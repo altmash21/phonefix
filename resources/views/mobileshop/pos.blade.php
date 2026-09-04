@@ -36,7 +36,7 @@
 @endpush
 
 @section('content')
-<form action="{{ route('mobileshop.pos.sale') }}" method="POST" id="posForm" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Processing Sale...'; if(typeof MT !== 'undefined'){ MT.enqueue('create', 'ms_mobile_sales', {source:'posForm', action:'processSale'}); return false; }">
+<form action="{{ route('mobileshop.pos.sale') }}" method="POST" id="posForm" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Processing Sale...';">
     @csrf
     <input type="hidden" name="idempotency_key" value="{{ \Illuminate\Support\Str::uuid() }}">
     <div class="pos-grid">

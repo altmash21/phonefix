@@ -103,7 +103,7 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:read-mobileshop-sales')
         ->name('invoice.pdf');
 
-    Route::get('invoice/purchase/{id}', 'MobileShopController@purchaseInvoiceView')
+    Route::get('invoice/purchase/{id}', 'MobileShopController@purchaseInvoice')
         ->middleware('permission:read-mobileshop-purchase')
         ->name('purchase.invoice');
     Route::get('invoice/purchase/{id}/pdf', 'MobileShopController@purchaseInvoicePdf')

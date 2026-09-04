@@ -25,10 +25,10 @@ class SyncController extends Controller
         $request->validate([
             'operations' => 'required|array|max:100',
             'operations.*.action' => 'required|in:create,update,delete',
-            'operations.*.model' => 'required|string|max=100',
+            'operations.*.model' => 'required|string|max:100',
             'operations.*.record_id' => 'nullable|integer',
             'operations.*.payload' => 'required|string',
-            'operations.*.sync_key' => 'nullable|string|max=100',
+            'operations.*.sync_key' => 'nullable|string|max:100',
         ]);
 
         $results = [];
@@ -97,36 +97,29 @@ class SyncController extends Controller
 
         switch ($op['action']) {
             case 'create':
-                $cols = [];
-                $vals = [];
-                foreach ($payload as $k => $v) {
-                    $cols[] = '`' . str_replace('`', '``', $k) . '`';
-                    $vals[] = DB::connection()->getPdo()->quote($v ?? '');
+                if (empty($payload)) {
+                    throw new \InvalidArgumentException('Empty sanitized payload for create operation');
                 }
-                $sql = "INSERT INTO `{$op['model']}` (" . implode(', ', $cols) . ") VALUES (" . implode(', ', $vals) . ")";
-                DB::statement($sql);
-                $serverId = (int) DB::connection()->getPdo()->lastInsertId();
+                $serverId = (int) DB::table($op['model'])->insertGetId($payload);
                 break;
             case 'update':
                 if (empty($op['record_id'])) {
                     throw new \InvalidArgumentException('record_id required for update');
                 }
-                $set = [];
-                foreach ($payload as $key => $value) {
-                    $set[] = "`{$key}` = " . DB::connection()->getPdo()->quote($value ?? '');
+                if (!empty($payload)) {
+                    DB::table($op['model'])->where('id', $op['record_id'])->update($payload);
                 }
-                $sql = "UPDATE `{$op['model']}` SET " . implode(', ', $set) . " WHERE `id` = {$op['record_id']}";
-                DB::statement($sql);
                 $serverId = $op['record_id'];
                 break;
             case 'delete':
                 if (empty($op['record_id'])) {
                     throw new \InvalidArgumentException('record_id required for delete');
                 }
-                DB::statement("DELETE FROM `{$op['model']}` WHERE `id` = {$op['record_id']}");
+                DB::table($op['model'])->where('id', $op['record_id'])->delete();
                 $serverId = $op['record_id'];
                 break;
         }
+
 
         MSSyncQueue::where('sync_key', $op['sync_key'] ?? '')
             ->update(['status' => 'uploaded', 'record_id' => $serverId, 'synced_at' => now()]);

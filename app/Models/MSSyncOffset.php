@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class MSSyncOffset extends Model
 {
     protected $table = 'ms_sync_offsets';
+    protected $primaryKey = 'model';
     protected $guarded = [];
     public $timestamps = true;
     public $incrementing = false;

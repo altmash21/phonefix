@@ -1563,11 +1563,11 @@ PROMPT;
 
             $invNumber = trim($request->invoice_no ?: '');
             if (empty($invNumber)) {
-                $invNumber = 'INV-' . date('Ymd') . '-' . str_pad(DB::table('ms_purchase_orders')->count() + 1, 4, '0', STR_PAD_LEFT);
+                $invNumber = 'INV-' . date('Ymd') . '-' . str_pad(DB::table('ms_purchase_orders')->where('company_id', $companyId)->count() + 1, 4, '0', STR_PAD_LEFT);
             }
             $basePoNum = $invNumber;
             $counter = 1;
-            while (DB::table('ms_purchase_orders')->where('po_number', $invNumber)->exists()) {
+            while (DB::table('ms_purchase_orders')->where('company_id', $companyId)->where('po_number', $invNumber)->exists()) {
                 $invNumber = $basePoNum . '-' . $counter++;
             }
 
@@ -2065,8 +2065,8 @@ PROMPT;
             }
 
             // Update Device status based on condition
-            $newDeviceStatus = $shouldRestock ? 'in_stock' : 'in_stock';
-            DB::table('ms_mobile_devices')->where('id', $sale->device_id)->update([
+            $newDeviceStatus = $shouldRestock ? 'in_stock' : 'returned';
+            DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('id', $sale->device_id)->update([
                 'status' => $newDeviceStatus,
                 'updated_at' => now(),
             ]);
@@ -3698,6 +3698,14 @@ PROMPT;
         }
 
         abort(404, 'Purchase record not found.');
+    }
+
+    /**
+     * Alias for purchaseInvoice
+     */
+    public function purchaseInvoiceView(Request $request, $id)
+    {
+        return $this->purchaseInvoice($request, $id);
     }
 
     /**

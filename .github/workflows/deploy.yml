@@ -1,4 +1,4 @@
-name: Deploy to Split Shared Hosting
+name: Deploy to Shared Hosting
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-deploy:
-    name: Build & Upload to Split Shared Hosting
+    name: Build & Upload to Shared Hosting
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,7 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: Install PHP Dependencies (Production)
+      - name: Install PHP Dependencies (No Dev)
         run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
 
       - name: Install NPM & Compile Frontend Assets
@@ -41,42 +41,17 @@ jobs:
           npm ci
           npm run production
 
-      - name: Prepare Staging Folders (app/ and public_html/)
-        run: |
-          mkdir -p deploy/public_html deploy/app
-
-          # 1. Copy public assets to deploy/public_html
-          cp -r public/* deploy/public_html/
-          [ -f public/.htaccess ] && cp public/.htaccess deploy/public_html/ || true
-
-          # 2. Update index.php paths in deploy/public_html to point to ../app
-          sed -i "s|__DIR__\s*\.\s*'\/..\/storage|__DIR__ . '\/..\/app\/storage|g" deploy/public_html/index.php
-          sed -i "s|__DIR__\s*\.\s*'\/..\/vendor|__DIR__ . '\/..\/app\/vendor|g" deploy/public_html/index.php
-          sed -i "s|__DIR__\s*\.\s*'\/..\/bootstrap|__DIR__ . '\/..\/app\/bootstrap|g" deploy/public_html/index.php
-          sed -i "/\$app = require_once/a \    \$app->usePublicPath(__DIR__);" deploy/public_html/index.php
-
-          # 3. Copy core application code to deploy/app
-          rsync -av \
-            --exclude='public' \
-            --exclude='deploy' \
-            --exclude='node_modules' \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.env*' \
-            --exclude='tests' \
-            ./ deploy/app/
-
       - name: Sync Files to Shared Hosting via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: deploy/
-          server-dir: ${{ secrets.FTP_REMOTE_DIR || './' }}
+          server-dir: public_html/
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
             .env
             .env.*
+            tests/**
