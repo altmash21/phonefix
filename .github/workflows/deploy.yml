@@ -78,20 +78,33 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p $SSH_PORT -H $SSH_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          chmod 644 ~/.ssh/known_hosts
 
-      - name: Deploy via Rsync over SSH
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Deploy via lftp (SFTP)
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
           TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || './' }}
         run: |
-          rsync -avz --delete \
-            -e "ssh -p $SSH_PORT -o StrictHostKeyChecking=no" \
-            deploy/ $SSH_USER@$SSH_HOST:$TARGET_DIR
+          # NOTE: no --delete. On shared hosting the target dir contains
+          # server-only files (.env, storage/logs, etc.) that must survive
+          # each deploy. Only add --delete back once you've set up explicit
+          # excludes for everything that shouldn't be touched.
+          lftp -e "
+            set sftp:auto-confirm yes;
+            set net:timeout 30;
+            set net:max-retries 2;
+            set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no';
+            mirror -R --verbose --parallel=4 deploy/ $TARGET_DIR;
+            bye
+          " -p $SSH_PORT sftp://$SSH_USER@$SSH_HOST
 
       - name: Post-Deploy Optimization on Server
         env:
@@ -99,23 +112,20 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
         run: |
-          ssh -p $SSH_PORT -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
-            # Locate the app folder on server and optimize
-            APP_DIR=$(find ~ -maxdepth 4 -type d -name "app" -exec test -f "{}/artisan" \; -print -quit 2>/dev/null)
-            if [ -z "$APP_DIR" ]; then
-              APP_DIR=$(find ~ -maxdepth 4 -type f -name "artisan" -exec dirname "{}" \; -print -quit 2>/dev/null)
-            fi
+          ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" << 'EOF'
+            APP_DIR="$HOME/domains/mauryamobilee.in/app"
 
-            if [ -n "$APP_DIR" ] && [ -f "$APP_DIR/artisan" ]; then
-              echo "Found artisan at $APP_DIR. Running optimizations..."
+            if [ -f "$APP_DIR/artisan" ]; then
+              echo "Running optimizations in $APP_DIR..."
               cd "$APP_DIR"
-              chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+              chmod -R 775 storage bootstrap/cache || true
               php artisan optimize:clear || true
               php artisan config:cache || true
               php artisan route:cache || true
               php artisan view:cache || true
               echo "Deployment optimizations completed successfully!"
             else
-              echo "Notice: artisan not found in scan, skipping post-deploy cache."
+              echo "ERROR: artisan not found at $APP_DIR"
+              exit 1
             fi
           EOF
