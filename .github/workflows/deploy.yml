@@ -64,6 +64,10 @@ jobs:
             --exclude='.github' \
             --exclude='.env*' \
             --exclude='tests' \
+            --exclude='vendor/**/tests' \
+            --exclude='vendor/**/Tests' \
+            --exclude='vendor/**/doc' \
+            --exclude='vendor/**/docs' \
             ./ deploy/app/
 
       - name: Sync Files to Shared Hosting via FTP
@@ -74,9 +78,14 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: deploy/
           server-dir: ${{ secrets.FTP_REMOTE_DIR || './' }}
+          timeout: 600000
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
             .env
             .env.*
+            tests/**
+            **/tests/**
+            **/Tests/**
+            **/docs/**
