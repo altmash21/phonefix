@@ -57,13 +57,13 @@ jobs:
 
           # 3. Copy core backend application code to deploy/app
           rsync -av \
-            --exclude='public' \
-            --exclude='deploy' \
-            --exclude='node_modules' \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.env*' \
-            --exclude='tests' \
+            --exclude='/public' \
+            --exclude='/deploy' \
+            --exclude='/node_modules' \
+            --exclude='/.git' \
+            --exclude='/.github' \
+            --exclude='/.env*' \
+            --exclude='/tests' \
             --exclude='vendor/**/tests' \
             --exclude='vendor/**/Tests' \
             --exclude='vendor/**/doc' \
