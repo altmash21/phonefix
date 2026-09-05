@@ -1,4 +1,4 @@
-name: Deploy to Shared Hosting (Secure Split)
+name: Deploy to Shared Hosting via SSH
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-deploy:
-    name: Build & Upload to Split Folders
+    name: Build & Deploy via SSH
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,7 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: Install PHP Dependencies (No Dev)
+      - name: Install PHP Dependencies (Production)
         run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
 
       - name: Install NPM & Compile Frontend Assets
@@ -45,7 +45,7 @@ jobs:
         run: |
           mkdir -p deploy/public_html deploy/app
 
-          # 1. Copy public assets to deploy/public_html
+          # 1. Copy compiled frontend assets to deploy/public_html
           cp -r public/* deploy/public_html/
           [ -f public/.htaccess ] && cp public/.htaccess deploy/public_html/ || true
 
@@ -55,7 +55,7 @@ jobs:
           sed -i "s|__DIR__\s*\.\s*'\/..\/bootstrap|__DIR__ . '\/..\/app\/bootstrap|g" deploy/public_html/index.php
           sed -i "/\$app = require_once/a \    \$app->usePublicPath(__DIR__);" deploy/public_html/index.php
 
-          # 3. Copy core application code to deploy/app
+          # 3. Copy core backend application code to deploy/app
           rsync -av \
             --exclude='public' \
             --exclude='deploy' \
@@ -70,22 +70,52 @@ jobs:
             --exclude='vendor/**/docs' \
             ./ deploy/app/
 
-      - name: Sync Files to Shared Hosting via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: deploy/
-          server-dir: ${{ secrets.FTP_REMOTE_DIR || './' }}
-          timeout: 600000
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            .env
-            .env.*
-            tests/**
-            **/tests/**
-            **/Tests/**
-            **/docs/**
+      - name: Setup SSH Key & Known Hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p $SSH_PORT -H $SSH_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy via Rsync over SSH
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || './' }}
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p $SSH_PORT -o StrictHostKeyChecking=no" \
+            deploy/ $SSH_USER@$SSH_HOST:$TARGET_DIR
+
+      - name: Post-Deploy Optimization on Server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+        run: |
+          ssh -p $SSH_PORT -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
+            # Locate the app folder on server and optimize
+            APP_DIR=$(find ~ -maxdepth 4 -type d -name "app" -exec test -f "{}/artisan" \; -print -quit 2>/dev/null)
+            if [ -z "$APP_DIR" ]; then
+              APP_DIR=$(find ~ -maxdepth 4 -type f -name "artisan" -exec dirname "{}" \; -print -quit 2>/dev/null)
+            fi
+
+            if [ -n "$APP_DIR" ] && [ -f "$APP_DIR/artisan" ]; then
+              echo "Found artisan at $APP_DIR. Running optimizations..."
+              cd "$APP_DIR"
+              chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+              php artisan optimize:clear || true
+              php artisan config:cache || true
+              php artisan route:cache || true
+              php artisan view:cache || true
+              echo "Deployment optimizations completed successfully!"
+            else
+              echo "Notice: artisan not found in scan, skipping post-deploy cache."
+            fi
+          EOF
