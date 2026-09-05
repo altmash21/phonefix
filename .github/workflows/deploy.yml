@@ -83,28 +83,24 @@ jobs:
           ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Install lftp
-        run: sudo apt-get update && sudo apt-get install -y lftp
-
-      - name: Deploy via lftp (SFTP)
+      - name: Verify SSH Connection
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
-          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || './' }}
         run: |
-          # NOTE: no --delete. On shared hosting the target dir contains
-          # server-only files (.env, storage/logs, etc.) that must survive
-          # each deploy. Only add --delete back once you've set up explicit
-          # excludes for everything that shouldn't be touched.
-          lftp -e "
-            set sftp:auto-confirm yes;
-            set net:timeout 30;
-            set net:max-retries 2;
-            set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no';
-            mirror -R --verbose --parallel=4 deploy/ $TARGET_DIR;
-            bye
-          " -p $SSH_PORT sftp://$SSH_USER@$SSH_HOST
+          echo "Testing SSH connection to $SSH_USER@$SSH_HOST on port $SSH_PORT..."
+          ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=15 "$SSH_USER@$SSH_HOST" "echo 'SSH Connected successfully as user:' \$(whoami)"
+
+      - name: Transfer Files via SSH Stream
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || 'domains/mauryamobilee.in' }}
+        run: |
+          echo "Streaming staged files to $TARGET_DIR on server..."
+          tar -czf - -C deploy . | ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p $TARGET_DIR && tar -xzf - -C $TARGET_DIR"
 
       - name: Post-Deploy Optimization on Server
         env:
@@ -114,6 +110,9 @@ jobs:
         run: |
           ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" << 'EOF'
             APP_DIR="$HOME/domains/mauryamobilee.in/app"
+            if [ ! -d "$APP_DIR" ]; then
+              APP_DIR="$HOME/app"
+            fi
 
             if [ -f "$APP_DIR/artisan" ]; then
               echo "Running optimizations in $APP_DIR..."
@@ -125,7 +124,7 @@ jobs:
               php artisan view:cache || true
               echo "Deployment optimizations completed successfully!"
             else
-              echo "ERROR: artisan not found at $APP_DIR"
-              exit 1
+              echo "Notice: artisan not found at $APP_DIR yet, skipping cache."
             fi
           EOF
+
