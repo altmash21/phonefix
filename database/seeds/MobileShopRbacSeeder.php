@@ -7,15 +7,33 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Auth\Role;
 use App\Models\Auth\Permission;
 use App\Models\Auth\User;
+use App\Models\Common\Company;
+use App\Utilities\Installer;
 
 class MobileShopRbacSeeder extends Seeder
 {
     public function run(): void
     {
         // ─────────────────────────────────────────────────────────────────────
+        // Ensure default company exists and is enabled
+        // ─────────────────────────────────────────────────────────────────────
+        if (Company::count() === 0) {
+            Installer::createCompany('Maurya Mobile Store', 'admin@mobitrack.local', 'en-GB');
+        }
+
+        $company = Company::first();
+        $companyId = $company ? $company->id : 1;
+        if ($company && !$company->enabled) {
+            $company->enabled = 1;
+            $company->save();
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         // PERMISSIONS — Fine-grained, niche-scoped
         // ─────────────────────────────────────────────────────────────────────
         $permissions = [
+            'read-admin-panel'                  => 'Read Admin Panel',
+
             // Dashboard (all roles)
             'read-mobileshop-dashboard'         => 'View MobiTrack Dashboard (Niche-Scoped)',
 
@@ -247,8 +265,8 @@ class MobileShopRbacSeeder extends Seeder
             $adminUser->save();
         }
 
-        if (!$adminUser->companies()->where('company_id', 1)->exists()) {
-            $adminUser->companies()->attach(1);
+        if (!$adminUser->companies()->where('company_id', $companyId)->exists()) {
+            $adminUser->companies()->attach($companyId);
         }
         $adminUser->syncRoles([$adminRole->id]);
 
@@ -307,8 +325,8 @@ class MobileShopRbacSeeder extends Seeder
                 $user->save();
             }
 
-            if (!$user->companies()->where('company_id', 1)->exists()) {
-                $user->companies()->attach(1);
+            if (!$user->companies()->where('company_id', $companyId)->exists()) {
+                $user->companies()->attach($companyId);
             }
             $user->syncRoles([$su['role']->id]);
         }

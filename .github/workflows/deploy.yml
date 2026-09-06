@@ -119,6 +119,7 @@ jobs:
               cd "$APP_DIR"
               chmod -R 775 storage bootstrap/cache || true
               php artisan migrate --force
+              php artisan db:seed --class="Database\\Seeds\\MobileShopRbacSeeder" --force
               php artisan optimize:clear || true
               php artisan config:cache || true
               php artisan route:cache || true
