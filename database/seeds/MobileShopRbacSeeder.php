@@ -18,7 +18,17 @@ class MobileShopRbacSeeder extends Seeder
         // Ensure default company exists and is enabled
         // ─────────────────────────────────────────────────────────────────────
         if (Company::count() === 0) {
-            Installer::createCompany('Maurya Mobile Store', 'admin@mobitrack.local', 'en-GB');
+            try {
+                Installer::createCompany('Maurya Mobile Store', 'admin@mobitrack.local', 'en-GB');
+            } catch (\Throwable $e) {
+                DB::table('companies')->insert([
+                    'id'         => 1,
+                    'domain'     => '',
+                    'enabled'    => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         $company = Company::first();

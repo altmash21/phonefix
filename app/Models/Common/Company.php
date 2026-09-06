@@ -257,8 +257,16 @@ class Company extends Eloquent implements Ownable
                 $this->offsetUnset($key);
             }
 
-            $this->offsetUnset('logo');
-            $this->offsetUnset('currency');
+            // Always strip virtual attributes that are stored in settings, not in the companies table
+            $virtualAttributes = [
+                'name', 'email', 'locale', 'currency', 'logo',
+                'phone', 'address', 'city', 'state', 'country',
+                'zip_code', 'tax_number',
+            ];
+
+            foreach ($virtualAttributes as $attr) {
+                $this->offsetUnset($attr);
+            }
         } catch(\Throwable $e) {
 
         }
