@@ -3,6 +3,13 @@ name: Deploy to Shared Hosting via SSH
 on:
   push:
     branches: [ master, main ]
+  workflow_dispatch:
+    inputs:
+      seed_rbac:
+        description: 'Run RBAC seeder (default: false)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-and-deploy:
@@ -92,41 +99,64 @@ jobs:
           echo "Testing SSH connection to $SSH_USER@$SSH_HOST on port $SSH_PORT..."
           ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=15 "$SSH_USER@$SSH_HOST" "echo 'SSH Connected successfully as user:' \$(whoami)"
 
-      - name: Transfer Files via SSH Stream
+      - name: Incremental File Sync via SSH
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
           TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || 'domains/mauryamobilee.in' }}
         run: |
-          echo "Streaming staged files to $TARGET_DIR on server..."
-          tar -czf - -C deploy . | ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p $TARGET_DIR && tar -xzf - -C $TARGET_DIR"
+          # Use incremental rsync if available on remote host to avoid re-uploading unchanged files
+          if ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "which rsync" >/dev/null 2>&1; then
+            echo "Fast incremental rsync detected on server. Syncing changed files only..."
+            rsync -avz --no-perms --no-owner --no-group \
+              --exclude='.env*' \
+              --exclude='storage/logs/*' \
+              --exclude='storage/framework/cache/*' \
+              --exclude='storage/framework/sessions/*' \
+              --exclude='storage/framework/views/*' \
+              -e "ssh -p $SSH_PORT -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+              deploy/ "$SSH_USER@$SSH_HOST:$TARGET_DIR/"
+          else
+            echo "Streaming staged files to $TARGET_DIR on server via tar..."
+            tar -czf - -C deploy . | ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p $TARGET_DIR && tar -xzf - -C $TARGET_DIR"
+          fi
 
-      - name: Post-Deploy Optimization on Server
+      - name: Post-Deploy Incremental Update on Server
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          RUN_SEED: ${{ github.event.inputs.seed_rbac || 'false' }}
         run: |
-          ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" << 'EOF'
-            APP_DIR="$HOME/domains/mauryamobilee.in/app"
-            if [ ! -d "$APP_DIR" ]; then
-              APP_DIR="$HOME/app"
+          ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" << EOF
+            APP_DIR="\$HOME/domains/mauryamobilee.in/app"
+            if [ ! -d "\$APP_DIR" ]; then
+              APP_DIR="\$HOME/app"
             fi
 
-            if [ -f "$APP_DIR/artisan" ]; then
-              echo "Running database migrations and optimizations in $APP_DIR..."
-              cd "$APP_DIR"
+            if [ -f "\$APP_DIR/artisan" ]; then
+              echo "Running incremental updates in \$APP_DIR..."
+              cd "\$APP_DIR"
               chmod -R 775 storage bootstrap/cache || true
+
+              # Run only pending new migrations (no reset)
               php artisan migrate --force
-              php artisan db:seed --class="Database\\Seeds\\MobileShopRbacSeeder" --force
+
+              # Only seed if explicitly requested via workflow_dispatch
+              if [ "$RUN_SEED" = "true" ]; then
+                echo "Running RBAC Seeder..."
+                php artisan db:seed --class="Database\\Seeds\\MobileShopRbacSeeder" --force
+              fi
+
+              # Clear and regenerate production caches
               php artisan optimize:clear || true
               php artisan config:cache || true
               php artisan route:cache || true
               php artisan view:cache || true
-              echo "Deployment optimizations and migrations completed successfully!"
+              php artisan event:cache || true
+              echo "Deployment incremental update completed successfully!"
             else
-              echo "Notice: artisan not found at $APP_DIR yet, skipping migrations."
+              echo "Notice: artisan not found at \$APP_DIR yet, skipping artisan commands."
             fi
           EOF
-

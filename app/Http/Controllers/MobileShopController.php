@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class MobileShopController extends Controller
@@ -114,170 +115,268 @@ class MobileShopController extends Controller
         $niche     = $this->getUserNiche();
         $isAdmin   = $niche === 'admin';
 
-        // ─── Niche-Scoped KPI Stats ───────────────────────────────────────────
-        switch ($niche) {
-            case 'phones':
-                $statPurchaseInvoices = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->count();
-                $statBuybackReturns   = 0;
-                $statSaleInvoices     = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
-                $statPendingUdhari    = DB::table('ms_customers')->where('company_id', $companyId)->where('udhari_balance', '>', 0)->count();
-                $totalNewPhones       = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', 'in_stock')->count();
-                $totalSecondHand      = 0;
-                $totalRepairsOpen     = 0;
-                $totalUdhariDue       = (float) DB::table('ms_customers')->where('company_id', $companyId)->sum('udhari_balance');
-                $totalSupplierCredit  = 0;
-                $totalEmiBalance      = 0;
-                break;
+        // ─── Niche-Scoped KPI Stats (Cached 60s for performance) ───────────────
+        $kpis = Cache::remember("ms_dash_kpis_{$companyId}_{$niche}", 60, function () use ($companyId, $niche) {
+            $statPurchaseInvoices = 0;
+            $statBuybackReturns   = 0;
+            $statSaleInvoices     = 0;
+            $statPendingUdhari    = 0;
+            $totalNewPhones       = 0;
+            $totalSecondHand      = 0;
+            $totalRepairsOpen     = 0;
+            $totalUdhariDue       = 0.0;
+            $totalSupplierCredit  = 0.0;
+            $totalEmiBalance      = 0.0;
 
-            case 'secondhand':
-                $statPurchaseInvoices = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->count();
-                $statBuybackReturns   = $statPurchaseInvoices;
-                $statSaleInvoices     = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')
-                    ->whereExists(function($q) { $q->from('ms_mobile_devices')->whereColumn('ms_mobile_devices.id','ms_mobile_sales.device_id')->where('ms_mobile_devices.type','second_hand'); })->count();
-                $statPendingUdhari    = 0;
-                $totalNewPhones       = 0;
-                $totalSecondHand      = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->count();
-                $totalRepairsOpen     = 0;
-                $totalUdhariDue       = 0;
-                $totalSupplierCredit  = 0;
-                $totalEmiBalance      = 0;
-                break;
-
-            case 'accessories':
-                $statPurchaseInvoices = DB::table('ms_parts_inventory_history')->where('type', 'addition')
-                    ->whereExists(function($q) use ($companyId) { $q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id','ms_parts_inventory_history.part_id')->where('ms_parts_inventory.company_id',$companyId); })->count();
-                $statBuybackReturns   = 0;
-                $statSaleInvoices     = DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
-                $statPendingUdhari    = 0;
-                $totalNewPhones       = 0;
-                $totalSecondHand      = 0;
-                $totalRepairsOpen     = 0;
-                $totalUdhariDue       = 0;
-                $totalSupplierCredit  = (float) DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->sum('credit_balance');
-                $totalEmiBalance      = 0;
-                break;
-
-            case 'covers':
-                $coverCats = $this->coverCategories;
-                $statPurchaseInvoices = DB::table('ms_parts_inventory_history')->where('type', 'addition')
-                    ->whereExists(function($q) use ($companyId, $coverCats) {
-                        $q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id','ms_parts_inventory_history.part_id')
-                          ->where('ms_parts_inventory.company_id',$companyId)->whereIn('ms_parts_inventory.category',$coverCats);
-                    })->count();
-                $statBuybackReturns   = 0;
-                $statSaleInvoices     = DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')
-                    ->whereExists(function($q) use ($companyId, $coverCats) {
-                        $q->from('ms_accessory_sale_items')->whereColumn('ms_accessory_sale_items.accessory_sale_id','ms_accessory_sales.id')
-                          ->join('ms_parts_inventory','ms_accessory_sale_items.part_id','=','ms_parts_inventory.id')
-                          ->whereIn('ms_parts_inventory.category',$coverCats);
-                    })->count();
-                $statPendingUdhari    = 0;
-                $totalNewPhones       = 0;
-                $totalSecondHand      = 0;
-                $totalRepairsOpen     = 0;
-                $totalUdhariDue       = 0;
-                $totalSupplierCredit  = 0;
-                $totalEmiBalance      = 0;
-                break;
-
-            case 'repairs':
-                $statPurchaseInvoices = 0;
-                $statBuybackReturns   = 0;
-                $statSaleInvoices     = DB::table('ms_repair_tickets')->where('company_id', $companyId)->where('status', 'delivered')->count();
-                $statPendingUdhari    = 0;
-                $totalNewPhones       = 0;
-                $totalSecondHand      = 0;
-                $totalRepairsOpen     = DB::table('ms_repair_tickets')->where('company_id', $companyId)->whereNotIn('status', ['delivered', 'cancelled'])->count();
-                $totalUdhariDue       = 0;
-                $totalSupplierCredit  = 0;
-                $totalEmiBalance      = 0;
-                break;
-
-            default: // admin — all data
-                $totalNewPhones      = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', 'in_stock')->count();
-                $totalSecondHand     = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->count();
-                $totalRepairsOpen    = DB::table('ms_repair_tickets')->where('company_id', $companyId)->whereNotIn('status', ['delivered', 'cancelled'])->count();
-                $totalUdhariDue      = (float) DB::table('ms_customers')->where('company_id', $companyId)->sum('udhari_balance');
-                $totalSupplierCredit = (float) DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->sum('credit_balance');
-                $totalEmiBalance     = (float) DB::table('ms_emi_providers')->where('company_id', $companyId)->sum('advance_balance');
-                $statPurchaseInvoices = DB::table('ms_purchase_orders')->where('company_id', $companyId)->count()
-                    + DB::table('ms_parts_inventory_history')->where('type', 'addition')->count()
-                    + max(1, $totalNewPhones);
-                $statBuybackReturns  = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->count();
-                $statSaleInvoices    = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count()
-                    + DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
-                $statPendingUdhari   = DB::table('ms_customers')->where('company_id', $companyId)->where('udhari_balance', '>', 0)->count();
-                break;
-        }
-
-        // ─── Niche-Scoped 12-Month Spline Chart Data ──────────────────────────
-        $monthsLabels  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        $chartPurchases = array_fill(0, 12, 0);
-        $chartBuybacks  = array_fill(0, 12, 0);
-        $chartSales     = array_fill(0, 12, 0);
-        $chartUdhari    = array_fill(0, 12, 0);
-
-        for ($m = 1; $m <= 12; $m++) {
-            $mIdx = $m - 1;
-            $yr   = now()->year;
             switch ($niche) {
                 case 'phones':
-                    $chartSales[$mIdx]     = DB::table('ms_mobile_sales')->where('company_id',$companyId)->whereMonth('created_at',$m)->whereYear('created_at',$yr)->where('status','!=','voided')
-                        ->whereExists(fn($q)=>$q->from('ms_mobile_devices')->whereColumn('ms_mobile_devices.id','ms_mobile_sales.device_id')->where('type','new'))->count();
-                    $chartPurchases[$mIdx] = DB::table('ms_mobile_devices')->where('company_id',$companyId)->where('type','new')->whereMonth('created_at',$m)->whereYear('created_at',$yr)->count();
+                    $statPurchaseInvoices = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->count();
+                    $statSaleInvoices     = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
+                    $statPendingUdhari    = DB::table('ms_customers')->where('company_id', $companyId)->where('udhari_balance', '>', 0)->count();
+                    $totalNewPhones       = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', 'in_stock')->count();
+                    $totalUdhariDue       = (float) DB::table('ms_customers')->where('company_id', $companyId)->sum('udhari_balance');
                     break;
+
                 case 'secondhand':
-                    $chartSales[$mIdx]    = DB::table('ms_mobile_sales')->where('company_id',$companyId)->whereMonth('created_at',$m)->whereYear('created_at',$yr)->where('status','!=','voided')
-                        ->whereExists(fn($q)=>$q->from('ms_mobile_devices')->whereColumn('ms_mobile_devices.id','ms_mobile_sales.device_id')->where('type','second_hand'))->count();
-                    $chartBuybacks[$mIdx] = DB::table('ms_mobile_devices')->where('company_id',$companyId)->where('type','second_hand')->whereMonth('created_at',$m)->whereYear('created_at',$yr)->count();
+                    $statPurchaseInvoices = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->count();
+                    $statBuybackReturns   = $statPurchaseInvoices;
+                    $statSaleInvoices     = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')
+                        ->whereExists(function($q) { $q->from('ms_mobile_devices')->whereColumn('ms_mobile_devices.id','ms_mobile_sales.device_id')->where('ms_mobile_devices.type','second_hand'); })->count();
+                    $totalSecondHand      = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->count();
                     break;
+
                 case 'accessories':
-                    $chartSales[$mIdx]     = DB::table('ms_accessory_sales')->where('company_id',$companyId)->whereMonth('created_at',$m)->whereYear('created_at',$yr)->where('status','!=','voided')->count();
-                    $chartPurchases[$mIdx] = DB::table('ms_parts_inventory_history')->where('type','addition')->whereMonth('created_at',$m)->whereYear('created_at',$yr)
-                        ->whereExists(fn($q)=>$q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id','ms_parts_inventory_history.part_id')->where('company_id',$companyId))->count();
+                    $statPurchaseInvoices = DB::table('ms_parts_inventory_history')->where('type', 'addition')
+                        ->whereExists(function($q) use ($companyId) { $q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id','ms_parts_inventory_history.part_id')->where('ms_parts_inventory.company_id',$companyId); })->count();
+                    $statSaleInvoices     = DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
+                    $totalSupplierCredit  = (float) DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->sum('credit_balance');
                     break;
+
                 case 'covers':
                     $coverCats = $this->coverCategories;
-                    $chartSales[$mIdx]     = DB::table('ms_accessory_sales')->where('company_id',$companyId)->whereMonth('created_at',$m)->whereYear('created_at',$yr)->where('status','!=','voided')
-                        ->whereExists(fn($q)=>$q->from('ms_accessory_sale_items')->whereColumn('ms_accessory_sale_items.accessory_sale_id','ms_accessory_sales.id')
-                            ->join('ms_parts_inventory','ms_accessory_sale_items.part_id','=','ms_parts_inventory.id')->whereIn('ms_parts_inventory.category',$coverCats))->count();
-                    $chartPurchases[$mIdx] = DB::table('ms_parts_inventory_history')->where('type','addition')->whereMonth('created_at',$m)->whereYear('created_at',$yr)
-                        ->whereExists(fn($q)=>$q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id','ms_parts_inventory_history.part_id')->where('company_id',$companyId)->whereIn('category',$coverCats))->count();
+                    $statPurchaseInvoices = DB::table('ms_parts_inventory_history')->where('type', 'addition')
+                        ->whereExists(function($q) use ($companyId, $coverCats) {
+                            $q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id','ms_parts_inventory_history.part_id')
+                              ->where('ms_parts_inventory.company_id',$companyId)->whereIn('ms_parts_inventory.category',$coverCats);
+                        })->count();
+                    $statSaleInvoices     = DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')
+                        ->whereExists(function($q) use ($companyId, $coverCats) {
+                            $q->from('ms_accessory_sale_items')->whereColumn('ms_accessory_sale_items.accessory_sale_id','ms_accessory_sales.id')
+                              ->join('ms_parts_inventory','ms_accessory_sale_items.part_id','=','ms_parts_inventory.id')
+                              ->whereIn('ms_parts_inventory.category',$coverCats);
+                        })->count();
                     break;
+
                 case 'repairs':
-                    $chartSales[$mIdx]  = DB::table('ms_repair_tickets')->where('company_id',$companyId)->where('status','delivered')->whereMonth('created_at',$m)->whereYear('created_at',$yr)->count();
+                    $statSaleInvoices     = DB::table('ms_repair_tickets')->where('company_id', $companyId)->where('status', 'delivered')->count();
+                    $totalRepairsOpen     = DB::table('ms_repair_tickets')->where('company_id', $companyId)->whereNotIn('status', ['delivered', 'cancelled'])->count();
                     break;
+
+                default: // admin — all data
+                    $totalNewPhones      = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', 'in_stock')->count();
+                    $totalSecondHand     = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->count();
+                    $totalRepairsOpen    = DB::table('ms_repair_tickets')->where('company_id', $companyId)->whereNotIn('status', ['delivered', 'cancelled'])->count();
+                    $totalUdhariDue      = (float) DB::table('ms_customers')->where('company_id', $companyId)->sum('udhari_balance');
+                    $totalSupplierCredit = (float) DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->sum('credit_balance');
+                    $totalEmiBalance     = (float) DB::table('ms_emi_providers')->where('company_id', $companyId)->sum('advance_balance');
+                    $statPurchaseInvoices = DB::table('ms_purchase_orders')->where('company_id', $companyId)->count()
+                        + DB::table('ms_parts_inventory_history')->where('type', 'addition')->count()
+                        + max(1, $totalNewPhones);
+                    $statBuybackReturns  = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->count();
+                    $statSaleInvoices    = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count()
+                        + DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
+                    $statPendingUdhari   = DB::table('ms_customers')->where('company_id', $companyId)->where('udhari_balance', '>', 0)->count();
+                    break;
+            }
+
+            return compact(
+                'statPurchaseInvoices', 'statBuybackReturns', 'statSaleInvoices', 'statPendingUdhari',
+                'totalNewPhones', 'totalSecondHand', 'totalRepairsOpen', 'totalUdhariDue',
+                'totalSupplierCredit', 'totalEmiBalance'
+            );
+        });
+
+        extract($kpis);
+
+        // ─── Niche-Scoped 12-Month Spline Chart Data (Cached 5 mins & Grouped) ─
+        $yr = (int) now()->year;
+        $coverCategories = $this->coverCategories;
+
+        $monthlyChartData = Cache::remember("ms_dash_chart_{$companyId}_{$niche}_{$yr}", 300, function () use ($companyId, $niche, $yr, $coverCategories) {
+            $monthsLabels   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            $chartPurchases = array_fill(0, 12, 0);
+            $chartBuybacks  = array_fill(0, 12, 0);
+            $chartSales     = array_fill(0, 12, 0);
+            $chartUdhari    = array_fill(0, 12, 0);
+
+            $getMonthlyCounts = function($query) {
+                return $query->selectRaw('MONTH(created_at) as m, COUNT(*) as aggregate')
+                    ->groupBy(DB::raw('MONTH(created_at)'))
+                    ->pluck('aggregate', 'm')
+                    ->all();
+            };
+
+            switch ($niche) {
+                case 'phones':
+                    $salesCounts = $getMonthlyCounts(
+                        DB::table('ms_mobile_sales')
+                            ->where('company_id', $companyId)
+                            ->whereYear('created_at', $yr)
+                            ->where('status', '!=', 'voided')
+                            ->whereExists(fn($q) => $q->from('ms_mobile_devices')->whereColumn('ms_mobile_devices.id', 'ms_mobile_sales.device_id')->where('type', 'new'))
+                    );
+                    $purchCounts = $getMonthlyCounts(
+                        DB::table('ms_mobile_devices')
+                            ->where('company_id', $companyId)
+                            ->where('type', 'new')
+                            ->whereYear('created_at', $yr)
+                    );
+                    for ($m = 1; $m <= 12; $m++) {
+                        $chartSales[$m - 1]     = (int) ($salesCounts[$m] ?? 0);
+                        $chartPurchases[$m - 1] = (int) ($purchCounts[$m] ?? 0);
+                    }
+                    break;
+
+                case 'secondhand':
+                    $salesCounts = $getMonthlyCounts(
+                        DB::table('ms_mobile_sales')
+                            ->where('company_id', $companyId)
+                            ->whereYear('created_at', $yr)
+                            ->where('status', '!=', 'voided')
+                            ->whereExists(fn($q) => $q->from('ms_mobile_devices')->whereColumn('ms_mobile_devices.id', 'ms_mobile_sales.device_id')->where('type', 'second_hand'))
+                    );
+                    $buybackCounts = $getMonthlyCounts(
+                        DB::table('ms_mobile_devices')
+                            ->where('company_id', $companyId)
+                            ->where('type', 'second_hand')
+                            ->whereYear('created_at', $yr)
+                    );
+                    for ($m = 1; $m <= 12; $m++) {
+                        $chartSales[$m - 1]    = (int) ($salesCounts[$m] ?? 0);
+                        $chartBuybacks[$m - 1] = (int) ($buybackCounts[$m] ?? 0);
+                    }
+                    break;
+
+                case 'accessories':
+                    $salesCounts = $getMonthlyCounts(
+                        DB::table('ms_accessory_sales')
+                            ->where('company_id', $companyId)
+                            ->whereYear('created_at', $yr)
+                            ->where('status', '!=', 'voided')
+                    );
+                    $purchCounts = $getMonthlyCounts(
+                        DB::table('ms_parts_inventory_history')
+                            ->where('type', 'addition')
+                            ->whereYear('created_at', $yr)
+                            ->whereExists(fn($q) => $q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id', 'ms_parts_inventory_history.part_id')->where('company_id', $companyId))
+                    );
+                    for ($m = 1; $m <= 12; $m++) {
+                        $chartSales[$m - 1]     = (int) ($salesCounts[$m] ?? 0);
+                        $chartPurchases[$m - 1] = (int) ($purchCounts[$m] ?? 0);
+                    }
+                    break;
+
+                case 'covers':
+                    $salesCounts = $getMonthlyCounts(
+                        DB::table('ms_accessory_sales')
+                            ->where('company_id', $companyId)
+                            ->whereYear('created_at', $yr)
+                            ->where('status', '!=', 'voided')
+                            ->whereExists(fn($q) => $q->from('ms_accessory_sale_items')->whereColumn('ms_accessory_sale_items.accessory_sale_id', 'ms_accessory_sales.id')
+                                ->join('ms_parts_inventory', 'ms_accessory_sale_items.part_id', '=', 'ms_parts_inventory.id')
+                                ->whereIn('ms_parts_inventory.category', $coverCategories))
+                    );
+                    $purchCounts = $getMonthlyCounts(
+                        DB::table('ms_parts_inventory_history')
+                            ->where('type', 'addition')
+                            ->whereYear('created_at', $yr)
+                            ->whereExists(fn($q) => $q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id', 'ms_parts_inventory_history.part_id')->where('company_id', $companyId)->whereIn('category', $coverCategories))
+                    );
+                    for ($m = 1; $m <= 12; $m++) {
+                        $chartSales[$m - 1]     = (int) ($salesCounts[$m] ?? 0);
+                        $chartPurchases[$m - 1] = (int) ($purchCounts[$m] ?? 0);
+                    }
+                    break;
+
+                case 'repairs':
+                    $repCounts = $getMonthlyCounts(
+                        DB::table('ms_repair_tickets')
+                            ->where('company_id', $companyId)
+                            ->where('status', 'delivered')
+                            ->whereYear('created_at', $yr)
+                    );
+                    for ($m = 1; $m <= 12; $m++) {
+                        $chartSales[$m - 1] = (int) ($repCounts[$m] ?? 0);
+                    }
+                    break;
+
                 default: // admin
-                    $chartSales[$mIdx]     = DB::table('ms_mobile_sales')->where('company_id',$companyId)->whereMonth('created_at',$m)->whereYear('created_at',$yr)->where('status','!=','voided')->count()
-                                           + DB::table('ms_accessory_sales')->where('company_id',$companyId)->whereMonth('created_at',$m)->whereYear('created_at',$yr)->where('status','!=','voided')->count();
-                    $chartPurchases[$mIdx] = DB::table('ms_purchase_orders')->where('company_id',$companyId)->whereMonth('created_at',$m)->whereYear('created_at',$yr)->count()
-                                           + DB::table('ms_parts_inventory_history')->where('type','addition')->whereMonth('created_at',$m)->whereYear('created_at',$yr)->count();
-                    $chartBuybacks[$mIdx]  = DB::table('ms_mobile_devices')->where('company_id',$companyId)->where('type','second_hand')->whereMonth('created_at',$m)->whereYear('created_at',$yr)->count();
-                    $chartUdhari[$mIdx]    = DB::table('ms_mobile_sales')->where('company_id',$companyId)->where('udhari_amount','>',0)->whereMonth('created_at',$m)->whereYear('created_at',$yr)->count();
-            }
-        }
+                    $mobSalesCounts = $getMonthlyCounts(
+                        DB::table('ms_mobile_sales')
+                            ->where('company_id', $companyId)
+                            ->whereYear('created_at', $yr)
+                            ->where('status', '!=', 'voided')
+                    );
+                    $accSalesCounts = $getMonthlyCounts(
+                        DB::table('ms_accessory_sales')
+                            ->where('company_id', $companyId)
+                            ->whereYear('created_at', $yr)
+                            ->where('status', '!=', 'voided')
+                    );
+                    $poPurchCounts = $getMonthlyCounts(
+                        DB::table('ms_purchase_orders')
+                            ->where('company_id', $companyId)
+                            ->whereYear('created_at', $yr)
+                    );
+                    $partPurchCounts = $getMonthlyCounts(
+                        DB::table('ms_parts_inventory_history')
+                            ->where('type', 'addition')
+                            ->whereYear('created_at', $yr)
+                    );
+                    $bbCounts = $getMonthlyCounts(
+                        DB::table('ms_mobile_devices')
+                            ->where('company_id', $companyId)
+                            ->where('type', 'second_hand')
+                            ->whereYear('created_at', $yr)
+                    );
+                    $udhCounts = $getMonthlyCounts(
+                        DB::table('ms_mobile_sales')
+                            ->where('company_id', $companyId)
+                            ->where('udhari_amount', '>', 0)
+                            ->whereYear('created_at', $yr)
+                    );
 
-        // Demo data for new stores
-        if (array_sum($chartSales) < 5) {
-            $demoSales    = [244, 1507, 1804, 2400, 2240, 2607, 3521, 2607, 0, 0, 0, 0];
-            $demoPurch    = [180, 189,  221,  233,  191,  284,  302,  169, 0, 0, 0, 0];
-            $demoBuyback  = [ 20,  35,   42,   50,   48,   55,   60,   49, 0, 0, 0, 0];
-            $demoUdhari   = [ 50,  70,   85,  110,   95,  120,  140,   90, 0, 0, 0, 0];
-            for ($i = 0; $i < 12; $i++) {
-                if ($chartSales[$i]     === 0) $chartSales[$i]     = $demoSales[$i];
-                if ($chartPurchases[$i] === 0) $chartPurchases[$i] = $demoPurch[$i];
-                if ($chartBuybacks[$i]  === 0) $chartBuybacks[$i]  = $demoBuyback[$i];
-                if ($chartUdhari[$i]    === 0) $chartUdhari[$i]    = $demoUdhari[$i];
+                    for ($m = 1; $m <= 12; $m++) {
+                        $chartSales[$m - 1]     = (int) (($mobSalesCounts[$m] ?? 0) + ($accSalesCounts[$m] ?? 0));
+                        $chartPurchases[$m - 1] = (int) (($poPurchCounts[$m] ?? 0) + ($partPurchCounts[$m] ?? 0));
+                        $chartBuybacks[$m - 1]  = (int) ($bbCounts[$m] ?? 0);
+                        $chartUdhari[$m - 1]    = (int) ($udhCounts[$m] ?? 0);
+                    }
+                    break;
             }
-        }
 
-        $monthlyChartData = [
-            'labels'    => $monthsLabels,
-            'purchases' => $chartPurchases,
-            'buybacks'  => $chartBuybacks,
-            'sales'     => $chartSales,
-            'udhari'    => $chartUdhari,
-        ];
+            // Demo data for new stores
+            if (array_sum($chartSales) < 5) {
+                $demoSales    = [244, 1507, 1804, 2400, 2240, 2607, 3521, 2607, 0, 0, 0, 0];
+                $demoPurch    = [180, 189,  221,  233,  191,  284,  302,  169, 0, 0, 0, 0];
+                $demoBuyback  = [ 20,  35,   42,   50,   48,   55,   60,   49, 0, 0, 0, 0];
+                $demoUdhari   = [ 50,  70,   85,  110,   95,  120,  140,   90, 0, 0, 0, 0];
+                for ($i = 0; $i < 12; $i++) {
+                    if ($chartSales[$i]     === 0) $chartSales[$i]     = $demoSales[$i];
+                    if ($chartPurchases[$i] === 0) $chartPurchases[$i] = $demoPurch[$i];
+                    if ($chartBuybacks[$i]  === 0) $chartBuybacks[$i]  = $demoBuyback[$i];
+                    if ($chartUdhari[$i]    === 0) $chartUdhari[$i]    = $demoUdhari[$i];
+                }
+            }
+
+            return [
+                'labels'    => $monthsLabels,
+                'purchases' => $chartPurchases,
+                'buybacks'  => $chartBuybacks,
+                'sales'     => $chartSales,
+                'udhari'    => $chartUdhari,
+            ];
+        });
 
         // ─── Contextual Lists for Dashboard Cards ─────────────────────────────
         $recentSales    = collect();
