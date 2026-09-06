@@ -792,13 +792,16 @@
                         </div>
                     </div>
 
-                    <!-- Bill Type -->
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:12px;">Bill Type</label>
-                        <select name="bill_type" id="accBillType" required class="form-control" style="font-weight:700; color:#0F172A; border-color:#CBD5E1;">
-                            <option value="gst">📜 Formal GST Tax Invoice (18% incl.)</option>
-                            <option value="non_gst">📄 Estimate / Retail Bill (0% Tax)</option>
-                        </select>
+                    <!-- Bill Type / GST Checkbox -->
+                    <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0; user-select:none;">
+                            <input type="checkbox" name="is_gst" id="accIsGstCheckbox" value="1" style="width:18px; height:18px; accent-color:#0F766E; cursor:pointer;" onchange="document.getElementById('accBillType').value = this.checked ? 'gst' : 'non_gst'">
+                            <div>
+                                <span style="font-size:13px; font-weight:700; color:#0F172A;">Make GST Bill (18% Tax Invoice)</span>
+                                <p style="font-size:11px; color:#64748B; margin:1px 0 0 0;">Unchecked by default (Standard Retail / Non-GST Estimate)</p>
+                            </div>
+                        </label>
+                        <input type="hidden" name="bill_type" id="accBillType" value="non_gst">
                     </div>
 
                     <!-- Category Filter & Searchable Item Input -->

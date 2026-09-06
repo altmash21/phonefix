@@ -677,7 +677,8 @@ PROMPT;
             $salePrice = (float) $request->sale_price;
             $amountPaid = (float) $request->amount_paid;
             $taxRate = (float) ($request->tax_rate ?? 18.00);
-            $billType = $request->bill_type === 'non_gst' ? 'non_gst' : 'gst';
+            $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst');
+            $billType = $isGst ? 'gst' : 'non_gst';
             
             // Tax Calculation
             if ($billType === 'non_gst') {
@@ -1207,7 +1208,8 @@ PROMPT;
             $salePrice = (float) $request->sale_price;
             $amountPaid = (float) $request->amount_paid;
             $taxRate = (float) ($request->tax_rate ?? 18.00);
-            $billType = $request->bill_type === 'non_gst' ? 'non_gst' : 'gst';
+            $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst');
+            $billType = $isGst ? 'gst' : 'non_gst';
 
             if ($billType === 'non_gst') {
                 $taxRate = 0.00;
@@ -1751,7 +1753,8 @@ PROMPT;
                 ];
             }
 
-            $billType = $request->bill_type === 'non_gst' ? 'non_gst' : 'gst';
+            $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst');
+            $billType = $isGst ? 'gst' : 'non_gst';
 
             // Tax Split Calculation
             if ($billType === 'non_gst') {

@@ -171,10 +171,9 @@
                 @endif
                 @if($sale->bill_type === 'gst')
                     <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Tax Regime: <strong>{{ strtoupper(str_replace('_', ' ', $sale->tax_type)) }} (18% GST)</strong></div>
+                @else
+                    <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Bill Category: <strong>Retail / Non-GST Estimate</strong></div>
                 @endif
-                <div style="font-size: 10px; font-weight: bold; color: #111827; margin-top: 3px;">
-                    Settlement: {{ $sale->udhari_amount > 0 ? 'PARTIAL / KHATA' : 'PAID IN FULL' }}
-                </div>
             </td>
         </tr>
     </table>
@@ -207,8 +206,8 @@
                 </td>
                 <td class="text-center font-mono" style="font-size: 9.5px;">{{ $sale->hsn_code ?: '85171300' }}</td>
                 <td class="text-center font-mono" style="font-weight: bold;">1</td>
-                <td class="text-right font-mono">{{ number_format($sale->sale_price / 1.18, 2) }}</td>
-                <td class="text-right font-mono">{{ number_format($sale->sale_price / 1.18, 2) }}</td>
+                <td class="text-right font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->sale_price, 2) }}</td>
+                <td class="text-right font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->sale_price, 2) }}</td>
                 <td class="text-right font-mono" style="font-weight: bold;">{{ number_format($sale->total_amount, 2) }}</td>
             </tr>
 
@@ -285,7 +284,7 @@
                 <table class="summary-table">
                     <tr>
                         <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Subtotal (Taxable Value)</td>
-                        <td style="text-align: right;" class="font-mono">{{ number_format($sale->sale_price / 1.18, 2) }}</td>
+                        <td style="text-align: right;" class="font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->total_amount, 2) }}</td>
                     </tr>
                     @if($sale->bill_type === 'gst')
                     <tr>
@@ -297,16 +296,6 @@
                         <td style="color: #111827;">Invoice Grand Total</td>
                         <td style="text-align: right; color: #111827;" class="font-mono">Rs. {{ number_format($sale->total_amount, 2) }}</td>
                     </tr>
-                    <tr>
-                        <td style="color: #374151; font-weight: bold;">Amount Paid Now</td>
-                        <td style="text-align: right; font-weight: bold; color: #111827;" class="font-mono">{{ number_format($sale->amount_paid, 2) }}</td>
-                    </tr>
-                    @if($sale->udhari_amount > 0)
-                    <tr style="background-color: #fafafa;">
-                        <td style="font-weight: bold; color: #111827;">Balance Due (Khata)</td>
-                        <td style="text-align: right; font-weight: bold; color: #111827;" class="font-mono">{{ number_format($sale->udhari_amount, 2) }}</td>
-                    </tr>
-                    @endif
                 </table>
             </td>
         </tr>

@@ -255,17 +255,20 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">Payment & Checkout</div>
-                    <span class="badge badge-purple">18% GST INCL</span>
+                    <span id="gstBadge" class="badge" style="background:#F1F5F9; color:#475569; font-weight:700;">NON-GST RETAIL</span>
                 </div>
                 <div class="card-body" style="display:flex; flex-direction:column; gap: 16px;">
 
-                    <!-- Bill Type -->
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label required">Bill Type</label>
-                        <select name="bill_type" id="billType" required class="form-control" style="font-weight:700;">
-                            <option value="gst">📜 Formal GST Tax Invoice (18% incl.)</option>
-                            <option value="non_gst">📄 Estimate / Retail Bill (0% Tax)</option>
-                        </select>
+                    <!-- Bill Type / GST Checkbox -->
+                    <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; margin-bottom:0;">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0; user-select:none;">
+                            <input type="checkbox" name="is_gst" id="isGstCheckbox" value="1" style="width:18px; height:18px; accent-color:#0F766E; cursor:pointer;">
+                            <div>
+                                <span style="font-size:13px; font-weight:700; color:#0F172A;">Make GST Bill (18% Tax Invoice)</span>
+                                <p style="font-size:11px; color:#64748B; margin:1px 0 0 0;">Unchecked by default (Standard Retail / Non-GST Estimate)</p>
+                            </div>
+                        </label>
+                        <input type="hidden" name="bill_type" id="billType" value="non_gst">
                     </div>
 
                     <!-- Final Agreed Selling Price -->
@@ -319,7 +322,7 @@
                     <!-- Summary Box -->
                     <div style="background: var(--bg-page); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:4px 0;color:var(--text-secondary);">
-                            <span>Sale Total (Incl. GST)</span>
+                            <span>Sale Total</span>
                             <span style="font-weight:700;color:var(--text-primary);" id="summaryTotal">₹0.00</span>
                         </div>
                         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:4px 0;color:var(--text-secondary);">
@@ -436,6 +439,30 @@
             summaryTotal.textContent = '₹' + tot.toFixed(2);
             summaryPaid.textContent = '₹' + pd.toFixed(2);
             summaryUdhari.textContent = '₹' + udh.toFixed(2);
+        }
+
+        const isGstCheckbox = document.getElementById('isGstCheckbox');
+        const billTypeInput = document.getElementById('billType');
+        const gstBadge = document.getElementById('gstBadge');
+
+        if (isGstCheckbox) {
+            isGstCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    billTypeInput.value = 'gst';
+                    if (gstBadge) {
+                        gstBadge.textContent = '18% GST INCL';
+                        gstBadge.style.background = '#F3E8FF';
+                        gstBadge.style.color = '#7E22CE';
+                    }
+                } else {
+                    billTypeInput.value = 'non_gst';
+                    if (gstBadge) {
+                        gstBadge.textContent = 'NON-GST RETAIL';
+                        gstBadge.style.background = '#F1F5F9';
+                        gstBadge.style.color = '#475569';
+                    }
+                }
+            });
         }
 
         salePrice.addEventListener('input', updateSummary);

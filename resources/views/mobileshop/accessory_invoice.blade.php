@@ -142,10 +142,9 @@
                     </div>
                     @if($sale->bill_type === 'gst')
                         <div style="font-size: 11px; color: #374151; margin-top: 2px;">Tax Regime: <strong>Intra-State GST @ 18%</strong></div>
+                    @else
+                        <div style="font-size: 11px; color: #374151; margin-top: 2px;">Bill Category: <strong>Retail / Non-GST Estimate</strong></div>
                     @endif
-                    <div style="font-size: 11px; color: #111827; font-weight: 700; margin-top: 4px;">
-                        Settlement: {{ $sale->udhari_amount > 0 ? 'PARTIAL / KHATA' : 'PAID IN FULL' }}
-                    </div>
                 </td>
             </tr>
         </table>
@@ -227,7 +226,7 @@
                     <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; border: 1px solid #E5E7EB;">
                         <tr style="border-bottom: 1px solid #E5E7EB;">
                             <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563; width: 55%;">Subtotal (Taxable)</td>
-                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($sale->subtotal - $sale->tax_amount, 2) }}</td>
+                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($sale->bill_type === 'gst' ? ($sale->subtotal - $sale->tax_amount) : $sale->subtotal, 2) }}</td>
                         </tr>
                         @if($sale->bill_type === 'gst')
                         <tr style="border-bottom: 1px solid #E5E7EB;">
@@ -239,82 +238,10 @@
                             <td style="padding: 9px 10px; font-weight: 800; font-size: 13px; color: #111827;">Grand Total</td>
                             <td style="padding: 9px 10px; text-align: right; font-weight: 900; font-size: 15px; font-family: monospace; color: #111827;">₹{{ number_format($sale->total_amount, 2) }}</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #E5E7EB;">
-                            <td style="padding: 7px 10px; color: #374151; font-weight: 600;">Amount Paid Now</td>
-                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #111827;">₹{{ number_format($sale->amount_paid, 2) }}</td>
-                        </tr>
-                        @if($sale->udhari_amount > 0)
-                        <tr style="background: #FAFAFA;">
-                            <td style="padding: 7px 10px; color: #111827; font-weight: 800;">Balance Due (Khata)</td>
-                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 800; color: #111827;">₹{{ number_format($sale->udhari_amount, 2) }}</td>
-                        </tr>
-                        @endif
                     </table>
                 </td>
             </tr>
         </table>
-
-        @if(!empty($customerStatement) && count($customerStatement['ledger']) > 0)
-        <!-- CUSTOMER KHATA LEDGER STRIP -->
-        <div style="margin-top: 18px; margin-bottom: 20px; border: 1px solid #E5E7EB; border-radius: 4px; overflow: hidden;">
-            <div style="background: #F3F4F6; padding: 7px 12px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center;">
-                <div style="font-weight: 700; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: #1F2937;">
-                    Customer Account Statement (Khata Ledger)
-                </div>
-                <div style="font-size: 9.5px; color: #6B7280;">
-                    Live Running Balance History
-                </div>
-            </div>
-
-            <table style="margin: 0; border-collapse: collapse; font-size: 10px; width: 100%;">
-                <thead style="background: #FAFAFA; border-bottom: 1px solid #E5E7EB;">
-                    <tr>
-                        <th style="width: 14%; padding: 5px 8px; font-weight: 700; color: #374151; text-align: left;">Date</th>
-                        <th style="width: 44%; padding: 5px 8px; font-weight: 700; color: #374151; text-align: left;">Particulars</th>
-                        <th style="width: 14%; padding: 5px 8px; text-align: right; font-weight: 700; color: #374151;">Billed (₹)</th>
-                        <th style="width: 14%; padding: 5px 8px; text-align: right; font-weight: 700; color: #374151;">Paid (₹)</th>
-                        <th style="width: 14%; padding: 5px 8px; text-align: right; font-weight: 700; color: #374151;">Balance (₹)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($customerStatement['ledger'] as $entry)
-                    <tr style="border-bottom: 1px solid #F3F4F6; {{ $entry->ref_no === $sale->invoice_number ? 'background: #FFFBEB; font-weight: 700;' : '' }}">
-                        <td style="padding: 4px 8px; font-family: monospace;">{{ $entry->date }}</td>
-                        <td style="padding: 4px 8px;">
-                            <span style="font-family: monospace; font-weight: 700; color: #111827;">{{ $entry->ref_no }}</span>
-                            <span style="color: #6B7280; font-size: 9.5px; margin-left: 3px;">{{ $entry->particulars }}</span>
-                        </td>
-                        <td style="padding: 4px 8px; text-align: right; font-family: monospace;">
-                            {{ $entry->billed > 0 ? number_format($entry->billed, 2) : '—' }}
-                        </td>
-                        <td style="padding: 4px 8px; text-align: right; font-family: monospace;">
-                            {{ $entry->paid > 0 ? number_format($entry->paid, 2) : '—' }}
-                        </td>
-                        <td style="padding: 4px 8px; text-align: right; font-family: monospace; font-weight: 700; color: #111827;">
-                            {{ number_format($entry->balance_left, 2) }}
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-                <tfoot style="background: #F9FAFB; border-top: 1.5px solid #374151;">
-                    <tr style="font-weight: 800; font-size: 10.5px;">
-                        <td colspan="2" style="padding: 6px 8px; text-align: right; text-transform: uppercase; color: #111827;">
-                            Total Khata Balance:
-                        </td>
-                        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #111827;">
-                            ₹{{ number_format($customerStatement['totalBilled'], 2) }}
-                        </td>
-                        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #111827;">
-                            ₹{{ number_format($customerStatement['totalPaid'], 2) }}
-                        </td>
-                        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #111827; font-size: 11.5px;">
-                            ₹{{ number_format($customerStatement['closingBalance'], 2) }}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        @endif
 
         <!-- TERMS & SIGNATURES SECTION -->
         <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
