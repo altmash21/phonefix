@@ -111,6 +111,14 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->name('purchase.invoice.pdf');
 
     // ── REPORTS ACTIONS ──
+    Route::get('reports/export/sales', 'MobileShopController@exportSalesCsv')
+        ->middleware('permission:read-mobileshop-reports|read-reports-financial')
+        ->name('reports.export.sales');
+
+    Route::get('reports/export/gst', 'MobileShopController@exportGstCsv')
+        ->middleware('permission:read-mobileshop-reports|read-reports-financial')
+        ->name('reports.export.gst');
+
     Route::post('reports/khata/collect', 'MobileShopController@collectKhata')
         ->middleware('permission:read-reports-khata')
         ->name('reports.khata.collect');

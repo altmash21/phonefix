@@ -434,7 +434,23 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js (with error boundary) -->
+<script>
+    window.__chartFallback = function () {
+        var canvas = document.getElementById('performanceSplineChart');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#F1F5F9';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '14px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Chart unavailable — data shown in tables below', canvas.width / 2, canvas.height / 2);
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" onerror="window.__chartFallback();"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const chartData = @json($monthlyChartData ?? []);

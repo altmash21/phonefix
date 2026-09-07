@@ -5,13 +5,31 @@
 
 @push('styles')
 <style>
-/* ─── Responsive Reports Dashboard Layout ─── */
-.reports-toolbar-wrap {
+/* ─── Dedicated Filter & Period Toolbar Card ─── */
+.reports-filter-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-card);
+    padding: 12px 18px;
+    margin-bottom: 20px;
     display: flex;
-    gap: 10px;
     align-items: center;
-    flex-wrap: wrap;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.reports-filter-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    flex-wrap: wrap;
+}
+.reports-date-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 .reports-kpi-grid {
     display: grid;
@@ -127,20 +145,23 @@
     }
 }
 
-/* Mobile Screens */
-@media (max-width: 640px) {
-    .reports-toolbar-wrap {
+@media (max-width: 860px) {
+    .reports-filter-card {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
     }
-    .reports-toolbar-wrap .filter-bar {
+    .reports-filter-card .filter-bar {
         width: 100%;
         overflow-x: auto;
         white-space: nowrap;
         padding-bottom: 4px;
         -webkit-overflow-scrolling: touch;
     }
+}
+
+/* Mobile Screens */
+@media (max-width: 640px) {
     .reports-filter-form {
         display: flex;
         flex-wrap: wrap;
@@ -183,42 +204,57 @@
 @endpush
 
 @section('page-actions')
-    <div class="reports-toolbar-wrap">
-        <div class="filter-bar" style="margin-bottom:0;">
-            <a href="{{ route('mobileshop.reports', ['period' => 'all']) }}" class="filter-pill {{ $filter === 'all' ? 'active' : '' }}">All Time</a>
-            <a href="{{ route('mobileshop.reports', ['period' => 'today']) }}" class="filter-pill {{ $filter === 'today' ? 'active' : '' }}">Today</a>
-            <a href="{{ route('mobileshop.reports', ['period' => 'yesterday']) }}" class="filter-pill {{ $filter === 'yesterday' ? 'active' : '' }}">Yesterday</a>
-            <a href="{{ route('mobileshop.reports', ['period' => 'week']) }}" class="filter-pill {{ $filter === 'week' ? 'active' : '' }}">Last 7 Days</a>
-            <a href="{{ route('mobileshop.reports', ['period' => 'month']) }}" class="filter-pill {{ $filter === 'month' ? 'active' : '' }}">This Month</a>
-        </div>
-
-        <!-- Custom Date Range Form -->
-        <form method="GET" action="{{ route('mobileshop.reports') }}" class="reports-filter-form" style="display:flex; align-items:center; gap:6px; margin:0;">
-            <div class="reports-date-group">
-                <label for="repFromDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">From:</label>
-                <input type="date" id="repFromDate" name="from_date" value="{{ $fromDate ?? '' }}" class="form-control" style="font-size:11px; padding:4px 8px; height:auto; width:auto; font-weight:600; color:#0F172A;" required>
-            </div>
-            <div class="reports-date-group">
-                <label for="repToDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">To:</label>
-                <input type="date" id="repToDate" name="to_date" value="{{ $toDate ?? '' }}" class="form-control" style="font-size:11px; padding:4px 8px; height:auto; width:auto; font-weight:600; color:#0F172A;" required>
-            </div>
-            <div style="display:flex; gap:4px; align-items:center;">
-                <button type="submit" class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:11px; font-weight:700;">Filter</button>
-                @if(!empty($fromDate) || !empty($toDate) || $filter !== 'all')
-                    <a href="{{ route('mobileshop.reports', ['period' => 'all']) }}" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:11px; color:#64748B;">Reset</a>
-                @endif
-                <button type="button" id="btnToggleAllSections" onclick="toggleAllReportSections()" class="btn btn-outline btn-sm" title="Expand or Collapse All Cards" style="font-size:11px; padding:4px 8px; font-weight:600;">
-                    <i data-lucide="chevrons-up-down" style="width:13px;height:13px;"></i> Toggle All
-                </button>
-                <button type="button" onclick="window.print()" class="btn btn-outline btn-sm" title="Print this report">
-                    <i data-lucide="printer" style="width:13px;height:13px;"></i>
-                </button>
-            </div>
-        </form>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button type="button" id="btnToggleAllSections" onclick="toggleAllReportSections()" class="btn btn-outline btn-sm" title="Expand or Collapse All Cards" style="font-size:12px; padding:6px 12px; font-weight:600; display:inline-flex; align-items:center; gap:5px;">
+            <i data-lucide="chevrons-up-down" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">Toggle All</span>
+        </button>
+        <a href="{{ route('mobileshop.reports.export.sales', request()->all()) }}" class="btn btn-outline btn-sm" title="Download Complete Sales Register as CSV / Excel" style="font-size:12px; padding:6px 12px; font-weight:600; color:#2563EB; border-color:#93C5FD; background:#EFF6FF; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+            <i data-lucide="download" style="width:14px;height:14px;"></i> <span>Sales CSV</span>
+        </a>
+        <a href="{{ route('mobileshop.reports.export.gst', request()->all()) }}" class="btn btn-outline btn-sm" title="Download CA-Ready GSTR-1 & GSTR-3B Statement as CSV / Excel" style="font-size:12px; padding:6px 12px; font-weight:600; color:#7E22CE; border-color:#D8B4FE; background:#FAF5FF; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+            <i data-lucide="file-spreadsheet" style="width:14px;height:14px;"></i> <span>GST (GSTR-1) CSV</span>
+        </a>
+        <button type="button" onclick="window.print()" class="btn btn-outline btn-sm" title="Print this report" style="padding:6px 10px; display:inline-flex; align-items:center; justify-content:center;">
+            <i data-lucide="printer" style="width:14px;height:14px;"></i>
+        </button>
     </div>
 @endsection
 
 @section('content')
+
+    <!-- 0. PERIOD & CUSTOM DATE RANGE FILTER TOOLBAR -->
+    <div class="reports-filter-card">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:11px; font-weight:800; text-transform:uppercase; color:#64748B; letter-spacing:0.5px; display:flex; align-items:center; gap:5px;">
+                <i data-lucide="calendar" style="width:14px;height:14px; color:var(--color-primary);"></i> Filter Period:
+            </span>
+            <div class="filter-bar" style="margin-bottom:0; display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                <a href="{{ route('mobileshop.reports', ['period' => 'all']) }}" class="filter-pill {{ $filter === 'all' ? 'active' : '' }}">All Time</a>
+                <a href="{{ route('mobileshop.reports', ['period' => 'today']) }}" class="filter-pill {{ $filter === 'today' ? 'active' : '' }}">Today</a>
+                <a href="{{ route('mobileshop.reports', ['period' => 'yesterday']) }}" class="filter-pill {{ $filter === 'yesterday' ? 'active' : '' }}">Yesterday</a>
+                <a href="{{ route('mobileshop.reports', ['period' => 'week']) }}" class="filter-pill {{ $filter === 'week' ? 'active' : '' }}">Last 7 Days</a>
+                <a href="{{ route('mobileshop.reports', ['period' => 'month']) }}" class="filter-pill {{ $filter === 'month' ? 'active' : '' }}">This Month</a>
+            </div>
+        </div>
+
+        <!-- Custom Date Range Form -->
+        <form method="GET" action="{{ route('mobileshop.reports') }}" class="reports-filter-form" style="display:flex; align-items:center; gap:8px; margin:0; flex-wrap:wrap;">
+            <div class="reports-date-group">
+                <label for="repFromDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">From:</label>
+                <input type="date" id="repFromDate" name="from_date" value="{{ $fromDate ?? '' }}" class="form-control" style="font-size:12px; padding:5px 9px; height:auto; width:135px; font-weight:500;" required>
+            </div>
+            <div class="reports-date-group">
+                <label for="repToDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">To:</label>
+                <input type="date" id="repToDate" name="to_date" value="{{ $toDate ?? '' }}" class="form-control" style="font-size:12px; padding:5px 9px; height:auto; width:135px; font-weight:500;" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm" style="padding:6px 14px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                <i data-lucide="filter" style="width:13px;height:13px;"></i> Apply Filter
+            </button>
+            @if(!empty($fromDate) || !empty($toDate) || $filter !== 'all')
+                <a href="{{ route('mobileshop.reports', ['period' => 'all']) }}" class="btn btn-outline btn-sm" style="padding:6px 10px; font-size:12px; color:#64748B; font-weight:600;">Reset</a>
+            @endif
+        </form>
+    </div>
 
     <!-- 1. EXECUTIVE KPI METRIC CARDS -->
     <div class="reports-kpi-grid">
@@ -279,17 +315,20 @@
             </div>
         </div>
 
-        <!-- GST Tax Liability -->
+        <!-- GST Tax Liability & Net Payable -->
         <div class="card" style="padding: 16px; border-left: 4px solid #7E22CE; background:#fff;">
             <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#64748B; display:flex; justify-content:space-between; align-items:center;">
                 <span>GST Tax Output</span>
-                <i data-lucide="file-check" style="width:15px;height:15px; color:#7E22CE;"></i>
+                <i data-lucide="file-check-2" style="width:15px;height:15px; color:#7E22CE;"></i>
             </div>
             <div style="font-size:21px; font-weight:900; color:#7E22CE; margin-top:4px;">
-                ₹{{ number_format($gstTotal, 2) }}
+                ₹{{ number_format($gstr3b['output_total'] ?? $gstTotal, 2) }}
             </div>
-            <div style="font-size:11px; color:#64748B; margin-top:2px;">
-                Total Tax Output Liability
+            <div style="font-size:11px; color:#64748B; margin-top:2px; display:flex; justify-content:space-between;">
+                <span>ITC: ₹{{ number_format($gstr3b['itc_total'] ?? 0, 0) }}</span>
+                <span style="font-weight:700; color:{{ ($gstr3b['net_payable'] ?? 0) > 0 ? '#DC2626' : '#16A34A' }};">
+                    Net: ₹{{ number_format($gstr3b['net_payable'] ?? $gstTotal, 0) }}
+                </span>
             </div>
         </div>
 
@@ -636,7 +675,209 @@
 
     </div>
 
-    <!-- 5. DETAILED SALES INVOICES LEDGER (COLLAPSIBLE & INTERACTIVE FILTERING) -->
+    <!-- 5. GST FILING & TAX AUDIT STATEMENT (GSTR-1 & GSTR-3B) -->
+    <div class="card" id="cardGstStatement" style="margin-bottom:20px; border-top:3px solid #7E22CE;">
+        <div class="card-header collapsible-header" onclick="toggleSection('bodyGstStatement', this)" style="background:#FDF4FF; border-bottom:1px solid #F3E8FF;">
+            <div>
+                <div class="card-title" style="color:#6B21A8; display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="file-check-2" style="width:18px;height:18px; color:#7E22CE;"></i>
+                    GST Filing & Tax Audit Statement (GSTR-1 & GSTR-3B)
+                </div>
+                <div class="card-subtitle">Complete outward tax liability, input tax credit (ITC) reconciliation, B2B invoices & HSN summary</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span class="badge" style="background:#FAF5FF; color:#7E22CE; border:1px solid #E9D5FF; font-size:11px; font-weight:800;">
+                    Net Tax: ₹{{ number_format($gstr3b['net_payable'], 2) }}
+                </span>
+                <span class="badge badge-purple" style="font-size:11px; font-weight:800;">
+                    {{ count($b2bInvoices) }} B2B / {{ count($b2cInvoices) }} B2C
+                </span>
+                <i data-lucide="chevron-down" class="collapse-icon" style="color:#7E22CE;"></i>
+            </div>
+        </div>
+
+        <div class="collapsible-body" id="bodyGstStatement">
+            
+            <!-- GSTR-3B RECONCILIATION SUMMARY BOXES -->
+            <div style="padding: 18px 20px; background:#FAFAFA; border-bottom:1px solid #E2E8F0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                    <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#64748B; letter-spacing:0.5px;">
+                        GSTR-3B Tax Summary (Month / Period Reconciliation)
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <a href="{{ route('mobileshop.reports.export.gst', request()->all()) }}" class="btn btn-sm btn-primary" style="background:#7E22CE; border-color:#6B21A8; padding:5px 12px; font-size:11px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+                            <i data-lucide="download" style="width:13px;height:13px;"></i> Download GSTR-1 Excel/CSV for CA
+                        </a>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px;">
+                    <!-- Outward Tax (Sales) -->
+                    <div style="background:#fff; border:1px solid #E2E8F0; border-radius:10px; padding:14px; border-left:4px solid #7E22CE;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase;">Table 3.1: Output Tax (Sales)</span>
+                            <span class="badge badge-purple" style="font-size:10px;">Liability</span>
+                        </div>
+                        <div style="font-size:20px; font-weight:900; color:#0F172A; margin:6px 0 4px 0;">
+                            ₹{{ number_format($gstr3b['output_total'], 2) }}
+                        </div>
+                        <div style="font-size:11px; color:#64748B; line-height:1.6;">
+                            Taxable Value: <strong>₹{{ number_format($gstr3b['output_taxable'], 2) }}</strong><br>
+                            CGST: ₹{{ number_format($gstr3b['output_cgst'], 2) }} &bull; SGST: ₹{{ number_format($gstr3b['output_sgst'], 2) }} &bull; IGST: ₹{{ number_format($gstr3b['output_igst'], 2) }}
+                        </div>
+                    </div>
+
+                    <!-- Input Tax Credit (Purchases) -->
+                    <div style="background:#fff; border:1px solid #E2E8F0; border-radius:10px; padding:14px; border-left:4px solid #0284C7;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase;">Table 4.0: Input Tax Credit (Purchases)</span>
+                            <span class="badge badge-blue" style="font-size:10px;">ITC Credit</span>
+                        </div>
+                        <div style="font-size:20px; font-weight:900; color:#0284C7; margin:6px 0 4px 0;">
+                            ₹{{ number_format($gstr3b['itc_total'], 2) }}
+                        </div>
+                        <div style="font-size:11px; color:#64748B; line-height:1.6;">
+                            Taxable Purchases: <strong>₹{{ number_format($gstr3b['itc_taxable'], 2) }}</strong><br>
+                            ITC CGST: ₹{{ number_format($gstr3b['itc_cgst'], 2) }} &bull; SGST: ₹{{ number_format($gstr3b['itc_sgst'], 2) }} &bull; IGST: ₹{{ number_format($gstr3b['itc_igst'], 2) }}
+                        </div>
+                    </div>
+
+                    <!-- Net Tax Payable -->
+                    <div style="background:{{ $gstr3b['net_payable'] > 0 ? '#FDF2F8' : '#F0FDF4' }}; border:1px solid {{ $gstr3b['net_payable'] > 0 ? '#FBCFE8' : '#BBF7D0' }}; border-radius:10px; padding:14px; border-left:4px solid {{ $gstr3b['net_payable'] > 0 ? '#DB2777' : '#16A34A' }};">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:11px; font-weight:800; color:{{ $gstr3b['net_payable'] > 0 ? '#9D174D' : '#166534' }}; text-transform:uppercase;">Net GST Payable</span>
+                            <span class="badge {{ $gstr3b['net_payable'] > 0 ? 'badge-pink' : 'badge-green' }}" style="font-size:10px;">
+                                {{ $gstr3b['net_payable'] > 0 ? 'Cash Due' : 'ITC Surplus' }}
+                            </span>
+                        </div>
+                        <div style="font-size:20px; font-weight:900; color:{{ $gstr3b['net_payable'] > 0 ? '#BE185D' : '#16A34A' }}; margin:6px 0 4px 0;">
+                            ₹{{ number_format($gstr3b['net_payable'], 2) }}
+                        </div>
+                        <div style="font-size:11px; color:{{ $gstr3b['net_payable'] > 0 ? '#9D174D' : '#166534' }}; line-height:1.6;">
+                            @if($gstr3b['net_payable'] > 0)
+                                Net CGST: ₹{{ number_format($gstr3b['net_cgst'], 2) }} &bull; SGST: ₹{{ number_format($gstr3b['net_sgst'], 2) }} &bull; IGST: ₹{{ number_format($gstr3b['net_igst'], 2) }}
+                            @else
+                                Full output tax liability is offset by available Input Tax Credit!
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GSTR-1 DETAILED BREAKDOWN (B2B, B2C, HSN) -->
+            <div style="padding: 16px 20px;">
+                
+                <!-- SUB-SECTION 1: B2B INVOICES -->
+                <div style="margin-bottom:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+                        <div style="font-size:13px; font-weight:800; color:#0F172A; display:flex; align-items:center; gap:6px;">
+                            <span class="badge badge-purple" style="font-size:10px;">Table 4</span>
+                            B2B Invoices (Sales to GST Registered Customers with GSTIN)
+                        </div>
+                        <span style="font-size:11px; font-weight:700; color:#64748B;">{{ count($b2bInvoices) }} Registered Invoices</span>
+                    </div>
+
+                    <div class="reports-table-scroll">
+                        <table class="data-table" style="min-width:700px; font-size:12px;">
+                            <thead>
+                                <tr>
+                                    <th>Recipient GSTIN</th>
+                                    <th>Customer / Firm</th>
+                                    <th>Invoice #</th>
+                                    <th>Date</th>
+                                    <th style="text-align:right;">Taxable Value</th>
+                                    <th style="text-align:right;">CGST</th>
+                                    <th style="text-align:right;">SGST</th>
+                                    <th style="text-align:right;">IGST</th>
+                                    <th style="text-align:right;">Invoice Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($b2bInvoices as $inv)
+                                    <tr>
+                                        <td>
+                                            <span style="font-family:monospace; font-weight:800; color:#7E22CE; background:#F5F3FF; padding:2px 6px; border-radius:4px;">
+                                                {{ $inv->customer_gstin }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight:700; color:#0F172A;">{{ $inv->customer_name }}</div>
+                                            <div style="font-size:10px; color:#64748B;">{{ $inv->item_desc }}</div>
+                                        </td>
+                                        <td style="font-weight:700;">{{ $inv->invoice_number }}</td>
+                                        <td style="color:#64748B;">{{ date('d-M-Y', strtotime($inv->date)) }}</td>
+                                        <td style="text-align:right; font-weight:600;">₹{{ number_format($inv->taxable_value, 2) }}</td>
+                                        <td style="text-align:right; color:#7E22CE;">₹{{ number_format($inv->cgst, 2) }}</td>
+                                        <td style="text-align:right; color:#7E22CE;">₹{{ number_format($inv->sgst, 2) }}</td>
+                                        <td style="text-align:right; color:#7E22CE;">₹{{ number_format($inv->igst, 2) }}</td>
+                                        <td style="text-align:right; font-weight:800; color:#0F172A;">₹{{ number_format($inv->total_amount, 2) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" style="text-align:center; padding:18px; color:#64748B; font-style:italic;">
+                                            No B2B sales with customer GSTIN recorded in this period. All transactions were consumer retail (B2C).
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SUB-SECTION 2: HSN-WISE SUMMARY -->
+                <div style="margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+                        <div style="font-size:13px; font-weight:800; color:#0F172A; display:flex; align-items:center; gap:6px;">
+                            <span class="badge badge-purple" style="font-size:10px;">Table 12</span>
+                            HSN-wise Summary of Outward Supplies
+                        </div>
+                        <span style="font-size:11px; font-weight:700; color:#64748B;">Mandatory for GSTR-1 Return</span>
+                    </div>
+
+                    <div class="reports-table-scroll">
+                        <table class="data-table" style="min-width:700px; font-size:12px;">
+                            <thead>
+                                <tr>
+                                    <th>HSN Code</th>
+                                    <th>Description</th>
+                                    <th style="text-align:center;">UQC</th>
+                                    <th style="text-align:center;">Total Qty</th>
+                                    <th style="text-align:right;">Taxable Value</th>
+                                    <th style="text-align:right;">Central Tax (CGST)</th>
+                                    <th style="text-align:right;">State Tax (SGST)</th>
+                                    <th style="text-align:right;">Integrated Tax (IGST)</th>
+                                    <th style="text-align:right;">Total Invoiced Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($hsnSummary as $hsn)
+                                    <tr>
+                                        <td>
+                                            <span style="font-family:monospace; font-weight:800; color:#0F172A; background:#F1F5F9; padding:2px 6px; border-radius:4px;">
+                                                {{ $hsn['hsn'] }}
+                                            </span>
+                                        </td>
+                                        <td style="font-weight:600; color:#334155;">{{ $hsn['desc'] }}</td>
+                                        <td style="text-align:center; font-weight:700; color:#64748B;">{{ $hsn['uqc'] }}</td>
+                                        <td style="text-align:center; font-weight:800; color:#0F172A;">{{ $hsn['qty'] }}</td>
+                                        <td style="text-align:right; font-weight:600;">₹{{ number_format($hsn['taxable_value'], 2) }}</td>
+                                        <td style="text-align:right; color:#7E22CE;">₹{{ number_format($hsn['cgst'], 2) }}</td>
+                                        <td style="text-align:right; color:#7E22CE;">₹{{ number_format($hsn['sgst'], 2) }}</td>
+                                        <td style="text-align:right; color:#7E22CE;">₹{{ number_format($hsn['igst'], 2) }}</td>
+                                        <td style="text-align:right; font-weight:800; color:#0F172A;">₹{{ number_format($hsn['total_value'], 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 6. DETAILED SALES INVOICES LEDGER (COLLAPSIBLE & INTERACTIVE FILTERING) -->
     <div class="card" id="cardLedger">
         <div class="card-header collapsible-header" onclick="toggleSection('bodySalesLedger', this)" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
             <div>

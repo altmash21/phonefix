@@ -10,8 +10,54 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Lucide Icons (with offline fallback) -->
+    <script>
+        window.__lucideLoaded = false;
+        window.__lucideFallback = function () {
+            // If unpkg fails, inject a minimal set of SVG icons used across the app
+            if (window.__lucideLoaded) return;
+            window.lucide = window.lucide || {};
+            window.lucide.createIcons = function (options) {
+                var selector = options && options.selector ? options.selector : '[data-lucide]';
+                var nodes = document.querySelectorAll(selector);
+                nodes.forEach(function (node) {
+                    var name = node.getAttribute('data-lucide');
+                    var svg = getFallbackSvg(name);
+                    if (svg) node.innerHTML = svg;
+                });
+            };
+        };
+        window.getFallbackSvg = function (name) {
+            var svgs = {
+                'layout-dashboard': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="12" width="7" height="5"></rect></svg>',
+                'plus': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+                'chevron-down': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>',
+                'smartphone': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>',
+                'zap': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+                'repeat': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>',
+                'truck': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>',
+                'trending-up': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
+                'package': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24"></path><path d="M7.55 19.76 16.5 14.6"></path><path d="M22 11.5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"></path></svg>',
+                'book-open': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
+                'bar-chart-3': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>',
+                'settings': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>',
+                'sliders': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
+                'log-out': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
+                'alert-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+                'check-circle-2': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+                'arrow-left': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>',
+                'shopping-cart': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>',
+                'alert-triangle': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+                'user': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+                'calendar': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+                'building-2': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4h12v18"></path><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path><path d="M18 9h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-2"></path><path d="M6 12h4"></path></svg>',
+                'headphones': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.5a2.5 2.5 0 0 0 2.5-2.5v-1a2.5 2.5 0 0 1 2.5-2.5h3A2.5 2.5 0 0 0 13 6.5V4A2.5 2.5 0 0 1 15.5 6.5h3a2.5 2.5 0 0 0 2.5-2.5v1A2.5 2.5 0 0 1 21.5 12v1.5a2.5 2.5 0 0 0 2.5 2.5H22a2.5 2.5 0 0 0 2.5 2.5v1a2.5 2.5 0 0 0 2.5 2.5h3"></path><path d="M10.5 13a2.5 2.5 0 0 0-5 0"></path></svg>'
+            };
+            return svgs[name] || null;
+        };
+        window.__lucideFallback();
+    </script>
+    <script src="https://unpkg.com/lucide@latest" onerror="window.__lucideLoaded = true;"></script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,6 +83,23 @@
             --color-text-primary: #0F172A;
             --color-text-secondary: #64748B;
             --color-text-muted: #94A3B8;
+
+            /* ── Pastel accent families (lama-* tokens used by store-selector, pastel stat cards, flash messages) ── */
+            --lama-sky-light: #E0F2FE;
+            --lama-sky: #7DD3FC;
+            --lama-sky-dark: #0369A1;
+            --lama-purple-light: #F3E8FF;
+            --lama-purple: #C084FC;
+            --lama-purple-dark: #7E22CE;
+            --lama-yellow-light: #FEF9C3;
+            --lama-yellow: #FACC15;
+            --lama-yellow-dark: #A16207;
+            --lama-green-light: #DCFCE7;
+            --lama-green: #4ADE80;
+            --lama-green-dark: #15803D;
+            --lama-rose-light: #FFE4E6;
+            --lama-rose: #FB7185;
+            --lama-rose-dark: #BE123C;
 
             /* Radius & Spacing */
             --radius-card: 10px;
@@ -285,6 +348,10 @@
             color: var(--color-primary);
             border-color: var(--brand-200);
         }
+        .nav-link:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
         .nav-link.active {
             background: var(--color-primary);
             color: #FFFFFF !important;
@@ -394,7 +461,7 @@
             font-weight: 500;
             margin-top: 2px;
         }
-        .card-body { padding: 22px; }
+        .card-body { padding: 14px 24px; }
 
         /* KPI Card Pattern — Restrained B2B Neutral Style */
         .kpi-card, .stat-card {
@@ -424,11 +491,23 @@
         .kpi-card.kpi-blue,    .kpi-card.kpi-purple {
             border-left-color: var(--color-border);
         }
-        .kpi-card.kpi-success:hover, .stat-card.stat-success:hover,
-        .kpi-card.kpi-warning:hover, .stat-card.stat-warning:hover,
-        .kpi-card.kpi-info:hover,    .stat-card.stat-info:hover,
-        .kpi-card.kpi-danger:hover,  .stat-card.stat-danger:hover,
-        .kpi-card.kpi-primary:hover, .stat-card.stat-primary:hover,
+        .kpi-card.kpi-success { border-left-color: var(--color-success); }
+        .kpi-card.kpi-warning { border-left-color: var(--color-warning); }
+        .kpi-card.kpi-danger, .kpi-card.kpi-red { border-left-color: var(--color-danger); }
+        .kpi-card.kpi-info, .kpi-card.kpi-primary { border-left-color: var(--color-primary); }
+        .kpi-card.kpi-green { border-left-color: var(--color-success); }
+        .kpi-card.kpi-orange { border-left-color: var(--color-warning); }
+        .kpi-card.kpi-blue { border-left-color: var(--color-primary); }
+        .kpi-card.kpi-purple { border-left-color: #7E22CE; }
+
+        .kpi-card:hover, .stat-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .kpi-card:not(.kpi-success):not(.kpi-warning):not(.kpi-danger):not(.kpi-red):not(.kpi-info):not(.kpi-primary):not(.kpi-green):not(.kpi-orange):not(.kpi-blue):not(.kpi-purple):not(.kpi-green):hover,
+        .stat-card:hover {
+            border-left-color: var(--color-primary);
+        }
         .kpi-card.kpi-green:hover,   .kpi-card.kpi-orange:hover,
         .kpi-card.kpi-blue:hover,    .kpi-card.kpi-purple:hover {
             border-left-color: var(--color-primary);
@@ -577,6 +656,10 @@
             background: #F8FAFC;
         }
         .data-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #F8FAFC;
             padding: 12px 18px;
             text-align: left;
             font-size: 11px;
@@ -771,6 +854,15 @@
             width: 220px;
             font-family: inherit;
         }
+        .search-bar input:focus-visible {
+            outline: none;
+        }
+        .search-bar input::-webkit-search-decoration,
+        .search-bar input::-webkit-search-cancel-button,
+        .search-bar input::-webkit-search-results-button,
+        .search-bar input::-webkit-search-results-decoration {
+            -webkit-appearance: none;
+        }
         .search-bar svg { color: var(--text-muted); }
 
         /* ─── BUTTONS ─── */
@@ -794,7 +886,36 @@
             color: #fff;
             box-shadow: 0 1px 3px rgba(15, 118, 110, 0.15);
         }
-        .btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
+        .btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); transform: translateY(-1px); }
+        .btn-primary:disabled {
+            background: #94A3B8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-primary.btn-loading {
+            position: relative;
+            color: transparent;
+        }
+        .btn-primary.btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: btn-spinner 0.6s linear infinite;
+        }
+        @keyframes btn-spinner {
+            to { transform: rotate(360deg); }
+        }
+        .btn-outline:disabled {
+            background: #F1F5F9;
+            color: #94A3B8;
+            cursor: not-allowed;
+            border-color: #E2E8F0;
+        }
         .btn-outline {
             background: #fff;
             color: var(--text-primary);
@@ -834,6 +955,21 @@
             font-weight: 700;
             color: var(--text-secondary);
             background: #ffffff;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+            text-decoration: none;
+        }
+        .filter-pill:hover {
+            border-color: var(--brand-200);
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+        .filter-pill:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
             border: 1px solid var(--border-color);
             cursor: pointer;
             transition: all 0.15s ease;
@@ -951,6 +1087,37 @@
         .form-control::placeholder { color: var(--text-muted); }
         select.form-control { appearance: none; cursor: pointer; }
 
+        /* Form validation visual feedback */
+        .form-control.is-invalid {
+            border-color: var(--color-danger);
+            background-color: #FFF5F5;
+        }
+        .form-control.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+            border-color: var(--color-danger);
+        }
+        .form-control.is-valid {
+            border-color: var(--color-success);
+            background-color: #F0FDF4;
+        }
+        .form-control.is-valid:focus {
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+            border-color: var(--color-success);
+        }
+        .invalid-feedback {
+            color: var(--color-danger);
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .invalid-feedback::before {
+            content: '⚠';
+            font-size: 11px;
+        }
+
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1020,6 +1187,13 @@
             transition: all 0.15s;
             flex: 1;
             max-width: 75px;
+            text-align: center;
+        }
+        .mobile-nav-item span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60px;
         }
         .mobile-nav-item.active {
             color: var(--color-primary);
@@ -1053,7 +1227,7 @@
                 background: #ffffff !important;
                 border-bottom: 1px solid var(--color-border) !important;
             }
-            .page-header.no-actions:not(:has(.page-back)) {
+            .page-header.no-actions:not(:has(.page-back)):not(:has(.page-title)) {
                 display: none !important;
             }
             .page-title {
@@ -1073,6 +1247,11 @@
             .search-bar input { width: 140px; }
         }
 
+        @media (max-width: 380px) {
+            .mobile-nav-item span { display: none; }
+            .mobile-nav-item { max-width: 44px !important; padding: 6px 2px !important; }
+        }
+
         @media (max-width: 767px) {
             :root {
                 --topbar-height: 48px;
@@ -1088,7 +1267,7 @@
                 background: #ffffff !important;
                 border-bottom: 1px solid var(--color-border) !important;
             }
-            .page-header.no-actions:not(:has(.page-back)) {
+            .page-header.no-actions:not(:has(.page-back)):not(:has(.page-title)) {
                 display: none !important;
             }
             .page-title {
@@ -1142,7 +1321,7 @@
                 background: #ffffff !important;
                 border-bottom: 1px solid var(--color-border) !important;
             }
-            .page-header.no-actions:not(:has(.page-back)) {
+            .page-header.no-actions:not(:has(.page-back)):not(:has(.page-title)) {
                 display: none !important;
             }
             .page-title {
@@ -1161,42 +1340,6 @@
             .main-content { padding: 4px 6px calc(var(--bottom-nav-height) + 10px) !important; }
         }
 
-        /* ─── UNIVERSAL PRINT STYLES (A4 FIT WITHOUT EXTRA MARGINS) ─── */
-        @media print {
-            @page {
-                size: A4 portrait;
-                margin: 10mm 12mm 10mm 12mm;
-            }
-            body, html {
-                background: #ffffff !important;
-                color: #000000 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-            }
-            .sidebar, .topbar, .bottom-nav, .page-header, .btn, .notification-bell, .user-badge, .mobile-quick-actions {
-                display: none !important;
-            }
-            .app-layout, .main-wrapper, .main-content, .statement-page-wrapper, .invoice-page-wrapper {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                display: block !important;
-                background: transparent !important;
-            }
-            .printable-invoice-container {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                border: none !important;
-                box-shadow: none !important;
-                background: transparent !important;
-            }
-        }
-
-        /* ─── UNIVERSAL KPI GRID (Single Row Compact Metrics) ─── */
         .kpi-grid, .kpi-row {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1364,7 +1507,9 @@
                 background: #ffffff !important;
             }
             .topbar, .sidebar, .page-header, .page-actions, .mobile-bottom-nav,
-            .flash-success, .flash-error, .btn, button, .no-print, nav, aside {
+            .flash-success, .flash-error, .btn, button, .no-print, nav, aside,
+            .notification-bell, .user-badge, .mobile-quick-actions, .app-layout, .main-wrapper,
+            .statement-page-wrapper, .invoice-page-wrapper {
                 display: none !important;
             }
             .card {
@@ -1394,38 +1539,14 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            #viewThermal {
-                display: none !important;
-            }
-
-            /* Thermal Printing Override */
-            body.thermal-mode {
-                width: 80mm !important;
-            }
-            body.thermal-mode .printable-invoice-container {
-                display: none !important;
-            }
-            body.thermal-mode #viewThermal {
-                display: block !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                border: none !important;
-                box-shadow: none !important;
-            }
-            table {
-                page-break-inside: auto !important;
-            }
-            tr {
-                page-break-inside: avoid !important;
-                page-break-after: auto !important;
-            }
-            thead {
-                display: table-header-group !important;
-            }
-            tfoot {
-                display: table-footer-group !important;
-            }
+            #viewThermal { display: none !important; }
+            body.thermal-mode { width: 80mm !important; }
+            body.thermal-mode .printable-invoice-container { display: none !important; }
+            body.thermal-mode #viewThermal { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+            table { page-break-inside: auto !important; }
+            tr { page-break-inside: avoid !important; page-break-after: auto !important; }
+            thead { display: table-header-group !important; }
+            tfoot { display: table-footer-group !important; }
         }
 
         /* ══════════════════════════════════════════════════════════ */
@@ -1796,6 +1917,7 @@
             {{ session('success') }}
             <button onclick="document.getElementById('flash-msg').remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:currentColor;font-weight:bold;">✕</button>
         </div>
+        <script>setTimeout(() => { const el = document.getElementById('flash-msg'); if (el) { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); } }, 5000);</script>
     @endif
     @if(session('error'))
         <div class="flash-error" id="flash-msg">
@@ -1803,6 +1925,7 @@
             {{ session('error') }}
             <button onclick="document.getElementById('flash-msg').remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:currentColor;font-weight:bold;">✕</button>
         </div>
+        <script>setTimeout(() => { const el = document.getElementById('flash-msg'); if (el) { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); } }, 8000);</script>
     @endif
 
     <header class="topbar">
@@ -2016,308 +2139,7 @@
         </div>
     </nav>
 
-    <script>
-        lucide.createIcons();
-
-        // ─── UNIVERSAL CLIENT-SIDE UTILITIES ───
-        window.formatDate = function(d) {
-            if (!d) return '';
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-        };
-
-        window.getDateRangePreset = function(preset) {
-            const today = new Date();
-            let from = '';
-            let to = '';
-
-            if (preset === 'today') {
-                from = to = window.formatDate(today);
-            } else if (preset === 'yesterday') {
-                const yest = new Date(today);
-                yest.setDate(yest.getDate() - 1);
-                from = to = window.formatDate(yest);
-            } else if (preset === 'week') {
-                const weekAgo = new Date(today);
-                weekAgo.setDate(weekAgo.getDate() - 6);
-                from = window.formatDate(weekAgo);
-                to = window.formatDate(today);
-            } else if (preset === 'month') {
-                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                from = window.formatDate(firstDay);
-                to = window.formatDate(today);
-            }
-
-            return { from, to };
-        };
-
-        window.escapeHtml = function(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        };
-
-        window.filterTable = function(tableId, query) {
-            const q = (query || '').toLowerCase().trim();
-            document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
-                row.style.display = !q || row.textContent.toLowerCase().includes(q) ? '' : 'none';
-            });
-        };
-
-        /**
-         * ─── MOBITRACK UNIVERSAL TABLE & CARD PAGINATION ENGINE ───
-         * Supports:
-         * - Desktop HTML Tables (tbody tr)
-         * - Mobile Card Lists (card elements)
-         * - Per Page selector (10, 25, 50, 100)
-         * - Dynamic search & category filtering hooks
-         * - Page numbers with smart ellipsis & Prev/Next navigation
-         */
-        window.setupMobiTablePagination = function(config) {
-            const tableId = config.tableId || null;
-            const cardsContainerId = config.cardsContainerId || null;
-            const paginationContainerId = config.paginationContainerId;
-            const rowSelector = config.rowSelector || 'tbody tr:not(.empty-placeholder):not(.non-data-row)';
-            const cardSelector = config.cardSelector || '.mobile-card, .sales-card-item, .new-mobile-card, .secondhand-mobile-card, .card-row, .mob-card-item, .repair-mobile-card, .customer-row-card';
-            const itemName = config.itemName || 'entries';
-            let pageSize = parseInt(config.pageSize || 10, 10);
-            let currentPage = 1;
-            let filterPredicate = config.filterPredicate || null;
-
-            const paginationContainer = document.getElementById(paginationContainerId);
-            if (!paginationContainer) return null;
-
-            function getAllItems() {
-                const rows = tableId ? Array.from(document.querySelectorAll('#' + tableId + ' ' + rowSelector)) : [];
-                const cards = cardsContainerId ? Array.from(document.querySelectorAll('#' + cardsContainerId + ' ' + cardSelector)) : [];
-                return { rows, cards };
-            }
-
-            function getVisibleItems() {
-                const { rows, cards } = getAllItems();
-                
-                // If custom filter predicate provided
-                if (typeof filterPredicate === 'function') {
-                    const maxLen = Math.max(rows.length, cards.length);
-                    const matchedIndices = [];
-                    for (let i = 0; i < maxLen; i++) {
-                        const r = rows[i] || null;
-                        const c = cards[i] || null;
-                        if (filterPredicate(r, c, i)) {
-                            matchedIndices.push(i);
-                        }
-                    }
-                    return { rows, cards, matchedIndices, total: matchedIndices.length };
-                }
-
-                // Default check: check if row or card is filtered out (via dataset.mobiHidden === '1' or data-filtered="0" or custom style)
-                const maxLen = Math.max(rows.length, cards.length);
-                const matchedIndices = [];
-                for (let i = 0; i < maxLen; i++) {
-                    const r = rows[i] || null;
-                    const c = cards[i] || null;
-                    const rHidden = r && (r.dataset.mobiHidden === '1' || r.dataset.filterHidden === '1');
-                    const cHidden = c && (c.dataset.mobiHidden === '1' || c.dataset.filterHidden === '1');
-                    if (!rHidden && !cHidden) {
-                        matchedIndices.push(i);
-                    }
-                }
-                return { rows, cards, matchedIndices, total: matchedIndices.length };
-            }
-
-            function render() {
-                const { rows, cards, matchedIndices, total } = getVisibleItems();
-                const totalPages = Math.max(1, Math.ceil(total / pageSize));
-                if (currentPage > totalPages) currentPage = totalPages;
-                if (currentPage < 1) currentPage = 1;
-
-                const startIndex = total === 0 ? 0 : (currentPage - 1) * pageSize;
-                const endIndex = Math.min(startIndex + pageSize, total);
-                const activeIndices = new Set(matchedIndices.slice(startIndex, endIndex));
-
-                // Update Table Rows
-                rows.forEach((r, idx) => {
-                    const isMatched = matchedIndices.includes(idx);
-                    if (!isMatched) {
-                        r.style.display = 'none';
-                    } else if (activeIndices.has(idx)) {
-                        r.style.display = '';
-                    } else {
-                        r.style.display = 'none';
-                    }
-                });
-
-                // Update Mobile Cards
-                cards.forEach((c, idx) => {
-                    const isMatched = matchedIndices.includes(idx);
-                    if (!isMatched) {
-                        c.style.display = 'none';
-                    } else if (activeIndices.has(idx)) {
-                        c.style.display = '';
-                    } else {
-                        c.style.display = 'none';
-                    }
-                });
-
-                // Render Controls HTML
-                const showingFrom = total === 0 ? 0 : startIndex + 1;
-                const showingTo = endIndex;
-
-                let paginationHtml = `
-                    <div class="mobi-pagination-wrap">
-                        <div class="mobi-pagination-left">
-                            <span class="mobi-page-info">
-                                Showing <strong>${showingFrom}</strong> to <strong>${showingTo}</strong> of <strong>${total}</strong> ${itemName}
-                            </span>
-                            <div class="mobi-page-size-picker">
-                                <label for="${paginationContainerId}_ps">Per page:</label>
-                                <select id="${paginationContainerId}_ps" class="mobi-page-size-select">
-                                    <option value="10" ${pageSize === 10 ? 'selected' : ''}>10</option>
-                                    <option value="25" ${pageSize === 25 ? 'selected' : ''}>25</option>
-                                    <option value="50" ${pageSize === 50 ? 'selected' : ''}>50</option>
-                                    <option value="100" ${pageSize === 100 ? 'selected' : ''}>100</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mobi-pagination-right">
-                            <div class="mobi-pagination-nav">
-                                <button type="button" class="mobi-page-nav-btn prev-btn" ${currentPage <= 1 ? 'disabled' : ''} title="Previous Page">
-                                    <svg style="width:13px;height:13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> Prev
-                                </button>
-                                <div class="mobi-page-numbers">
-                `;
-
-                // Build page numbers with ellipsis
-                const pageNumbers = getPageNumbers(currentPage, totalPages);
-                pageNumbers.forEach(p => {
-                    if (p === '...') {
-                        paginationHtml += `<span class="mobi-page-ellipsis">…</span>`;
-                    } else {
-                        paginationHtml += `
-                            <button type="button" class="mobi-page-num-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">
-                                ${p}
-                            </button>
-                        `;
-                    }
-                });
-
-                paginationHtml += `
-                                </div>
-                                <button type="button" class="mobi-page-nav-btn next-btn" ${currentPage >= totalPages ? 'disabled' : ''} title="Next Page">
-                                    Next <svg style="width:13px;height:13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                paginationContainer.innerHTML = paginationHtml;
-
-                // Event Listeners
-                const selectEl = document.getElementById(`${paginationContainerId}_ps`);
-                if (selectEl) {
-                    selectEl.addEventListener('change', (e) => {
-                        pageSize = parseInt(e.target.value, 10);
-                        currentPage = 1;
-                        render();
-                    });
-                }
-
-                const prevBtn = paginationContainer.querySelector('.prev-btn');
-                if (prevBtn && !prevBtn.disabled) {
-                    prevBtn.addEventListener('click', () => {
-                        if (currentPage > 1) {
-                            currentPage--;
-                            render();
-                        }
-                    });
-                }
-
-                const nextBtn = paginationContainer.querySelector('.next-btn');
-                if (nextBtn && !nextBtn.disabled) {
-                    nextBtn.addEventListener('click', () => {
-                        if (currentPage < totalPages) {
-                            currentPage++;
-                            render();
-                        }
-                    });
-                }
-
-                paginationContainer.querySelectorAll('.mobi-page-num-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const targetPage = parseInt(btn.dataset.page, 10);
-                        if (targetPage && targetPage !== currentPage) {
-                            currentPage = targetPage;
-                            render();
-                        }
-                    });
-                });
-            }
-
-            function getPageNumbers(current, total) {
-                if (total <= 7) {
-                    return Array.from({ length: total }, (_, i) => i + 1);
-                }
-                const pages = [];
-                pages.push(1);
-
-                if (current > 3) {
-                    pages.push('...');
-                }
-
-                const start = Math.max(2, current - 1);
-                const end = Math.min(total - 1, current + 1);
-                for (let i = start; i <= end; i++) {
-                    pages.push(i);
-                }
-
-                if (current < total - 2) {
-                    pages.push('...');
-                }
-
-                pages.push(total);
-                return pages;
-            }
-
-            // Initial render
-            render();
-
-            return {
-                refresh: function(resetToPage1 = true) {
-                    if (resetToPage1) currentPage = 1;
-                    render();
-                },
-                setPage: function(p) {
-                    currentPage = p;
-                    render();
-                },
-                setFilterPredicate: function(fn) {
-                    filterPredicate = fn;
-                    currentPage = 1;
-                    render();
-                },
-                getPage: () => currentPage,
-                getPageSize: () => pageSize
-            };
-        };
-
-        // User dropdown toggle
-        const btn = document.getElementById('user-badge-btn');
-        const dd = document.getElementById('user-dropdown');
-        if (btn && dd) {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dd.classList.toggle('open');
-            });
-            document.addEventListener('click', () => dd.classList.remove('open'));
-        }
-    </script>
+    <script src="{{ asset('js/mobileshop/ui-utils.js') }}" defer></script>
     @stack('scripts')
 </body>
 </html>

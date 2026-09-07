@@ -73,7 +73,8 @@ fabric.properties
 /node_modules
 /public/hot
 /public/storage
-/public/js
+/public/js/*
+!/public/js/mobileshop/
 /public/mix-manifest.json
 /storage/*.key
 /vendor
