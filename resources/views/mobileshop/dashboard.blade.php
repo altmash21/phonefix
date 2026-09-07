@@ -31,8 +31,16 @@
             </button>
             <div id="new-action-menu" style="display:none; position:absolute; right:0; top:calc(100% + 6px); width:220px; background:#fff; border:1px solid var(--color-border); border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.08); z-index:150; padding:6px 0; overflow:hidden;">
                 @if(auth()->user()->can('create-sale-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                <a href="{{ route('mobileshop.sales.create') }}" class="dropdown-item-link" style="font-weight:600; color:var(--color-primary);">
+                    <i data-lucide="plus-circle" style="width:15px;height:15px;color:var(--color-primary);"></i> Register Sale (Full Page)
+                </a>
                 <a href="{{ route('mobileshop.pos') }}" class="dropdown-item-link">
                     <i data-lucide="smartphone" style="width:15px;height:15px;"></i> New Phone POS
+                </a>
+                @endif
+                @if(auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                <a href="{{ route('mobileshop.purchase.create') }}" class="dropdown-item-link" style="font-weight:600; color:#16A34A;">
+                    <i data-lucide="truck" style="width:15px;height:15px;color:#16A34A;"></i> Bulk Purchase Intake
                 </a>
                 @endif
                 @if(auth()->user()->can('create-sale-accessories') || auth()->user()->can('create-sale-covers') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
@@ -46,8 +54,11 @@
                 </a>
                 @endif
                 @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                <a href="{{ route('mobileshop.emi.ledger') }}" class="dropdown-item-link">
+                    <i data-lucide="building-2" style="width:15px;height:15px;color:#2563EB;"></i> EMI Finance Ledger
+                </a>
                 <a href="{{ route('mobileshop.purchase_orders') }}" class="dropdown-item-link">
-                    <i data-lucide="truck" style="width:15px;height:15px;"></i> Supplier Purchase Order
+                    <i data-lucide="file-text" style="width:15px;height:15px;"></i> Supplier Purchase Order
                 </a>
                 @endif
                 @if(auth()->user()->can('create-purchase-phones') || auth()->user()->can('manage-stock-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
@@ -96,8 +107,8 @@
 
     @media (max-width: 600px) {
         #new-action-menu {
-            right: auto !important;
-            left: 0 !important;
+            right: 0 !important;
+            left: auto !important;
             max-width: calc(100vw - 32px) !important;
         }
     }

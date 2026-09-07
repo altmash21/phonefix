@@ -213,7 +213,7 @@
 </div>
 
 <!-- Modal: Add Brand New Phone (With Photo Upload) -->
-<div id="addMobileModal" style="display:none; position: fixed; inset: 0; z-index: 200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+<div id="addMobileModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
     <div class="card" style="max-width: 520px; width: 100%; max-height:90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px;">
         <div class="card-header" style="border-bottom:1px solid var(--card-border); padding:14px 18px;">
             <div class="card-title">Add Brand New Mobile to Stock</div>

@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class MobileShopController extends Controller
 {
@@ -25,6 +27,124 @@ class MobileShopController extends Controller
             abort(403, 'Unauthorized company access attempt.');
         }
         return (int) $companyId;
+    }
+
+    /**
+     * Check if the authenticated user has Store Owner / Admin privileges.
+     * Role 'store-admin' or 'admin' grants owner rights (bypasses OTP).
+     */
+    private function isOwner(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+        $user = auth()->user();
+        return $user->hasRole('store-admin') || $user->hasRole('admin');
+    }
+
+    /**
+     * Resolve store owner's email address for security OTP notifications.
+     */
+    private function getOwnerEmail(int $companyId): string
+    {
+        try {
+            $owner = DB::table('users')
+                ->join('user_companies', 'users.id', '=', 'user_companies.user_id')
+                ->join('user_roles', 'users.id', '=', 'user_roles.user_id')
+                ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+                ->where('user_companies.company_id', $companyId)
+                ->whereIn('roles.name', ['store-admin', 'admin'])
+                ->select('users.email')
+                ->first();
+
+            if ($owner && !empty($owner->email)) {
+                return $owner->email;
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Could not query owner email via roles: " . $e->getMessage());
+        }
+
+        if (auth()->check() && auth()->user()->email) {
+            return auth()->user()->email;
+        }
+
+        $company = DB::table('companies')->where('id', $companyId)->first();
+        return $company?->email ?? config('mail.from.address', 'admin@mobileshop.local');
+    }
+
+    /**
+     * Generate and dispatch a 6-digit OTP to the store owner's email.
+     */
+    private function generateOtp(int $companyId, string $action, string $itemReference, ?int $userId): array
+    {
+        $otp = sprintf('%06d', mt_rand(100000, 999999));
+        $ownerEmail = $this->getOwnerEmail($companyId);
+
+        DB::table('ms_otp_tokens')->insert([
+            'company_id'     => $companyId,
+            'requested_by'   => $userId ?? (auth()->check() ? auth()->id() : 1),
+            'action'         => $action,
+            'item_reference' => $itemReference,
+            'otp_code'       => $otp,
+            'expires_at'     => Carbon::now()->addMinutes(10),
+            'created_at'     => Carbon::now(),
+        ]);
+
+        $readableAction = ucwords(str_replace('_', ' ', $action));
+        $requesterName  = auth()->check() ? auth()->user()->name : "User #{$userId}";
+
+        try {
+            Mail::raw("Security Notice: Restricted Action '{$readableAction}' requested on item reference '{$itemReference}' by {$requesterName}.\n\nYour 6-digit Authorization Code is: {$otp}\n\nThis OTP expires in 10 minutes. If you did not authorize this action, do not disclose this code.", function ($message) use ($ownerEmail, $readableAction) {
+                $message->to($ownerEmail)->subject("Security Authorization OTP: {$readableAction}");
+            });
+        } catch (\Throwable $e) {
+            Log::warning("Failed to dispatch OTP email to {$ownerEmail}: " . $e->getMessage());
+        }
+
+        $maskedEmail = $ownerEmail;
+        if (str_contains($ownerEmail, '@')) {
+            $parts = explode('@', $ownerEmail);
+            $maskedEmail = substr($parts[0], 0, 3) . '***@' . $parts[1];
+        }
+
+        return [
+            'sent'         => true,
+            'target_email' => $maskedEmail,
+            'expires_in'   => 600,
+        ];
+    }
+
+    /**
+     * Verify OTP token for a specific action and item reference.
+     */
+    private function verifyOtp(int $companyId, string $action, string $itemReference, ?string $code): bool
+    {
+        if ($this->isOwner()) {
+            return true;
+        }
+
+        if (empty($code)) {
+            return false;
+        }
+
+        $token = DB::table('ms_otp_tokens')
+            ->where('company_id', $companyId)
+            ->where('action', $action)
+            ->where('item_reference', $itemReference)
+            ->where('otp_code', trim($code))
+            ->where('expires_at', '>', Carbon::now())
+            ->whereNull('verified_at')
+            ->latest('id')
+            ->first();
+
+        if ($token) {
+            DB::table('ms_otp_tokens')->where('id', $token->id)->update([
+                'verified_at' => Carbon::now(),
+            ]);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -76,6 +196,84 @@ class MobileShopController extends Controller
     private function getStoreStateCode(): string
     {
         return (string) setting('company.state_code', '09');
+    }
+
+    /**
+     * Find existing customer by phone or create a new customer record
+     */
+    private function findOrCreateCustomer(int $companyId, Request $request): object
+    {
+        $storeState = $this->getStoreStateCode();
+        $customer = DB::table('ms_customers')->where('company_id', $companyId)->where('phone', $request->customer_phone)->first();
+        if (!$customer) {
+            $customerId = DB::table('ms_customers')->insertGetId([
+                'company_id' => $companyId,
+                'name'       => $request->customer_name,
+                'phone'      => $request->customer_phone,
+                'gstin'      => $request->customer_gstin,
+                'state_code' => $request->customer_state_code ?? $storeState,
+                'address'    => $request->customer_address,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $customer = DB::table('ms_customers')->where('id', $customerId)->first();
+        }
+        return $customer;
+    }
+
+    /**
+     * Calculate GST amounts and split based on store state and customer state
+     */
+    private function calculateGst(float $salePrice, float $taxRate, string $billType, string $storeState, ?string $customerStateCode): array
+    {
+        if ($billType === 'non_gst') {
+            return [
+                'taxRate'      => 0.00,
+                'taxable'      => $salePrice,
+                'totalTax'     => 0.00,
+                'cgst'         => 0.00,
+                'sgst'         => 0.00,
+                'igst'         => 0.00,
+                'isStateMatch' => true,
+                'taxType'      => 'intra_state',
+                'billType'     => 'non_gst',
+            ];
+        }
+
+        $taxable = round($salePrice / (1 + ($taxRate / 100)), 2);
+        $totalTax = round($salePrice - $taxable, 2);
+        $isStateMatch = empty($customerStateCode) || ($customerStateCode === $storeState);
+        $halfTax = round($totalTax / 2, 2);
+
+        $cgst = $isStateMatch ? $halfTax : 0.00;
+        $sgst = $isStateMatch ? ($totalTax - $halfTax) : 0.00;
+        $igst = !$isStateMatch ? $totalTax : 0.00;
+
+        return [
+            'taxRate'      => $taxRate,
+            'taxable'      => $taxable,
+            'totalTax'     => $totalTax,
+            'cgst'         => $cgst,
+            'sgst'         => $sgst,
+            'igst'         => $igst,
+            'isStateMatch' => $isStateMatch,
+            'taxType'      => $isStateMatch ? 'intra_state' : 'inter_state',
+            'billType'     => 'gst',
+        ];
+    }
+
+    /**
+     * Upload mobile device photo and return public relative path
+     */
+    private function uploadMobilePhoto(Request $request, string $prefix): ?string
+    {
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            $file = $request->file('photo');
+            $filename = $prefix . '_' . time() . '_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/mobiles'), $filename);
+            return 'uploads/mobiles/' . $filename;
+        }
+        return null;
     }
 
     /**
@@ -620,7 +818,6 @@ PROMPT;
                 'Content-Type: application/json',
             ]);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -744,21 +941,7 @@ PROMPT;
 
         return DB::transaction(function () use ($request, $companyId) {
             $storeState = $this->getStoreStateCode();
-            // Find or create customer
-            $customer = DB::table('ms_customers')->where('company_id', $companyId)->where('phone', $request->customer_phone)->first();
-            if (!$customer) {
-                $customerId = DB::table('ms_customers')->insertGetId([
-                    'company_id' => $companyId,
-                    'name' => $request->customer_name,
-                    'phone' => $request->customer_phone,
-                    'gstin' => $request->customer_gstin,
-                    'state_code' => $request->customer_state_code ?? $storeState,
-                    'address' => $request->customer_address,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                $customer = DB::table('ms_customers')->where('id', $customerId)->first();
-            }
+            $customer = $this->findOrCreateCustomer($companyId, $request);
 
             // Lock device row
             $device = DB::table('ms_mobile_devices')
@@ -775,36 +958,29 @@ PROMPT;
 
             $salePrice = (float) $request->sale_price;
             $amountPaid = (float) $request->amount_paid;
-            $taxRate = (float) ($request->tax_rate ?? 18.00);
+            $reqTaxRate = (float) ($request->tax_rate ?? 18.00);
             $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst');
             $billType = $isGst ? 'gst' : 'non_gst';
             
             // Tax Calculation
-            if ($billType === 'non_gst') {
-                $taxRate = 0.00;
-                $cgst = 0.00;
-                $sgst = 0.00;
-                $igst = 0.00;
-                $isStateMatch = true;
-            } else {
-                $taxable = round($salePrice / (1 + ($taxRate / 100)), 2);
-                $totalTax = round($salePrice - $taxable, 2);
-                $isStateMatch = empty($customer->state_code) || ($customer->state_code === $storeState);
-                $halfTax = round($totalTax / 2, 2);
-
-                $cgst = $isStateMatch ? $halfTax : 0.00;
-                $sgst = $isStateMatch ? ($totalTax - $halfTax) : 0.00;
-                $igst = !$isStateMatch ? $totalTax : 0.00;
-            }
+            $gst = $this->calculateGst($salePrice, $reqTaxRate, $billType, $storeState, $customer->state_code ?? null);
+            $taxRate = $gst['taxRate'];
+            $cgst = $gst['cgst'];
+            $sgst = $gst['sgst'];
+            $igst = $gst['igst'];
+            $isStateMatch = $gst['isStateMatch'];
 
             $udhariAmount = max(0.00, $salePrice - $amountPaid);
 
-            // EMI specifics
-            $emiProviderId = $request->emi_provider_id;
-            $emiFinanced = 0.00;
+            $emiProviderId = $request->payment_mode === 'emi' ? $request->emi_provider_id : null;
+            $emiProcessingFee = 0.00;
             if ($request->payment_mode === 'emi' && $emiProviderId) {
                 $emiDownpayment = (float) ($request->emi_downpayment ?? 0.00);
                 $emiFinanced = max(0.00, $salePrice - $emiDownpayment);
+
+                $feeType = $request->input('emi_fee_type', 'flat');
+                $feeVal  = (float) ($request->input('emi_fee_value', $request->input('emi_processing_fee', 0)));
+                $emiProcessingFee = $feeType === 'percent' ? round(($emiFinanced * $feeVal) / 100, 2) : round($feeVal, 2);
 
                 $provider = DB::table('ms_emi_providers')->where('company_id', $companyId)->where('id', $emiProviderId)->lockForUpdate()->first();
                 if (!$provider || $provider->advance_balance < $emiFinanced) {
@@ -829,32 +1005,33 @@ PROMPT;
 
             // Create Sale Record
             $saleId = DB::table('ms_mobile_sales')->insertGetId([
-                'company_id' => $companyId,
-                'idempotency_key' => $request->idempotency_key ?? Str::uuid()->toString(),
-                'customer_id' => $customer->id,
-                'invoice_number' => $invoiceNumber,
-                'bill_type' => $billType,
-                'device_id' => $device->id,
-                'sale_price' => $salePrice,
-                'tax_rate' => $taxRate,
-                'tax_type' => $isStateMatch ? 'intra_state' : 'inter_state',
-                'cgst_amount' => $cgst,
-                'sgst_amount' => $sgst,
-                'igst_amount' => $igst,
-                'total_amount' => $salePrice,
-                'amount_paid' => $amountPaid,
-                'udhari_amount' => $udhariAmount,
-                'payment_mode' => $request->payment_mode,
-                'emi_provider_id' => $emiProviderId,
-                'emi_loan_no' => $request->emi_loan_no,
-                'emi_downpayment' => $request->emi_downpayment ?? 0.00,
-                'emi_financed_amount' => $emiFinanced,
-                'emi_monthly_amount' => $request->emi_monthly_amount ?? 0.00,
-                'emi_tenure_months' => $request->emi_tenure_months ?? 0,
-                'sold_by' => auth()->id(),
-                'status' => 'completed',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'company_id'          => $companyId,
+                'idempotency_key'     => $request->idempotency_key ?? Str::uuid()->toString(),
+                'customer_id'         => $customer->id,
+                'invoice_number'      => $invoiceNumber,
+                'bill_type'           => $billType,
+                'device_id'           => $device->id,
+                'sale_price'          => $salePrice,
+                'tax_rate'            => $taxRate,
+                'tax_type'            => $isStateMatch ? 'intra_state' : 'inter_state',
+                'cgst_amount'         => $cgst,
+                'sgst_amount'         => $sgst,
+                'igst_amount'         => $igst,
+                'total_amount'        => $salePrice,
+                'amount_paid'         => $amountPaid,
+                'udhari_amount'       => $udhariAmount,
+                'payment_mode'        => $request->payment_mode,
+                'emi_provider_id'     => $emiProviderId,
+                'emi_loan_no'         => $request->emi_loan_no,
+                'emi_downpayment'     => $request->emi_downpayment ?? 0.00,
+                'emi_financed_amount' => $emiFinanced ?? 0.00,
+                'emi_processing_fee'  => $emiProcessingFee,
+                'emi_monthly_amount'  => $request->emi_monthly_amount ?? 0.00,
+                'emi_tenure_months'   => (int) ($request->emi_tenure_months ?: 12),
+                'sold_by'             => auth()->id(),
+                'status'              => 'completed',
+                'created_at'          => now(),
+                'updated_at'          => now(),
             ]);
 
             // Update Device Status
@@ -1043,13 +1220,7 @@ PROMPT;
         $poNum = 'PO-PHONES-' . date('Ymd') . '-' . rand(100, 999);
         $phoneCost = (float) $request->purchase_cost;
 
-        $photoPath = null;
-        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
-            $file = $request->file('photo');
-            $filename = 'new_' . time() . '_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/mobiles'), $filename);
-            $photoPath = 'uploads/mobiles/' . $filename;
-        }
+        $photoPath = $this->uploadMobilePhoto($request, 'new');
 
         $poId = DB::table('ms_purchase_orders')->insertGetId([
             'company_id'   => $companyId,
@@ -1172,13 +1343,7 @@ PROMPT;
 
         $buybackCost = (float) $request->purchase_cost;
 
-        $photoPath = null;
-        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
-            $file = $request->file('photo');
-            $filename = 'sh_' . time() . '_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/mobiles'), $filename);
-            $photoPath = 'uploads/mobiles/' . $filename;
-        }
+        $photoPath = $this->uploadMobilePhoto($request, 'sh');
 
         $bbNum = 'BUYBACK-' . date('Ymd') . '-' . rand(100, 999);
         $poId = DB::table('ms_purchase_orders')->insertGetId([
@@ -1275,21 +1440,7 @@ PROMPT;
 
         return DB::transaction(function () use ($request, $companyId) {
             $storeState = $this->getStoreStateCode();
-            // Find or create customer
-            $customer = DB::table('ms_customers')->where('company_id', $companyId)->where('phone', $request->customer_phone)->first();
-            if (!$customer) {
-                $customerId = DB::table('ms_customers')->insertGetId([
-                    'company_id' => $companyId,
-                    'name' => $request->customer_name,
-                    'phone' => $request->customer_phone,
-                    'gstin' => $request->customer_gstin,
-                    'state_code' => $request->customer_state_code ?? $storeState,
-                    'address' => $request->customer_address,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                $customer = DB::table('ms_customers')->where('id', $customerId)->first();
-            }
+            $customer = $this->findOrCreateCustomer($companyId, $request);
 
             // Lock device row
             $device = DB::table('ms_mobile_devices')
@@ -1306,26 +1457,16 @@ PROMPT;
 
             $salePrice = (float) $request->sale_price;
             $amountPaid = (float) $request->amount_paid;
-            $taxRate = (float) ($request->tax_rate ?? 18.00);
+            $reqTaxRate = (float) ($request->tax_rate ?? 18.00);
             $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst');
             $billType = $isGst ? 'gst' : 'non_gst';
 
-            if ($billType === 'non_gst') {
-                $taxRate = 0.00;
-                $cgst = 0.00;
-                $sgst = 0.00;
-                $igst = 0.00;
-                $isStateMatch = true;
-            } else {
-                $taxable = round($salePrice / (1 + ($taxRate / 100)), 2);
-                $totalTax = round($salePrice - $taxable, 2);
-                $isStateMatch = empty($customer->state_code) || ($customer->state_code === $storeState);
-                $halfTax = round($totalTax / 2, 2);
-
-                $cgst = $isStateMatch ? $halfTax : 0.00;
-                $sgst = $isStateMatch ? ($totalTax - $halfTax) : 0.00;
-                $igst = !$isStateMatch ? $totalTax : 0.00;
-            }
+            $gst = $this->calculateGst($salePrice, $reqTaxRate, $billType, $storeState, $customer->state_code ?? null);
+            $taxRate = $gst['taxRate'];
+            $cgst = $gst['cgst'];
+            $sgst = $gst['sgst'];
+            $igst = $gst['igst'];
+            $isStateMatch = $gst['isStateMatch'];
 
             $udhariAmount = max(0.00, $salePrice - $amountPaid);
 
@@ -1383,13 +1524,7 @@ PROMPT;
         });
     }
 
-    /**
-     * Accessories Hub — Redirects cleanly to Unified Stock Hub
-     */
-    public function accessories()
-    {
-        return redirect()->route('mobileshop.stock');
-    }
+
 
     /**
      * Category List (JSON)
@@ -1439,15 +1574,37 @@ PROMPT;
     }
 
     /**
-     * Delete Custom Part Category
+     * Delete Custom Part Category (Gated by Owner OTP)
      */
-    public function deleteCategory($id)
+    public function deleteCategory(Request $request, $id)
     {
         abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized action.');
 
         $companyId = $this->getCompanyId();
+
+        // OTP Security Gate: Only owner can delete category without OTP
+        $itemRef = "category:{$id}";
+        if (!$this->isOwner()) {
+            $otpCode = $request->input('otp_code');
+            if (!$this->verifyOtp($companyId, 'delete_category', $itemRef, $otpCode)) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'otp_required' => true,
+                        'action' => 'delete_category',
+                        'item_reference' => $itemRef,
+                        'message' => 'Store Owner OTP authorization is required to delete product categories.',
+                    ], 403);
+                }
+                return redirect()->back()->with('error', 'Store Owner OTP authorization is required to delete product categories.');
+            }
+        }
+
         DB::table('ms_part_categories')->where('company_id', $companyId)->where('id', $id)->delete();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Category deleted successfully!']);
+        }
         return redirect()->route('mobileshop.stock')->with('success', 'Category deleted successfully!');
     }
 
@@ -1459,13 +1616,16 @@ PROMPT;
         abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff')), 403, 'Unauthorized action.');
 
         $request->validate([
-            'name' => 'required|string|max:150',
-            'category' => 'required|string|max:100',
-            'brand' => 'nullable|string|max:100',
+            'name'             => 'required|string|max:150',
+            'category'         => 'required|string|max:100',
+            'brand'            => 'nullable|string|max:100',
             'compatible_model' => 'nullable|string|max:100',
-            'unit_cost' => 'required|numeric|min:0',
-            'selling_price' => 'required|numeric|min:0',
-            'stock_qty' => 'required|numeric|min:0',
+            'display_type'     => 'nullable|string|max:50',
+            'description'      => 'nullable|string|max:1000',
+            'unit_cost'        => 'required|numeric|min:0',
+            'selling_price'    => 'required|numeric|min:0',
+            'stock_qty'        => 'required|numeric|min:0',
+            'min_stock_alert'  => 'nullable|integer|min:0',
         ]);
 
         $companyId = $this->getCompanyId();
@@ -1480,32 +1640,33 @@ PROMPT;
         $isGift = $request->has('is_gift_eligible') ? 1 : ($categoryRow ? ($categoryRow->is_gift_eligible ? 1 : 0) : 0);
 
         $partId = DB::table('ms_parts_inventory')->insertGetId([
-            'company_id' => $companyId,
-            'category' => $request->category,
-            'category_id' => $categoryRow?->id,
+            'company_id'       => $companyId,
+            'category'         => $request->category,
+            'category_id'      => $categoryRow?->id,
             'is_gift_eligible' => $isGift,
-            'brand' => $request->brand ?: 'Universal',
+            'brand'            => $request->brand ?: 'Universal',
             'compatible_model' => $request->compatible_model ?: 'Universal / Multi-Model',
-            'display_type' => $request->display_type ?? 'na',
-            'hsn_code' => $request->hsn_code ?? '85177090',
-            'name' => $request->name,
-            'unit_cost' => (float) $request->unit_cost,
-            'selling_price' => (float) $request->selling_price,
-            'stock_qty' => (int) $request->stock_qty,
-            'min_stock_alert' => $request->min_stock_alert ?? 3,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'display_type'     => $request->display_type ?: 'Normal',
+            'description'      => $request->description,
+            'hsn_code'         => $request->hsn_code ?? '85177090',
+            'name'             => $request->name,
+            'unit_cost'        => (float) $request->unit_cost,
+            'selling_price'    => (float) $request->selling_price,
+            'stock_qty'        => (int) $request->stock_qty,
+            'min_stock_alert'  => $request->min_stock_alert !== null ? (int) $request->min_stock_alert : 3,
+            'created_at'       => now(),
+            'updated_at'       => now(),
         ]);
 
         DB::table('ms_parts_inventory_history')->insert([
-            'part_id' => $partId,
-            'type' => 'addition',
-            'quantity' => (int) $request->stock_qty,
+            'part_id'       => $partId,
+            'type'          => 'addition',
+            'quantity'      => (int) $request->stock_qty,
             'balance_after' => (int) $request->stock_qty,
-            'reference' => 'Initial Stock Intake',
-            'user_id' => auth()->id(),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'reference'     => 'Initial Stock Intake',
+            'user_id'       => auth()->id(),
+            'created_at'    => now(),
+            'updated_at'    => now(),
         ]);
 
         if ($request->filled('redirect_to')) {
@@ -1588,6 +1749,12 @@ PROMPT;
                     if ($isGift) {
                         $updateData['is_gift_eligible'] = 1;
                     }
+                    if (isset($item['min_stock_alert']) && $item['min_stock_alert'] !== '') {
+                        $updateData['min_stock_alert'] = (int) $item['min_stock_alert'];
+                    }
+                    if (!empty($item['description'])) {
+                        $updateData['description'] = $item['description'];
+                    }
 
                     DB::table('ms_parts_inventory')->where('id', $part->id)->update($updateData);
 
@@ -1620,12 +1787,13 @@ PROMPT;
                         'category_id' => $categoryRow?->id,
                         'brand' => $brand,
                         'compatible_model' => $model,
-                        'display_type' => $item['display_type'] ?? 'na',
+                        'display_type' => $item['display_type'] ?? 'Normal',
+                        'description' => $item['description'] ?? null,
                         'hsn_code' => $item['hsn_code'] ?? '85177090',
                         'unit_cost' => $unitCost,
                         'selling_price' => $sellingPrice,
                         'stock_qty' => $qty,
-                        'min_stock_alert' => $item['min_stock_alert'] ?? 3,
+                        'min_stock_alert' => isset($item['min_stock_alert']) && $item['min_stock_alert'] !== '' ? (int) $item['min_stock_alert'] : 3,
                         'is_gift_eligible' => $isGift || ($categoryRow && $categoryRow->is_gift_eligible ? 1 : 0),
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -2008,6 +2176,24 @@ PROMPT;
         $auditReason   = "{$reasonLabel}{$customDetails}";
         $returnedItemsInput = $request->input('returned_items', []);
 
+        // OTP Security Gate: Only owner can void without OTP
+        $itemRef = "acc_sale:{$id}";
+        if (!$this->isOwner()) {
+            $otpCode = $request->input('otp_code');
+            if (!$this->verifyOtp($companyId, 'void_accessory_sale', $itemRef, $otpCode)) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'otp_required' => true,
+                        'action' => 'void_accessory_sale',
+                        'item_reference' => $itemRef,
+                        'message' => 'Store Owner OTP authorization is required to void sales invoices.',
+                    ], 403);
+                }
+                return redirect()->back()->with('error', 'Store Owner OTP authorization is required to void sales invoices.');
+            }
+        }
+
         return DB::transaction(function () use ($request, $id, $companyId, $shouldRestock, $auditReason, $returnedItemsInput) {
             $sale = DB::table('ms_accessory_sales')
                 ->where('company_id', $companyId)
@@ -2155,6 +2341,24 @@ PROMPT;
         $customDetails = $request->input('void_reason') ? " — {$request->input('void_reason')}" : "";
         $auditReason   = "{$reasonLabel}{$customDetails}";
 
+        // OTP Security Gate: Only owner can void without OTP
+        $itemRef = "sale:{$id}";
+        if (!$this->isOwner()) {
+            $otpCode = $request->input('otp_code');
+            if (!$this->verifyOtp($companyId, 'void_sale', $itemRef, $otpCode)) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'otp_required' => true,
+                        'action' => 'void_sale',
+                        'item_reference' => $itemRef,
+                        'message' => 'Store Owner OTP authorization is required to void sales invoices.',
+                    ], 403);
+                }
+                return redirect()->back()->with('error', 'Store Owner OTP authorization is required to void sales invoices.');
+            }
+        }
+
         return DB::transaction(function () use ($request, $id, $companyId, $shouldRestock, $auditReason) {
             $sale = DB::table('ms_mobile_sales')
                 ->where('company_id', $companyId)
@@ -2195,10 +2399,6 @@ PROMPT;
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-                } else {
-                    if ($shouldRestock) {
-                        DB::table('ms_gifts')->where('id', $g->gift_id)->increment('stock_qty', $g->qty);
-                    }
                 }
             }
 
@@ -2599,7 +2799,7 @@ PROMPT;
      */
     public function purchaseOrders()
     {
-        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized access to procurement ledger.');
+        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized access to procurement ledger.');
 
         $companyId = $this->getCompanyId();
         $purchaseOrders = DB::table('ms_purchase_orders')
@@ -2624,7 +2824,7 @@ PROMPT;
      */
     public function recordSupplierPayment(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized action.');
+        abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
 
         $request->validate([
             'supplier_id' => 'required|exists:ms_suppliers,id',
@@ -2718,7 +2918,7 @@ PROMPT;
                 ]);
             }
 
-            return redirect()->route('mobileshop.purchase_orders')->with('success', 'Supplier payment successfully logged and ledger updated!');
+            return redirect()->route('mobileshop.purchase_orders', ['company_id' => $companyId])->with('success', 'Supplier payment successfully logged and ledger updated!');
         });
     }
 
@@ -3870,8 +4070,23 @@ PROMPT;
         $staffUsers = \App\Models\Auth\User::whereHas('companies', function($q) use ($companyId) {
             $q->where('companies.id', $companyId);
         })->get();
+        $roles = \App\Models\Auth\Role::whereNotIn('name', ['admin'])->get();
 
-        return view('mobileshop.masters', compact('categories', 'financiers', 'suppliers', 'staffUsers'));
+        $loginSessions = DB::table('ms_login_sessions')
+            ->join('users', 'ms_login_sessions.user_id', '=', 'users.id')
+            ->where('ms_login_sessions.company_id', $companyId)
+            ->select('ms_login_sessions.*', 'users.name as user_name', 'users.email as user_email')
+            ->orderByDesc('ms_login_sessions.last_active_at')
+            ->limit(50)
+            ->get()
+            ->map(function ($s) {
+                $lastActive = $s->last_active_at ? Carbon::parse($s->last_active_at) : null;
+                $s->is_online = $s->is_active && $lastActive && $lastActive->diffInMinutes(now()) <= 15;
+                $s->last_online_diff = $lastActive ? $lastActive->diffForHumans() : 'Never';
+                return $s;
+            });
+
+        return view('mobileshop.masters', compact('categories', 'financiers', 'suppliers', 'staffUsers', 'roles', 'loginSessions'));
     }
 
     /**
@@ -4167,11 +4382,11 @@ PROMPT;
 
         switch ($niche) {
             case 'phones':
-                $newPhones  = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->orderBy('id', 'desc')->get();
+                $newPhones  = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', '!=', 'deleted')->orderBy('id', 'desc')->get();
                 break;
 
             case 'secondhand':
-                $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->orderBy('id', 'desc')->get();
+                $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', '!=', 'deleted')->orderBy('id', 'desc')->get();
                 break;
 
             case 'accessories':
@@ -4194,8 +4409,8 @@ PROMPT;
                 break;
 
             default: // admin — all stock
-                $newPhones        = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->orderBy('id', 'desc')->get();
-                $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->orderBy('id', 'desc')->get();
+                $newPhones        = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', '!=', 'deleted')->orderBy('id', 'desc')->get();
+                $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', '!=', 'deleted')->orderBy('id', 'desc')->get();
                 $parts            = DB::table('ms_parts_inventory')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
                 $categories       = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
                 $repairTickets    = DB::table('ms_repair_tickets')
@@ -4209,7 +4424,7 @@ PROMPT;
         $totalNewPhonesInStock    = $newPhones->where('status', 'in_stock')->count();
         $totalSecondHandInStock   = $secondHandPhones->where('status', 'in_stock')->count();
         $totalPartsInStock        = (int) $parts->sum('stock_qty');
-        $lowStockCount            = $parts->where('stock_qty', '<=', 3)->count();
+        $lowStockCount            = $parts->filter(fn($p) => (int) $p->stock_qty <= (int) ($p->min_stock_alert ?? 3))->count();
         $valuationCost = (float) $newPhones->where('status','in_stock')->sum('purchase_cost')
                        + (float) $secondHandPhones->where('status','in_stock')->sum('purchase_cost')
                        + (float) $parts->sum(fn($p) => ($p->unit_cost ?? 0) * ($p->stock_qty ?? 0));
@@ -4228,6 +4443,11 @@ PROMPT;
 
     /**
      * Dispatcher: Unified Purchase Store
+     * Sniffs request payload attributes to route to the appropriate handler:
+     * 1. 'second_hand' / 'customer_buyback_name' -> storeSecondHand (Customer device buyback)
+     * 2. 'bulk_restock' / 'restock_qty'          -> bulkRestock (Batch inventory restock)
+     * 3. 'accessory' / 'compatible_model'        -> storePart (Single accessory/part registration)
+     * 4. Default                                 -> storeNewMobile (Supplier purchase order for new phone)
      */
     public function storePurchase(Request $request)
     {
@@ -4245,6 +4465,10 @@ PROMPT;
 
     /**
      * Dispatcher: Unified Sale Store
+     * Sniffs request payload attributes to route to the appropriate handler:
+     * 1. 'items' / 'accessory' sale_type -> sellAccessory (Counter accessory sale with cart)
+     * 2. 'second_hand' device type       -> sellSecondHand (Second-hand phone billing)
+     * 3. Default                         -> processSale (New phone POS billing)
      */
     public function storeSale(Request $request)
     {
@@ -4259,6 +4483,10 @@ PROMPT;
 
     /**
      * Dispatcher: Unified Stock Store
+     * Sniffs request payload attributes to route to the appropriate handler:
+     * 1. 'part' / 'compatible_model' / 'category' -> storePart (Accessory / Spare part)
+     * 2. 'second_hand' stock type                 -> storeSecondHand (Buyback stock)
+     * 3. Default                                  -> storeNewMobile (New mobile phone stock)
      */
     public function storeStock(Request $request)
     {
@@ -4344,13 +4572,7 @@ PROMPT;
         abort(404, 'Purchase record not found.');
     }
 
-    /**
-     * Alias for purchaseInvoice
-     */
-    public function purchaseInvoiceView(Request $request, $id)
-    {
-        return $this->purchaseInvoice($request, $id);
-    }
+
 
     /**
      * Download Purchase Invoice as Direct PDF
@@ -4365,6 +4587,700 @@ PROMPT;
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('mobileshop.pdf.purchase_invoice', $data);
         $pdf->setPaper('a4', 'portrait');
         return $pdf->download("PurchaseOrder-{$data['po']->po_number}.pdf");
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       FULL-PAGE PURCHASE REGISTRATION (Bulk Stock Inward from Company)
+       ══════════════════════════════════════════════════════════════════════ */
+
+    /**
+     * Purchase Registration Page — full page, multi-item bulk stock entry
+     * Shows supplier running balances & advance (credit wallet) balances.
+     */
+    public function purchaseCreate()
+    {
+        abort_unless(auth()->check() && (auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized access to purchase registration.');
+
+        $companyId = $this->getCompanyId();
+
+        $prefix = DB::getTablePrefix();
+        // Suppliers with running outstanding (sum of unpaid PO balances) and advance credit
+        $suppliers = DB::table('ms_suppliers')
+            ->leftJoin('ms_purchase_orders', function ($j) use ($companyId) {
+                $j->on('ms_suppliers.id', '=', 'ms_purchase_orders.supplier_id')
+                  ->where('ms_purchase_orders.company_id', $companyId)
+                  ->whereNotIn('ms_purchase_orders.status', ['paid', 'cancelled']);
+            })
+            ->leftJoin('ms_supplier_credit_wallets', function ($j) use ($companyId) {
+                $j->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
+                  ->where('ms_supplier_credit_wallets.company_id', $companyId);
+            })
+            ->where('ms_suppliers.company_id', $companyId)
+            ->groupBy('ms_suppliers.id', 'ms_suppliers.name', 'ms_suppliers.phone', 'ms_suppliers.gstin')
+            ->select(
+                'ms_suppliers.id', 'ms_suppliers.name', 'ms_suppliers.phone', 'ms_suppliers.gstin',
+                DB::raw("COALESCE(SUM({$prefix}ms_purchase_orders.balance_due), 0) as outstanding_balance"),
+                DB::raw("COALESCE(MAX({$prefix}ms_supplier_credit_wallets.credit_balance), 0) as advance_balance")
+            )
+            ->orderBy('ms_suppliers.name')
+            ->get();
+
+        return view('mobileshop.purchase_create', compact('suppliers'));
+    }
+
+    /**
+     * Store Bulk Multi-Item Purchase — creates one PO with many device lines,
+     * carries unpaid balance to supplier ledger, applies advance credit wallet.
+     */
+    public function storeBulkPurchase(Request $request)
+    {
+        abort_unless(auth()->check() && (auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'supplier_id'            => 'nullable|exists:ms_suppliers,id',
+            'new_supplier_name'      => 'required_without:supplier_id|nullable|string|max:150',
+            'new_supplier_phone'     => 'nullable|string|max:20',
+            'supplier_invoice_no'    => 'nullable|string|max:100',
+            'order_date'             => 'required|date',
+            'bill_type'              => 'required|in:gst,non_gst',
+            'bill_total'             => 'required|numeric|min:1',
+            'amount_paid'            => 'required|numeric|min:0',
+            'use_advance_credit'     => 'nullable|numeric|min:0',
+            'payment_mode'           => 'required|in:cash,bank_transfer,cheque,upi',
+            'items'                  => 'required|array|min:1',
+            'items.*.brand'          => 'required|string|max:100',
+            'items.*.model'          => 'required|string|max:100',
+            'items.*.qty'            => 'required|integer|min:1',
+            'items.*.unit_cost'      => 'required|numeric|min:0',
+            'items.*.selling_price'  => 'required|numeric|min:1',
+            'items.*.ram'            => 'nullable|string|max:50',
+            'items.*.storage'        => 'nullable|string|max:50',
+            'items.*.color'          => 'nullable|string|max:50',
+            'items.*.imeis'          => 'nullable|string',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        return DB::transaction(function () use ($request, $companyId) {
+            // ── Resolve supplier (existing or create new) ──
+            if ($request->filled('supplier_id')) {
+                $supplierId = (int) $request->supplier_id;
+            } else {
+                $supplierId = DB::table('ms_suppliers')->insertGetId([
+                    'company_id' => $companyId,
+                    'name'       => trim($request->new_supplier_name),
+                    'phone'      => $request->new_supplier_phone,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $billTotal = round((float) $request->bill_total, 2);
+            $amountPaid = min(round((float) $request->amount_paid, 2), $billTotal);
+            $advanceUsed = 0.00;
+
+            // ── Apply advance credit wallet if requested ──
+            $wallet = DB::table('ms_supplier_credit_wallets')
+                ->where('company_id', $companyId)->where('supplier_id', $supplierId)
+                ->lockForUpdate()->first();
+
+            if ($request->filled('use_advance_credit') && (float) $request->use_advance_credit > 0 && $wallet) {
+                $advanceUsed = min((float) $request->use_advance_credit, (float) $wallet->credit_balance, $billTotal - $amountPaid);
+                if ($advanceUsed > 0) {
+                    $amountPaid += $advanceUsed;
+                    $newCredit = (float) $wallet->credit_balance - $advanceUsed;
+                    DB::table('ms_supplier_credit_wallets')->where('id', $wallet->id)->update([
+                        'credit_balance' => $newCredit, 'updated_at' => now(),
+                    ]);
+                    DB::table('ms_supplier_credit_transactions')->insert([
+                        'supplier_id' => $supplierId, 'txn_type' => 'credit_used',
+                        'amount' => $advanceUsed, 'related_po_id' => null,
+                        'balance_after' => $newCredit,
+                        'remarks' => 'Advance credit applied on bulk purchase invoice',
+                        'txn_date' => now(),
+                    ]);
+                }
+            }
+
+            $balanceDue = max(0.00, $billTotal - $amountPaid);
+            $newStatus = ($balanceDue <= 0) ? 'paid' : (($amountPaid > 0) ? 'partially_paid' : 'received');
+
+            // ── Create PO header ──
+            $poNum = 'PO-BULK-' . date('Ymd') . '-' . rand(100, 999);
+            $poId = DB::table('ms_purchase_orders')->insertGetId([
+                'company_id'   => $companyId,
+                'supplier_id'  => $supplierId,
+                'po_number'    => $poNum,
+                'order_date'   => $request->order_date,
+                'tax_type'     => $request->bill_type === 'gst' ? 'intra_state' : 'none',
+                'subtotal'     => $billTotal,
+                'total_amount' => $billTotal,
+                'amount_paid'  => $amountPaid,
+                'balance_due'  => $balanceDue,
+                'status'       => $newStatus,
+                'created_by'   => auth()->id(),
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
+
+            // ── Insert line items + bulk devices ──
+            $deviceCount = 0;
+            foreach ($request->items as $item) {
+                $qty = (int) $item['qty'];
+                $unitCost = (float) $item['unit_cost'];
+                $lineTotal = round($unitCost * $qty, 2);
+                $variantParts = [];
+                if (!empty($item['ram']) && !empty($item['storage'])) $variantParts[] = $item['ram'] . '/' . $item['storage'];
+                if (!empty($item['color'])) $variantParts[] = $item['color'];
+
+                DB::table('ms_purchase_order_items')->insert([
+                    'purchase_order_id' => $poId,
+                    'brand'             => $item['brand'],
+                    'model'             => $item['model'],
+                    'variant'           => implode(' ', $variantParts) ?: 'Standard',
+                    'hsn_code'          => '85171300',
+                    'qty'               => $qty,
+                    'qty_received'      => $qty,
+                    'unit_cost'         => $unitCost,
+                    'tax_rate'          => $request->bill_type === 'gst' ? 18.00 : 0,
+                    'line_total'        => $lineTotal,
+                ]);
+
+                // Parse optional IMEI list (one per line / comma separated)
+                $imeis = [];
+                if (!empty($item['imeis'])) {
+                    $imeis = preg_split('/[\n,]+/', trim($item['imeis']));
+                    $imeis = array_values(array_filter(array_map('trim', $imeis)));
+                }
+
+                for ($i = 0; $i < $qty; $i++) {
+                    $imei = !empty($imeis[$i]) ? substr($imeis[$i], 0, 20) : ('86' . str_pad($poId % 1000, 3, '0', STR_PAD_LEFT) . rand(1000000000, 9999999999));
+                    DB::table('ms_mobile_devices')->insert([
+                        'company_id'        => $companyId,
+                        'purchase_order_id' => $poId,
+                        'type'              => 'new',
+                        'brand'             => $item['brand'],
+                        'model'             => $item['model'],
+                        'color'             => $item['color'] ?? 'Standard',
+                        'ram'               => $item['ram'] ?? null,
+                        'storage'           => $item['storage'] ?? null,
+                        'imei_1'            => $imei,
+                        'purchase_cost'     => $unitCost,
+                        'selling_price'     => (float) $item['selling_price'],
+                        'status'            => 'in_stock',
+                        'condition_grade'   => 'brand_new',
+                        'created_at'        => now(),
+                        'updated_at'        => now(),
+                    ]);
+                    $deviceCount++;
+                }
+            }
+
+            // ── Record cash payment row if paid now ──
+            if ($amountPaid > 0) {
+                DB::table('ms_supplier_payments')->insert([
+                    'company_id'        => $companyId,
+                    'supplier_id'       => $supplierId,
+                    'purchase_order_id' => $poId,
+                    'amount'            => $amountPaid,
+                    'payment_date'      => now()->toDateString(),
+                    'mode'              => $request->payment_mode,
+                    'reference_no'      => $request->supplier_invoice_no,
+                    'remarks'           => "Payment on bulk purchase {$poNum}" . ($advanceUsed > 0 ? " (advance credit used: ₹" . number_format($advanceUsed, 2) . ")" : ""),
+                    'recorded_by'       => auth()->id(),
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ]);
+            }
+
+            $msg = "Bulk purchase {$poNum} recorded — {$deviceCount} units added to stock.";
+            if ($balanceDue > 0) {
+                $msg .= " Balance due to supplier: ₹" . number_format($balanceDue, 2) . " (carried to supplier ledger).";
+            }
+            return redirect()->route('mobileshop.purchase', ['company_id' => $companyId])->with('success', $msg);
+        });
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       FULL-PAGE SALE REGISTRATION (Multi-Device)
+       ══════════════════════════════════════════════════════════════════════ */
+
+    /**
+     * Sale Registration Page — full page, multi-device selection
+     */
+    public function saleCreate()
+    {
+        abort_unless(auth()->check() && (auth()->user()->can('create-sale-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized access to sale registration.');
+
+        $companyId = $this->getCompanyId();
+        $inStockDevices = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->where('type', 'new')
+            ->where('status', 'in_stock')
+            ->orderBy('brand')->orderBy('model')
+            ->get();
+        $customers = DB::table('ms_customers')->where('company_id', $companyId)->orderBy('name')->get();
+        $emiProviders = DB::table('ms_emi_providers')->where('company_id', $companyId)->where('enabled', 1)->get();
+
+        return view('mobileshop.sales_create', compact('inStockDevices', 'customers', 'emiProviders'));
+    }
+
+    /**
+     * Store Multi-Device Sale — creates one sale invoice per device for the
+     * same customer; unpaid total flows to customer Khata (udhari).
+     */
+    public function storeMultiSale(Request $request)
+    {
+        abort_unless(auth()->check() && (auth()->user()->can('create-sale-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'customer_phone'   => 'required|string|min:7|max:20',
+            'customer_name'    => 'required|string|min:2|max:100',
+            'device_ids'       => 'required|array|min:1',
+            'device_ids.*'     => 'exists:ms_mobile_devices,id',
+            'sale_prices'      => 'required|array',
+            'amount_paid'      => 'required|numeric|min:0',
+            'payment_mode'     => 'required|in:cash,upi,card,bank_transfer,emi,credit_udhari,split',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        return DB::transaction(function () use ($request, $companyId) {
+            // Find or create customer
+            $customer = $this->findOrCreateCustomer($companyId, $request);
+
+            $billTotal = 0.00;
+            $devices = [];
+            foreach ($request->device_ids as $idx => $devId) {
+                $device = DB::table('ms_mobile_devices')
+                    ->where('company_id', $companyId)->where('id', $devId)
+                    ->where('status', 'in_stock')->where('type', 'new')
+                    ->lockForUpdate()->first();
+                if (!$device) {
+                    return redirect()->back()->with('error', "Device #{$devId} is no longer in stock. Sale cancelled — please retry.");
+                }
+                $price = (float) ($request->sale_prices[$idx] ?? $device->selling_price);
+                if ($price < 1) $price = (float) $device->selling_price;
+                $devices[] = ['device' => $device, 'price' => $price];
+                $billTotal += $price;
+            }
+
+            $amountPaid = min(round((float) $request->amount_paid, 2), $billTotal);
+            $udhariTotal = max(0.00, $billTotal - $amountPaid);
+
+            // EMI handling (single provider finances the financed part of the bill)
+            $emiProviderId = $request->payment_mode === 'emi' ? $request->emi_provider_id : null;
+            $emiProcessingFee = 0.00;
+            if ($request->payment_mode === 'emi' && $emiProviderId) {
+                $emiFinanced = $udhariTotal; // financed portion = unpaid part
+
+                $feeType = $request->input('emi_fee_type', 'flat');
+                $feeVal  = (float) ($request->input('emi_fee_value', $request->input('emi_processing_fee', 0)));
+                $emiProcessingFee = $feeType === 'percent' ? round(($emiFinanced * $feeVal) / 100, 2) : round($feeVal, 2);
+
+                $provider = DB::table('ms_emi_providers')->where('company_id', $companyId)->where('id', $emiProviderId)->lockForUpdate()->first();
+                if ($provider && $emiFinanced > 0 && $provider->advance_balance >= $emiFinanced) {
+                    DB::table('ms_emi_providers')->where('id', $emiProviderId)->decrement('advance_balance', $emiFinanced);
+                    DB::table('ms_emi_provider_transactions')->insert([
+                        'emi_provider_id' => $emiProviderId, 'type' => 'sale_deduction',
+                        'amount' => $emiFinanced, 'balance_after' => $provider->advance_balance - $emiFinanced,
+                        'reference_no' => $request->emi_loan_no,
+                        'notes' => "Multi-device sale financing for {$customer->name}",
+                        'created_at' => now(),
+                    ]);
+                }
+            }
+
+            $storeState = $this->getStoreStateCode();
+            $reqTaxRate = (float) ($request->tax_rate ?? 18.00);
+            $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst') || (!$request->has('bill_type') && !$request->has('is_gst'));
+            $billType = $isGst ? 'gst' : 'non_gst';
+
+            $firstInvoice = null;
+            $lastInvoice = null;
+            foreach ($devices as $d) {
+                $invoiceNumber = $this->getNextInvoiceNumber($companyId, 'INV');
+                $salePrice = $d['price'];
+                $gst = $this->calculateGst($salePrice, $reqTaxRate, $billType, $storeState, $customer->state_code ?? null);
+
+                // Proportional paid/udhari across devices
+                $share = $billTotal > 0 ? $salePrice / $billTotal : 0;
+                $paidShare = round($amountPaid * $share, 2);
+                $udhariShare = round($salePrice - $paidShare, 2);
+                $itemEmiFee = round($emiProcessingFee * $share, 2);
+
+                $saleId = DB::table('ms_mobile_sales')->insertGetId([
+                    'company_id'          => $companyId,
+                    'idempotency_key'     => Str::uuid()->toString(),
+                    'customer_id'         => $customer->id,
+                    'invoice_number'      => $invoiceNumber,
+                    'bill_type'           => $gst['billType'],
+                    'device_id'           => $d['device']->id,
+                    'sale_price'          => $salePrice,
+                    'tax_rate'            => $gst['taxRate'],
+                    'tax_type'            => $gst['taxType'],
+                    'cgst_amount'         => $gst['cgst'],
+                    'sgst_amount'         => $gst['sgst'],
+                    'igst_amount'         => $gst['igst'],
+                    'total_amount'        => $salePrice,
+                    'amount_paid'         => $paidShare,
+                    'udhari_amount'       => $udhariShare,
+                    'payment_mode'        => $request->payment_mode,
+                    'emi_provider_id'     => $emiProviderId,
+                    'emi_loan_no'         => $request->emi_loan_no,
+                    'emi_downpayment'     => $request->payment_mode === 'emi' ? $paidShare : 0.00,
+                    'emi_financed_amount' => $request->payment_mode === 'emi' ? $udhariShare : 0.00,
+                    'emi_processing_fee'  => $request->payment_mode === 'emi' ? $itemEmiFee : 0.00,
+                    'emi_tenure_months'   => $request->payment_mode === 'emi' ? (int) ($request->emi_tenure_months ?: 12) : null,
+                    'sold_by'             => auth()->id(),
+                    'status'              => 'completed',
+                    'created_at'          => now(),
+                    'updated_at'          => now(),
+                ]);
+
+                DB::table('ms_mobile_devices')->where('id', $d['device']->id)->update([
+                    'status' => 'sold', 'selling_price' => $salePrice, 'updated_at' => now(),
+                ]);
+
+                if ($udhariShare > 0) {
+                    DB::table('ms_customers')->where('id', $customer->id)->increment('udhari_balance', $udhariShare);
+                    $newBal = (float) $customer->udhari_balance + $udhariShare;
+                    $customer->udhari_balance = $newBal;
+                    DB::table('ms_customer_khata_transactions')->insert([
+                        'company_id' => $companyId, 'customer_id' => $customer->id,
+                        'type' => 'udhari_sale', 'sale_id' => $saleId,
+                        'amount' => $udhariShare, 'balance_after' => $newBal,
+                        'remarks' => "Udhari on Sale Invoice #{$invoiceNumber}",
+                        'recorded_by' => auth()->id(), 'created_at' => now(),
+                    ]);
+                }
+
+                $firstInvoice = $firstInvoice ?: $saleId;
+                $lastInvoice = $saleId;
+            }
+
+            return redirect()->route('mobileshop.invoice', ['id' => $firstInvoice])
+                ->with('success', count($devices) . " sale invoices recorded for {$customer->name}. Bill total ₹" . number_format($billTotal, 2)
+                    . ($udhariTotal > 0 ? ", Khata balance ₹" . number_format($udhariTotal, 2) : "") . ".");
+        });
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       EMI COMPANY LEDGER (Finance Partners)
+       ══════════════════════════════════════════════════════════════════════ */
+
+    /**
+     * EMI Companies Ledger — list providers, deposits, usage & balances
+     */
+    public function emiLedger()
+    {
+        abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized access to EMI ledger.');
+
+        $companyId = $this->getCompanyId();
+        $providers = DB::table('ms_emi_providers')->where('company_id', $companyId)->orderBy('name')->get();
+
+        $transactions = DB::table('ms_emi_provider_transactions')
+            ->join('ms_emi_providers', 'ms_emi_provider_transactions.emi_provider_id', '=', 'ms_emi_providers.id')
+            ->where('ms_emi_providers.company_id', $companyId)
+            ->select('ms_emi_provider_transactions.*', 'ms_emi_providers.name as provider_name')
+            ->orderBy('ms_emi_provider_transactions.id', 'desc')
+            ->limit(100)
+            ->get();
+
+        return view('mobileshop.emi_ledger', compact('providers', 'transactions'));
+    }
+
+    /**
+     * Add new EMI company (finance partner)
+     */
+    public function storeEmiProvider(Request $request)
+    {
+        abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'name'                  => 'required|string|max:150',
+            'code'                  => 'nullable|string|max:50',
+            'contact_person'        => 'nullable|string|max:150',
+            'phone'                 => 'nullable|string|max:20',
+            'opening_balance'       => 'nullable|numeric|min:0',
+            'processing_fee_flat'   => 'nullable|numeric|min:0',
+            'processing_fee_pct'    => 'nullable|numeric|min:0|max:100',
+            'default_tenure_months' => 'nullable|integer|min:1|max:60',
+            'interest_rate_pct'     => 'nullable|numeric|min:0|max:100',
+            'notes'                 => 'nullable|string|max:500',
+        ]);
+
+        $companyId = $this->getCompanyId();
+        $opening = round((float) ($request->opening_balance ?? 0), 2);
+
+        $providerId = DB::table('ms_emi_providers')->insertGetId([
+            'company_id'            => $companyId,
+            'name'                  => trim($request->name),
+            'code'                  => $request->code,
+            'contact_person'        => $request->contact_person,
+            'phone'                 => $request->phone,
+            'advance_balance'       => $opening,
+            'processing_fee_flat'   => (float) ($request->processing_fee_flat ?? 0.00),
+            'processing_fee_pct'    => (float) ($request->processing_fee_pct ?? 0.00),
+            'default_tenure_months' => (int) ($request->default_tenure_months ?? 12),
+            'interest_rate_pct'     => (float) ($request->interest_rate_pct ?? 0.00),
+            'notes'                 => $request->notes,
+            'enabled'               => 1,
+            'created_at'            => now(),
+            'updated_at'            => now(),
+        ]);
+
+        if ($opening > 0) {
+            DB::table('ms_emi_provider_transactions')->insert([
+                'emi_provider_id' => $providerId, 'type' => 'advance_deposit',
+                'amount' => $opening, 'balance_after' => $opening,
+                'notes' => 'Opening advance deposit', 'created_at' => now(),
+            ]);
+        }
+
+        return redirect()->route('mobileshop.emi.ledger', ['company_id' => $companyId])->with('success', "EMI company '{$request->name}' added to ledger.");
+    }
+
+    /**
+     * Deposit money into an EMI company's advance pool
+     */
+    public function recordEmiDeposit(Request $request)
+    {
+        abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'emi_provider_id' => 'required|exists:ms_emi_providers,id',
+            'amount' => 'required|numeric|min:1',
+            'reference_no' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        return DB::transaction(function () use ($request, $companyId) {
+            $provider = DB::table('ms_emi_providers')->where('company_id', $companyId)->where('id', $request->emi_provider_id)->lockForUpdate()->first();
+            if (!$provider) {
+                return redirect()->back()->with('error', 'EMI provider not found.');
+            }
+            $amount = round((float) $request->amount, 2);
+            $newBalance = (float) $provider->advance_balance + $amount;
+
+            DB::table('ms_emi_providers')->where('id', $provider->id)->update([
+                'advance_balance' => $newBalance, 'updated_at' => now(),
+            ]);
+            DB::table('ms_emi_provider_transactions')->insert([
+                'emi_provider_id' => $provider->id, 'type' => 'advance_deposit',
+                'amount' => $amount, 'balance_after' => $newBalance,
+                'reference_no' => $request->reference_no,
+                'notes' => $request->notes ?: 'Advance deposit to finance pool',
+                'created_at' => now(),
+            ]);
+
+            return redirect()->route('mobileshop.emi.ledger', ['company_id' => $companyId])->with('success', "₹" . number_format($amount, 2) . " deposited to {$provider->name} advance pool.");
+        });
+    }
+
+    /**
+     * Update EMI Provider details and/or adjust advance balance
+     */
+    public function updateEmiProvider(Request $request)
+    {
+        abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'emi_provider_id'       => 'required|exists:ms_emi_providers,id',
+            'name'                  => 'required|string|max:150',
+            'code'                  => 'nullable|string|max:50',
+            'contact_person'        => 'nullable|string|max:150',
+            'phone'                 => 'nullable|string|max:20',
+            'advance_balance'       => 'nullable|numeric|min:0',
+            'processing_fee_flat'   => 'nullable|numeric|min:0',
+            'processing_fee_pct'    => 'nullable|numeric|min:0|max:100',
+            'default_tenure_months' => 'nullable|integer|min:1|max:60',
+            'interest_rate_pct'     => 'nullable|numeric|min:0|max:100',
+            'notes'                 => 'nullable|string|max:500',
+            'adjustment_notes'      => 'nullable|string|max:255',
+            'enabled'               => 'nullable',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        return DB::transaction(function () use ($request, $companyId) {
+            $provider = DB::table('ms_emi_providers')->where('company_id', $companyId)->where('id', $request->emi_provider_id)->lockForUpdate()->first();
+            if (!$provider) {
+                return redirect()->back()->with('error', 'EMI provider not found.');
+            }
+
+            $currentBalance = (float) $provider->advance_balance;
+            $newBalance = $request->has('advance_balance') && $request->advance_balance !== null
+                ? round((float) $request->advance_balance, 2)
+                : $currentBalance;
+            $delta = round($newBalance - $currentBalance, 2);
+
+            $updateData = [
+                'name'                  => trim($request->name),
+                'code'                  => $request->code,
+                'contact_person'        => $request->contact_person,
+                'phone'                 => $request->phone,
+                'advance_balance'       => $newBalance,
+                'enabled'               => $request->has('enabled') ? (int) $request->enabled : $provider->enabled,
+                'updated_at'            => now(),
+            ];
+
+            if ($request->has('processing_fee_flat')) {
+                $updateData['processing_fee_flat'] = (float) $request->processing_fee_flat;
+            }
+            if ($request->has('processing_fee_pct')) {
+                $updateData['processing_fee_pct'] = (float) $request->processing_fee_pct;
+            }
+            if ($request->has('default_tenure_months')) {
+                $updateData['default_tenure_months'] = (int) $request->default_tenure_months;
+            }
+            if ($request->has('interest_rate_pct')) {
+                $updateData['interest_rate_pct'] = (float) $request->interest_rate_pct;
+            }
+            if ($request->has('notes')) {
+                $updateData['notes'] = $request->notes;
+            }
+
+            DB::table('ms_emi_providers')->where('id', $provider->id)->update($updateData);
+
+            if (abs($delta) > 0.001) {
+                $type = $delta > 0 ? 'advance_deposit' : 'settlement';
+                DB::table('ms_emi_provider_transactions')->insert([
+                    'emi_provider_id' => $provider->id,
+                    'type' => $type,
+                    'amount' => abs($delta),
+                    'balance_after' => $newBalance,
+                    'reference_no' => 'MANUAL-ADJ',
+                    'notes' => $request->adjustment_notes ?: ('Manual balance adjustment by ' . auth()->user()->name),
+                    'created_at' => now(),
+                ]);
+            }
+
+            return redirect()->back()->with('success', "EMI Partner '{$request->name}' updated successfully." . (abs($delta) > 0 ? " Balance adjusted to ₹" . number_format($newBalance, 2) . "." : ""));
+        });
+    }
+
+    /**
+     * Update Supplier details and/or adjust prepaid wallet balance
+     */
+    public function updateSupplier(Request $request)
+    {
+        abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'supplier_id' => 'required|exists:ms_suppliers,id',
+            'name' => 'required|string|max:191',
+            'contact_person' => 'nullable|string|max:150',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:191',
+            'gstin' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'credit_balance' => 'nullable|numeric|min:0',
+            'adjustment_notes' => 'nullable|string|max:255',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        return DB::transaction(function () use ($request, $companyId) {
+            $supplier = DB::table('ms_suppliers')->where('company_id', $companyId)->where('id', $request->supplier_id)->first();
+            if (!$supplier) {
+                return redirect()->back()->with('error', 'Supplier not found.');
+            }
+
+            DB::table('ms_suppliers')->where('id', $supplier->id)->update([
+                'name' => trim($request->name),
+                'contact_person' => $request->contact_person,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'gstin' => $request->gstin,
+                'address' => $request->address,
+                'updated_at' => now(),
+            ]);
+
+            $deltaMsg = "";
+            if ($request->has('credit_balance') && $request->credit_balance !== null) {
+                $wallet = DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->where('supplier_id', $supplier->id)->lockForUpdate()->first();
+                $newBal = round((float) $request->credit_balance, 2);
+                $oldBal = $wallet ? (float) $wallet->credit_balance : 0.00;
+                $delta = round($newBal - $oldBal, 2);
+
+                if (!$wallet) {
+                    DB::table('ms_supplier_credit_wallets')->insert([
+                        'company_id' => $companyId,
+                        'supplier_id' => $supplier->id,
+                        'credit_balance' => $newBal,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    DB::table('ms_supplier_credit_wallets')->where('id', $wallet->id)->update([
+                        'credit_balance' => $newBal,
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                if (abs($delta) > 0.001) {
+                    $txnType = $delta > 0 ? 'credit_added' : 'credit_applied';
+                    DB::table('ms_supplier_credit_transactions')->insert([
+                        'supplier_id' => $supplier->id,
+                        'txn_type' => $txnType,
+                        'amount' => abs($delta),
+                        'balance_after' => $newBal,
+                        'txn_date' => now(),
+                        'remarks' => $request->adjustment_notes ?: ('Manual wallet adjustment by ' . auth()->user()->name),
+                    ]);
+                    $deltaMsg = " Prepaid wallet updated to ₹" . number_format($newBal, 2) . ".";
+                }
+            }
+
+            return redirect()->back()->with('success', "Supplier '{$request->name}' ledger details updated.{$deltaMsg}");
+        });
+    }
+
+    /**
+     * Update user credentials from Masters (Store Admin can edit any non-superadmin user)
+     */
+    public function updateUserCredentials(Request $request, $id)
+    {
+        abort_unless(auth()->check() && (auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('admin')), 403, 'Admin access required to modify user credentials.');
+
+        $currentUser = auth()->user();
+        $targetUser = \App\Models\Auth\User::findOrFail($id);
+
+        // Security restriction: store-admin cannot modify super-admin (role 'admin')
+        $targetIsSuperAdmin = $targetUser->hasRole('admin');
+        if ($targetIsSuperAdmin && !$currentUser->hasRole('admin')) {
+            return redirect()->back()->with('error', 'Store Admin cannot modify credentials of the Super Admin account.');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:191',
+            'email' => 'required|email|max:191|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:6',
+            'role' => 'nullable|string|exists:roles,name',
+        ]);
+
+        $targetUser->name = trim($request->name);
+        $targetUser->email = trim($request->email);
+
+        if ($request->filled('password')) {
+            $targetUser->password = $request->password;
+        }
+
+        $targetUser->save();
+
+        // Update role if provided and target is not super admin
+        if ($request->filled('role') && !$targetIsSuperAdmin) {
+            $role = \App\Models\Auth\Role::where('name', $request->role)->first();
+            if ($role) {
+                $targetUser->syncRoles([$role]);
+            }
+        }
+
+        return redirect()->route('mobileshop.masters', ['company_id' => $this->getCompanyId()])
+            ->with('success', "Credentials for user '{$targetUser->name}' updated successfully." . ($request->filled('password') ? " Password has been changed." : ""));
     }
 
     /**
@@ -4403,5 +5319,545 @@ PROMPT;
         $rupees = implode('', array_reverse($str));
         $paise = ($decimal > 0) ? " and " . ($words[$decimal / 10 * 10] . " " . $words[$decimal % 10]) . ' Paise' : '';
         return 'Rupees ' . ($rupees ? trim($rupees) : 'Zero') . $paise . ' Only';
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       STOCK AUDIT TRAIL, HISTORY & DELETION ENGINE
+       ══════════════════════════════════════════════════════════════════════ */
+
+    /**
+     * Get Complete Stock History & Audit Trail for any stock item
+     * (Spare Parts/Accessories, Brand New Phones, Pre-Owned Phones)
+     */
+    public function getStockHistory($type, $id)
+    {
+        abort_unless(auth()->check(), 401);
+
+        $companyId = $this->getCompanyId();
+        $history = [];
+        $itemInfo = [];
+
+        if ($type === 'part') {
+            $part = DB::table('ms_parts_inventory')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->first();
+
+            if (!$part) {
+                return response()->json(['success' => false, 'message' => 'Part not found in inventory'], 404);
+            }
+
+            $itemInfo = [
+                'id' => $part->id,
+                'name' => $part->name,
+                'type' => 'part',
+                'type_label' => 'Spare Part / Accessory',
+                'category' => ucwords(str_replace('_', ' ', $part->category)),
+                'sku' => $part->compatible_model ?: 'Universal',
+                'current_stock' => $part->stock_qty . ' units',
+                'stock_qty' => (int) $part->stock_qty,
+                'unit_cost' => '₹' . number_format($part->unit_cost, 2),
+                'selling_price' => '₹' . number_format($part->selling_price, 2),
+                'is_in_stock' => $part->stock_qty > 0,
+            ];
+
+            // 1. Fetch from ms_parts_inventory_history
+            $partHistory = DB::table('ms_parts_inventory_history')
+                ->leftJoin('users', 'ms_parts_inventory_history.user_id', '=', 'users.id')
+                ->select('ms_parts_inventory_history.*', 'users.name as user_name')
+                ->where('ms_parts_inventory_history.part_id', $id)
+                ->orderBy('ms_parts_inventory_history.id', 'desc')
+                ->get();
+
+            foreach ($partHistory as $h) {
+                $ref = $h->reference ?? '';
+                $isAddition = ($h->type === 'addition');
+                $isDeletion = (stripos($ref, 'deletion') !== false || stripos($ref, 'reduction') !== false || stripos($ref, 'damaged') !== false || stripos($ref, 'write-off') !== false);
+                $isRepair = (stripos($ref, 'repair') !== false || stripos($ref, 'job') !== false);
+
+                if ($isAddition) {
+                    $actionType = 'added';
+                    $actionLabel = 'Stock Inward / Added';
+                    $badgeClass = 'badge-green';
+                    $qtyDisplay = '+' . abs($h->quantity) . ' Units';
+                } elseif ($isDeletion) {
+                    $actionType = 'deleted';
+                    $actionLabel = 'Stock Deleted / Reduced';
+                    $badgeClass = 'badge-red';
+                    $qtyDisplay = '-' . abs($h->quantity) . ' Units';
+                } elseif ($isRepair) {
+                    $actionType = 'repair';
+                    $actionLabel = 'Consumed in Repair';
+                    $badgeClass = 'badge-purple';
+                    $qtyDisplay = '-' . abs($h->quantity) . ' Units';
+                } else {
+                    $actionType = 'sold';
+                    $actionLabel = 'Sold to Customer';
+                    $badgeClass = 'badge-blue';
+                    $qtyDisplay = '-' . abs($h->quantity) . ' Units';
+                }
+
+                $history[] = [
+                    'action' => $actionType,
+                    'action_label' => $actionLabel,
+                    'badge_class' => $badgeClass,
+                    'quantity' => $qtyDisplay,
+                    'raw_qty' => $h->quantity,
+                    'balance_after' => $h->balance_after . ' Units',
+                    'reference' => $ref ?: 'Direct Inventory Adjustment',
+                    'user_name' => $h->user_name ?: 'Staff',
+                    'date' => Carbon::parse($h->created_at)->format('d M Y, h:i A'),
+                    'relative_time' => Carbon::parse($h->created_at)->diffForHumans(),
+                    'timestamp' => Carbon::parse($h->created_at)->timestamp,
+                ];
+            }
+
+            // Also check ms_stock_audit_log for this part
+            $auditLogs = DB::table('ms_stock_audit_log')
+                ->leftJoin('users', 'ms_stock_audit_log.user_id', '=', 'users.id')
+                ->select('ms_stock_audit_log.*', 'users.name as user_name')
+                ->where('company_id', $companyId)
+                ->where('item_type', 'part')
+                ->where('item_id', $id)
+                ->orderBy('ms_stock_audit_log.id', 'desc')
+                ->get();
+
+            foreach ($auditLogs as $al) {
+                $already = false;
+                foreach ($history as $existing) {
+                    if ($existing['action'] === 'deleted' && abs($existing['raw_qty']) == abs($al->quantity) && $existing['date'] === Carbon::parse($al->created_at)->format('d M Y, h:i A')) {
+                        $already = true;
+                        break;
+                    }
+                }
+                if (!$already) {
+                    $history[] = [
+                        'action' => $al->action,
+                        'action_label' => $al->action === 'deletion' ? 'Stock Deleted / Reduced' : ucfirst($al->action),
+                        'badge_class' => $al->action === 'deletion' ? 'badge-red' : 'badge-green',
+                        'quantity' => '-' . abs($al->quantity) . ' Units',
+                        'raw_qty' => -$al->quantity,
+                        'balance_after' => ($al->balance_after !== null ? $al->balance_after . ' Units' : '—'),
+                        'reference' => $al->reason ?: 'Manual Stock Deletion',
+                        'user_name' => $al->user_name ?: 'Staff',
+                        'date' => Carbon::parse($al->created_at)->format('d M Y, h:i A'),
+                        'relative_time' => Carbon::parse($al->created_at)->diffForHumans(),
+                        'timestamp' => Carbon::parse($al->created_at)->timestamp,
+                    ];
+                }
+            }
+
+            usort($history, fn($a, $b) => ($b['timestamp'] ?? 0) <=> ($a['timestamp'] ?? 0));
+
+        } else {
+            // Mobile Device: 'new_phone' or 'second_hand'
+            $device = DB::table('ms_mobile_devices')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->first();
+
+            if (!$device) {
+                return response()->json(['success' => false, 'message' => 'Mobile device not found'], 404);
+            }
+
+            $itemInfo = [
+                'id' => $device->id,
+                'name' => $device->brand . ' ' . $device->model . ($device->color ? ' (' . $device->color . ')' : ''),
+                'type' => $device->type,
+                'type_label' => $device->type === 'new' ? 'Brand New Smartphone' : 'Pre-Owned Device',
+                'category' => $device->ram ? "{$device->ram}/{$device->storage}" : 'Standard Edition',
+                'sku' => 'IMEI 1: ' . $device->imei_1 . ($device->imei_2 ? ' • IMEI 2: ' . $device->imei_2 : ''),
+                'current_stock' => $device->status === 'in_stock' ? 'In Stock (1 unit)' : ($device->status === 'sold' ? 'Sold Out' : ucfirst($device->status)),
+                'stock_qty' => $device->status === 'in_stock' ? 1 : 0,
+                'status' => $device->status,
+                'unit_cost' => '₹' . number_format($device->purchase_cost, 2),
+                'selling_price' => '₹' . number_format($device->selling_price, 2),
+                'is_in_stock' => $device->status === 'in_stock',
+            ];
+
+            // 1. ADDITION EVENT: When was it added and by who?
+            $additionUser = 'Store Admin';
+            $additionRef = 'Direct Stock Inward / Registration';
+
+            if ($device->purchase_order_id) {
+                $po = DB::table('ms_purchase_orders')
+                    ->leftJoin('users', 'ms_purchase_orders.created_by', '=', 'users.id')
+                    ->leftJoin('ms_suppliers', 'ms_purchase_orders.supplier_id', '=', 'ms_suppliers.id')
+                    ->select('ms_purchase_orders.*', 'users.name as user_name', 'ms_suppliers.name as supplier_name')
+                    ->where('ms_purchase_orders.id', $device->purchase_order_id)
+                    ->first();
+                if ($po) {
+                    $additionUser = $po->user_name ?: 'Store Admin';
+                    $additionRef = "Purchase Order #{$po->po_number}" . ($po->supplier_name ? " • Supplier: {$po->supplier_name}" : "");
+                }
+            } elseif (!empty($device->customer_buyback_name)) {
+                $additionUser = 'Buyback Counter Staff';
+                $additionRef = "Intake Buyback from {$device->customer_buyback_name}" . ($device->customer_buyback_phone ? " ({$device->customer_buyback_phone})" : "");
+            }
+
+            $history[] = [
+                'action' => 'added',
+                'action_label' => 'Stock Inward / Registered',
+                'badge_class' => 'badge-green',
+                'quantity' => '+1 Device Unit',
+                'raw_qty' => 1,
+                'balance_after' => '1 Unit in stock',
+                'reference' => $additionRef,
+                'user_name' => $additionUser,
+                'date' => Carbon::parse($device->created_at)->format('d M Y, h:i A'),
+                'relative_time' => Carbon::parse($device->created_at)->diffForHumans(),
+                'timestamp' => Carbon::parse($device->created_at)->timestamp,
+            ];
+
+            // 2. SALE EVENT: Was it sold and by who?
+            $sales = DB::table('ms_mobile_sales')
+                ->leftJoin('users', 'ms_mobile_sales.sold_by', '=', 'users.id')
+                ->leftJoin('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
+                ->select('ms_mobile_sales.*', 'users.name as user_name', 'ms_customers.name as customer_name')
+                ->where('ms_mobile_sales.device_id', $id)
+                ->orderBy('ms_mobile_sales.id', 'desc')
+                ->get();
+
+            foreach ($sales as $sale) {
+                $history[] = [
+                    'action' => 'sold',
+                    'action_label' => 'Sold / Billed',
+                    'badge_class' => 'badge-blue',
+                    'quantity' => '-1 Device Unit',
+                    'raw_qty' => -1,
+                    'balance_after' => '0 Units (Sold Out)',
+                    'reference' => "Tax Invoice #{$sale->invoice_number}" . ($sale->customer_name ? " • Customer: {$sale->customer_name}" : "") . " • Bill Amount: ₹" . number_format($sale->sale_price, 2) . " (" . strtoupper($sale->payment_mode) . ")",
+                    'user_name' => $sale->user_name ?: 'Cashier Staff',
+                    'date' => Carbon::parse($sale->created_at)->format('d M Y, h:i A'),
+                    'relative_time' => Carbon::parse($sale->created_at)->diffForHumans(),
+                    'timestamp' => Carbon::parse($sale->created_at)->timestamp,
+                ];
+            }
+
+            // 3. DELETION / AUDIT LOGS: Was it deleted or written off?
+            $auditLogs = DB::table('ms_stock_audit_log')
+                ->leftJoin('users', 'ms_stock_audit_log.user_id', '=', 'users.id')
+                ->select('ms_stock_audit_log.*', 'users.name as user_name')
+                ->where('company_id', $companyId)
+                ->where('item_id', $id)
+                ->whereIn('item_type', ['new_phone', 'second_hand', 'phone', $device->type])
+                ->orderBy('ms_stock_audit_log.id', 'desc')
+                ->get();
+
+            foreach ($auditLogs as $al) {
+                $history[] = [
+                    'action' => 'deleted',
+                    'action_label' => 'Device Deleted / Removed',
+                    'badge_class' => 'badge-red',
+                    'quantity' => '-1 Device Unit',
+                    'raw_qty' => -1,
+                    'balance_after' => '0 Units (Removed)',
+                    'reference' => $al->reason ?: 'Manual stock removal',
+                    'user_name' => $al->user_name ?: 'Staff',
+                    'date' => Carbon::parse($al->created_at)->format('d M Y, h:i A'),
+                    'relative_time' => Carbon::parse($al->created_at)->diffForHumans(),
+                    'timestamp' => Carbon::parse($al->created_at)->timestamp,
+                ];
+            }
+
+            usort($history, fn($a, $b) => ($b['timestamp'] ?? 0) <=> ($a['timestamp'] ?? 0));
+        }
+
+        return response()->json([
+            'success' => true,
+            'item' => $itemInfo,
+            'history' => $history,
+        ]);
+    }
+
+    /**
+     * Delete / Reduce Stock Item with Quantity & Audit Trail
+     */
+    public function deleteStockItem(Request $request)
+    {
+        abort_unless(auth()->check(), 401);
+
+        $request->validate([
+            'item_type' => 'required|in:part,new_phone,second_hand',
+            'item_id'   => 'required|integer',
+            'quantity'  => 'nullable|integer|min:1',
+            'reason'    => 'required|string|max:200',
+            'notes'     => 'nullable|string|max:500',
+        ]);
+
+        $companyId = $this->getCompanyId();
+        $user      = auth()->user();
+        $type      = $request->item_type;
+        $id        = (int) $request->item_id;
+        $reason    = trim($request->reason);
+        $notes     = trim($request->notes ?? '');
+        $fullReason = $reason . ($notes ? " — {$notes}" : "");
+
+        // OTP Security Gate: Only owner (store-admin/admin) can delete without OTP
+        $itemRef = "{$type}:{$id}";
+        if (!$this->isOwner()) {
+            $otpCode = $request->input('otp_code');
+            if (!$this->verifyOtp($companyId, 'delete_stock', $itemRef, $otpCode)) {
+                return response()->json([
+                    'success' => false,
+                    'otp_required' => true,
+                    'action' => 'delete_stock',
+                    'item_reference' => $itemRef,
+                    'message' => 'Store Owner OTP authorization is required to delete inventory stock.',
+                ], 403);
+            }
+        }
+
+        if ($type === 'part') {
+            $part = DB::table('ms_parts_inventory')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->first();
+
+            if (!$part) {
+                return response()->json(['success' => false, 'message' => 'Part item not found in stock.'], 404);
+            }
+
+            $currentStock = (int) $part->stock_qty;
+            $qtyToDelete  = (int) ($request->quantity ?? 1);
+
+            if ($currentStock > 0 && $qtyToDelete > $currentStock) {
+                return response()->json(['success' => false, 'message' => "Cannot delete {$qtyToDelete} units. Only {$currentStock} units available in stock."], 422);
+            }
+
+            $newStock = max(0, $currentStock - $qtyToDelete);
+
+            DB::transaction(function () use ($id, $newStock, $qtyToDelete, $fullReason, $user, $companyId) {
+                DB::table('ms_parts_inventory')->where('id', $id)->update([
+                    'stock_qty' => $newStock,
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('ms_parts_inventory_history')->insert([
+                    'part_id'       => $id,
+                    'type'          => 'deduction',
+                    'quantity'      => -$qtyToDelete,
+                    'balance_after' => $newStock,
+                    'reference'     => "Stock Deletion / Write-off: {$fullReason}",
+                    'user_id'       => $user->id,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+
+                DB::table('ms_stock_audit_log')->insert([
+                    'company_id'    => $companyId,
+                    'item_type'     => 'part',
+                    'item_id'       => $id,
+                    'action'        => 'deletion',
+                    'quantity'      => $qtyToDelete,
+                    'balance_after' => $newStock,
+                    'reason'        => $fullReason,
+                    'user_id'       => $user->id,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully removed {$qtyToDelete} unit(s) of '{$part->name}'. Remaining stock: {$newStock} units. Action logged by {$user->name}.",
+                'new_stock' => $newStock,
+                'item_id' => $id,
+                'item_type' => 'part',
+            ]);
+
+        } else {
+            // Phone: new_phone or second_hand
+            $device = DB::table('ms_mobile_devices')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->first();
+
+            if (!$device) {
+                return response()->json(['success' => false, 'message' => 'Mobile device not found in inventory.'], 404);
+            }
+
+            if ($device->status === 'sold') {
+                return response()->json(['success' => false, 'message' => 'Cannot delete a device that has already been sold. Please process a Sales Return if needed.'], 422);
+            }
+
+            DB::transaction(function () use ($id, $device, $type, $fullReason, $user, $companyId) {
+                DB::table('ms_mobile_devices')->where('id', $id)->update([
+                    'status'     => 'deleted',
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('ms_stock_audit_log')->insert([
+                    'company_id'    => $companyId,
+                    'item_type'     => $type,
+                    'item_id'       => $id,
+                    'action'        => 'deletion',
+                    'quantity'      => 1,
+                    'balance_after' => 0,
+                    'reason'        => $fullReason,
+                    'user_id'       => $user->id,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+            });
+
+            $devName = "{$device->brand} {$device->model} (IMEI: {$device->imei_1})";
+            return response()->json([
+                'success' => true,
+                'message' => "Device '{$devName}' removed from stock. Action logged by {$user->name}.",
+                'status'  => 'deleted',
+                'item_id' => $id,
+                'item_type' => $type,
+            ]);
+        }
+    }
+
+    /**
+     * Request OTP for destructive action authorization (sent to store owner's email)
+     */
+    public function requestOtp(Request $request)
+    {
+        abort_unless(auth()->check(), 401);
+
+        $request->validate([
+            'action'         => 'required|string|max:50',
+            'item_reference' => 'nullable|string|max:100',
+        ]);
+
+        $companyId     = $this->getCompanyId();
+        $action        = $request->action;
+        $itemReference = $request->item_reference ?? 'general';
+
+        if ($this->isOwner()) {
+            return response()->json([
+                'success'  => true,
+                'is_owner' => true,
+                'message'  => 'User has owner privileges. Direct authorization granted.',
+            ]);
+        }
+
+        $result = $this->generateOtp($companyId, $action, $itemReference, auth()->id());
+
+        return response()->json([
+            'success'      => true,
+            'is_owner'     => false,
+            'target_email' => $result['target_email'],
+            'message'      => "A 6-digit authorization OTP has been dispatched to store owner ({$result['target_email']}).",
+        ]);
+    }
+
+    /**
+     * Verify OTP code endpoint
+     */
+    public function verifyOtpEndpoint(Request $request)
+    {
+        abort_unless(auth()->check(), 401);
+
+        $request->validate([
+            'action'         => 'required|string|max:50',
+            'item_reference' => 'nullable|string|max:100',
+            'otp_code'       => 'required|string|max:10',
+        ]);
+
+        $companyId     = $this->getCompanyId();
+        $action        = $request->action;
+        $itemReference = $request->item_reference ?? 'general';
+        $code          = $request->otp_code;
+
+        if ($this->verifyOtp($companyId, $action, $itemReference, $code)) {
+            return response()->json(['success' => true, 'message' => 'OTP verified successfully.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Invalid or expired OTP code.'], 422);
+    }
+
+    /**
+     * Get active login sessions (Admin-only)
+     */
+    public function getLoginSessions(Request $request)
+    {
+        abort_unless($this->isOwner(), 403, 'Only Store Owner / Admin can view login session history.');
+
+        $companyId = $this->getCompanyId();
+
+        $sessions = DB::table('ms_login_sessions')
+            ->join('users', 'ms_login_sessions.user_id', '=', 'users.id')
+            ->where('ms_login_sessions.company_id', $companyId)
+            ->select(
+                'ms_login_sessions.*',
+                'users.name as user_name',
+                'users.email as user_email'
+            )
+            ->orderByDesc('ms_login_sessions.last_active_at')
+            ->limit(100)
+            ->get()
+            ->map(function ($s) {
+                $lastActive = $s->last_active_at ? Carbon::parse($s->last_active_at) : null;
+                $isOnline = $s->is_active && $lastActive && $lastActive->diffInMinutes(now()) <= 15;
+                $s->is_online = $isOnline;
+                $s->last_online_diff = $lastActive ? $lastActive->diffForHumans() : 'Never';
+                return $s;
+            });
+
+        return response()->json(['success' => true, 'sessions' => $sessions]);
+    }
+
+    /**
+     * Terminate / Kick an active login session (Admin-only)
+     */
+    public function terminateLoginSession(Request $request, $id)
+    {
+        abort_unless($this->isOwner(), 403, 'Only Store Owner / Admin can terminate login sessions.');
+
+        $companyId = $this->getCompanyId();
+
+        DB::table('ms_login_sessions')
+            ->where('company_id', $companyId)
+            ->where('id', $id)
+            ->update([
+                'is_active' => false,
+                'logged_out_at' => Carbon::now(),
+            ]);
+
+        return response()->json(['success' => true, 'message' => 'Device session terminated successfully.']);
+    }
+
+    /**
+     * Live search parts and accessories for Repair ticket parts consumption
+     */
+    public function searchParts(Request $request)
+    {
+        abort_unless(auth()->check(), 401);
+
+        $companyId = $this->getCompanyId();
+        $q = trim($request->input('q', ''));
+        $category = $request->input('category');
+
+        $query = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId);
+
+        if (!empty($category)) {
+            $query->where('category', $category);
+        }
+
+        if (!empty($q)) {
+            $query->where(function ($w) use ($q) {
+                $w->where('name', 'LIKE', "%{$q}%")
+                  ->orWhere('brand', 'LIKE', "%{$q}%")
+                  ->orWhere('compatible_model', 'LIKE', "%{$q}%")
+                  ->orWhere('display_type', 'LIKE', "%{$q}%")
+                  ->orWhere('category', 'LIKE', "%{$q}%");
+            });
+        }
+
+        $parts = $query->orderBy('stock_qty', 'desc')
+            ->orderBy('name', 'asc')
+            ->limit(50)
+            ->get([
+                'id', 'name', 'category', 'brand', 'compatible_model',
+                'display_type', 'description', 'unit_cost', 'selling_price', 'stock_qty', 'min_stock_alert'
+            ]);
+
+        return response()->json(['success' => true, 'parts' => $parts]);
     }
 }

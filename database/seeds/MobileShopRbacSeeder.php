@@ -142,6 +142,8 @@ class MobileShopRbacSeeder extends Seeder
             'read-mobileshop-new',
             'read-mobileshop-khata',
             'create-mobileshop-khata',
+            'read-mobileshop-procurement',
+            'create-mobileshop-procurement',
         ])->get());
 
         // ─────────────────────────────────────────────────────────────────────

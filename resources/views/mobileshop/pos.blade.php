@@ -297,7 +297,12 @@
                             <label class="form-label" style="font-size:11px;">Provider</label>
                             <select name="emi_provider_id" id="emiProviderId" class="form-control" style="font-size:12px;">
                                 @foreach($emiProviders as $ep)
-                                    <option value="{{ $ep->id }}">{{ $ep->name }} (Pool: ₹{{ number_format($ep->advance_balance, 2) }})</option>
+                                    <option value="{{ $ep->id }}"
+                                        data-flat="{{ $ep->processing_fee_flat ?? 0 }}"
+                                        data-pct="{{ $ep->processing_fee_pct ?? 0 }}"
+                                        data-tenure="{{ $ep->default_tenure_months ?? 12 }}">
+                                        {{ $ep->name }} (Pool: ₹{{ number_format($ep->advance_balance, 2) }})
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -310,6 +315,31 @@
                                 <label class="form-label" style="font-size:11px;">Down Payment (₹)</label>
                                 <input type="number" step="0.01" name="emi_downpayment" id="emiDownpayment" placeholder="0.00" class="form-control" style="font-size:12px; padding:6px 10px;">
                             </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div>
+                                <label class="form-label" style="font-size:11px;">Fee Type</label>
+                                <select name="emi_fee_type" id="emiFeeTypePos" class="form-control" style="font-size:12px; padding:6px 10px;">
+                                    <option value="flat">Flat (₹)</option>
+                                    <option value="percent">Percent (%)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label" style="font-size:11px;">Processing Fee</label>
+                                <input type="number" step="0.01" min="0" name="emi_processing_fee" id="emiProcessingFeePos" placeholder="0.00" class="form-control" style="font-size:12px; padding:6px 10px;">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size:11px;">Tenure (Months)</label>
+                            <select name="emi_tenure_months" id="emiTenurePos" class="form-control" style="font-size:12px;">
+                                <option value="3">3 Months</option>
+                                <option value="6">6 Months</option>
+                                <option value="9">9 Months</option>
+                                <option value="12" selected>12 Months</option>
+                                <option value="18">18 Months</option>
+                                <option value="24">24 Months</option>
+                                <option value="36">36 Months</option>
+                            </select>
                         </div>
                     </div>
 
@@ -415,10 +445,38 @@
             }
         });
 
+        function updateEmiDefaultsFromProvider() {
+            const epSelect = document.getElementById('emiProviderId');
+            if (!epSelect) return;
+            const opt = epSelect.options[epSelect.selectedIndex];
+            if (opt) {
+                const flat = parseFloat(opt.dataset.flat || 0);
+                const pct = parseFloat(opt.dataset.pct || 0);
+                const tenure = opt.dataset.tenure || '12';
+
+                if (pct > 0) {
+                    document.getElementById('emiFeeTypePos').value = 'percent';
+                    document.getElementById('emiProcessingFeePos').value = pct;
+                } else if (flat > 0) {
+                    document.getElementById('emiFeeTypePos').value = 'flat';
+                    document.getElementById('emiProcessingFeePos').value = flat;
+                }
+                if (tenure) {
+                    document.getElementById('emiTenurePos').value = tenure;
+                }
+            }
+        }
+
+        const emiProvSelect = document.getElementById('emiProviderId');
+        if (emiProvSelect) {
+            emiProvSelect.addEventListener('change', updateEmiDefaultsFromProvider);
+        }
+
         // Payment Mode Toggle
         paymentMode.addEventListener('change', function() {
             if (this.value === 'emi') {
                 emiFields.style.display = 'flex';
+                updateEmiDefaultsFromProvider();
             } else {
                 emiFields.style.display = 'none';
             }
@@ -615,7 +673,9 @@
                 successText.textContent += ' ⚠️ Note: Device (' + (d.brand || '') + ' ' + (d.model || '') + ' ' + (d.imei ? 'IMEI: ' + d.imei : '') + ') was not matched in stock. Please verify device.';
             }
 
-            if (typeof lucide !== 'undefined') {
+            if (window.refreshIcons) {
+                window.refreshIcons();
+            } else if (typeof lucide !== 'undefined' && typeof lucide.createIcons === 'function') {
                 lucide.createIcons();
             }
         })

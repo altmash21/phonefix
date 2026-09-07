@@ -278,7 +278,7 @@
 </div>
 
 <!-- Repayment Modal -->
-<div id="repayModal" style="display:none; position: fixed; inset: 0; z-index: 200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+<div id="repayModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
     <div class="card" style="max-width: 480px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; border:none; background:#fff;">
         <div style="background:#0F172A; color:#fff; padding:16px 20px; border-top-left-radius:14px; border-top-right-radius:14px; display:flex; justify-content:space-between; align-items:center;">
             <div style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px;">
@@ -340,7 +340,7 @@
 </div>
 
 <!-- Active Debtors Quick Drawer / Modal -->
-<div id="debtorsModal" style="display:none; position: fixed; inset: 0; z-index: 210; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+<div id="debtorsModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
     <div class="card" style="max-width: 720px; width: 100%; max-height: 90vh; display:flex; flex-direction:column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; border:none; background:#fff; overflow:hidden;">
         <!-- Header -->
         <div style="background:#854D0E; color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
@@ -484,9 +484,11 @@
         const btn = document.getElementById('khataDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
-        const range = window.getDateRangePreset(preset);
-        fromInput.value = range.from;
-        toInput.value = range.to;
+        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
+            ? window.getDateRangePreset(preset)
+            : { from: '', to: '' };
+        if (fromInput) fromInput.value = range.from || '';
+        if (toInput) toInput.value = range.to || '';
 
         filterKhataLedger();
     }
@@ -525,12 +527,10 @@
                 matchesDate = matchesDate && (rowDate <= toDate);
             }
 
-            if (matchesType && matchesCustomer && matchesSearch && matchesDate) {
-                row.dataset.mobiHidden = '0';
-                visibleCount++;
-            } else {
-                row.dataset.mobiHidden = '1';
-            }
+            const isVisible = matchesType && matchesCustomer && matchesSearch && matchesDate;
+            row.dataset.mobiHidden = isVisible ? '0' : '1';
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
         });
 
         // Filter mobile cards
@@ -547,10 +547,12 @@
             if (fromDate && cardDate) matchesDate = matchesDate && (cardDate >= fromDate);
             if (toDate && cardDate) matchesDate = matchesDate && (cardDate <= toDate);
 
-            card.dataset.mobiHidden = (matchesType && matchesCustomer && matchesSearch && matchesDate) ? '0' : '1';
+            const isCardVisible = matchesType && matchesCustomer && matchesSearch && matchesDate;
+            card.dataset.mobiHidden = isCardVisible ? '0' : '1';
+            card.style.display = isCardVisible ? '' : 'none';
         });
 
-        if (window.khataPager) {
+        if (window.khataPager && typeof window.khataPager.refresh === 'function') {
             window.khataPager.refresh();
         }
 
@@ -560,7 +562,7 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    function initKhataPage() {
         if (window.setupMobiTablePagination) {
             window.khataPager = window.setupMobiTablePagination({
                 tableId: 'khataMasterTable',
@@ -573,8 +575,15 @@
             });
         }
         filterKhataLedger();
-        if (window.lucide) window.lucide.createIcons();
-    });
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initKhataPage);
+    } else {
+        initKhataPage();
+    }
 </script>
 <style>
 @media (max-width: 768px) {
@@ -587,7 +596,8 @@
 
     function openRepayModal() {
         document.getElementById('repayModal').style.display = 'flex';
-        lucide.createIcons();
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     }
 
     function closeRepayModal() {

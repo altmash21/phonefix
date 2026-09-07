@@ -267,7 +267,7 @@
 </div>
 
 <!-- Interactive Update Repair & Consume Parts Modal -->
-<div id="updateRepairModal" style="display:none; position: fixed; inset: 0; z-index: 250; background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+<div id="updateRepairModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
     <div class="card" style="max-width: 620px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;">
         <div class="card-header" style="background:var(--brand-700); color:#fff;">
             <div>
@@ -304,15 +304,32 @@
                         Select any replacement screen, folder, battery or accessory from inventory. It will deduct from stock and add its price to the customer's repair bill.
                     </div>
 
-                    <div class="form-group" style="margin-bottom:10px;">
-                        <select name="consumed_part_id" id="modalPartSelect" class="form-control" onchange="calculateModalTotals()">
-                            <option value="" data-price="0">-- No Part Used / Service Only (₹0.00) --</option>
-                            @foreach($parts ?? [] as $p)
-                                <option value="{{ $p->id }}" data-price="{{ $p->selling_price }}" data-stock="{{ $p->stock_qty }}" {{ $p->stock_qty <= 0 ? 'disabled' : '' }}>
-                                    [{{ strtoupper(str_replace('_', ' ', $p->category)) }}] {{ $p->name }} ({{ $p->brand }} {{ $p->compatible_model }}) — ₹{{ number_format($p->selling_price, 2) }} {{ $p->stock_qty <= 0 ? '(OUT OF STOCK)' : '(Stock: ' . $p->stock_qty . ')' }}
-                                </option>
-                            @endforeach
-                        </select>
+                    <div class="repair-part-picker" style="position:relative; margin-bottom:12px;">
+                        <input type="hidden" name="consumed_part_id" id="modalPartId" value="">
+                        
+                        <div style="position:relative;">
+                            <input type="text" id="modalPartSearchInput" class="form-control" placeholder="🔍 Search spare part by name, brand, model, folder (OG/Normal)..." autocomplete="off" style="width:100%; padding-right:34px; font-size:13px;">
+                            <button type="button" id="modalPartClearBtn" onclick="clearSelectedRepairPart()" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748B; cursor:pointer; font-size:16px; padding:2px 6px;">✕</button>
+                        </div>
+
+                        <!-- Selected Part Preview Card -->
+                        <div id="modalSelectedPartCard" style="display:none; margin-top:8px; padding:10px 12px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; align-items:center; justify-content:space-between;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="badge badge-blue" id="selectedPartCatBadge" style="font-size:10px; font-weight:700;">PART</span>
+                                <div>
+                                    <div id="selectedPartTitle" style="font-weight:700; color:#1E3A8A; font-size:12.5px;"></div>
+                                    <div id="selectedPartSub" style="font-size:11px; color:#3B82F6;"></div>
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div id="selectedPartPrice" style="font-weight:800; font-size:13px; color:#1D4ED8;">₹0.00</div>
+                                <div id="selectedPartStock" style="font-size:10px; color:#64748B;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Live Search Results Dropdown -->
+                        <div id="modalPartSearchResults" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1050; background:#fff; border:1px solid #CBD5E1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.15); max-height:240px; overflow-y:auto; margin-top:4px;">
+                        </div>
                     </div>
 
                     <div style="display:flex; gap:12px; align-items:center;">
@@ -375,7 +392,8 @@ function toggleForm() {
     const card = document.getElementById('add-repair-card');
     card.style.display = card.style.display === 'none' || !card.style.display ? 'block' : 'none';
     if (card.style.display === 'block') card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    lucide.createIcons();
+    if (window.refreshIcons) window.refreshIcons();
+    else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 }
 
 function filterTable(val) {
@@ -399,18 +417,110 @@ function openUpdateModal(repair) {
     // Prefill fields
     document.getElementById('modalStatusSelect').value = repair.status || 'received';
     document.getElementById('modalLaborInput').value = repair.labor_charge || 0;
-    document.getElementById('modalPartSelect').value = '';
     document.getElementById('modalPartQty').value = 1;
     document.getElementById('modalPaymentInput').value = '';
+    clearSelectedRepairPart();
 
     calculateModalTotals();
 
     modal.style.display = 'flex';
-    lucide.createIcons();
+    if (window.refreshIcons) window.refreshIcons();
+    else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 }
 
 function closeUpdateModal() {
     document.getElementById('updateRepairModal').style.display = 'none';
+}
+
+let selectedRepairPart = null;
+let repairPartsSearchDebounce = null;
+
+function clearSelectedRepairPart() {
+    selectedRepairPart = null;
+    var idInput = document.getElementById('modalPartId');
+    if (idInput) idInput.value = '';
+    var searchInput = document.getElementById('modalPartSearchInput');
+    if (searchInput) searchInput.value = '';
+    var clearBtn = document.getElementById('modalPartClearBtn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    var card = document.getElementById('modalSelectedPartCard');
+    if (card) card.style.display = 'none';
+    var results = document.getElementById('modalPartSearchResults');
+    if (results) results.style.display = 'none';
+    calculateModalTotals();
+}
+
+function selectRepairPart(p) {
+    selectedRepairPart = p;
+    document.getElementById('modalPartId').value = p.id;
+    document.getElementById('modalPartSearchInput').value = p.name;
+    document.getElementById('modalPartClearBtn').style.display = 'block';
+
+    document.getElementById('selectedPartCatBadge').textContent = (p.category || 'PART').toUpperCase();
+    var quality = p.display_type ? ' [' + p.display_type + ']' : '';
+    document.getElementById('selectedPartTitle').textContent = p.name + quality;
+    var brandModel = [p.brand, p.compatible_model].filter(Boolean).join(' ');
+    document.getElementById('selectedPartSub').textContent = brandModel ? 'Fits: ' + brandModel : (p.description || '');
+    document.getElementById('selectedPartPrice').textContent = '₹' + parseFloat(p.selling_price || 0).toFixed(2);
+    document.getElementById('selectedPartStock').textContent = 'Stock: ' + p.stock_qty;
+
+    document.getElementById('modalSelectedPartCard').style.display = 'flex';
+    document.getElementById('modalPartSearchResults').style.display = 'none';
+
+    calculateModalTotals();
+}
+
+function performRepairPartsSearch(q) {
+    var resultsContainer = document.getElementById('modalPartSearchResults');
+    if (!resultsContainer) return;
+    resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#94A3B8; font-size:12px;">Searching inventory...</div>';
+    resultsContainer.style.display = 'block';
+
+    var searchUrl = (window.mobiShopRoutes && window.mobiShopRoutes.partsSearch) 
+        ? window.mobiShopRoutes.partsSearch + '?q=' + encodeURIComponent(q)
+        : "{{ route('mobileshop.parts.search') }}?q=" + encodeURIComponent(q);
+
+    fetch(searchUrl, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success || !data.parts || data.parts.length === 0) {
+            resultsContainer.innerHTML = '<div style="padding:14px; text-align:center; color:#94A3B8; font-size:12px;">No matching parts found in stock.</div>';
+            return;
+        }
+        var html = '';
+        data.parts.forEach(function(p) {
+            var outOfStock = p.stock_qty <= 0;
+            var qualityBadge = p.display_type ? '<span class="badge ' + (p.display_type === 'OG' ? 'badge-purple' : 'badge-blue') + '" style="font-size:9.5px; padding:1px 5px; margin-left:4px;">' + p.display_type + '</span>' : '';
+            var brandModel = [p.brand, p.compatible_model].filter(Boolean).join(' ');
+            var jsonStr = JSON.stringify(p).replace(/"/g, '&quot;');
+
+            html += '<div class="part-search-item" style="padding:9px 12px; border-bottom:1px solid #F1F5F9; cursor:' + (outOfStock ? 'not-allowed' : 'pointer') + '; opacity:' + (outOfStock ? '0.6' : '1') + '; display:flex; justify-content:space-between; align-items:center;" ' +
+                'onmouseover="if(!' + outOfStock + ') this.style.background=\'#F8FAFC\'" onmouseout="this.style.background=\'#fff\'" ' +
+                (outOfStock ? '' : 'onclick=\'selectRepairPart(' + jsonStr + ')\'') + '>' +
+                '<div>' +
+                    '<div style="font-weight:700; color:#0F172A; font-size:12.5px;">' + p.name + qualityBadge + '</div>' +
+                    '<div style="font-size:11px; color:#64748B; margin-top:2px;">' +
+                        '<span style="text-transform:uppercase; font-size:9.5px; font-weight:700; color:#6366F1;">[' + (p.category || 'PART') + ']</span> ' +
+                        (brandModel ? '• Fits: <strong>' + brandModel + '</strong>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<div style="text-align:right;">' +
+                    '<div style="font-weight:800; font-size:12.5px; color:#0F172A;">₹' + parseFloat(p.selling_price).toFixed(2) + '</div>' +
+                    '<div style="font-size:10px; color:' + (outOfStock ? '#DC2626' : '#16A34A') + '; font-weight:600;">' + (outOfStock ? 'Out of Stock' : 'Stock: ' + p.stock_qty) + '</div>' +
+                '</div>' +
+            '</div>';
+        });
+        resultsContainer.innerHTML = html;
+    })
+    .catch(function(err) {
+        console.error(err);
+        resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#EF4444; font-size:12px;">Failed to load inventory.</div>';
+    });
 }
 
 function calculateModalTotals() {
@@ -419,9 +529,7 @@ function calculateModalTotals() {
     const prevParts = parseFloat(currentTicket.parts_cost || 0);
     const prevAdvance = parseFloat(currentTicket.advance_paid || 0);
     
-    const partSelect = document.getElementById('modalPartSelect');
-    const selectedOption = partSelect.options[partSelect.selectedIndex];
-    const unitPrice = parseFloat(selectedOption?.getAttribute('data-price') || 0);
+    const unitPrice = parseFloat(selectedRepairPart?.selling_price || 0);
     const qty = parseInt(document.getElementById('modalPartQty').value || 1);
     const newPartCost = unitPrice * qty;
 
@@ -493,15 +601,17 @@ function renderFilteredRepairs() {
             matchSearch = rowText.includes(currentRepairSearch);
         }
 
-        row.dataset.mobiHidden = (matchStatus && matchSearch) ? '0' : '1';
+        const isVisible = matchStatus && matchSearch;
+        row.dataset.mobiHidden = isVisible ? '0' : '1';
+        row.style.display = isVisible ? '' : 'none';
     });
 
-    if (window.repairsPager) {
+    if (window.repairsPager && typeof window.repairsPager.refresh === 'function') {
         window.repairsPager.refresh();
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function initRepairsPage() {
     if (window.setupMobiTablePagination) {
         window.repairsPager = window.setupMobiTablePagination({
             tableId: 'repairTable',
@@ -512,8 +622,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     renderFilteredRepairs();
-    if (window.lucide) window.lucide.createIcons();
-});
+    if (window.refreshIcons) window.refreshIcons();
+    else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+
+    var searchInput = document.getElementById('modalPartSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            var q = e.target.value.trim();
+            clearTimeout(repairPartsSearchDebounce);
+            repairPartsSearchDebounce = setTimeout(function() {
+                performRepairPartsSearch(q);
+            }, 250);
+        });
+
+        searchInput.addEventListener('focus', function(e) {
+            performRepairPartsSearch(e.target.value.trim());
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        var picker = document.querySelector('.repair-part-picker');
+        var results = document.getElementById('modalPartSearchResults');
+        if (picker && results && !picker.contains(e.target)) {
+            results.style.display = 'none';
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRepairsPage);
+} else {
+    initRepairsPage();
+}
 
 // Close modal on escape key
 document.addEventListener('keydown', function(e) {

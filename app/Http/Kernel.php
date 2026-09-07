@@ -85,6 +85,7 @@ class Kernel extends HttpKernel
             'permission:read-admin-panel',
             'plan.limits',
             'module.subscription',
+            \App\Http\Middleware\TrackLoginSession::class,
         ],
 
         'import' => [

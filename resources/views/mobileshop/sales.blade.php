@@ -17,7 +17,10 @@
 @section('page-actions')
     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         @if($canCreatePhones ?? false)
-        <a href="{{ route('mobileshop.pos') }}" class="btn btn-primary btn-sm" style="min-height: 38px;">
+        <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-sm" style="min-height: 38px;">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">Register Sale</span><span class="mobile-btn-label">Sale</span>
+        </a>
+        <a href="{{ route('mobileshop.pos') }}" class="btn btn-outline btn-sm" style="min-height: 38px;">
             <i data-lucide="shopping-cart" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">New POS Sale</span><span class="mobile-btn-label">POS Sale</span>
         </a>
         @endif
@@ -36,6 +39,9 @@
             <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">Sell Pre-Owned</span><span class="mobile-btn-label">Pre-Owned</span>
         </a>
         @endif
+        <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm" style="min-height: 38px; color:#2563EB; border-color:#BFDBFE;">
+            <i data-lucide="building-2" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">EMI Ledger</span><span class="mobile-btn-label">EMI</span>
+        </a>
     </div>
 @endsection
 
@@ -172,6 +178,20 @@
         /* Show FAB on Mobile */
         .mobile-fab-container {
             display: block !important;
+        }
+
+        .acc-product-picker-grid {
+            grid-template-columns: 170px 1fr auto;
+        }
+        @media (max-width: 600px) {
+            .acc-product-picker-grid {
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
+            }
+            .acc-product-picker-grid button {
+                width: 100% !important;
+                justify-content: center;
+            }
         }
     }
 
@@ -668,7 +688,7 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- MODAL: Sales Return / Restock Void Confirmation -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div id="salesReturnModal" style="display:none; position: fixed; inset: 0; z-index: 210; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+    <div id="salesReturnModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
         <div class="card" style="max-width: 520px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; border:none; background:#fff;">
             <div style="background:#DC2626; color:#fff; padding:16px 20px; border-top-left-radius:14px; border-top-right-radius:14px; display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px;">
@@ -756,7 +776,7 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- MODAL: Quick Sell / Retail POS (Multi-Item Cart) -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div id="sellAccessoryModal" style="display:none; position: fixed; inset: 0; z-index: 200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+    <div id="sellAccessoryModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
         <div class="card" style="max-width: 720px; width: 100%; max-height: 92vh; overflow-y:auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; border:none; background:#fff;">
             <div style="background:#0F172A; color:#fff; padding:18px 22px; border-top-left-radius:14px; border-top-right-radius:14px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
@@ -809,7 +829,7 @@
                         <div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
                             <i data-lucide="search" style="width:14px;height:14px; color:#64748B;"></i> Select Product to Bill
                         </div>
-                        <div style="display:grid; grid-template-columns: 170px 1fr auto; gap:10px; align-items:flex-end;">
+                        <div class="acc-product-picker-grid" style="display:grid; gap:10px; align-items:flex-end;">
                             <!-- Category Filter Dropdown -->
                             <div>
                                 <label class="form-label" style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Category</label>
@@ -1007,13 +1027,15 @@
 
 @push('scripts')
 <script>
+    const companyId = {{ company_id() }};
     let cart = [];
     let userEditedPaidAmount = false;
     const allCatalogParts = {!! json_encode($partsList ?? []) !!};
 
     function openSellAccessoryModal(presetCategory = null) {
         document.getElementById('sellAccessoryModal').style.display = 'flex';
-        lucide.createIcons();
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         userEditedPaidAmount = false;
         const catSelect = document.getElementById('accCategoryFilter');
         if (presetCategory && catSelect) {
@@ -1476,13 +1498,14 @@
         recalcReturnRefund();
 
         if (type === 'accessory') {
-            form.action = `/1/mobileshop/accessories/${saleId}/void`;
+            form.action = `/${companyId}/mobileshop/accessories/${saleId}/void`;
         } else {
-            form.action = `/1/mobileshop/sales/${saleId}/void`;
+            form.action = `/${companyId}/mobileshop/sales/${saleId}/void`;
         }
 
         modal.style.display = 'flex';
-        lucide.createIcons();
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     }
 
     function recalcReturnRefund() {
@@ -1538,9 +1561,12 @@
         const btn = document.getElementById('salesDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
-        const range = window.getDateRangePreset(preset);
-        fromInput.value = range.from;
-        toInput.value = range.to;
+        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
+            ? window.getDateRangePreset(preset)
+            : { from: '', to: '' };
+
+        if (fromInput) fromInput.value = range.from || '';
+        if (toInput) toInput.value = range.to || '';
 
         filterSalesTable();
     }
@@ -1583,12 +1609,10 @@
                 matchesDate = matchesDate && (rowDate <= toDate);
             }
 
-            if (matchesCategory && matchesText && matchesDate) {
-                row.dataset.mobiHidden = '0';
-                visibleCount++;
-            } else {
-                row.dataset.mobiHidden = '1';
-            }
+            const isVisible = matchesCategory && matchesText && matchesDate;
+            row.dataset.mobiHidden = isVisible ? '0' : '1';
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
         });
 
         // 2. Filter Mobile Cards View
@@ -1608,14 +1632,12 @@
                 matchesDate = matchesDate && (cardDate <= toDate);
             }
 
-            if (matchesCategory && matchesText && matchesDate) {
-                card.dataset.mobiHidden = '0';
-            } else {
-                card.dataset.mobiHidden = '1';
-            }
+            const isCardVisible = matchesCategory && matchesText && matchesDate;
+            card.dataset.mobiHidden = isCardVisible ? '0' : '1';
+            card.style.display = isCardVisible ? '' : 'none';
         });
 
-        if (window.salesPager) {
+        if (window.salesPager && typeof window.salesPager.refresh === 'function') {
             window.salesPager.refresh();
         }
 
@@ -1654,7 +1676,6 @@
     }
 
     function closeFabMenu() {
-        const menu = document.getElementById('fabDropupMenu');
         const menuEl = document.getElementById('fabDropupMenu');
         const icon = document.getElementById('fabIcon');
         if (menuEl) menuEl.style.display = 'none';
@@ -1674,7 +1695,8 @@
             if (drawerTo && toInput) drawerTo.value = toInput.value;
 
             modal.style.display = 'flex';
-            if (window.lucide) window.lucide.createIcons();
+            if (window.refreshIcons) window.refreshIcons();
+            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
     }
 
@@ -1686,9 +1708,11 @@
     function setDrawerPreset(preset) {
         const drawerFrom = document.getElementById('drawerFromDate');
         const drawerTo = document.getElementById('drawerToDate');
-        const range = window.getDateRangePreset(preset);
-        if (drawerFrom) drawerFrom.value = range.from;
-        if (drawerTo) drawerTo.value = range.to;
+        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
+            ? window.getDateRangePreset(preset)
+            : { from: '', to: '' };
+        if (drawerFrom) drawerFrom.value = range.from || '';
+        if (drawerTo) drawerTo.value = range.to || '';
     }
 
     function applyDrawerFilter() {
@@ -1728,8 +1752,8 @@
         }
     });
 
-    // Initialize counts on page load
-    document.addEventListener('DOMContentLoaded', function() {
+    // Initialize counts and pagination on page load
+    function initSalesPage() {
         if (window.setupMobiTablePagination) {
             window.salesPager = window.setupMobiTablePagination({
                 tableId: 'salesTable',
@@ -1742,7 +1766,14 @@
             });
         }
         filterSalesTable();
-        if (window.lucide) window.lucide.createIcons();
-    });
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSalesPage);
+    } else {
+        initSalesPage();
+    }
 </script>
 @endpush

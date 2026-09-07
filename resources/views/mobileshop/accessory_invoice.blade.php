@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', ($sale->bill_type === 'non_gst' ? 'Estimate' : 'Tax Invoice') . ' #' . $sale->invoice_number . ' â€” MobiTrack')
+@section('title', ($sale->bill_type === 'non_gst' ? 'Estimate' : 'Tax Invoice') . ' #' . $sale->invoice_number . ' — MobiTrack')
 @section('page-title', $sale->bill_type === 'non_gst' ? 'Estimate & Retail Bill' : 'Accessory Tax Invoice & Receipt')
 
 @php
@@ -11,44 +11,44 @@
         $cleanPhone = '91' . $cleanPhone;
     }
 
-    $waMsg = "ðŸ§¾ *" . ($sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE RECEIPT') . "*\n";
-    $waMsg .= "ðŸª *{$storeName}*\n";
+    $waMsg = "🧾 *" . ($sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE RECEIPT') . "*\n";
+    $waMsg .= "🏬 *{$storeName}*\n";
     $waMsg .= "------------------------------------\n";
     $waMsg .= "Hello *" . ($sale->customer_name ?: 'Valued Customer') . "*,\n";
     $waMsg .= "Thank you for shopping with us! Here is your bill summary:\n\n";
-    $waMsg .= "ðŸ“Œ *Invoice #:* {$sale->invoice_number}\n";
-    $waMsg .= "ðŸ“… *Date:* " . date('d M Y, h:i A', strtotime($sale->created_at)) . "\n";
-    $waMsg .= "ðŸ“¦ *Items Purchased:*\n";
+    $waMsg .= "📌 *Invoice #:* {$sale->invoice_number}\n";
+    $waMsg .= "📅 *Date:* " . date('d M Y, h:i A', strtotime($sale->created_at)) . "\n";
+    $waMsg .= "📦 *Items Purchased:*\n";
     foreach ($items as $idx => $it) {
-        $waMsg .= "â€¢ {$it->part_name} (Qty: {$it->quantity}) - â‚¹" . number_format($it->line_total, 2) . "\n";
+        $waMsg .= "• {$it->part_name} (Qty: {$it->quantity}) - ₹" . number_format($it->line_total, 2) . "\n";
     }
     $waMsg .= "------------------------------------\n";
-    $waMsg .= "ðŸ’° *This Bill Total:* â‚¹" . number_format($sale->total_amount, 2) . "\n";
-    $waMsg .= "âœ… *Amount Paid Now:* â‚¹" . number_format($sale->amount_paid, 2) . "\n";
+    $waMsg .= "💰 *This Bill Total:* ₹" . number_format($sale->total_amount, 2) . "\n";
+    $waMsg .= "✅ *Amount Paid Now:* ₹" . number_format($sale->amount_paid, 2) . "\n";
     if ($sale->udhari_amount > 0) {
-        $waMsg .= "âš ï¸ *This Bill Due:* â‚¹" . number_format($sale->udhari_amount, 2) . "\n";
+        $waMsg .= "⚠️ *This Bill Due:* ₹" . number_format($sale->udhari_amount, 2) . "\n";
     }
 
     if (!empty($customerStatement) && count($customerStatement['ledger']) > 0) {
         $waMsg .= "\n------------------------------------\n";
-        $waMsg .= "ðŸ“Š *CUSTOMER ACCOUNT STATEMENT (KHATA)*\n";
+        $waMsg .= "📊 *CUSTOMER ACCOUNT STATEMENT (KHATA)*\n";
         $waMsg .= "------------------------------------\n";
         $waMsg .= "Date | Bill/Ref | Billed | Paid | Balance\n";
         foreach ($customerStatement['ledger'] as $entry) {
-            $b = $entry->billed > 0 ? "â‚¹" . number_format($entry->billed, 0) : "â€”";
-            $p = $entry->paid > 0 ? "â‚¹" . number_format($entry->paid, 0) : "â€”";
-            $bl = "â‚¹" . number_format($entry->balance_left, 0);
+            $b = $entry->billed > 0 ? "₹" . number_format($entry->billed, 0) : "—";
+            $p = $entry->paid > 0 ? "₹" . number_format($entry->paid, 0) : "—";
+            $bl = "₹" . number_format($entry->balance_left, 0);
             $waMsg .= "{$entry->date} | {$entry->ref_no} | {$b} | {$p} | {$bl}\n";
         }
         $waMsg .= "------------------------------------\n";
-        $waMsg .= "ðŸ’° *Total Billed:* â‚¹" . number_format($customerStatement['totalBilled'], 2) . "\n";
-        $waMsg .= "âœ… *Total Paid:*   â‚¹" . number_format($customerStatement['totalPaid'], 2) . "\n";
-        $waMsg .= "ðŸ”´ *TOTAL NET BALANCE DUE:* â‚¹" . number_format($customerStatement['closingBalance'], 2) . "\n";
+        $waMsg .= "💰 *Total Billed:* ₹" . number_format($customerStatement['totalBilled'], 2) . "\n";
+        $waMsg .= "✅ *Total Paid:*   ₹" . number_format($customerStatement['totalPaid'], 2) . "\n";
+        $waMsg .= "🔴 *TOTAL NET BALANCE DUE:* ₹" . number_format($customerStatement['closingBalance'], 2) . "\n";
     }
 
-    $waMsg .= "\nðŸ’³ *Mode:* " . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . "\n";
+    $waMsg .= "\n💳 *Mode:* " . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . "\n";
     $waMsg .= "Thank you for your business! Visit us again soon.\n";
-    $waMsg .= "ðŸ“ž *Store Support:* {$storePhone}";
+    $waMsg .= "📞 *Store Support:* {$storePhone}";
 
     $waInvoiceUrl = 'https://wa.me/' . $cleanPhone . '?text=' . rawurlencode($waMsg);
 @endphp
@@ -289,17 +289,17 @@
             @foreach($items as $it)
             <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:2px;">
                 <span>{{ $it->part_name }} (x{{ $it->quantity }})</span>
-                <span>â‚¹{{ number_format($it->line_total, 2) }}</span>
+                <span>₹{{ number_format($it->line_total, 2) }}</span>
             </div>
             @endforeach
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 6px; margin-top: 6px; font-size:10px;">
-            <div style="display:flex; justify-content:space-between;"><span>Taxable:</span><span>â‚¹{{ number_format($sale->subtotal - $sale->tax_amount, 2) }}</span></div>
-            <div style="display:flex; justify-content:space-between;"><span>GST (18%):</span><span>â‚¹{{ number_format($sale->tax_amount, 2) }}</span></div>
-            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>TOTAL:</span><span>â‚¹{{ number_format($sale->total_amount, 2) }}</span></div>
-            <div style="display:flex; justify-content:space-between; font-weight:700; color:#10B981;"><span>PAID:</span><span>â‚¹{{ number_format($sale->amount_paid, 2) }}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Taxable:</span><span>₹{{ number_format($sale->subtotal - $sale->tax_amount, 2) }}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>GST (18%):</span><span>₹{{ number_format($sale->tax_amount, 2) }}</span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>TOTAL:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; color:#10B981;"><span>PAID:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
             @if($sale->udhari_amount > 0)
-                <div style="display:flex; justify-content:space-between; font-weight:700; color:#DC2626;"><span>UDHARI DUE:</span><span>â‚¹{{ number_format($sale->udhari_amount, 2) }}</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:700; color:#DC2626;"><span>UDHARI DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
             @endif
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 8px; margin-top: 8px; text-align:center; font-size:9px; color:#6B7280; line-height:1.4;">

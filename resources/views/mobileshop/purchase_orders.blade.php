@@ -15,11 +15,16 @@
 <div class="stat-grid" style="margin-bottom: 24px;">
     @foreach($suppliers as $s)
         <div class="stat-card stat-pastel-purple">
-            <div class="stat-card-top">
+            <div class="stat-card-top" style="display:flex; justify-content:space-between; align-items:center;">
                 <span class="stat-card-tag">Supplier</span>
-                <button onclick="openPaymentModal({{ $s->id }}, '{{ addslashes($s->name) }}')" class="btn btn-primary btn-sm" style="padding: 3px 8px; font-size:11px;">
-                    + Advance
-                </button>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="openPaymentModal({{ $s->id }}, '{{ addslashes($s->name) }}')" class="btn btn-primary btn-sm" style="padding: 3px 8px; font-size:11px;">
+                        + Advance
+                    </button>
+                    <button onclick="openEditSupplierModal({{ $s->id }}, '{{ addslashes($s->name) }}', '{{ addslashes($s->phone ?? '') }}', '{{ addslashes($s->gstin ?? '') }}', '{{ addslashes($s->address ?? '') }}', {{ (float) ($s->credit_balance ?? 0) }})" class="btn btn-outline btn-sm" style="padding: 3px 8px; font-size:11px;">
+                        Edit
+                    </button>
+                </div>
             </div>
             <div style="font-size:17px; font-weight:800; color:#0F172A;">{{ $s->name }}</div>
             <div style="font-size:11px; color:var(--text-secondary); font-family:monospace; margin-top:2px;">GSTIN: {{ $s->gstin }}</div>
@@ -110,7 +115,7 @@
 </div>
 
 <!-- Supplier Payment Modal -->
-<div id="paymentModal" style="display:none; position: fixed; inset: 0; z-index: 200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+<div id="paymentModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
     <div class="card" style="max-width: 460px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
         <div class="card-header">
             <div class="card-title">Record Supplier Payment</div>
@@ -156,6 +161,61 @@
     </div>
 </div>
 
+<!-- Edit Supplier Details & Wallet Modal -->
+<div class="modal" id="editSupplierModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+    <div class="modal-dialog" style="max-width: 440px; width: 100%; margin:20px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.25);">
+        <div class="modal-header" style="background:#0F766E; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px;">
+                <i data-lucide="truck" style="width:17px;height:17px;"></i> Edit Supplier & Wallet
+            </div>
+            <button type="button" onclick="closeEditSupplierModal()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:20px; line-height:1;">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 18px;">
+            <form action="{{ route('mobileshop.supplier.update') }}" method="POST">
+                @csrf
+                <input type="hidden" name="supplier_id" id="editSupplierId">
+
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label class="form-label required" style="font-weight:700; font-size:12px;">Supplier Name</label>
+                    <input type="text" name="name" id="editSupplierName" required class="form-control" style="font-size:13px;">
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:700; font-size:12px;">Phone</label>
+                        <input type="text" name="phone" id="editSupplierPhone" class="form-control" style="font-size:13px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:700; font-size:12px;">GSTIN</label>
+                        <input type="text" name="gstin" id="editSupplierGstin" class="form-control" style="font-size:13px;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label class="form-label" style="font-weight:700; font-size:12px;">Address</label>
+                    <input type="text" name="address" id="editSupplierAddress" class="form-control" style="font-size:13px;">
+                </div>
+
+                <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:12px; margin-bottom:12px;">
+                    <label class="form-label" style="font-weight:700; font-size:12px; color:#166534;">Prepaid Advance Wallet (₹)</label>
+                    <input type="number" step="0.01" min="0" name="credit_balance" id="editSupplierCredit" class="form-control" style="font-weight:800; font-size:16px; color:#15803D;">
+                    <div style="font-size:10.5px; color:#166534; margin-top:4px;">Direct balance modification records an audit transaction in the supplier credit ledger.</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label" style="font-weight:700; font-size:12px;">Adjustment Reason / Note</label>
+                    <input type="text" name="adjustment_notes" class="form-control" placeholder="e.g. Ledger reconciliation" style="font-size:13px;">
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--card-border);">
+                    <button type="button" onclick="closeEditSupplierModal()" class="btn btn-outline btn-sm">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:#0F766E;">Update Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -187,6 +247,7 @@
         document.getElementById('paySupplierName').textContent = supplierName + ' (Direct Advance to Wallet)';
         document.getElementById('payAmount').value = '';
         document.getElementById('paymentModal').style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
     }
 
     function openPaymentForPO(supplierId, supplierName, poId, due) {
@@ -195,10 +256,26 @@
         document.getElementById('paySupplierName').textContent = supplierName + ' (PO #' + poId + ' — Due: ₹' + due.toFixed(2) + ')';
         document.getElementById('payAmount').value = due.toFixed(2);
         document.getElementById('paymentModal').style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
     }
 
     function closePaymentModal() {
         document.getElementById('paymentModal').style.display = 'none';
+    }
+
+    function openEditSupplierModal(id, name, phone, gstin, address, balance) {
+        document.getElementById('editSupplierId').value = id;
+        document.getElementById('editSupplierName').value = name;
+        document.getElementById('editSupplierPhone').value = phone || '';
+        document.getElementById('editSupplierGstin').value = gstin || '';
+        document.getElementById('editSupplierAddress').value = address || '';
+        document.getElementById('editSupplierCredit').value = balance || 0;
+        document.getElementById('editSupplierModal').style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeEditSupplierModal() {
+        document.getElementById('editSupplierModal').style.display = 'none';
     }
 
 </script>

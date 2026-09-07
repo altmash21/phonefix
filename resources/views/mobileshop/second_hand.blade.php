@@ -256,7 +256,7 @@
 </div>
 
 <!-- MODAL 1: Sell Pre-Owned Phone at POS Counter -->
-<div id="sellModal" style="display:none; position: fixed; inset: 0; z-index: 200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+<div id="sellModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
     <div class="card" style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px;">
         <div class="card-header" style="border-bottom:1px solid var(--card-border); padding:14px 18px;">
             <div class="card-title">Sell Pre-Owned Device</div>
@@ -342,7 +342,7 @@
 </div>
 
 <!-- MODAL 2: Intake / Register Buyback (With Photo Upload) -->
-<div id="buybackModal" style="display:none; position: fixed; inset: 0; z-index: 200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+<div id="buybackModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
     <div class="card" style="max-width: 540px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px;">
         <div class="card-header" style="border-bottom:1px solid var(--card-border); padding:14px 18px;">
             <div class="card-title">Customer Device Buyback Intake</div>
@@ -561,7 +561,9 @@
             let matchGrade = (currentShGrade === 'all') || (grade === currentShGrade);
             let matchSearch = !currentShSearch || searchTarget.includes(currentShSearch);
 
-            row.dataset.mobiHidden = (matchStatus && matchGrade && matchSearch) ? '0' : '1';
+            const isVisible = matchStatus && matchGrade && matchSearch;
+            row.dataset.mobiHidden = isVisible ? '0' : '1';
+            row.style.display = isVisible ? '' : 'none';
         });
 
         // Mobile Cards
@@ -575,15 +577,17 @@
             let matchGrade = (currentShGrade === 'all') || (grade === currentShGrade);
             let matchSearch = !currentShSearch || searchTarget.includes(currentShSearch);
 
-            card.dataset.mobiHidden = (matchStatus && matchGrade && matchSearch) ? '0' : '1';
+            const isCardVisible = matchStatus && matchGrade && matchSearch;
+            card.dataset.mobiHidden = isCardVisible ? '0' : '1';
+            card.style.display = isCardVisible ? '' : 'none';
         });
 
-        if (window.shPager) {
+        if (window.shPager && typeof window.shPager.refresh === 'function') {
             window.shPager.refresh();
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    function initShPage() {
         if (window.setupMobiTablePagination) {
             window.shPager = window.setupMobiTablePagination({
                 tableId: 'secondHandTable',
@@ -596,8 +600,15 @@
             });
         }
         renderFilteredSh();
-        if (window.lucide) window.lucide.createIcons();
-    });
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initShPage);
+    } else {
+        initShPage();
+    }
 
     function previewSelectedPhoto(input, imgId, boxId) {
         if (input.files && input.files[0]) {

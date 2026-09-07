@@ -75,6 +75,49 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('masters', 'MobileShopController@masters')
         ->middleware('permission:read-mobileshop-masters')
         ->name('masters');
+    Route::post('masters/user/{id}/update', 'MobileShopController@updateUserCredentials')
+        ->middleware('permission:read-mobileshop-masters')
+        ->name('masters.user.update');
+
+    // ── LOGIN SESSION MANAGEMENT (Admin only) ──
+    Route::get('sessions', 'MobileShopController@getLoginSessions')
+        ->middleware('permission:read-mobileshop-masters')
+        ->name('sessions.index');
+    Route::post('sessions/{id}/terminate', 'MobileShopController@terminateLoginSession')
+        ->middleware('permission:read-mobileshop-masters')
+        ->name('sessions.terminate');
+
+    // ── OTP VERIFICATION (Security) ──
+    Route::post('otp/request', 'MobileShopController@requestOtp')
+        ->name('otp.request');
+    Route::post('otp/verify', 'MobileShopController@verifyOtpEndpoint')
+        ->name('otp.verify');
+
+    // ── FULL-PAGE REGISTRATION (Sale / Purchase / EMI Ledger) ──
+    Route::get('purchase/create', 'MobileShopController@purchaseCreate')
+        ->middleware('permission:read-mobileshop-purchase')
+        ->name('purchase.create');
+    Route::post('purchase/store-bulk', 'MobileShopController@storeBulkPurchase')
+        ->middleware('permission:create-purchase-phones|create-purchase-secondhand|create-purchase-accessories|create-purchase-covers')
+        ->name('purchase.store_bulk');
+    Route::get('sales/create', 'MobileShopController@saleCreate')
+        ->middleware('permission:read-mobileshop-sales')
+        ->name('sales.create');
+    Route::post('sales/store-multi', 'MobileShopController@storeMultiSale')
+        ->middleware('permission:create-sale-phones|create-sale-secondhand|create-sale-accessories|create-sale-covers')
+        ->name('sales.store_multi');
+    Route::get('emi-ledger', 'MobileShopController@emiLedger')
+        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
+        ->name('emi.ledger');
+    Route::post('emi-ledger/provider', 'MobileShopController@storeEmiProvider')
+        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
+        ->name('emi.provider.store');
+    Route::post('emi-ledger/deposit', 'MobileShopController@recordEmiDeposit')
+        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
+        ->name('emi.deposit');
+    Route::post('emi-ledger/provider/update', 'MobileShopController@updateEmiProvider')
+        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
+        ->name('emi.provider.update');
 
     // ── PURCHASE ACTIONS (niche-gated) ──
     Route::post('purchase/store', 'MobileShopController@storePurchase')
@@ -94,6 +137,14 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('stock/{id}/update', 'MobileShopController@updateStock')
         ->middleware('permission:manage-stock-phones|manage-stock-secondhand|manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
         ->name('stock.update');
+
+    Route::get('stock/history/{type}/{id}', 'MobileShopController@getStockHistory')
+        ->middleware('permission:read-mobileshop-stock|read-mobileshop-accessories|read-mobileshop-reports')
+        ->name('stock.history');
+
+    Route::post('stock/delete', 'MobileShopController@deleteStockItem')
+        ->middleware('permission:manage-stock-phones|manage-stock-secondhand|manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
+        ->name('stock.delete');
 
     // ── INVOICE / RECEIPT VIEWER & PDF EXPORT ──
     Route::get('invoice/{id}', 'MobileShopController@invoice')
@@ -118,10 +169,6 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('reports/export/gst', 'MobileShopController@exportGstCsv')
         ->middleware('permission:read-mobileshop-reports|read-reports-financial')
         ->name('reports.export.gst');
-
-    Route::post('reports/khata/collect', 'MobileShopController@collectKhata')
-        ->middleware('permission:read-reports-khata')
-        ->name('reports.khata.collect');
 
     // ── VOID (Admin Only) ──
     Route::post('sales/{id}/void', 'MobileShopController@voidMobileSale')
@@ -153,9 +200,7 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('second-hand/sale', 'MobileShopController@sellSecondHand')
         ->middleware('permission:sell-mobileshop-secondhand')
         ->name('second_hand.sale');
-    Route::get('accessories', 'MobileShopController@accessories')
-        ->middleware('permission:read-mobileshop-accessories')
-        ->name('accessories');
+
     Route::post('accessories/store', 'MobileShopController@storePart')
         ->middleware('permission:create-mobileshop-accessories')
         ->name('accessories.store');
@@ -204,6 +249,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('purchase-orders/payment', 'MobileShopController@recordSupplierPayment')
         ->middleware('permission:create-mobileshop-procurement')
         ->name('purchase_orders.payment');
+    Route::post('supplier/update', 'MobileShopController@updateSupplier')
+        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement')
+        ->name('supplier.update');
     Route::get('repairs', 'MobileShopController@repairs')
         ->middleware('permission:read-mobileshop-repairs')
         ->name('repairs');
@@ -213,4 +261,8 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('repairs/{id}/update', 'MobileShopController@updateRepairStatus')
         ->middleware('permission:update-mobileshop-repairs')
         ->name('repairs.update');
+
+    Route::get('parts/search', 'MobileShopController@searchParts')
+        ->middleware('permission:read-mobileshop-repairs|read-mobileshop-accessories')
+        ->name('parts.search');
 });

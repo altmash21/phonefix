@@ -1111,15 +1111,15 @@ function filterSalesLedgerTable() {
         const matchesPay  = (currentLedgerPay === 'all')  || (rowMode === currentLedgerPay);
         const matchesSearch = !q || rowText.includes(q);
 
-        if (matchesType && matchesPay && matchesSearch) {
-            row.dataset.mobiHidden = '0';
+        const isVisible = matchesType && matchesPay && matchesSearch;
+        row.dataset.mobiHidden = isVisible ? '0' : '1';
+        row.style.display = isVisible ? '' : 'none';
+        if (isVisible) {
             visibleCount++;
-        } else {
-            row.dataset.mobiHidden = '1';
         }
     });
 
-    if (window.reportsLedgerPager) {
+    if (window.reportsLedgerPager && typeof window.reportsLedgerPager.refresh === 'function') {
         window.reportsLedgerPager.refresh();
     }
 

@@ -17,7 +17,10 @@
 @section('page-actions')
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
         @if($canAddPhones ?? false)
-        <a href="{{ route('mobileshop.new_mobiles') }}" class="btn btn-primary btn-sm">
+        <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-primary btn-sm">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Register Purchase (Bulk)
+        </a>
+        <a href="{{ route('mobileshop.new_mobiles') }}" class="btn btn-outline btn-sm">
             <i data-lucide="smartphone" style="width:14px;height:14px;"></i> Add Phone Stock
         </a>
         @endif
@@ -31,12 +34,17 @@
             <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Restock Parts
         </button>
         @endif
-        @if($isAdmin ?? false)
+        @if(($isAdmin ?? false) || ($canAddPhones ?? false) || auth()->user()->hasRole('sales-staff') || auth()->user()->can('read-mobileshop-procurement'))
         <a href="{{ route('mobileshop.purchase_orders') }}" class="btn btn-outline btn-sm">
-            <i data-lucide="truck" style="width:14px;height:14px;"></i> Supplier POs
+            <i data-lucide="truck" style="width:14px;height:14px;"></i> Supplier POs & Ledgers
+        </a>
+        <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm" style="color:#2563EB; border-color:#BFDBFE;">
+            <i data-lucide="building-2" style="width:14px;height:14px;"></i> EMI Ledger
         </a>
         @endif
     </div>
+@endsection
+
 @push('styles')
 <style>
     /* Safe container wrapper */
@@ -571,7 +579,7 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- MODAL: View Purchased Invoice Items -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div id="viewPurchaseItemsModal" style="display:none; position: fixed; inset: 0; z-index: 250; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+    <div id="viewPurchaseItemsModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
         <div class="card" style="max-width: 900px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; display:flex; flex-direction:column; overflow:hidden; border-radius:14px;">
             <div class="card-header" style="background:var(--brand-700); color:#fff; padding:16px 20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
@@ -659,8 +667,8 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- MODAL: Bulk Restock & AI Invoice OCR Inflow -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div id="bulkRestockModal" style="display:none; position: fixed; inset: 0; z-index: 240; background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
-        <div class="card" style="max-width: 1060px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 92vh; display:flex; flex-direction:column; overflow:hidden;">
+    <div id="bulkRestockModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+        <div class="card" style="max-width: 1300px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 94vh; display:flex; flex-direction:column; overflow:hidden;">
             <div class="card-header" style="background:var(--brand-700); color:#fff;">
                 <div>
                     <div class="card-title" style="color:#fff; display:flex; align-items:center; gap:8px;">
@@ -740,19 +748,24 @@
                             </button>
                         </div>
 
-                        <div style="max-height: 340px; overflow-y: auto;">
-                            <table class="data-table" id="bulkTable" style="margin:0; border-radius:0; border:none;">
+                        <div style="max-height: 380px; overflow-x: auto; overflow-y: auto;">
+                            <table class="data-table" id="bulkTable" style="margin:0; border-radius:0; border:none; min-width:1200px;">
                                 <thead style="position:sticky; top:0; background:#F8FAFC; z-index:5;">
                                     <tr>
-                                        <th style="width:30px;">#</th>
-                                        <th>Item Name & Description</th>
-                                        <th style="width:150px;">Category</th>
-                                        <th style="width:85px; text-align:center;">Qty</th>
-                                        <th style="width:110px; text-align:right;">Cost (₹)</th>
-                                        <th style="width:110px; text-align:right;">Sell Price (₹)</th>
-                                        <th style="width:75px; text-align:center;">🎁 Gift</th>
-                                        <th style="width:100px; text-align:right;">Total (₹)</th>
-                                        <th style="width:40px; text-align:center;">✕</th>
+                                        <th style="width:25px;">#</th>
+                                        <th style="min-width:150px;">Item / Part Name</th>
+                                        <th style="min-width:130px;">Category</th>
+                                        <th style="min-width:105px;">Fits Brand</th>
+                                        <th style="min-width:105px;">Fits Model</th>
+                                        <th style="min-width:90px;">Folder Quality</th>
+                                        <th style="min-width:120px;">Description</th>
+                                        <th style="width:65px; text-align:center;">Qty</th>
+                                        <th style="width:65px; text-align:center;">Low Alert</th>
+                                        <th style="width:85px; text-align:right;">Cost (₹)</th>
+                                        <th style="width:90px; text-align:right;">Sell (₹)</th>
+                                        <th style="width:55px; text-align:center;">🎁 Gift</th>
+                                        <th style="width:85px; text-align:right;">Total (₹)</th>
+                                        <th style="width:35px; text-align:center;">✕</th>
                                     </tr>
                                 </thead>
                                 <tbody id="bulkTableBody">
@@ -791,6 +804,7 @@
 
 @push('scripts')
 <script>
+    const companyId = {{ company_id() }};
     const catalogParts = {!! json_encode($parts ?? []) !!};
     let catalogCategories = {!! json_encode($categories ?? []) !!};
     if (!catalogCategories || catalogCategories.length === 0) {
@@ -811,7 +825,8 @@
 
     function openBulkRestockModal() {
         document.getElementById('bulkRestockModal').style.display = 'flex';
-        lucide.createIcons();
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         if (document.querySelectorAll('#bulkTableBody tr').length === 0) {
             addBulkRow();
             addBulkRow();
@@ -846,6 +861,11 @@
         });
 
         const nameVal = escapeHtml(itemData?.name || '');
+        const brandVal = escapeHtml(itemData?.brand || '');
+        const modelVal = escapeHtml(itemData?.compatible_model || '');
+        const folderType = (itemData?.display_type || 'Normal').toUpperCase() === 'OG' ? 'OG' : 'Normal';
+        const descVal = escapeHtml(itemData?.description || '');
+        const alertVal = itemData?.min_stock_alert !== undefined ? itemData.min_stock_alert : 3;
         const qtyVal = itemData?.qty || 1;
         const costVal = itemData?.unit_cost ? parseFloat(itemData.unit_cost).toFixed(2) : '0.00';
         const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2);
@@ -855,19 +875,37 @@
         tr.innerHTML = `
             <td style="font-size:11px; color:#94A3B8; text-align:center; font-weight:700;">${idx}</td>
             <td>
-                <input type="text" name="items[${idx}][name]" value="${nameVal}" list="partList_${idx}" placeholder="Type part name or choose from stock..." required class="form-control" style="font-size:12px; font-weight:700;" oninput="onBulkPartNameInput(${idx}, this.value)">
+                <input type="text" name="items[${idx}][name]" value="${nameVal}" list="partList_${idx}" placeholder="e.g. Display Folder / 9D Glass" required class="form-control" style="font-size:12px; font-weight:700;" oninput="onBulkPartNameInput(${idx}, this.value)">
                 <datalist id="partList_${idx}">
                     ${partDatalist}
                 </datalist>
                 <input type="hidden" name="items[${idx}][part_id]" id="partId_${idx}" value="${itemData?.part_id || ''}">
             </td>
             <td>
-                <select name="items[${idx}][category]" id="catSelect_${idx}" class="form-control" style="font-size:12px; font-weight:600;">
+                <select name="items[${idx}][category]" id="catSelect_${idx}" class="form-control" style="font-size:11.5px; font-weight:600;">
                     ${catOptions}
                 </select>
             </td>
             <td>
+                <input type="text" name="items[${idx}][brand]" id="brand_${idx}" value="${brandVal}" placeholder="e.g. Samsung" class="form-control" style="font-size:11.5px;">
+            </td>
+            <td>
+                <input type="text" name="items[${idx}][compatible_model]" id="model_${idx}" value="${modelVal}" placeholder="e.g. Galaxy A14" class="form-control" style="font-size:11.5px;">
+            </td>
+            <td>
+                <select name="items[${idx}][display_type]" id="displayType_${idx}" class="form-control" style="font-size:11.5px; font-weight:700;">
+                    <option value="Normal" ${folderType === 'Normal' ? 'selected' : ''}>Normal</option>
+                    <option value="OG" ${folderType === 'OG' ? 'selected' : ''}>OG</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" name="items[${idx}][description]" id="desc_${idx}" value="${descVal}" placeholder="Specs, quality..." class="form-control" style="font-size:11px;">
+            </td>
+            <td>
                 <input type="number" name="items[${idx}][qty]" id="qty_${idx}" value="${qtyVal}" min="1" required class="form-control" style="text-align:center; font-weight:800; font-size:12px;" oninput="updateBulkRowTotal(${idx})">
+            </td>
+            <td>
+                <input type="number" name="items[${idx}][min_stock_alert]" id="alert_${idx}" value="${alertVal}" min="0" placeholder="3" class="form-control" style="text-align:center; font-weight:600; font-size:11px;" title="Low stock warning threshold">
             </td>
             <td>
                 <input type="number" step="0.01" name="items[${idx}][unit_cost]" id="cost_${idx}" value="${costVal}" min="0" required class="form-control" style="text-align:right; font-weight:700; font-size:12px;" oninput="updateBulkRowTotal(${idx})">
@@ -876,19 +914,20 @@
                 <input type="number" step="0.01" name="items[${idx}][selling_price]" id="price_${idx}" value="${priceVal}" min="0" class="form-control" style="text-align:right; font-weight:700; font-size:12px; color:var(--lama-green-dark);">
             </td>
             <td style="text-align:center;">
-                <input type="checkbox" name="items[${idx}][is_gift_eligible]" value="1" ${isGiftChecked} style="width:15px; height:15px; accent-color:var(--brand-600);">
+                <input type="checkbox" name="items[${idx}][is_gift_eligible]" value="1" ${isGiftChecked} style="width:14px; height:14px; accent-color:var(--brand-600);">
             </td>
-            <td style="text-align:right; font-weight:800; color:#0F172A; font-size:13px;" id="lineTotal_${idx}">
+            <td style="text-align:right; font-weight:800; color:#0F172A; font-size:12.5px;" id="lineTotal_${idx}">
                 ₹${lineTotal}
             </td>
             <td style="text-align:center;">
-                <button type="button" class="btn-icon" style="color:#DC2626; width:26px; height:26px;" onclick="removeBulkRow(${idx})" title="Remove Line">✕</button>
+                <button type="button" class="btn-icon" style="color:#DC2626; width:24px; height:24px;" onclick="removeBulkRow(${idx})" title="Remove Line">✕</button>
             </td>
         `;
 
         tbody.appendChild(tr);
         updateBulkSummary();
-        lucide.createIcons();
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     }
 
     function removeBulkRow(idx) {
@@ -904,6 +943,11 @@
         if (match) {
             document.getElementById(`partId_${idx}`).value = match.id;
             document.getElementById(`catSelect_${idx}`).value = match.category;
+            if (match.brand) document.getElementById(`brand_${idx}`).value = match.brand;
+            if (match.compatible_model) document.getElementById(`model_${idx}`).value = match.compatible_model;
+            if (match.display_type) document.getElementById(`displayType_${idx}`).value = match.display_type;
+            if (match.description) document.getElementById(`desc_${idx}`).value = match.description;
+            if (match.min_stock_alert !== undefined && match.min_stock_alert !== null) document.getElementById(`alert_${idx}`).value = match.min_stock_alert;
             document.getElementById(`cost_${idx}`).value = parseFloat(match.unit_cost).toFixed(2);
             document.getElementById(`price_${idx}`).value = parseFloat(match.selling_price).toFixed(2);
             updateBulkRowTotal(idx);
@@ -1103,9 +1147,11 @@
         const btn = document.getElementById('purchaseDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
-        const range = window.getDateRangePreset(preset);
-        fromInput.value = range.from;
-        toInput.value = range.to;
+        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
+            ? window.getDateRangePreset(preset)
+            : { from: '', to: '' };
+        if (fromInput) fromInput.value = range.from || '';
+        if (toInput) toInput.value = range.to || '';
 
         filterPurchaseTables();
     }
@@ -1192,11 +1238,12 @@
 
         const printLink = document.getElementById('lnkModalPrintInvoice');
         if (printLink && invoice.id) {
-            printLink.href = `/1/mobileshop/invoice/purchase/${invoice.id}`;
+            printLink.href = `/${companyId}/mobileshop/invoice/purchase/${invoice.id}`;
         }
 
         document.getElementById('viewPurchaseItemsModal').style.display = 'flex';
-        lucide.createIcons();
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     }
 
     function closeViewPurchaseModal() {
@@ -1272,7 +1319,8 @@
         menu.style.display = isOpen ? 'none' : 'flex';
         if (icon) {
             icon.setAttribute('data-lucide', isOpen ? 'plus' : 'x');
-            lucide.createIcons();
+            if (window.refreshIcons) window.refreshIcons();
+            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
     }
 
@@ -1284,7 +1332,8 @@
             const icon = document.getElementById('purchaseFabIcon');
             if (icon) {
                 icon.setAttribute('data-lucide', 'plus');
-                lucide.createIcons();
+                if (window.refreshIcons) window.refreshIcons();
+                else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             }
         }
     });
@@ -1329,12 +1378,10 @@
                 matchesDate = matchesDate && (rowDate <= toDate);
             }
 
-            if (matchesType && matchesText && matchesDate) {
-                row.dataset.mobiHidden = '0';
-                visibleCount++;
-            } else {
-                row.dataset.mobiHidden = '1';
-            }
+            const isVisible = matchesType && matchesText && matchesDate;
+            row.dataset.mobiHidden = isVisible ? '0' : '1';
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
         });
 
         // Mobile Flat Cards
@@ -1354,10 +1401,12 @@
                 matchesDate = matchesDate && (rowDate <= toDate);
             }
 
-            row.dataset.mobiHidden = (matchesType && matchesText && matchesDate) ? '0' : '1';
+            const isCardVisible = matchesType && matchesText && matchesDate;
+            row.dataset.mobiHidden = isCardVisible ? '0' : '1';
+            row.style.display = isCardVisible ? '' : 'none';
         });
 
-        if (window.purchaseInvoicesPager) {
+        if (window.purchaseInvoicesPager && typeof window.purchaseInvoicesPager.refresh === 'function') {
             window.purchaseInvoicesPager.refresh();
         }
 
@@ -1367,7 +1416,7 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    function initPurchasePage() {
         if (window.setupMobiTablePagination) {
             window.purchaseInvoicesPager = window.setupMobiTablePagination({
                 tableId: 'purchaseInvoicesTable',
@@ -1380,7 +1429,19 @@
             });
         }
         filterPurchaseTables();
-        if (window.lucide) window.lucide.createIcons();
-    });
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'restock' || urlParams.get('restock') === '1') {
+            openBulkRestockModal();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPurchasePage);
+    } else {
+        initPurchasePage();
+    }
 </script>
 @endpush

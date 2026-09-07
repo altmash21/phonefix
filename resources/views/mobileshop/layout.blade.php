@@ -2,8 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0F766E">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'MobiTrack — Mobile Shop ERP')</title>
+
+    <script>
+        window.mobiShopRoutes = {
+            otpRequest: "{{ route('mobileshop.otp.request') }}",
+            otpVerify: "{{ route('mobileshop.otp.verify') }}",
+            partsSearch: "{{ route('mobileshop.parts.search') }}"
+        };
+    </script>
 
     <!-- Google Fonts: Inter & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,8 +27,9 @@
     <script>
         window.__lucideLoaded = false;
         window.__lucideFallback = function () {
-            // If unpkg fails, inject a minimal set of SVG icons used across the app
-            if (window.__lucideLoaded) return;
+            // If the CDN lucide script is unavailable, render icons from the
+            // inline fallback set. Runs only when real lucide never loaded.
+            if (window.lucide && typeof window.lucide.createIcons === 'function' && window.__lucideLoaded) return;
             window.lucide = window.lucide || {};
             window.lucide.createIcons = function (options) {
                 var selector = options && options.selector ? options.selector : '[data-lucide]';
@@ -57,7 +71,16 @@
         };
         window.__lucideFallback();
     </script>
-    <script src="https://unpkg.com/lucide@latest" onerror="window.__lucideLoaded = true;"></script>
+    <script>
+        // Robust CDN loading with automatic fallback (works with or without internet)
+        (function () {
+            var script = document.createElement('script');
+            script.src = 'https://unpkg.com/lucide@latest';
+            script.onload = function () { window.__lucideLoaded = true; window.refreshIcons && window.refreshIcons(); };
+            script.onerror = function () { window.__lucideLoaded = false; };
+            document.head.appendChild(script);
+        })();
+    </script>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -128,29 +151,41 @@
             --radius-btn: var(--radius-button);
         }
 
+        html {
+            height: 100%;
+            -webkit-text-size-adjust: 100%;
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
             background: var(--color-bg);
             color: var(--color-text-primary);
+            min-height: 100%;
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
             -webkit-font-smoothing: antialiased;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* ─── TOP NAVBAR ─── */
         .topbar {
             position: fixed;
             top: 0; left: 0; right: 0;
-            height: var(--topbar-height);
+            height: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
+            padding-top: env(safe-area-inset-top, 0px);
             background: #ffffff;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            padding-left: 20px;
+            padding-right: 20px;
             z-index: 100;
             gap: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            transition: transform 0.3s ease;
         }
 
         .topbar-logo {
@@ -296,8 +331,11 @@
         /* ─── LAYOUT WRAPPER ─── */
         .app-wrapper {
             display: flex;
+            min-height: 100%;
             min-height: 100vh;
-            padding-top: var(--topbar-height);
+            min-height: 100dvh;
+            padding-top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
+            flex: 1;
         }
 
         /* ─── LEFT SIDEBAR ─── */
@@ -306,7 +344,7 @@
             background: #ffffff;
             border-right: 1px solid var(--border-color);
             position: fixed;
-            top: var(--topbar-height);
+            top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
             bottom: 0;
             left: 0;
             overflow-y: auto;
@@ -477,11 +515,6 @@
             flex-direction: column;
             gap: 6px;
         }
-        .kpi-card:hover, .stat-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            border-left-color: var(--color-primary);
-        }
         .kpi-card.kpi-success, .stat-card.stat-success,
         .kpi-card.kpi-warning, .stat-card.stat-warning,
         .kpi-card.kpi-info,    .stat-card.stat-info,
@@ -500,16 +533,8 @@
         .kpi-card.kpi-blue { border-left-color: var(--color-primary); }
         .kpi-card.kpi-purple { border-left-color: #7E22CE; }
 
-        .kpi-card:hover, .stat-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        }
-        .kpi-card:not(.kpi-success):not(.kpi-warning):not(.kpi-danger):not(.kpi-red):not(.kpi-info):not(.kpi-primary):not(.kpi-green):not(.kpi-orange):not(.kpi-blue):not(.kpi-purple):not(.kpi-green):hover,
+        .kpi-card:not(.kpi-success):not(.kpi-warning):not(.kpi-danger):not(.kpi-red):not(.kpi-info):not(.kpi-primary):not(.kpi-green):not(.kpi-orange):not(.kpi-blue):not(.kpi-purple):hover,
         .stat-card:hover {
-            border-left-color: var(--color-primary);
-        }
-        .kpi-card.kpi-green:hover,   .kpi-card.kpi-orange:hover,
-        .kpi-card.kpi-blue:hover,    .kpi-card.kpi-purple:hover {
             border-left-color: var(--color-primary);
         }
 
@@ -970,17 +995,6 @@
             outline: 2px solid var(--color-primary);
             outline-offset: 2px;
         }
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.15s ease;
-            user-select: none;
-            text-decoration: none;
-        }
-        .filter-pill:hover {
-            border-color: var(--brand-200);
-            color: var(--color-primary);
-            background: var(--color-primary-light);
-        }
         .filter-pill.active {
             background: var(--color-primary);
             color: #ffffff;
@@ -1149,19 +1163,34 @@
         .flash-success { background: var(--lama-green-light); color: var(--lama-green-dark); border-bottom: 1px solid var(--lama-green); }
         .flash-error { background: var(--lama-rose-light); color: var(--lama-rose-dark); border-bottom: 1px solid var(--lama-rose); }
 
+        /* Universal Modal Backdrop & Layering: Guaranteed above bottom nav (1000) and FAB (995) */
+        .mobi-modal-backdrop,
+        [id$="Modal"],
+        [id$="Drawer"] {
+            z-index: 1200 !important;
+        }
+
         /* ─── RESPONSIVE & MOBILE BOTTOM NAVBAR ─── */
         .mobile-bottom-nav {
             display: none;
             position: fixed;
             bottom: 0; left: 0; right: 0;
-            height: var(--bottom-nav-height);
+            height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
             background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-top: 1px solid var(--border-color);
             z-index: 1000;
-            padding: 4px 8px;
+            padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
             box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+            will-change: transform;
+        }
+
+        .mobile-bottom-nav.nav-hidden {
+            transform: translateY(100%) translateY(env(safe-area-inset-bottom, 0px));
+            pointer-events: none;
+            opacity: 0;
         }
 
         .mobile-nav-items {
@@ -1241,7 +1270,7 @@
                 gap: 6px;
                 align-items: center;
             }
-            .main-content { padding: 8px 10px calc(var(--bottom-nav-height) + 14px) !important; }
+            .main-content { padding: 8px 10px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 14px) !important; }
             .mobile-bottom-nav { display: flex; }
             .topbar-subtitle { display: none; }
             .search-bar input { width: 140px; }
@@ -1285,8 +1314,8 @@
                 padding: 5px 10px !important;
             }
             .mobile-bottom-nav {
-                height: 50px !important;
-                padding: 2px 6px !important;
+                height: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
+                padding: 2px 6px calc(2px + env(safe-area-inset-bottom, 0px)) !important;
             }
             .mobile-nav-item {
                 font-size: 10px !important;
@@ -1298,7 +1327,13 @@
                 height: 18px !important;
             }
             .main-content {
-                padding: 6px 8px calc(var(--bottom-nav-height) + 12px) !important;
+                padding: 6px 8px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px) !important;
+            }
+            .mobile-stat-strip {
+                display: flex !important;
+            }
+            .mobile-fab-container {
+                display: block !important;
             }
         }
 
@@ -1337,7 +1372,7 @@
                 font-size: 11px !important;
                 padding: 5px 8px !important;
             }
-            .main-content { padding: 4px 6px calc(var(--bottom-nav-height) + 10px) !important; }
+            .main-content { padding: 4px 6px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 10px) !important; }
         }
 
         .kpi-grid, .kpi-row {
@@ -1775,9 +1810,16 @@
         .mobile-fab-container {
             display: none;
             position: fixed;
-            bottom: 68px;
+            bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
             right: 14px;
             z-index: 995;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+            will-change: transform;
+        }
+        .mobile-fab-container.fab-hidden {
+            transform: translateY(100px);
+            pointer-events: none;
+            opacity: 0;
         }
         .btn-app-fab, .btn-sales-fab, .btn-purchase-fab {
             width: 48px;
@@ -1984,6 +2026,11 @@
                         <i data-lucide="bar-chart-3" style="width:14px;height:14px;"></i> Reports & Analytics
                     </a>
                     @endcanany
+                    @can('read-mobileshop-repairs')
+                    <a href="{{ route('mobileshop.repairs') }}">
+                        <i data-lucide="wrench" style="width:14px;height:14px;"></i> Repairs Desk
+                    </a>
+                    @endcan
                     @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin')))
                     <a href="{{ route('mobileshop.masters') }}">
                         <i data-lucide="settings" style="width:14px;height:14px;"></i> Masters & Settings
@@ -2002,7 +2049,6 @@
             <nav class="sidebar-nav">
                     {{-- ════ UNIFIED SIDEBAR — Same 5 items for all roles, @can gated ════ --}}
                 @can('read-mobileshop-dashboard')
-                <div class="nav-section-label">Overview</div>
                 <a href="{{ route('mobileshop.dashboard') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.dashboard') ? 'active' : '' }}">
                     <i data-lucide="layout-dashboard"></i>
@@ -2011,7 +2057,6 @@
                 @endcan
 
                 @can('read-mobileshop-purchase')
-                <div class="nav-section-label" style="margin-top:14px;">Purchase</div>
                 <a href="{{ route('mobileshop.purchase') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.purchase*') ? 'active' : '' }}">
                     <i data-lucide="truck"></i>
@@ -2020,7 +2065,6 @@
                 @endcan
 
                 @can('read-mobileshop-sales')
-                <div class="nav-section-label" style="margin-top:14px;">Sales</div>
                 <a href="{{ route('mobileshop.sales') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.sales*') ? 'active' : '' }}">
                     <i data-lucide="trending-up"></i>
@@ -2029,7 +2073,6 @@
                 @endcan
 
                 @can('read-mobileshop-stock')
-                <div class="nav-section-label" style="margin-top:14px;">Inventory</div>
                 <a href="{{ route('mobileshop.stock') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.stock*') ? 'active' : '' }}">
                     <i data-lucide="package"></i>
@@ -2037,15 +2080,29 @@
                 </a>
                 @endcan
 
-                <div class="nav-section-label" style="margin-top:14px;">Credit & Khata</div>
                 <a href="{{ route('mobileshop.khata') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.khata*') ? 'active' : '' }}">
                     <i data-lucide="book-open"></i>
                     Customer Khata
                 </a>
 
+                @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('sales-staff')))
+                <a href="{{ route('mobileshop.emi.ledger') }}"
+                   class="nav-link {{ request()->routeIs('mobileshop.emi*') ? 'active' : '' }}">
+                    <i data-lucide="building-2"></i>
+                    EMI Ledger
+                </a>
+                @endif
+
+                @can('read-mobileshop-repairs')
+                <a href="{{ route('mobileshop.repairs') }}"
+                   class="nav-link {{ request()->routeIs('mobileshop.repairs*') ? 'active' : '' }}">
+                    <i data-lucide="wrench"></i>
+                    Repairs Desk
+                </a>
+                @endcan
+
                 @canany(['read-mobileshop-reports', 'read-reports-financial', 'read-reports-khata'])
-                <div class="nav-section-label" style="margin-top:14px;">Analytics</div>
                 <a href="{{ route('mobileshop.reports') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.reports*') ? 'active' : '' }}">
                     <i data-lucide="bar-chart-3"></i>
@@ -2054,7 +2111,6 @@
                 @endcanany
 
                 @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin')))
-                <div class="nav-section-label" style="margin-top:14px;">Administration</div>
                 <a href="{{ route('mobileshop.masters') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.masters*') ? 'active' : '' }}">
                     <i data-lucide="sliders"></i>
@@ -2136,10 +2192,17 @@
                 <i data-lucide="book-open"></i>
                 <span>Khata</span>
             </a>
+
+            @can('read-mobileshop-repairs')
+            <a href="{{ route('mobileshop.repairs') }}" class="mobile-nav-item {{ request()->routeIs('mobileshop.repairs*') ? 'active' : '' }}">
+                <i data-lucide="wrench"></i>
+                <span>Repairs</span>
+            </a>
+            @endcan
         </div>
     </nav>
 
-    <script src="{{ asset('js/mobileshop/ui-utils.js') }}" defer></script>
+    <script src="{{ asset('js/mobileshop/ui-utils.js') }}"></script>
     @stack('scripts')
 </body>
 </html>
