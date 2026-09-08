@@ -380,7 +380,13 @@
             </form>
         </div>
     </div>
-</div>
+    <!-- Mobile Floating Action Button -->
+    <div class="mobile-fab-container">
+        <button type="button" class="btn-app-fab" onclick="toggleForm()" title="Log New Repair">
+            <i data-lucide="plus"></i>
+            <span>Log Repair</span>
+        </button>
+    </div>
 
 @endsection
 

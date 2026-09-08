@@ -1097,6 +1097,16 @@ input:focus, select:focus, textarea:focus {
     background: var(--color-success-light);
 }
 
+/* ================================================================
+   11. MOBILE BOTTOM NAV & FAB (DESKTOP DEFAULT: HIDDEN)
+   ================================================================ */
+.mobile-bottom-nav {
+    display: none !important;
+}
+.mobile-fab-container {
+    display: none !important;
+}
+
 @media (max-width: 1023px) {
     .sidebar {
         display: none !important;
@@ -1104,22 +1114,23 @@ input:focus, select:focus, textarea:focus {
     .content-area {
         margin-left: 0 !important;
         width: 100% !important;
-        padding-bottom: calc(var(--bottom-nav-height) + 12px) !important;
+        padding-bottom: calc(var(--bottom-nav-height) + 20px) !important;
     }
     .mobile-bottom-nav {
         display: flex !important;
         flex-direction: row !important;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: var(--bottom-nav-height);
-        background: var(--color-canvas);
-        border-top: 1px solid var(--color-hairline);
-        z-index: 100;
-        align-items: stretch;
-        justify-content: space-around;
-        padding-bottom: env(safe-area-inset-bottom, 0);
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: var(--bottom-nav-height) !important;
+        background: #ffffff !important;
+        border-top: 1px solid var(--color-hairline) !important;
+        z-index: 990 !important;
+        align-items: stretch !important;
+        justify-content: space-around !important;
+        padding-bottom: env(safe-area-inset-bottom, 0) !important;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06) !important;
     }
     .mobile-nav-items {
         display: flex !important;
@@ -1135,26 +1146,28 @@ input:focus, select:focus, textarea:focus {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 9.5px;
-        font-weight: 500;
-        color: var(--color-ink-muted);
-        text-decoration: none;
-        gap: 2px;
-        min-width: 0;
-        height: 100%;
+        font-size: 9.5px !important;
+        font-weight: 500 !important;
+        color: var(--color-ink-muted) !important;
+        text-decoration: none !important;
+        gap: 2px !important;
+        min-width: 0 !important;
+        height: 100% !important;
+        transition: color 0.12s ease !important;
     }
     .mobile-nav-item svg, .mobile-nav-item i {
-        width: 15px !important;
-        height: 15px !important;
-        flex-shrink: 0;
+        width: 16px !important;
+        height: 16px !important;
+        flex-shrink: 0 !important;
     }
     .mobile-nav-item span {
         font-size: 9px !important;
         line-height: 1 !important;
+        font-weight: 500 !important;
     }
     .mobile-nav-item.active {
         color: var(--color-primary) !important;
-        font-weight: 600;
+        font-weight: 600 !important;
     }
     .desktop-sales-table {
         display: none !important;
@@ -1167,6 +1180,136 @@ input:focus, select:focus, textarea:focus {
     }
     .mobile-sales-cards, .mobile-purchase-cards {
         display: block !important;
+    }
+
+    /* ── Mobile FAB (Floating Action Button) ── */
+    .mobile-fab-container {
+        display: flex !important;
+        position: fixed !important;
+        bottom: calc(var(--bottom-nav-height, 48px) + env(safe-area-inset-bottom, 0px) + 12px) !important;
+        right: 16px !important;
+        z-index: 1000 !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .btn-sales-fab,
+    .btn-purchase-fab {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        border-radius: 9999px !important;
+        background: var(--color-primary) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 4px 14px rgba(94, 106, 210, 0.45), 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        padding: 0 !important;
+        transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .btn-app-fab {
+        height: 44px !important;
+        min-width: 44px !important;
+        border-radius: 9999px !important;
+        background: var(--color-primary) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 4px 14px rgba(94, 106, 210, 0.45), 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 0 14px !important;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
+    .btn-sales-fab:active,
+    .btn-purchase-fab:active,
+    .btn-app-fab:active {
+        transform: scale(0.92) !important;
+        box-shadow: 0 2px 8px rgba(94, 106, 210, 0.3) !important;
+    }
+
+    .btn-sales-fab svg, .btn-sales-fab i,
+    .btn-purchase-fab svg, .btn-purchase-fab i,
+    .btn-app-fab svg, .btn-app-fab i {
+        width: 22px !important;
+        height: 22px !important;
+        stroke-width: 2.5px !important;
+        color: #ffffff !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Dropup Menu for FAB quick actions */
+    .fab-dropup-menu {
+        position: absolute !important;
+        bottom: 56px !important;
+        right: 0 !important;
+        width: 210px !important;
+        background: #ffffff !important;
+        border: 1px solid var(--color-hairline) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+        overflow: hidden !important;
+        padding: 5px !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        z-index: 1001 !important;
+        animation: fabSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    @keyframes fabSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.96);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .fab-menu-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 9px !important;
+        padding: 8px 11px !important;
+        min-height: 38px !important;
+        border-radius: var(--radius-sm) !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: var(--color-ink) !important;
+        text-decoration: none !important;
+        border: none !important;
+        background: transparent !important;
+        cursor: pointer !important;
+        text-align: left !important;
+        width: 100% !important;
+        transition: background 0.12s ease !important;
+    }
+
+    .fab-menu-item:hover,
+    .fab-menu-item:active {
+        background: var(--color-surface-2) !important;
+        color: var(--color-ink) !important;
+    }
+
+    .fab-menu-item svg,
+    .fab-menu-item i {
+        width: 16px !important;
+        height: 16px !important;
+        flex-shrink: 0 !important;
     }
 }
 

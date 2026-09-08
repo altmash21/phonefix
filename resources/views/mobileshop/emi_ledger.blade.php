@@ -525,6 +525,14 @@
     </div>
 </div>
 
+    <!-- Mobile Floating Action Button -->
+    <div class="mobile-fab-container">
+        <button type="button" class="btn-app-fab" onclick="openDepositModal()" title="Deposit Advance Pool">
+            <i data-lucide="plus"></i>
+            <span>Deposit Pool</span>
+        </button>
+    </div>
+
 @endsection
 
 @push('scripts')

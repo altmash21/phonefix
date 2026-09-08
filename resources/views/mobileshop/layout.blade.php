@@ -393,8 +393,8 @@
     </div>
 
     <!-- ════ MOBILE BOTTOM NAV ════ -->
-    <nav class="mobile-bottom-nav flex flex-row items-stretch justify-around" style="display:flex; flex-direction:row; align-items:stretch; justify-content:space-around;">
-        <div class="mobile-nav-items flex flex-row items-stretch justify-around w-full h-full" style="display:flex; flex-direction:row; align-items:stretch; justify-content:space-around; width:100%; height:100%;">
+    <nav class="mobile-bottom-nav">
+        <div class="mobile-nav-items">
             @can('read-mobileshop-dashboard')
             <a href="{{ route('mobileshop.dashboard') }}" class="mobile-nav-item {{ request()->routeIs('mobileshop.dashboard') ? 'active' : '' }}">
                 <i data-lucide="layout-dashboard"></i>

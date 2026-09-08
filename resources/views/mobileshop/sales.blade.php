@@ -175,11 +175,6 @@
             overflow: hidden !important;
         }
 
-        /* Show FAB on Mobile */
-        .mobile-fab-container {
-            display: block !important;
-        }
-
         .acc-product-picker-grid {
             grid-template-columns: 170px 1fr auto;
         }
@@ -215,9 +210,6 @@
             display: table !important;
         }
         .mobile-sales-cards {
-            display: none !important;
-        }
-        .mobile-fab-container {
             display: none !important;
         }
     }
@@ -955,24 +947,25 @@
     <div id="mobileSalesFabContainer" class="mobile-fab-container">
         <!-- FAB Dropup Menu -->
         <div id="fabDropupMenu" class="fab-dropup-menu" style="display:none;">
-            @if($canCreatePhones ?? false)
+            @if(($isAdmin ?? false) || ($canCreatePhones ?? false))
                 <a href="{{ route('mobileshop.pos') }}" class="fab-menu-item" style="color: #5E6AD2;">
                     <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
                     <span>New Phone Sale</span>
                 </a>
             @endif
-            @if($canCreateAccessories ?? false)
+            @if(($isAdmin ?? false) || ($canCreateAccessories ?? false))
                 <button type="button" onclick="closeFabMenu(); openSellAccessoryModal()" class="fab-menu-item" style="color: #16A34A;">
                     <i data-lucide="plus" style="width:16px;height:16px;"></i>
                     <span>Add Accessories / Parts</span>
                 </button>
-            @elseif($canCreateCovers ?? false)
+            @endif
+            @if(($isAdmin ?? false) || ($canCreateCovers ?? false))
                 <button type="button" onclick="closeFabMenu(); openSellAccessoryModal('covers')" class="fab-menu-item" style="color: #7C3AED;">
                     <i data-lucide="package" style="width:16px;height:16px;"></i>
                     <span>Add Cover / Glass</span>
                 </button>
             @endif
-            @if($canCreateSecondhand ?? false)
+            @if(($isAdmin ?? false) || ($canCreateSecondhand ?? false))
                 <a href="{{ route('mobileshop.second_hand') }}" class="fab-menu-item" style="color: #2563EB;">
                     <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
                     <span>Sell Pre-Owned</span>
@@ -982,7 +975,7 @@
 
         <!-- FAB Main Button -->
         <button type="button" onclick="toggleFabMenu()" id="btnSalesFab" class="btn-sales-fab" aria-label="Quick Sale">
-            <i data-lucide="plus" id="fabIcon" style="width: 26px; height: 26px; transition: transform 0.2s ease;"></i>
+            <i data-lucide="plus" id="fabIcon" style="width: 22px; height: 22px; transition: transform 0.2s ease;"></i>
         </button>
     </div>
 

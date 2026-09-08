@@ -135,11 +135,6 @@
             border-radius: 0 0 10px 10px !important;
             overflow: hidden !important;
         }
-
-        /* Show FAB on Mobile */
-        .mobile-fab-container {
-            display: block !important;
-        }
     }
 
     @media (min-width: 768px) {
@@ -153,9 +148,6 @@
             display: table !important;
         }
         .mobile-purchase-cards {
-            display: none !important;
-        }
-        .mobile-fab-container {
             display: none !important;
         }
     }
@@ -494,22 +486,22 @@
     <!-- Mobile Floating Action Button (FAB) -->
     <div class="mobile-fab-container">
         <div id="purchaseFabMenu" class="fab-dropup-menu" style="display: none;">
-            @if($canAddPhones ?? false)
+            @if(($isAdmin ?? false) || ($canAddPhones ?? false))
             <a href="{{ route('mobileshop.new_mobiles') }}" class="fab-menu-item" style="color: #5E6AD2;">
                 <i data-lucide="smartphone" style="width:16px;height:16px;"></i>
-                Add Phone Stock
+                <span>Add Phone Stock</span>
             </a>
             @endif
-            @if(($canAddAccessories ?? false) || ($canAddCovers ?? false))
+            @if(($isAdmin ?? false) || ($canAddAccessories ?? false) || ($canAddCovers ?? false))
             <a href="{{ route('mobileshop.accessories.purchase') }}" class="fab-menu-item" style="color: #059669;">
                 <i data-lucide="scan-line" style="width:16px;height:16px;"></i>
-                Restock Parts / Bills
+                <span>Restock Parts / Bills</span>
             </a>
             @endif
-            @if($canAddSecondhand ?? false)
+            @if(($isAdmin ?? false) || ($canAddSecondhand ?? false))
             <a href="{{ route('mobileshop.second_hand') }}" class="fab-menu-item" style="color: #2563EB;">
                 <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
-                Register Buyback
+                <span>Register Buyback</span>
             </a>
             @endif
         </div>
