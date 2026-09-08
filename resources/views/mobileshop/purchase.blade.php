@@ -216,46 +216,37 @@
     </div>
 
     <!-- Master Live Purchase Invoice Registry (Single un-nested container) -->
-    <div class="card purchase-registry-card" style="margin-bottom:12px; border-radius:8px; border:1px solid #E2E8F0; overflow:hidden;">
-        <div class="purchase-header-container" style="background:#FFFFFF; border-bottom:1px solid #F1F5F9; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div class="purchase-header-title-box" style="display:flex; align-items:center; gap:8px;">
-                <div style="width:30px; height:30px; border-radius:8px; background:#5E6AD2; display:flex; align-items:center; justify-content:center; color:#FFFFFF; flex-shrink:0; box-shadow:0 2px 6px rgba(94,106,210,0.2);">
-                    <i data-lucide="file-spreadsheet" style="width:16px;height:16px;"></i>
+    <div class="card purchase-registry-card">
+        <div class="purchase-header-container">
+            <div class="purchase-header-title-box flex items-center gap-2">
+                <div class="w-6 h-6 rounded-sm bg-primary-tint text-primary flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="file-spreadsheet" style="width:14px;height:14px;"></i>
                 </div>
                 <div>
-                    <h2 style="font-size:14px; font-weight:800; color:#0F172A; margin:0; letter-spacing:-0.2px;">Live Purchase Invoice Registry</h2>
-                    <p class="hide-on-mobile" style="font-size:11px; color:#64748B; margin:1px 0 0 0;">Official supplier invoices, wholesale shipments, and device buybacks</p>
+                    <h2 class="text-xs font-semibold text-ink leading-tight m-0">Live Purchase Invoice Registry</h2>
+                    <p class="hide-on-mobile text-[10px] text-ink-muted leading-none mt-0.5 m-0">Official supplier invoices, wholesale shipments, and device buybacks</p>
                     <span id="purchaseVisibleCountBadge" style="display:none;"></span>
                 </div>
             </div>
 
-            <!-- Full Width Search Bar with Embedded Date Filter Trigger -->
-            <div class="purchase-search-wrapper" style="position:relative;">
-                <div class="purchase-search-box" style="position:relative; width:100%;">
-                    <i data-lucide="search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:#94A3B8; pointer-events:none;"></i>
-                    <input type="text" id="purchaseSearchInput" oninput="filterPurchaseTables()" placeholder="Search invoice, supplier, item..."
-                           class="purchase-search-input"
-                           style="width:100%; min-height:40px; padding:6px 68px 6px 34px; font-size:12px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; outline:none; transition:all 0.15s ease;"
-                           onfocus="this.style.background='#fff'; this.style.borderColor='#5E6AD2'; this.style.boxShadow='0 0 0 3px rgba(94,106,210,0.18)';"
-                           onblur="if(!this.value){this.style.background='#F8FAFC';} this.style.borderColor='#CBD5E1'; this.style.boxShadow='none';">
-
-                    <!-- Inside Right Trailing Controls -->
-                    <div style="position:absolute; right:5px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:4px; z-index:2;">
-                        <button type="button" onclick="clearPurchaseSearch()" id="btnClearPurchaseSearch" style="display:none; background:#E2E8F0; border:none; border-radius:50%; width:20px; height:20px; color:#475569; cursor:pointer; font-size:11px; line-height:20px; text-align:center; padding:0;">✕</button>
-
-                        <button type="button" onclick="openPurchaseDateFilterDrawer()" id="btnMobilePurchaseDateFilter" class="mobile-filter-btn" title="Filter by Date Range">
-                            <i data-lucide="calendar" style="width:14px; height:14px;"></i>
-                            <span id="purchaseDateFilterActiveIndicator" style="display:none; position:absolute; top:3px; right:3px; width:6px; height:6px; border-radius:50%; background:#5E6AD2;"></span>
-                        </button>
-                    </div>
+            <!-- Search Bar with Embedded Date Filter Trigger -->
+            <div class="purchase-search-wrapper relative">
+                <div class="search-bar purchase-search-box">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="purchaseSearchInput" oninput="filterPurchaseTables()" placeholder="Search invoice, supplier, item..." class="purchase-search-input">
+                    <button type="button" onclick="clearPurchaseSearch()" id="btnClearPurchaseSearch" style="display:none; background:#e2e4e8; border:none; border-radius:50%; width:16px; height:16px; color:#4f535b; cursor:pointer; font-size:10px; line-height:16px; text-align:center; padding:0;">✕</button>
+                    <button type="button" onclick="openPurchaseDateFilterDrawer()" id="btnMobilePurchaseDateFilter" class="mobile-filter-btn" title="Filter by Date Range" style="height:22px; width:22px; padding:0; border-radius:4px; background:#ffffff; border:1px solid #e2e4e8; color:#5e6ad2; align-items:center; justify-content:center; cursor:pointer; position:relative;">
+                        <i data-lucide="calendar" style="width:12px; height:12px;"></i>
+                        <span id="purchaseDateFilterActiveIndicator" style="display:none; position:absolute; top:2px; right:2px; width:4px; height:4px; border-radius:50%; background:#5e6ad2;"></span>
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Integrated Un-Nested Toolbar (Single Flush Rail) -->
-        <div class="purchase-filter-toolbar" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:6px 14px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div class="filter-bar purchase-filter-toolbar">
             <!-- Category & Date Rail -->
-            <div class="purchase-pills-rail">
+            <div class="pills-scroll-rail purchase-pills-rail">
                 <!-- Categories (Scoped to User Permissions & Niche) -->
                 @php
                     $showPhonePill = $isAdmin || ($canAddPhones ?? false) || ($niche ?? '') === 'phones';
@@ -265,42 +256,42 @@
                 @endphp
 
                 @if($availablePillCount > 1)
-                    <button type="button" onclick="setPurchaseTypeFilter('all')" id="btnPoFilterAll" class="purchase-pill active">
+                    <button type="button" onclick="setPurchaseTypeFilter('all')" id="btnPoFilterAll" class="filter-pill purchase-pill active">
                         All ({{ count($purchaseInvoices) }})
                     </button>
                     @if($showPhonePill)
-                    <button type="button" onclick="setPurchaseTypeFilter('phones')" id="btnPoFilterPhones" class="purchase-pill">
+                    <button type="button" onclick="setPurchaseTypeFilter('phones')" id="btnPoFilterPhones" class="filter-pill purchase-pill">
                         📱 Phones ({{ $purchaseInvoices->filter(fn($i) => str_contains($i->po_number, 'PHONES') || str_contains($i->po_number, 'PO-2026'))->count() }})
                     </button>
                     @endif
                     @if($showPartsPill)
-                    <button type="button" onclick="setPurchaseTypeFilter('accessories')" id="btnPoFilterAccessories" class="purchase-pill">
+                    <button type="button" onclick="setPurchaseTypeFilter('accessories')" id="btnPoFilterAccessories" class="filter-pill purchase-pill">
                         📦 Parts ({{ $purchaseInvoices->filter(fn($i) => str_contains($i->po_number, 'INV-') || str_contains($i->po_number, 'RESTOCK'))->count() }})
                     </button>
                     @endif
                     @if($showBuybackPill)
-                    <button type="button" onclick="setPurchaseTypeFilter('buyback')" id="btnPoFilterBuyback" class="purchase-pill">
+                    <button type="button" onclick="setPurchaseTypeFilter('buyback')" id="btnPoFilterBuyback" class="filter-pill purchase-pill">
                         🔄 Buybacks ({{ $purchaseInvoices->filter(fn($i) => str_contains($i->po_number, 'BUYBACK'))->count() }})
                     </button>
                     @endif
-                    <div style="width:1px; height:18px; background:#CBD5E1; margin:0 4px; flex-shrink:0;"></div>
+                    <div style="width:1px; height:18px; background:var(--color-hairline); margin:0 4px; flex-shrink:0;"></div>
                 @endif
 
                 <!-- Date Presets -->
-                <button type="button" onclick="setPurchaseDatePreset('all')" id="purchaseDateBtn_all" class="purchase-pill purchase-date-pill active">All Time</button>
-                <button type="button" onclick="setPurchaseDatePreset('today')" id="purchaseDateBtn_today" class="purchase-pill purchase-date-pill">Today</button>
-                <button type="button" onclick="setPurchaseDatePreset('yesterday')" id="purchaseDateBtn_yesterday" class="purchase-pill purchase-date-pill">Yesterday</button>
-                <button type="button" onclick="setPurchaseDatePreset('week')" id="purchaseDateBtn_week" class="purchase-pill purchase-date-pill">7 Days</button>
-                <button type="button" onclick="setPurchaseDatePreset('month')" id="purchaseDateBtn_month" class="purchase-pill purchase-date-pill">This Month</button>
+                <button type="button" onclick="setPurchaseDatePreset('all')" id="purchaseDateBtn_all" class="filter-pill purchase-pill purchase-date-pill active">All Time</button>
+                <button type="button" onclick="setPurchaseDatePreset('today')" id="purchaseDateBtn_today" class="filter-pill purchase-pill purchase-date-pill">Today</button>
+                <button type="button" onclick="setPurchaseDatePreset('yesterday')" id="purchaseDateBtn_yesterday" class="filter-pill purchase-pill purchase-date-pill">Yesterday</button>
+                <button type="button" onclick="setPurchaseDatePreset('week')" id="purchaseDateBtn_week" class="filter-pill purchase-pill purchase-date-pill">7 Days</button>
+                <button type="button" onclick="setPurchaseDatePreset('month')" id="purchaseDateBtn_month" class="filter-pill purchase-pill purchase-date-pill">This Month</button>
             </div>
 
             <!-- Desktop Custom Date Pickers -->
-            <div class="desktop-date-inputs" style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-                <label for="purchaseFromDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">From:</label>
-                <input type="date" id="purchaseFromDate" onchange="onPurchaseCustomDateChange()" style="font-size:11px; padding:3px 6px; height:28px; border:1px solid #CBD5E1; border-radius:6px; font-weight:600; color:#0F172A;">
-                <label for="purchaseToDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">To:</label>
-                <input type="date" id="purchaseToDate" onchange="onPurchaseCustomDateChange()" style="font-size:11px; padding:3px 6px; height:28px; border:1px solid #CBD5E1; border-radius:6px; font-weight:600; color:#0F172A;">
-                <button type="button" onclick="setPurchaseDatePreset('all')" title="Reset Filter" style="background:#FFFFFF; border:1px solid #CBD5E1; color:#64748B; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700; cursor:pointer;">Reset</button>
+            <div class="desktop-date-inputs flex items-center gap-1.5 flex-shrink-0">
+                <label for="purchaseFromDate" class="text-[11px] font-semibold text-ink-muted m-0">From:</label>
+                <input type="date" id="purchaseFromDate" onchange="onPurchaseCustomDateChange()" style="font-size:11px; padding:2px 6px; height:24px; border:1px solid var(--color-hairline); border-radius:4px; font-weight:600; color:var(--color-ink); background:var(--color-canvas);">
+                <label for="purchaseToDate" class="text-[11px] font-semibold text-ink-muted m-0">To:</label>
+                <input type="date" id="purchaseToDate" onchange="onPurchaseCustomDateChange()" style="font-size:11px; padding:2px 6px; height:24px; border:1px solid var(--color-hairline); border-radius:4px; font-weight:600; color:var(--color-ink); background:var(--color-canvas);">
+                <button type="button" onclick="setPurchaseDatePreset('all')" title="Reset Filter" class="btn btn-outline btn-sm">Reset</button>
             </div>
         </div>
 

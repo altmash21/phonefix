@@ -15,32 +15,32 @@
 @section('page-title', $salesPageTitle)
 
 @section('page-actions')
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <div class="flex items-center gap-2 flex-wrap">
         @if($canCreatePhones ?? false)
-        <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-sm" style="min-height: 38px;">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">Register Sale</span><span class="mobile-btn-label">Sale</span>
+        <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-sm">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Register Sale</span><span class="mobile-btn-label">Sale</span>
         </a>
-        <a href="{{ route('mobileshop.pos') }}" class="btn btn-outline btn-sm" style="min-height: 38px;">
-            <i data-lucide="shopping-cart" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">New POS Sale</span><span class="mobile-btn-label">POS Sale</span>
+        <a href="{{ route('mobileshop.pos') }}" class="btn btn-outline btn-sm">
+            <i data-lucide="shopping-cart" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">New POS Sale</span><span class="mobile-btn-label">POS</span>
         </a>
         @endif
         @if($canCreateAccessories ?? false)
-        <button type="button" onclick="openSellAccessoryModal()" class="btn btn-primary btn-sm hide-on-mobile" style="background:#16A34A; min-height: 38px; display:inline-flex; align-items:center; gap:5px;">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">Add Sales</span>
+        <button type="button" onclick="openSellAccessoryModal()" class="btn btn-outline btn-sm hide-on-mobile">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Add Sales</span>
         </button>
         @endif
         @if(($canCreateCovers ?? false) && !($canCreateAccessories ?? false))
-        <button type="button" onclick="openSellAccessoryModal('covers')" class="btn btn-outline btn-sm" style="color:#7C3AED; border-color:#DDD6FE; background:#F5F3FF; font-weight:700; min-height: 38px; display:inline-flex; align-items:center; gap:5px;">
-            <i data-lucide="package" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">Add Cover / Glass</span><span class="mobile-btn-label">Cover / Glass</span>
+        <button type="button" onclick="openSellAccessoryModal('covers')" class="btn btn-outline btn-sm">
+            <i data-lucide="package" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Add Cover / Glass</span><span class="mobile-btn-label">Cover</span>
         </button>
         @endif
         @if($canCreateSecondhand ?? false)
-        <a href="{{ route('mobileshop.second_hand') }}" class="btn btn-outline btn-sm" style="min-height: 38px;">
-            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">Sell Pre-Owned</span><span class="mobile-btn-label">Pre-Owned</span>
+        <a href="{{ route('mobileshop.second_hand') }}" class="btn btn-outline btn-sm">
+            <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Pre-Owned</span><span class="mobile-btn-label">Pre-Owned</span>
         </a>
         @endif
-        <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm" style="min-height: 38px; color:#2563EB; border-color:#BFDBFE;">
-            <i data-lucide="building-2" style="width:14px;height:14px;"></i> <span class="desktop-btn-label">EMI Ledger</span><span class="mobile-btn-label">EMI</span>
+        <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm">
+            <i data-lucide="building-2" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">EMI Ledger</span><span class="mobile-btn-label">EMI</span>
         </a>
     </div>
 @endsection
@@ -252,117 +252,82 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- TOP KPI EXECUTIVE METRIC CARDS (Desktop View)              -->
+    <!-- TOP KPI METRIC CARDS (Desktop View)                        -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="kpi-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px;">
+    <div class="kpi-cards-grid">
         <!-- Card 1: Today's Revenue -->
-        <div class="executive-kpi-card">
-            <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #10B981, #34D399);"></div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div class="kpi-label-text" style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; margin-bottom: 2px;">Today's Revenue</div>
-                    <div class="kpi-num-text" style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; line-height: 1.1;">
-                        ₹{{ fmod($todaySalesTotal, 1) != 0 ? number_format($todaySalesTotal, 2) : number_format($todaySalesTotal, 0) }}
-                    </div>
-                </div>
-                <div class="kpi-icon-box" style="background: #ECFDF5; border: 1px solid #A7F3D0; color: #059669;">
-                    <i data-lucide="banknote"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-label">Today's Revenue</div>
+                <div class="kpi-icon-box"><i data-lucide="banknote"></i></div>
             </div>
+            <div class="kpi-num">₹{{ fmod($todaySalesTotal, 1) != 0 ? number_format($todaySalesTotal, 2) : number_format($todaySalesTotal, 0) }}</div>
+            <div class="kpi-sub">Cash, UPI & card inflows</div>
         </div>
 
         <!-- Card 2: Monthly Inflow -->
-        <div class="executive-kpi-card">
-            <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3B82F6, #60A5FA);"></div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div class="kpi-label-text" style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; margin-bottom: 2px;">Monthly Inflow</div>
-                    <div class="kpi-num-text" style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; line-height: 1.1;">
-                        ₹{{ fmod($monthSalesTotal, 1) != 0 ? number_format($monthSalesTotal, 2) : number_format($monthSalesTotal, 0) }}
-                    </div>
-                </div>
-                <div class="kpi-icon-box" style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #2563EB;">
-                    <i data-lucide="trending-up"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-label">Monthly Inflow</div>
+                <div class="kpi-icon-box"><i data-lucide="trending-up"></i></div>
             </div>
+            <div class="kpi-num">₹{{ fmod($monthSalesTotal, 1) != 0 ? number_format($monthSalesTotal, 2) : number_format($monthSalesTotal, 0) }}</div>
+            <div class="kpi-sub">Gross revenue this month</div>
         </div>
 
         <!-- Card 3: Total Invoices -->
-        <div class="executive-kpi-card">
-            <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #8B5CF6, #A78BFA);"></div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div class="kpi-label-text" style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; margin-bottom: 2px;">Total Invoices</div>
-                    <div class="kpi-num-text" style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; line-height: 1.1;">
-                        {{ number_format($salesCount) }}
-                    </div>
-                </div>
-                <div class="kpi-icon-box" style="background: #F5F3FF; border: 1px solid #DDD6FE; color: #7C3AED;">
-                    <i data-lucide="receipt"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-label">Total Invoices</div>
+                <div class="kpi-icon-box"><i data-lucide="receipt"></i></div>
             </div>
+            <div class="kpi-num">{{ number_format($salesCount) }}</div>
+            <div class="kpi-sub">Filtered transactions</div>
         </div>
 
         <!-- Card 4: Ready Stock -->
-        <div class="executive-kpi-card">
-            <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #F59E0B, #FBBF24);"></div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div class="kpi-label-text" style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; margin-bottom: 2px;">Ready Stock</div>
-                    <div class="kpi-num-text" style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; line-height: 1.1;">
-                        {{ $availableNewPhones + $availableSecondHand + $availableParts }} <span style="font-size:11px; font-weight:700; color:#64748B;">Units</span>
-                    </div>
-                </div>
-                <div class="kpi-icon-box" style="background: #FEF3C7; border: 1px solid #FDE68A; color: #D97706;">
-                    <i data-lucide="package"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-label">Ready Stock</div>
+                <div class="kpi-icon-box"><i data-lucide="package"></i></div>
             </div>
+            <div class="kpi-num">{{ $availableNewPhones + $availableSecondHand + $availableParts }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
+            <div class="kpi-sub">Available inventory</div>
         </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- SALES REGISTRY TABLE CONTAINER                           -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="card sales-registry-card" style="border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+    <div class="card sales-registry-card">
         <!-- Top Title & Search Bar -->
-        <div class="sales-header-container" style="background: #FFFFFF; border-bottom: 1px solid #F1F5F9; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <div class="sales-header-title-box" style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: #5E6AD2; display: flex; align-items: center; justify-content: center; color: #FFFFFF; flex-shrink: 0; box-shadow: 0 4px 10px rgba(94,106,210,0.25);">
-                    <i data-lucide="receipt" style="width: 18px; height: 18px;"></i>
+        <div class="sales-header-container">
+            <div class="sales-header-title-box flex items-center gap-2">
+                <div class="w-6 h-6 rounded-sm bg-primary-tint text-primary flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="receipt" style="width: 14px; height: 14px;"></i>
                 </div>
                 <div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <h2 style="font-size: 16px; font-weight: 800; color: #0F172A; margin: 0; letter-spacing: -0.3px;">Live Sales Invoice Registry</h2>
-                    </div>
-                    <p style="font-size: 11.5px; color: #64748B; margin: 2px 0 0 0;">Recent smartphones, buybacks, and accessories</p>
+                    <h2 class="text-xs font-semibold text-ink leading-tight m-0">Live Sales Invoice Registry</h2>
+                    <p class="text-[10px] text-ink-muted leading-none mt-0.5 m-0">Recent smartphones, buybacks, and accessories</p>
                 </div>
             </div>
 
             <!-- Full Width Search Bar with Embedded Date Filter Trigger -->
-            <div class="sales-search-wrapper" style="position: relative;">
-                <div class="sales-search-box" style="position: relative; width: 100%;">
-                    <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8; pointer-events: none;"></i>
-                    <input type="text" id="salesSearchInput" oninput="filterSalesTable()" placeholder="Search invoice, customer, IMEI..." 
-                           class="sales-search-input"
-                           style="width: 100%; min-height: 42px; padding: 8px 74px 8px 36px; font-size: 12.5px; font-weight: 600; color: #0F172A; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 9px; outline: none; transition: all 0.15s ease;"
-                           onfocus="this.style.background='#fff'; this.style.borderColor='#5E6AD2'; this.style.boxShadow='0 0 0 3px rgba(94,106,210,0.18)';"
-                           onblur="if(!this.value){this.style.background='#F8FAFC';} this.style.borderColor='#CBD5E1'; this.style.boxShadow='none';">
-                    
-                    <!-- Inside Right Trailing Controls -->
-                    <div style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 4px; z-index: 2;">
-                        <button type="button" onclick="clearSalesSearch()" id="btnClearSearch" style="display:none; background: #E2E8F0; border: none; border-radius: 50%; width: 20px; height: 20px; color: #475569; cursor: pointer; font-size: 11px; line-height: 20px; text-align: center; padding: 0;">✕</button>
-                        
-                        <button type="button" onclick="openDateFilterDrawer()" id="btnMobileDateFilter" class="mobile-filter-btn" title="Filter by Date Range" style="height: 32px; width: 34px; padding: 0; border-radius: 7px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #5E6AD2; align-items: center; justify-content: center; cursor: pointer; position: relative;">
-                            <i data-lucide="calendar" style="width: 15px; height: 15px;"></i>
-                            <span id="dateFilterActiveIndicator" style="display:none; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: #5E6AD2;"></span>
-                        </button>
-                    </div>
+            <div class="sales-search-wrapper relative">
+                <div class="search-bar">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="salesSearchInput" oninput="filterSalesTable()" placeholder="Search invoice, customer, IMEI..." class="sales-search-input">
+                    <button type="button" onclick="clearSalesSearch()" id="btnClearSearch" style="display:none; background: #e2e4e8; border: none; border-radius: 50%; width: 16px; height: 16px; color: #4f535b; cursor: pointer; font-size: 10px; line-height: 16px; text-align: center; padding: 0;">✕</button>
+                    <button type="button" onclick="openDateFilterDrawer()" id="btnMobileDateFilter" class="mobile-filter-btn" title="Filter by Date Range" style="height: 22px; width: 22px; padding: 0; border-radius: 4px; background: #ffffff; border: 1px solid #e2e4e8; color: #5e6ad2; align-items: center; justify-content: center; cursor: pointer; position: relative;">
+                        <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                        <span id="dateFilterActiveIndicator" style="display:none; position: absolute; top: 2px; right: 2px; width: 4px; height: 4px; border-radius: 50%; background: #5e6ad2;"></span>
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Integrated Category & Date Presets & Custom Range Toolbar -->
-        <div class="sales-filter-toolbar" style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+        <div class="filter-bar sales-filter-toolbar">
             <!-- Left: Horizontal Scrollable Category & Date Preset Pills -->
             <div class="date-pills-scroll-rail">
                 @php
