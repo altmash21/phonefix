@@ -237,12 +237,6 @@
                 }
             @endphp
 
-            <!-- Store selector -->
-            <div class="topbar-store-pill">
-                <i data-lucide="building-2" style="width:13px;height:13px;color:var(--color-primary);"></i>
-                <span class="topbar-store-name">Main Mobile Store</span>
-                <i data-lucide="chevron-down" style="width:12px;height:12px; opacity:0.6;"></i>
-            </div>
 
             <!-- User Badge -->
             <div class="user-badge" id="user-badge-btn">
