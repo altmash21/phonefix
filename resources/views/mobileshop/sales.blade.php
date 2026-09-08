@@ -327,7 +327,7 @@
         <!-- Top Title & Search Bar -->
         <div class="sales-header-container" style="background: #FFFFFF; border-bottom: 1px solid #F1F5F9; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div class="sales-header-title-box" style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: #0F766E; display: flex; align-items: center; justify-content: center; color: #FFFFFF; flex-shrink: 0; box-shadow: 0 4px 10px rgba(15,118,110,0.25);">
+                <div style="width: 38px; height: 38px; border-radius: 10px; background: #5E6AD2; display: flex; align-items: center; justify-content: center; color: #FFFFFF; flex-shrink: 0; box-shadow: 0 4px 10px rgba(94,106,210,0.25);">
                     <i data-lucide="receipt" style="width: 18px; height: 18px;"></i>
                 </div>
                 <div>
@@ -345,16 +345,16 @@
                     <input type="text" id="salesSearchInput" oninput="filterSalesTable()" placeholder="Search invoice, customer, IMEI..." 
                            class="sales-search-input"
                            style="width: 100%; min-height: 42px; padding: 8px 74px 8px 36px; font-size: 12.5px; font-weight: 600; color: #0F172A; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 9px; outline: none; transition: all 0.15s ease;"
-                           onfocus="this.style.background='#fff'; this.style.borderColor='#0F766E'; this.style.boxShadow='0 0 0 3px rgba(15,118,110,0.12)';"
+                           onfocus="this.style.background='#fff'; this.style.borderColor='#5E6AD2'; this.style.boxShadow='0 0 0 3px rgba(94,106,210,0.18)';"
                            onblur="if(!this.value){this.style.background='#F8FAFC';} this.style.borderColor='#CBD5E1'; this.style.boxShadow='none';">
                     
                     <!-- Inside Right Trailing Controls -->
                     <div style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 4px; z-index: 2;">
                         <button type="button" onclick="clearSalesSearch()" id="btnClearSearch" style="display:none; background: #E2E8F0; border: none; border-radius: 50%; width: 20px; height: 20px; color: #475569; cursor: pointer; font-size: 11px; line-height: 20px; text-align: center; padding: 0;">✕</button>
                         
-                        <button type="button" onclick="openDateFilterDrawer()" id="btnMobileDateFilter" class="mobile-filter-btn" title="Filter by Date Range" style="height: 32px; width: 34px; padding: 0; border-radius: 7px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #0F766E; align-items: center; justify-content: center; cursor: pointer; position: relative;">
+                        <button type="button" onclick="openDateFilterDrawer()" id="btnMobileDateFilter" class="mobile-filter-btn" title="Filter by Date Range" style="height: 32px; width: 34px; padding: 0; border-radius: 7px; background: #FFFFFF; border: 1px solid #CBD5E1; color: #5E6AD2; align-items: center; justify-content: center; cursor: pointer; position: relative;">
                             <i data-lucide="calendar" style="width: 15px; height: 15px;"></i>
-                            <span id="dateFilterActiveIndicator" style="display:none; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: #0F766E;"></span>
+                            <span id="dateFilterActiveIndicator" style="display:none; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: #5E6AD2;"></span>
                         </button>
                     </div>
                 </div>
@@ -815,7 +815,7 @@
                     <!-- Bill Type / GST Checkbox -->
                     <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
                         <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0; user-select:none;">
-                            <input type="checkbox" name="is_gst" id="accIsGstCheckbox" value="1" style="width:18px; height:18px; accent-color:#0F766E; cursor:pointer;" onchange="document.getElementById('accBillType').value = this.checked ? 'gst' : 'non_gst'">
+                            <input type="checkbox" name="is_gst" id="accIsGstCheckbox" value="1" style="width:18px; height:18px; accent-color:#5E6AD2; cursor:pointer;" onchange="document.getElementById('accBillType').value = this.checked ? 'gst' : 'non_gst'">
                             <div>
                                 <span style="font-size:13px; font-weight:700; color:#0F172A;">Make GST Bill (18% Tax Invoice)</span>
                                 <p style="font-size:11px; color:#64748B; margin:1px 0 0 0;">Unchecked by default (Standard Retail / Non-GST Estimate)</p>
@@ -949,7 +949,7 @@
         <div style="background: #FFFFFF; width: 100%; max-width: 480px; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px 20px 32px 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); animation: fabSlideUp 0.2s ease-out;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <div style="font-size: 16px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="calendar" style="width: 18px; height: 18px; color: #0F766E;"></i>
+                    <i data-lucide="calendar" style="width: 18px; height: 18px; color: #5E6AD2;"></i>
                     Filter by Date Range
                 </div>
                 <button type="button" onclick="closeDateFilterDrawer()" style="background: #F1F5F9; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 14px; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
@@ -979,7 +979,7 @@
 
             <div style="display: flex; gap: 10px;">
                 <button type="button" onclick="resetDrawerFilter()" style="flex: 1; min-height: 44px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 10px; font-size: 13px; font-weight: 800; color: #475569; cursor: pointer;">Reset</button>
-                <button type="button" onclick="applyDrawerFilter()" style="flex: 2; min-height: 44px; background: #0F766E; border: none; border-radius: 10px; font-size: 13px; font-weight: 800; color: #FFFFFF; cursor: pointer; box-shadow: 0 4px 12px rgba(15,118,110,0.3);">Apply Filter</button>
+                <button type="button" onclick="applyDrawerFilter()" style="flex: 2; min-height: 44px; background: #5E6AD2; border: none; border-radius: 10px; font-size: 13px; font-weight: 800; color: #FFFFFF; cursor: pointer; box-shadow: 0 4px 12px rgba(94,106,210,0.3);">Apply Filter</button>
             </div>
         </div>
     </div>
@@ -991,7 +991,7 @@
         <!-- FAB Dropup Menu -->
         <div id="fabDropupMenu" class="fab-dropup-menu" style="display:none;">
             @if($canCreatePhones ?? false)
-                <a href="{{ route('mobileshop.pos') }}" class="fab-menu-item" style="color: #0F766E;">
+                <a href="{{ route('mobileshop.pos') }}" class="fab-menu-item" style="color: #5E6AD2;">
                     <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
                     <span>New Phone Sale</span>
                 </a>

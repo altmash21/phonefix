@@ -258,10 +258,10 @@
          ══════════════════════════════════════════════════════════════════════ -->
     <div id="editUserModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
         <div class="card" style="width:100%; max-width:440px; margin:20px; border-radius:12px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.2);">
-            <div class="card-header" style="background:#0F766E; color:#fff; padding:16px 20px;">
+            <div class="card-header" style="background:#5E6AD2; color:#fff; padding:16px 20px;">
                 <div>
                     <div class="card-title" style="color:#fff; font-size:16px;"><i data-lucide="user-check" style="width:18px;height:18px; vertical-align:-3px;"></i> Edit User Credentials</div>
-                    <div class="card-subtitle" style="color:#CCFBF1; font-size:11px;">Update name, login email, password, or counter role</div>
+                    <div class="card-subtitle" style="color:#E0E7FF; font-size:11px;">Update name, login email, password, or counter role</div>
                 </div>
                 <button type="button" onclick="closeEditUserModal()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:20px;">&times;</button>
             </div>
@@ -285,7 +285,7 @@
                         </select>
                     </div>
                     <div style="border-top:1px dashed #CBD5E1; padding-top:12px;">
-                        <label class="form-label" style="font-weight:700; font-size:12px; color:#0F766E;">
+                        <label class="form-label" style="font-weight:700; font-size:12px; color:#5E6AD2;">
                             New Password <span style="font-weight:400; color:#64748B;">(Leave blank to keep unchanged)</span>
                         </label>
                         <div style="position:relative;">
@@ -298,7 +298,7 @@
                 </div>
                 <div class="card-footer" style="background:#F8FAFC; border-top:1px solid #E2E8F0; padding:12px 20px; display:flex; justify-content:flex-end; gap:8px;">
                     <button type="button" class="btn btn-outline btn-sm" onclick="closeEditUserModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:#0F766E;">Save Credentials</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:#5E6AD2;">Save Credentials</button>
                 </div>
             </form>
         </div>
@@ -385,10 +385,10 @@
          ══════════════════════════════════════════════════════════════════════ -->
     <div id="editSupplierMasterModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
         <div class="card" style="width:100%; max-width:440px; margin:20px; border-radius:12px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.2);">
-            <div class="card-header" style="background:#0F766E; color:#fff; padding:16px 20px;">
+            <div class="card-header" style="background:#5E6AD2; color:#fff; padding:16px 20px;">
                 <div>
                     <div class="card-title" style="color:#fff; font-size:16px;"><i data-lucide="truck" style="width:18px;height:18px; vertical-align:-3px;"></i> Update Supplier Ledger</div>
-                    <div class="card-subtitle" style="color:#CCFBF1; font-size:11px;">Update vendor details and prepaid credit balance</div>
+                    <div class="card-subtitle" style="color:#E0E7FF; font-size:11px;">Update vendor details and prepaid credit balance</div>
                 </div>
                 <button type="button" onclick="closeEditSupplierMasterModal()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:20px;">&times;</button>
             </div>
@@ -422,7 +422,7 @@
                 </div>
                 <div class="card-footer" style="background:#F8FAFC; border-top:1px solid #E2E8F0; padding:12px 20px; display:flex; justify-content:flex-end; gap:8px;">
                     <button type="button" class="btn btn-outline btn-sm" onclick="closeEditSupplierMasterModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:#0F766E;">Update Supplier</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:#5E6AD2;">Update Supplier</button>
                 </div>
             </form>
         </div>

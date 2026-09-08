@@ -68,7 +68,7 @@
                 </div>
 
                 <!-- Supplier Balance Panel -->
-                <div id="supplierBalancePanel" style="display:none; background:#F0FDFA; border:1px solid #CCFBF1; border-radius:8px; padding:14px 18px; margin-top:4px;">
+                <div id="supplierBalancePanel" style="display:none; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:14px 18px; margin-top:4px;">
                     <div style="display:flex; gap:32px; flex-wrap:wrap;">
                         <div>
                             <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#64748B;">Previous Balance Due</div>

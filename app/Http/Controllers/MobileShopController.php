@@ -1755,6 +1755,12 @@ PROMPT;
                     if (!empty($item['description'])) {
                         $updateData['description'] = $item['description'];
                     }
+                    if (!empty($brand) && $brand !== 'Universal') {
+                        $updateData['brand'] = $brand;
+                    }
+                    if (!empty($model) && $model !== 'Universal') {
+                        $updateData['compatible_model'] = $model;
+                    }
 
                     DB::table('ms_parts_inventory')->where('id', $part->id)->update($updateData);
 
@@ -4350,11 +4356,49 @@ PROMPT;
         $categories = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
         $parts      = DB::table('ms_parts_inventory')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
 
+        $knownBrands = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->whereNotNull('brand')
+            ->where('brand', '!=', '')
+            ->distinct()
+            ->pluck('brand')
+            ->merge(
+                DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->whereNotNull('brand')
+                    ->where('brand', '!=', '')
+                    ->where('brand', '!=', 'Universal')
+                    ->distinct()
+                    ->pluck('brand')
+            )
+            ->unique()
+            ->sort()
+            ->values();
+
+        $knownModels = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->whereNotNull('model')
+            ->where('model', '!=', '')
+            ->distinct()
+            ->pluck('model')
+            ->merge(
+                DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->whereNotNull('compatible_model')
+                    ->where('compatible_model', '!=', '')
+                    ->where('compatible_model', '!=', 'Universal')
+                    ->distinct()
+                    ->pluck('compatible_model')
+            )
+            ->unique()
+            ->sort()
+            ->values();
+
         return view('mobileshop.purchase', compact(
             'niche', 'isAdmin', 'purchaseInvoices', 'purchaseOrders', 'newPhonePurchases', 'buybacks', 'batchRestocks',
             'canAddPhones', 'canAddSecondhand', 'canAddAccessories', 'canAddCovers',
             'totalPOValue', 'totalPODue', 'totalInvoicesCount', 'totalUnitsPurchased',
-            'suppliers', 'categories', 'parts'
+            'suppliers', 'categories', 'parts', 'knownBrands', 'knownModels'
         ));
     }
 
@@ -4587,6 +4631,86 @@ PROMPT;
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('mobileshop.pdf.purchase_invoice', $data);
         $pdf->setPaper('a4', 'portrait');
         return $pdf->download("PurchaseOrder-{$data['po']->po_number}.pdf");
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       DEDICATED FULL-PAGE ACCESSORIES & PARTS PURCHASE / RESTOCK INWARD
+       ══════════════════════════════════════════════════════════════════════ */
+
+    /**
+     * Dedicated Full Page: Accessories & Spare Parts Purchase / Bulk Restock Intake
+     */
+    public function accessoriesPurchase(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-mobileshop-accessories') || 
+            auth()->user()->can('read-mobileshop-accessories') || 
+            auth()->user()->can('create-purchase-accessories') || 
+            auth()->user()->can('create-purchase-covers') || 
+            auth()->user()->hasRole('admin') || 
+            auth()->user()->hasRole('store-admin') || 
+            auth()->user()->hasRole('accessories-staff')
+        ), 403, 'Unauthorized access to accessories purchase.');
+
+        $companyId = $this->getCompanyId();
+        $niche     = $this->getUserNiche();
+
+        $suppliers = DB::table('ms_suppliers')
+            ->where('company_id', $companyId)
+            ->orderBy('name')
+            ->get();
+
+        $categories = DB::table('ms_part_categories')
+            ->where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $parts = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $knownBrands = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->whereNotNull('brand')
+            ->where('brand', '!=', '')
+            ->distinct()
+            ->pluck('brand')
+            ->merge(
+                DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->whereNotNull('brand')
+                    ->where('brand', '!=', '')
+                    ->where('brand', '!=', 'Universal')
+                    ->distinct()
+                    ->pluck('brand')
+            )
+            ->unique()
+            ->sort()
+            ->values();
+
+        $knownModels = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->whereNotNull('model')
+            ->where('model', '!=', '')
+            ->distinct()
+            ->pluck('model')
+            ->merge(
+                DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->whereNotNull('compatible_model')
+                    ->where('compatible_model', '!=', '')
+                    ->where('compatible_model', '!=', 'Universal')
+                    ->distinct()
+                    ->pluck('compatible_model')
+            )
+            ->unique()
+            ->sort()
+            ->values();
+
+        return view('mobileshop.accessories_purchase', compact(
+            'suppliers', 'categories', 'parts', 'knownBrands', 'knownModels', 'niche'
+        ));
     }
 
     /* ══════════════════════════════════════════════════════════════════════

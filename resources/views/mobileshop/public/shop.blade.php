@@ -1,230 +1,222 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Explore Live Inventory — MobiTrack Store')
-@section('meta_description', 'Browse our current in-stock catalog of sealed brand new smartphones, 50-point certified pre-owned devices, original phone covers, and fast chargers.')
+@section('title', 'Explore Marketplace Catalog — MobiTrack Store')
+@section('meta_description', 'Browse official brand new smartphones and 50-point certified pre-owned devices in stock at our Mumbai showroom.')
 
 @section('content')
 
-    <!-- Header Banner -->
-    <div class="bg-gradient-to-b from-slate-950 to-slate-900 text-white py-12 px-4 text-center">
-        <div class="max-w-3xl mx-auto space-y-3">
-            <span class="px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 text-xs font-bold uppercase tracking-wider">
-                Live Storefront & Catalog
-            </span>
-            <h1 class="font-display font-black text-3xl sm:text-4xl text-white">Explore Current Stock & Deals</h1>
-            <p class="text-slate-400 text-sm max-w-xl mx-auto">Updated in real-time with our physical showroom inventory in Bandra West, Mumbai.</p>
+    <!-- ════ 1. EXPLORE CATALOG HEADER & SEARCH PILL ════ -->
+    <div class="border-b border-hairline-soft bg-canvas py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <h1 class="text-[26px] font-bold text-ink tracking-tight">Explore In-Stock Catalog</h1>
+                <p class="text-[14px] text-muted mt-1">Live physical showroom inventory available at Linking Road, Bandra West.</p>
+            </div>
+
+            <!-- Clean Search Input (Airbnb Text Input Spec) -->
+            <form action="{{ route('public.store') }}" method="GET" class="w-full md:w-80">
+                <input type="hidden" name="tab" value="{{ request('tab', 'all') }}">
+                <div class="relative flex items-center">
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search brand or model..."
+                           class="w-full pl-11 pr-4 py-3 bg-canvas border border-hairline hover:border-ink focus:border-ink rounded-full text-[14px] text-ink placeholder:text-muted focus:outline-none transition-airbnb shadow-airbnb-tier">
+                    <svg class="w-4 h-4 text-muted absolute left-4 pointer-events-none stroke-current fill-none stroke-[2]" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Store Catalog Container -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-
-        <!-- Search & Filter Controls -->
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <!-- Category Tabs -->
+    <!-- ════ 2. AIRBNB CATEGORY FILTER PILLS ════ -->
+    <div class="bg-canvas border-b border-hairline-soft sticky top-20 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             @php $currentTab = request('tab', 'all'); @endphp
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
                 <a href="{{ route('public.store', ['tab' => 'all', 'q' => request('q')]) }}" 
-                   class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $currentTab === 'all' ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
-                    All Items ({{ ($newPhones->count() + $secondHandPhones->count() + $accessories->count()) }})
+                   class="px-4 py-2 rounded-full text-[13px] font-medium transition-airbnb shrink-0 border {{ $currentTab === 'all' ? 'bg-ink text-white border-ink' : 'bg-canvas text-ink border-hairline hover:border-ink' }}">
+                    All Smartphones ({{ ($newPhones->count() + $secondHandPhones->count()) }})
                 </a>
                 <a href="{{ route('public.store', ['tab' => 'new', 'q' => request('q')]) }}" 
-                   class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $currentTab === 'new' ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
-                    📱 Brand New ({{ $newPhones->count() }})
+                   class="px-4 py-2 rounded-full text-[13px] font-medium transition-airbnb shrink-0 border {{ $currentTab === 'new' ? 'bg-ink text-white border-ink' : 'bg-canvas text-ink border-hairline hover:border-ink' }}">
+                    Brand New ({{ $newPhones->count() }})
                 </a>
                 <a href="{{ route('public.store', ['tab' => 'second_hand', 'q' => request('q')]) }}" 
-                   class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $currentTab === 'second_hand' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
-                    🔄 Certified Pre-Owned ({{ $secondHandPhones->count() }})
-                </a>
-                <a href="{{ route('public.store', ['tab' => 'covers', 'q' => request('q')]) }}" 
-                   class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $currentTab === 'covers' ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
-                    🖼️ Covers & Tempered
-                </a>
-                <a href="{{ route('public.store', ['tab' => 'accessories', 'q' => request('q')]) }}" 
-                   class="px-4 py-2 rounded-xl text-xs font-bold transition-all {{ $currentTab === 'accessories' ? 'bg-sky-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
-                    ⚡ Accessories & Parts
+                   class="px-4 py-2 rounded-full text-[13px] font-medium transition-airbnb shrink-0 border {{ $currentTab === 'second_hand' ? 'bg-ink text-white border-ink' : 'bg-canvas text-ink border-hairline hover:border-ink' }}">
+                    Certified Pre-Owned ({{ $secondHandPhones->count() }})
                 </a>
             </div>
-
-            <!-- Search Form -->
-            <form action="{{ route('public.store') }}" method="GET" class="relative min-w-[260px]">
-                <input type="hidden" name="tab" value="{{ $currentTab }}">
-                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search brand or model..."
-                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-brand-500 focus:bg-white transition-all">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            </form>
         </div>
+    </div>
 
-        <!-- ════ 1. BRAND NEW PHONES SECTION ════ -->
+    <!-- ════ 3. MAIN CATALOG CONTAINER ════ -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+
+        <!-- BRAND NEW SMARTPHONES SECTION -->
         @if(in_array($currentTab, ['all', 'new']))
         <section class="space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                <div class="flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-brand-100 text-brand-700"><i data-lucide="smartphone" class="w-5 h-5"></i></span>
-                    <h2 class="font-display font-extrabold text-xl text-slate-900">Brand New Sealed Smartphones</h2>
+            <div class="flex items-baseline justify-between border-b border-hairline-soft pb-3">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-[20px] font-semibold text-ink">Brand New Sealed Smartphones</h2>
+                    <span class="text-[12px] text-muted">({{ $newPhones->count() }} available)</span>
                 </div>
-                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-                    {{ $newPhones->count() }} In Stock
-                </span>
+                <span class="text-[12px] font-medium text-muted">Official Brand Warranty</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 @forelse($newPhones as $np)
-                    <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between group">
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-start">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-100 text-brand-800">
-                                    100% Sealed
-                                </span>
-                                <span class="text-xs text-slate-400 font-mono font-bold">{{ $np->brand }}</span>
+                    <div class="group flex flex-col cursor-pointer">
+                        <!-- Photo Plate -->
+                        <div class="relative aspect-square w-full rounded-[14px] overflow-hidden bg-surface-soft border border-hairline-soft mb-3">
+                            <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-surface-soft to-surface-strong group-hover:scale-105 transition-transform duration-300">
+                                <div class="w-20 h-20 rounded-2xl bg-white shadow-airbnb-tier flex items-center justify-center text-ink mb-2">
+                                    <svg class="w-10 h-10 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
+                                        <rect x="5" y="2" width="14" height="20" rx="3"></rect>
+                                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                    </svg>
+                                </div>
+                                <span class="text-[11px] font-semibold tracking-wider text-muted uppercase">{{ $np->brand }}</span>
+                                <span class="text-[13px] font-semibold text-ink">{{ $np->model }}</span>
                             </div>
 
-                            <h3 class="font-display font-extrabold text-lg text-slate-900 group-hover:text-brand-600 transition-colors">
-                                {{ $np->brand }} {{ $np->model }}
-                            </h3>
-
-                            <div class="flex flex-wrap gap-1.5 text-xs text-slate-500">
-                                <span class="px-2.5 py-0.5 rounded-md bg-slate-100 font-semibold">{{ $np->storage ?? '128GB' }}</span>
-                                <span class="px-2.5 py-0.5 rounded-md bg-slate-100 font-semibold">{{ $np->ram ?? '8GB' }} RAM</span>
-                                <span class="px-2.5 py-0.5 rounded-md bg-slate-100 font-semibold">{{ $np->color ?? 'Standard' }}</span>
+                            <!-- Top-Left Badge -->
+                            <div class="absolute top-3 left-3 bg-canvas text-ink text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-airbnb-tier">
+                                100% Sealed
                             </div>
 
-                            <div class="pt-2 text-xs space-y-1 text-slate-600">
-                                <p class="flex items-center gap-1.5 text-emerald-700 font-medium">
-                                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                    <span>Manufacturer 1-Year Warranty Included</span>
-                                </p>
-                                <p class="flex items-center gap-1.5 text-slate-500">
-                                    <i data-lucide="gift" class="w-3.5 h-3.5 text-brand-600"></i>
-                                    <span>Free 9D Tempered Glass + Protective Case</span>
-                                </p>
-                            </div>
+                            <!-- Top-Right Heart Button -->
+                            <button type="button" 
+                                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-ink flex items-center justify-center transition-airbnb shadow-airbnb-tier hover:scale-110"
+                                    title="Save to wishlist">
+                                <svg class="w-4 h-4 stroke-current fill-none hover:fill-rausch hover:text-rausch stroke-[2]" viewBox="0 0 24 24">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </button>
                         </div>
 
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                            <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Store Price</span>
-                                <p class="text-2xl font-black text-slate-900">₹{{ number_format($np->selling_price, 2) }}</p>
+                        <!-- Metadata Block -->
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-[15px]">
+                                <span class="font-semibold text-ink truncate">{{ $np->brand }} {{ $np->model }}</span>
+                                <span class="flex items-center gap-1 text-ink font-semibold shrink-0">
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                    <span>4.95</span>
+                                </span>
                             </div>
-                            <a href="https://wa.me/919876543210?text={{ urlencode('Hello, I want to purchase brand new ' . $np->brand . ' ' . $np->model . ' for ₹' . number_format($np->selling_price, 2)) }}" target="_blank" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-600/20 flex items-center gap-1.5 transition-all">
-                                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-                                <span>Buy via WhatsApp</span>
-                            </a>
+
+                            <p class="text-[14px] text-muted truncate">
+                                {{ $np->storage ?? '128GB' }} · {{ $np->ram ?? '8GB' }} RAM · {{ $np->color ?? 'Official Edition' }}
+                            </p>
+
+                            <p class="text-[14px] text-muted truncate">
+                                Free 9D Tempered Glass + Protective Case
+                            </p>
+
+                            <div class="pt-1 flex items-baseline justify-between">
+                                <div class="text-[15px] font-semibold text-ink">
+                                    <span>₹{{ number_format($np->selling_price, 2) }}</span>
+                                    <span class="font-normal text-muted text-[13px]"> incl. GST</span>
+                                </div>
+                                <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack, I would like to buy brand new ' . $np->brand . ' ' . $np->model . ' for ₹' . number_format($np->selling_price, 2)) }}" 
+                                   target="_blank"
+                                   class="text-[13px] font-semibold text-rausch hover:underline">
+                                    Buy / Inquire →
+                                </a>
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-3 py-10 text-center bg-white rounded-3xl border border-slate-200 text-slate-500">
-                        <p class="font-bold">No new phone models matched your search.</p>
+                    <div class="col-span-full py-10 text-center bg-surface-soft rounded-[14px] border border-hairline-soft text-muted">
+                        <p class="font-medium text-ink">No brand new phone models matched your search.</p>
                     </div>
                 @endforelse
             </div>
         </section>
         @endif
 
-        <!-- ════ 2. CERTIFIED PRE-OWNED SECTION ════ -->
+        <!-- CERTIFIED PRE-OWNED SECTION -->
         @if(in_array($currentTab, ['all', 'second_hand']))
         <section class="space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                <div class="flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-amber-100 text-amber-800"><i data-lucide="refresh-cw" class="w-5 h-5"></i></span>
-                    <h2 class="font-display font-extrabold text-xl text-slate-900">Certified Pre-Owned & Inspected</h2>
+            <div class="flex items-baseline justify-between border-b border-hairline-soft pb-3">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-[20px] font-semibold text-ink">Certified Pre-Owned Devices</h2>
+                    <span class="text-[12px] text-muted">({{ $secondHandPhones->count() }} available)</span>
                 </div>
-                <span class="text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1 rounded-full">
-                    {{ $secondHandPhones->count() }} Available
-                </span>
+                <span class="text-[12px] font-medium text-muted">50-Point Inspection Guaranteed</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 @forelse($secondHandPhones as $sp)
-                    <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between group">
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-start">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900">
-                                    Grade {{ strtoupper($sp->condition_grade ?? 'A') }}
-                                </span>
-                                @if($sp->battery_health)
-                                    <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                                        🔋 {{ $sp->battery_health }}% Battery
-                                    </span>
-                                @endif
+                    <div class="group flex flex-col cursor-pointer">
+                        <!-- Photo Plate -->
+                        <div class="relative aspect-square w-full rounded-[14px] overflow-hidden bg-surface-soft border border-hairline-soft mb-3">
+                            <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-surface-soft to-surface-strong group-hover:scale-105 transition-transform duration-300">
+                                <div class="w-20 h-20 rounded-2xl bg-white shadow-airbnb-tier flex items-center justify-center text-ink mb-2">
+                                    <svg class="w-10 h-10 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
+                                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-[11px] font-semibold tracking-wider text-muted uppercase">{{ $sp->brand }}</span>
+                                <span class="text-[13px] font-semibold text-ink">{{ $sp->model }}</span>
                             </div>
 
-                            <h3 class="font-display font-extrabold text-lg text-slate-900 group-hover:text-amber-600 transition-colors">
-                                {{ $sp->brand }} {{ $sp->model }}
-                            </h3>
-
-                            <div class="flex flex-wrap gap-1.5 text-xs text-slate-500">
-                                <span class="px-2.5 py-0.5 rounded-md bg-slate-100 font-semibold">{{ $sp->storage ?? '128GB' }}</span>
-                                <span class="px-2.5 py-0.5 rounded-md bg-slate-100 font-semibold">{{ $sp->color ?? 'Graphite' }}</span>
+                            <!-- Top-Left Badge -->
+                            <div class="absolute top-3 left-3 bg-canvas text-ink text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-airbnb-tier">
+                                Grade {{ strtoupper($sp->condition_grade ?? 'A+') }}
                             </div>
 
-                            @if($sp->checklist_notes)
-                                <p class="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100 line-clamp-2">
-                                    "{{ $sp->checklist_notes }}"
-                                </p>
+                            <!-- Top-Right Heart Button -->
+                            <button type="button" 
+                                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-ink flex items-center justify-center transition-airbnb shadow-airbnb-tier hover:scale-110"
+                                    title="Save to wishlist">
+                                <svg class="w-4 h-4 stroke-current fill-none hover:fill-rausch hover:text-rausch stroke-[2]" viewBox="0 0 24 24">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </button>
+
+                            @if($sp->battery_health)
+                                <div class="absolute bottom-3 left-3 bg-canvas/90 backdrop-blur-sm text-ink text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-sm">
+                                    {{ $sp->battery_health }}% Battery Health
+                                </div>
                             @endif
-
-                            <div class="text-xs text-slate-500 space-y-1">
-                                <p class="flex items-center gap-1.5 text-emerald-700 font-medium">
-                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                    <span>30-Day Testing & Store Replacement Warranty</span>
-                                </p>
-                            </div>
                         </div>
 
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                            <div>
-                                <span class="text-[10px] text-slate-400 uppercase font-bold">Deal Price</span>
-                                <p class="text-2xl font-black text-slate-900">₹{{ number_format($sp->selling_price, 2) }}</p>
+                        <!-- Metadata Block -->
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-[15px]">
+                                <span class="font-semibold text-ink truncate">{{ $sp->brand }} {{ $sp->model }}</span>
+                                <span class="flex items-center gap-1 text-ink font-semibold shrink-0">
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                    <span>4.90</span>
+                                </span>
                             </div>
-                            <a href="https://wa.me/919876543210?text={{ urlencode('Hello, I want to reserve certified pre-owned ' . $sp->brand . ' ' . $sp->model . ' for ₹' . number_format($sp->selling_price, 2)) }}" target="_blank" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-600/20 flex items-center gap-1.5 transition-all">
-                                <i data-lucide="tag" class="w-3.5 h-3.5"></i>
-                                <span>Reserve Device</span>
-                            </a>
+
+                            <p class="text-[14px] text-muted truncate">
+                                {{ $sp->storage ?? '128GB' }} · {{ $sp->color ?? 'Clean Condition' }}
+                            </p>
+
+                            <p class="text-[14px] text-muted truncate">
+                                30-Day Testing & Replacement Warranty
+                            </p>
+
+                            <div class="pt-1 flex items-baseline justify-between">
+                                <div class="text-[15px] font-semibold text-ink">
+                                    <span>₹{{ number_format($sp->selling_price, 2) }}</span>
+                                    <span class="font-normal text-muted text-[13px]"> tested</span>
+                                </div>
+                                <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack, I want to reserve pre-owned ' . $sp->brand . ' ' . $sp->model . ' for ₹' . number_format($sp->selling_price, 2)) }}" 
+                                   target="_blank"
+                                   class="text-[13px] font-semibold text-rausch hover:underline">
+                                    Reserve →
+                                </a>
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-3 py-10 text-center bg-white rounded-3xl border border-slate-200 text-slate-500">
-                        <p class="font-bold">No certified pre-owned models matched your search.</p>
+                    <div class="col-span-full py-10 text-center bg-surface-soft rounded-[14px] border border-hairline-soft text-muted">
+                        <p class="font-medium text-ink">No certified pre-owned devices matched your search.</p>
                     </div>
                 @endforelse
-            </div>
-        </section>
-        @endif
-
-        <!-- ════ 3. ACCESSORIES & COVERS SECTION ════ -->
-        @if(in_array($currentTab, ['all', 'accessories', 'covers']) && count($accessories) > 0)
-        <section class="space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                <div class="flex items-center gap-2.5">
-                    <span class="p-2 rounded-xl bg-purple-100 text-purple-700"><i data-lucide="package" class="w-5 h-5"></i></span>
-                    <h2 class="font-display font-extrabold text-xl text-slate-900">
-                        {{ $currentTab === 'covers' ? 'Back Covers & 9D Tempered Glass' : 'Original Accessories & Parts' }}
-                    </h2>
-                </div>
-                <span class="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1 rounded-full">
-                    {{ count($accessories) }} Items
-                </span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                @foreach($accessories as $acc)
-                    <div class="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between">
-                        <div class="space-y-2">
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 uppercase">
-                                {{ ucfirst(str_replace('_', ' ', $acc->category ?? 'General')) }}
-                            </span>
-                            <h4 class="font-bold text-sm text-slate-900 line-clamp-2">{{ $acc->name }}</h4>
-                            <p class="text-xs text-slate-500">In Stock: {{ $acc->stock_qty }} units</p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                            <span class="font-black text-lg text-slate-900">₹{{ number_format($acc->selling_price, 2) }}</span>
-                            <a href="https://wa.me/919876543210?text={{ urlencode('Hi, do you have ' . $acc->name . ' available in store?') }}" target="_blank" class="px-3 py-1.5 bg-slate-900 hover:bg-brand-600 text-white rounded-lg text-xs font-bold transition-colors">
-                                Inquire
-                            </a>
-                        </div>
-                    </div>
-                @endforeach
             </div>
         </section>
         @endif

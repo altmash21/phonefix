@@ -164,7 +164,7 @@
 <!-- Edit Supplier Details & Wallet Modal -->
 <div class="modal" id="editSupplierModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
     <div class="modal-dialog" style="max-width: 440px; width: 100%; margin:20px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.25);">
-        <div class="modal-header" style="background:#0F766E; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="modal-header" style="background:#5E6AD2; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
             <div style="font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px;">
                 <i data-lucide="truck" style="width:17px;height:17px;"></i> Edit Supplier & Wallet
             </div>
@@ -209,7 +209,7 @@
 
                 <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--card-border);">
                     <button type="button" onclick="closeEditSupplierModal()" class="btn btn-outline btn-sm">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:#0F766E;">Update Supplier</button>
+                    <button type="submit" class="btn btn-primary btn-sm" style="background:#5E6AD2;">Update Supplier</button>
                 </div>
             </form>
         </div>

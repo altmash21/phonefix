@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0F766E">
+    <meta name="theme-color" content="#5E6AD2">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'MobiTrack — Mobile Shop ERP')</title>
 
@@ -18,10 +18,10 @@
         };
     </script>
 
-    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <!-- Google Fonts: Inter, Plus Jakarta Sans & JetBrains Mono (Linear Software Craft) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- Lucide Icons (with offline fallback) -->
     <script>
@@ -88,62 +88,66 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            /* ── Design Tokens: Modern Deep Teal B2B SaaS ── */
-            --color-primary: #0F766E;
-            --color-primary-gradient: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
-            --color-primary-hover: #115E59;
-            --color-primary-light: #F0FDFA;
-            --color-primary-subtle: rgba(15, 118, 110, 0.08);
+            /* ── Design Tokens: Linear White Theme / Light Software Craft ── */
+            --color-primary: #5E6AD2;
+            --color-primary-gradient: linear-gradient(135deg, #5E6AD2 0%, #4E5AC0 100%);
+            --color-primary-hover: #717DD9;
+            --color-primary-active: #4E5AC0;
+            --color-primary-focus: #5E69D1;
+            --color-primary-light: #F4F5FD;
+            --color-primary-subtle: rgba(94, 106, 210, 0.08);
 
             /* Semantic Roles */
-            --color-success: #16A34A; /* Inbound, paid, completed, in-stock, approved */
+            --color-success: #27A644; /* Inbound, paid, completed, in-stock, approved */
             --color-warning: #D97706; /* Caution, pending, due, buyback, expiring */
-            --color-info: #0F766E;    /* Primary brand semantic */
-            --color-danger: #DC2626;  /* Negative, voided, cancelled, debts */
+            --color-info: #5E6AD2;    /* Primary brand semantic */
+            --color-danger: #EB5757;  /* Negative, voided, cancelled, debts */
 
-            /* Surfaces & Backgrounds */
-            --color-bg: #F8FAFC;
+            /* Surfaces & Backgrounds (Linear White Theme Ladder) */
+            --color-bg: #FBFBFC;
             --color-surface: #FFFFFF;
-            --color-surface-hover: #F8FAFC;
-            --color-border: #E2E8F0;
-            --color-border-subtle: rgba(226, 232, 240, 0.85);
-            --color-card-border: #F1F5F9;
+            --color-surface-hover: #F7F8F9;
+            --color-surface-subtle: #F4F5F7;
+            --color-border: #E6E8EC;
+            --color-border-subtle: #ECEEF2;
+            --color-card-border: #F0F2F5;
 
             /* Typography */
-            --color-text-primary: #0F172A;
-            --color-text-secondary: #64748B;
-            --color-text-muted: #94A3B8;
+            --color-text-primary: #0F1011;
+            --color-text-secondary: #555962;
+            --color-text-muted: #8A8F98;
+            --color-text-tertiary: #B0B4BC;
 
-            /* Ambient Elevation & Shadow Tokens */
-            --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-            --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
-            --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
-            --shadow-card-hover: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 10px 24px -4px rgba(15, 23, 42, 0.08);
-            --shadow-dropdown: 0 14px 35px -4px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
-            --shadow-glow: 0 4px 14px 0 rgba(15, 118, 110, 0.25);
-            --focus-ring: 0 0 0 3.5px rgba(15, 118, 110, 0.14);
+            /* Ambient Elevation & Shadow Tokens (Linear Minimalist Hairline Elevation) */
+            --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+            --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 0 0 1px #E6E8EC;
+            --shadow-card-hover: 0 4px 12px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px #D1D4DC;
+            --shadow-dropdown: 0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px #E6E8EC;
+            --shadow-glow: 0 0 0 3px rgba(94, 106, 210, 0.2);
+            --focus-ring: 0 0 0 3px rgba(94, 106, 210, 0.18);
 
-            /* Pastel accent families */
-            --lama-sky-light: #E0F2FE;
-            --lama-sky: #7DD3FC;
-            --lama-sky-dark: #0369A1;
-            --lama-purple-light: #F3E8FF;
-            --lama-purple: #C084FC;
-            --lama-purple-dark: #7E22CE;
-            --lama-yellow-light: #FEF9C3;
+            /* Soft accent families (Linear-tuned) */
+            --lama-sky-light: #F0F5FF;
+            --lama-sky: #828FFF;
+            --lama-sky-dark: #4E5AC0;
+            --lama-purple-light: #F4F5FD;
+            --lama-purple: #9FA8F0;
+            --lama-purple-dark: #5E6AD2;
+            --lama-yellow-light: #FEF8EB;
             --lama-yellow: #FACC15;
-            --lama-yellow-dark: #A16207;
-            --lama-green-light: #DCFCE7;
+            --lama-yellow-dark: #B45309;
+            --lama-green-light: #EDF7EE;
             --lama-green: #4ADE80;
-            --lama-green-dark: #15803D;
-            --lama-rose-light: #FFE4E6;
+            --lama-green-dark: #1E8236;
+            --lama-rose-light: #FDF2F2;
             --lama-rose: #FB7185;
-            --lama-rose-dark: #BE123C;
+            --lama-rose-dark: #EB5757;
 
             /* Radius & Spacing */
-            --radius-card: 10px;
+            --radius-card: 12px;
             --radius-pill: 9999px;
-            --radius-button: 7px;
+            --radius-button: 8px;
             --spacing-unit: 6px;
 
             /* Shell Dimensions */
@@ -155,9 +159,9 @@
             --brand-600: var(--color-primary);
             --brand-700: var(--color-primary-hover);
             --brand-50: var(--color-primary-light);
-            --brand-100: #CCFBF1;
-            --brand-200: #99F6E4;
-            --brand-500: #14B8A6;
+            --brand-100: #E8EAFB;
+            --brand-200: #D0D4F7;
+            --brand-500: var(--color-primary);
             --bg-page: var(--color-bg);
             --text-primary: var(--color-text-primary);
             --text-secondary: var(--color-text-secondary);
@@ -219,7 +223,7 @@
             padding-right: 14px;
             z-index: 100;
             gap: 12px;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -232,22 +236,22 @@
         }
         .topbar-logo-icon {
             width: 30px; height: 30px;
-            background: var(--color-primary-gradient);
+            background: var(--color-primary);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             color: #ffffff;
-            box-shadow: 0 2px 6px rgba(15, 118, 110, 0.25);
+            box-shadow: 0 2px 6px rgba(94, 106, 210, 0.25);
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
         }
         .topbar-logo:hover .topbar-logo-icon {
             transform: scale(1.04);
-            box-shadow: 0 3px 10px rgba(15, 118, 110, 0.32);
+            box-shadow: 0 3px 10px rgba(94, 106, 210, 0.35);
         }
         .topbar-logo-text {
             font-size: 15px;
-            font-weight: 800;
-            color: #0F172A;
+            font-weight: 700;
+            color: #0F1011;
             letter-spacing: -0.3px;
             display: flex;
             align-items: center;
@@ -339,8 +343,8 @@
         }
         .user-avatar {
             width: 26px; height: 26px;
-            background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%);
-            border: 1.5px solid var(--brand-200);
+            background: #EEF0FC;
+            border: 1.5px solid #D5DAF7;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             color: var(--color-primary);
@@ -459,7 +463,7 @@
         .nav-link:hover {
             background: var(--color-primary-light);
             color: var(--color-primary);
-            border-color: rgba(153, 246, 228, 0.6);
+            border-color: rgba(208, 212, 247, 0.6);
             transform: translateX(2px);
         }
         .nav-link:focus-visible {
@@ -467,11 +471,11 @@
             outline-offset: 2px;
         }
         .nav-link.active {
-            background: var(--color-primary-gradient);
+            background: var(--color-primary);
             color: #FFFFFF !important;
-            font-weight: 700;
+            font-weight: 600;
             border-color: var(--color-primary);
-            box-shadow: 0 3px 10px rgba(15, 118, 110, 0.24);
+            box-shadow: 0 2px 8px rgba(94, 106, 210, 0.25);
             transform: translateX(2px);
         }
         .nav-link svg {
@@ -704,7 +708,7 @@
             color: var(--color-primary);
             background: var(--color-primary-light);
             transform: scale(1.06);
-            box-shadow: 0 2px 4px rgba(15, 118, 110, 0.18);
+            box-shadow: 0 2px 4px rgba(94, 106, 210, 0.2);
         }
 
         /* Form Accordion Pattern */
@@ -861,8 +865,8 @@
             transition: all 0.15s ease;
         }
         .mobi-page-size-select:focus {
-            border-color: var(--brand-500, #14B8A6);
-            box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(94, 106, 210, 0.2);
         }
         .mobi-pagination-right {
             display: flex;
@@ -930,11 +934,11 @@
             border-color: #CBD5E1;
         }
         .mobi-page-num-btn.active {
-            background: var(--color-primary-gradient);
+            background: var(--color-primary);
             color: #FFFFFF;
             border-color: var(--color-primary);
-            font-weight: 800;
-            box-shadow: 0 1px 4px rgba(15, 118, 110, 0.25);
+            font-weight: 700;
+            box-shadow: 0 1px 4px rgba(94, 106, 210, 0.25);
         }
         .mobi-page-ellipsis {
             display: inline-flex;
@@ -1018,14 +1022,14 @@
             transform: scale(0.98);
         }
         .btn-primary {
-            background: var(--color-primary-gradient);
+            background: var(--color-primary);
             color: #fff;
-            box-shadow: 0 1px 4px rgba(15, 118, 110, 0.22);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
         .btn-primary:hover:not(:disabled) {
-            background: linear-gradient(135deg, #115E59 0%, #0F766E 100%);
+            background: var(--color-primary-hover);
             transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(15, 118, 110, 0.3);
+            box-shadow: 0 2px 6px rgba(94, 106, 210, 0.25);
         }
         .btn-primary:disabled {
             background: #94A3B8;
@@ -1129,10 +1133,10 @@
             outline-offset: 2px;
         }
         .filter-pill.active {
-            background: var(--color-primary-gradient);
+            background: var(--color-primary);
             color: #ffffff;
             border-color: var(--color-primary);
-            box-shadow: 0 2px 6px rgba(15, 118, 110, 0.25);
+            box-shadow: 0 2px 6px rgba(94, 106, 210, 0.25);
         }
         .filter-pill.active .pill-count {
             background: rgba(255, 255, 255, 0.25);
@@ -1194,12 +1198,12 @@
             letter-spacing: 0.2px;
             line-height: 1.35;
         }
-        .badge-green { background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; }
-        .badge-orange { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
-        .badge-red { background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; }
-        .badge-purple { background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; }
-        .badge-blue { background: #F0FDFA; color: #0F766E; border: 1px solid #CCFBF1; }
-        .badge-gray { background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; }
+        .badge-green { background: #EDF7EE; color: #27A644; border: 1px solid #C8E6C9; }
+        .badge-orange { background: #FEF8EB; color: #D97706; border: 1px solid #FDE68A; }
+        .badge-red { background: #FDF2F2; color: #EB5757; border: 1px solid #FECDCA; }
+        .badge-purple { background: #F4F5FD; color: #5E6AD2; border: 1px solid #D0D4F7; }
+        .badge-blue { background: #F4F5FD; color: #5E6AD2; border: 1px solid #D0D4F7; }
+        .badge-gray { background: #F4F5F7; color: #555962; border: 1px solid #E6E8EC; }
 
         /* ─── FORM ELEMENTS (Compact Density) ─── */
         .form-group { margin-bottom: 12px; }
@@ -1809,10 +1813,10 @@
             color: #0F172A;
         }
         .sales-date-pill.active, .purchase-pill.active, .filter-pill-btn.active {
-            background: #0F766E !important;
+            background: #5E6AD2 !important;
             color: #FFFFFF !important;
-            font-weight: 800 !important;
-            box-shadow: 0 2px 4px rgba(15,118,110,0.25);
+            font-weight: 700 !important;
+            box-shadow: 0 2px 4px rgba(94, 106, 210, 0.25);
         }
 
         /* 3. Mobile Flat Rows (Zero Depth, No Card-in-Card) */
@@ -1842,8 +1846,8 @@
         .row-line1 .inv-num {
             font-size: 12px;
             font-weight: 700;
-            font-family: monospace;
-            color: #0F766E;
+            font-family: 'JetBrains Mono', 'SF Mono', monospace;
+            color: #5E6AD2;
             text-decoration: none;
             flex-shrink: 0;
         }
@@ -1966,10 +1970,10 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #0F766E, #059669);
+            background: linear-gradient(135deg, #5E6AD2, #4E5AC0);
             color: #FFFFFF;
             border: none;
-            box-shadow: 0 6px 20px rgba(15, 118, 110, 0.4);
+            box-shadow: 0 6px 20px rgba(94, 106, 210, 0.35);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2033,7 +2037,7 @@
             border-radius: 6px;
             background: #FFFFFF;
             border: 1px solid #CBD5E1;
-            color: #0F766E;
+            color: #5E6AD2;
             align-items: center;
             justify-content: center;
             cursor: pointer;

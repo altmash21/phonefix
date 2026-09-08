@@ -30,9 +30,9 @@
         </a>
         @endif
         @if(($canAddAccessories ?? false) || ($canAddCovers ?? false))
-        <button type="button" onclick="openBulkRestockModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Restock Parts
-        </button>
+        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-outline btn-sm">
+            <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Restock Parts & Accessories
+        </a>
         @endif
         @if(($isAdmin ?? false) || ($canAddPhones ?? false) || auth()->user()->hasRole('sales-staff') || auth()->user()->can('read-mobileshop-procurement'))
         <a href="{{ route('mobileshop.purchase_orders') }}" class="btn btn-outline btn-sm">
@@ -64,9 +64,6 @@
     @media (max-width: 767px) {
         .purchase-page-wrapper {
             padding-bottom: 84px !important;
-        }
-        .desktop-action-buttons {
-            display: none !important;
         }
         .hide-on-mobile {
             display: none !important;
@@ -222,7 +219,7 @@
     <div class="card purchase-registry-card" style="margin-bottom:12px; border-radius:8px; border:1px solid #E2E8F0; overflow:hidden;">
         <div class="purchase-header-container" style="background:#FFFFFF; border-bottom:1px solid #F1F5F9; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
             <div class="purchase-header-title-box" style="display:flex; align-items:center; gap:8px;">
-                <div style="width:30px; height:30px; border-radius:8px; background:#0F766E; display:flex; align-items:center; justify-content:center; color:#FFFFFF; flex-shrink:0; box-shadow:0 2px 6px rgba(15,118,110,0.15);">
+                <div style="width:30px; height:30px; border-radius:8px; background:#5E6AD2; display:flex; align-items:center; justify-content:center; color:#FFFFFF; flex-shrink:0; box-shadow:0 2px 6px rgba(94,106,210,0.2);">
                     <i data-lucide="file-spreadsheet" style="width:16px;height:16px;"></i>
                 </div>
                 <div>
@@ -239,7 +236,7 @@
                     <input type="text" id="purchaseSearchInput" oninput="filterPurchaseTables()" placeholder="Search invoice, supplier, item..."
                            class="purchase-search-input"
                            style="width:100%; min-height:40px; padding:6px 68px 6px 34px; font-size:12px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; outline:none; transition:all 0.15s ease;"
-                           onfocus="this.style.background='#fff'; this.style.borderColor='#0F766E'; this.style.boxShadow='0 0 0 3px rgba(15,118,110,0.12)';"
+                           onfocus="this.style.background='#fff'; this.style.borderColor='#5E6AD2'; this.style.boxShadow='0 0 0 3px rgba(94,106,210,0.18)';"
                            onblur="if(!this.value){this.style.background='#F8FAFC';} this.style.borderColor='#CBD5E1'; this.style.boxShadow='none';">
 
                     <!-- Inside Right Trailing Controls -->
@@ -248,29 +245,10 @@
 
                         <button type="button" onclick="openPurchaseDateFilterDrawer()" id="btnMobilePurchaseDateFilter" class="mobile-filter-btn" title="Filter by Date Range">
                             <i data-lucide="calendar" style="width:14px; height:14px;"></i>
-                            <span id="purchaseDateFilterActiveIndicator" style="display:none; position:absolute; top:3px; right:3px; width:6px; height:6px; border-radius:50%; background:#0F766E;"></span>
+                            <span id="purchaseDateFilterActiveIndicator" style="display:none; position:absolute; top:3px; right:3px; width:6px; height:6px; border-radius:50%; background:#5E6AD2;"></span>
                         </button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Desktop Action Buttons -->
-            <div class="desktop-action-buttons" style="display:flex; align-items:center; gap:8px;">
-                @if($canAddPhones ?? false)
-                <a href="{{ route('mobileshop.new_mobiles') }}" class="btn btn-primary btn-sm" style="font-weight:700;">
-                    <i data-lucide="smartphone" style="width:13px;height:13px;"></i> Add Phone Stock
-                </a>
-                @endif
-                @if(($canAddAccessories ?? false) || ($canAddCovers ?? false))
-                <button type="button" onclick="openBulkRestockModal()" class="btn btn-outline btn-sm" style="font-weight:700; border-color:#CBD5E1;">
-                    <i data-lucide="scan-line" style="width:13px;height:13px;"></i> Restock / Scan Bill
-                </button>
-                @endif
-                @if($canAddSecondhand ?? false)
-                <a href="{{ route('mobileshop.second_hand') }}" class="btn btn-outline btn-sm" style="font-weight:700; border-color:#CBD5E1;">
-                    <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> Register Buyback
-                </a>
-                @endif
             </div>
         </div>
 
@@ -526,16 +504,16 @@
     <div class="mobile-fab-container">
         <div id="purchaseFabMenu" class="fab-dropup-menu" style="display: none;">
             @if($canAddPhones ?? false)
-            <a href="{{ route('mobileshop.new_mobiles') }}" class="fab-menu-item" style="color: #0F766E;">
+            <a href="{{ route('mobileshop.new_mobiles') }}" class="fab-menu-item" style="color: #5E6AD2;">
                 <i data-lucide="smartphone" style="width:16px;height:16px;"></i>
                 Add Phone Stock
             </a>
             @endif
             @if(($canAddAccessories ?? false) || ($canAddCovers ?? false))
-            <button type="button" onclick="openBulkRestockModal(); togglePurchaseFabMenu();" class="fab-menu-item" style="color: #059669;">
+            <a href="{{ route('mobileshop.accessories.purchase') }}" class="fab-menu-item" style="color: #059669;">
                 <i data-lucide="scan-line" style="width:16px;height:16px;"></i>
                 Restock Parts / Bills
-            </button>
+            </a>
             @endif
             @if($canAddSecondhand ?? false)
             <a href="{{ route('mobileshop.second_hand') }}" class="fab-menu-item" style="color: #2563EB;">
@@ -554,7 +532,7 @@
         <div style="background: #FFFFFF; width: 100%; max-width: 500px; border-radius: 16px 16px 0 0; padding: 18px 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.15);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                 <div style="font-weight: 800; font-size: 14px; color: #0F172A; display: flex; align-items: center; gap: 6px;">
-                    <i data-lucide="calendar" style="width: 16px; height: 16px; color: #0F766E;"></i>
+                    <i data-lucide="calendar" style="width: 16px; height: 16px; color: #5E6AD2;"></i>
                     Filter Purchases by Date Range
                 </div>
                 <button type="button" onclick="closePurchaseDateFilterDrawer()" style="background: #F1F5F9; border: none; width: 28px; height: 28px; border-radius: 50%; color: #64748B; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
@@ -570,7 +548,7 @@
                 </div>
                 <div style="display: flex; gap: 8px; margin-top: 6px;">
                     <button type="button" onclick="resetPurchaseDates(); closePurchaseDateFilterDrawer();" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1; background: #F8FAFC; color: #475569; font-size: 12px; font-weight: 700; cursor: pointer;">Reset</button>
-                    <button type="button" onclick="closePurchaseDateFilterDrawer()" style="flex: 2; padding: 10px; border-radius: 8px; border: none; background: #0F766E; color: #FFFFFF; font-size: 12px; font-weight: 800; cursor: pointer;">Apply Filter</button>
+                    <button type="button" onclick="closePurchaseDateFilterDrawer()" style="flex: 2; padding: 10px; border-radius: 8px; border: none; background: #5E6AD2; color: #FFFFFF; font-size: 12px; font-weight: 800; cursor: pointer;">Apply Filter</button>
                 </div>
             </div>
         </div>
@@ -664,476 +642,30 @@
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- MODAL: Bulk Restock & AI Invoice OCR Inflow -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <div id="bulkRestockModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
-        <div class="card" style="max-width: 1300px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 94vh; display:flex; flex-direction:column; overflow:hidden;">
-            <div class="card-header" style="background:var(--brand-700); color:#fff;">
-                <div>
-                    <div class="card-title" style="color:#fff; display:flex; align-items:center; gap:8px;">
-                        <i data-lucide="scan-line" style="width:18px;height:18px;"></i> Bulk Inventory Restock & AI Invoice Scanner
-                    </div>
-                    <div class="card-subtitle" style="color:rgba(255,255,255,0.85);">Scan supplier paper bills with OCR or manually batch-intake multiple parts in 1 click</div>
-                </div>
-                <button onclick="closeBulkRestockModal()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer;">✕</button>
-            </div>
 
-            <div class="card-body" style="overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px;">
-                <!-- OCR Invoice Upload & AI Scanner Area -->
-                <div style="background: linear-gradient(135deg, #F5F3FF, #EDE9FE); border: 2px dashed #A78BFA; border-radius: 14px; padding: 16px 20px; transition: all 0.2s;" id="ocrDropzone">
-                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div style="width:44px; height:44px; border-radius:12px; background:var(--brand-600); display:flex; align-items:center; justify-content:center; color:#fff;">
-                                <i data-lucide="file-text" style="width:22px;height:22px;"></i>
-                            </div>
-                            <div>
-                                <div style="font-weight:800; color:#4C1D95; font-size:14px;">AI Invoice Scanner (Auto-Extract Items & Rates)</div>
-                                <div style="font-size:12px; color:#6D28D9;">Upload supplier bill image (PNG, JPG) or take a photo to auto-populate the table below.</div>
-                            </div>
-                        </div>
-
-                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                            <input type="file" id="invoiceFileInput" accept="image/*" style="display:none;" onchange="handleInvoiceFile(this.files[0])">
-                            <button type="button" onclick="document.getElementById('invoiceFileInput').click()" class="btn btn-primary btn-sm" style="background:var(--brand-700);">
-                                <i data-lucide="upload" style="width:13px;height:13px;"></i> Select Invoice Photo
-                            </button>
-                            <button type="button" onclick="loadSampleInvoiceData()" class="btn btn-outline btn-sm" style="background:#fff; color:var(--brand-700); border-color:#DDD6FE; font-weight:700;">
-                                <i data-lucide="sparkles" style="width:13px;height:13px; color:#7C3AED;"></i> Demo Wholesale Bill
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- OCR Scanning Progress bar -->
-                    <div id="ocrProgressBox" style="display:none; margin-top:14px; background:#fff; padding:12px; border-radius:10px; border:1px solid #DDD6FE;">
-                        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:var(--brand-700); margin-bottom:6px;">
-                            <span id="ocrStatusText">🔍 OCR Engine reading text...</span>
-                            <span id="ocrPercentText">0%</span>
-                        </div>
-                        <div style="width:100%; height:6px; background:#F1F5F9; border-radius:3px; overflow:hidden;">
-                            <div id="ocrProgressBar" style="width:0%; height:100%; background:var(--brand-600); transition: width 0.2s;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Supplier Shipment Meta -->
-                <form action="{{ route('mobileshop.accessories.bulk_restock') }}" method="POST" id="bulkRestockForm" onsubmit="if(typeof MT !== 'undefined'){ MT.enqueue('create', 'ms_parts_inventory_history', {source:'bulkRestockForm', action:'bulkRestock'}); } return validateAndSubmitBulkRestock(this);">
-                    @csrf
-                    <div class="form-row" style="margin-bottom:14px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label">Supplier / Distributor Name</label>
-                            <input type="text" name="supplier_name" id="bulkSupplierName" placeholder="e.g. Metro Mobile Wholesale" class="form-control" style="font-weight:700;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label">Supplier Invoice / PO Reference #</label>
-                            <input type="text" name="invoice_no" id="bulkInvoiceNo" placeholder="e.g. INV-98421" class="form-control" style="font-family:monospace; font-weight:700;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label">Bill Type</label>
-                            <select name="bill_type" required class="form-control" style="font-weight:700;">
-                                <option value="gst">📜 Formal GST Tax Invoice (18% incl.)</option>
-                                <option value="non_gst">📄 Estimate / Retail Bill (0% Tax)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Multi-Item Table -->
-                    <div style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; margin-bottom: 14px;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; background:#F8FAFC; padding:10px 16px; border-bottom:1px solid var(--card-border);">
-                            <div style="font-weight:800; font-size:13px; color:#0F172A; text-transform:uppercase; letter-spacing:0.5px;">
-                                Batch Line Items (<span id="bulkRowCount">0</span>)
-                            </div>
-                            <button type="button" onclick="addBulkRow()" class="btn btn-outline btn-sm" style="font-weight:700;">
-                                <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Row
-                            </button>
-                        </div>
-
-                        <div style="max-height: 380px; overflow-x: auto; overflow-y: auto;">
-                            <table class="data-table" id="bulkTable" style="margin:0; border-radius:0; border:none; min-width:1200px;">
-                                <thead style="position:sticky; top:0; background:#F8FAFC; z-index:5;">
-                                    <tr>
-                                        <th style="width:25px;">#</th>
-                                        <th style="min-width:150px;">Item / Part Name</th>
-                                        <th style="min-width:130px;">Category</th>
-                                        <th style="min-width:105px;">Fits Brand</th>
-                                        <th style="min-width:105px;">Fits Model</th>
-                                        <th style="min-width:90px;">Folder Quality</th>
-                                        <th style="min-width:120px;">Description</th>
-                                        <th style="width:65px; text-align:center;">Qty</th>
-                                        <th style="width:65px; text-align:center;">Low Alert</th>
-                                        <th style="width:85px; text-align:right;">Cost (₹)</th>
-                                        <th style="width:90px; text-align:right;">Sell (₹)</th>
-                                        <th style="width:55px; text-align:center;">🎁 Gift</th>
-                                        <th style="width:85px; text-align:right;">Total (₹)</th>
-                                        <th style="width:35px; text-align:center;">✕</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="bulkTableBody">
-                                    <!-- Dynamic rows inserted here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Summary Bar & Submission -->
-                    <div style="display:flex; align-items:center; justify-content:space-between; background:#F8FAFC; border:1px solid var(--border-color); border-radius:12px; padding:14px 18px; flex-wrap:wrap; gap:12px;">
-                        <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
-                            <div>
-                                <span style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:700;">Total Units</span>
-                                <div style="font-size:16px; font-weight:800; color:#0F172A;" id="lblBulkTotalUnits">0 units</div>
-                            </div>
-                            <div>
-                                <span style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:700;">Shipment Investment Value</span>
-                                <div style="font-size:18px; font-weight:900; color:var(--brand-700);" id="lblBulkTotalCost">₹0.00</div>
-                            </div>
-                        </div>
-
-                        <div style="display:flex; gap:10px;">
-                            <button type="button" onclick="closeBulkRestockModal()" class="btn btn-outline">Cancel</button>
-                            <button type="submit" class="btn btn-primary" style="background:var(--brand-700); font-weight:800; padding:8px 20px;">
-                                <i data-lucide="check-circle-2" style="width:15px;height:15px;"></i> Submit Batch Restock
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
 @endsection
 
 @push('scripts')
 <script>
-    const companyId = {{ company_id() }};
-    const catalogParts = {!! json_encode($parts ?? []) !!};
-    let catalogCategories = {!! json_encode($categories ?? []) !!};
-    if (!catalogCategories || catalogCategories.length === 0) {
-        catalogCategories = [
-            { slug: 'display_folder', name: 'Display / Screen Folder' },
-            { slug: 'front_glass', name: 'Front Glass / Touch Glass' },
-            { slug: 'charging_pin', name: 'Charging Pin / Port' },
-            { slug: 'ic_motherboard', name: 'IC / Motherboard Chip' },
-            { slug: 'battery', name: 'Battery' },
-            { slug: 'back_panel', name: 'Back Panel / Housing Glass' },
-            { slug: 'back_cover_case', name: 'Back Cover & Cases 🎁' },
-            { slug: 'tempered_glass', name: 'Tempered Glass 🎁' },
-            { slug: 'general_accessory', name: 'General Accessory 🎁' }
-        ];
+    function escapeHtml(str) {
+        if (!str && str !== 0) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
+    window.escapeHtml = escapeHtml;
 
-    let bulkRowIndex = 0;
-
+    const companyId = {{ company_id() }};
     function openBulkRestockModal() {
-        document.getElementById('bulkRestockModal').style.display = 'flex';
-        if (window.refreshIcons) window.refreshIcons();
-        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-        if (document.querySelectorAll('#bulkTableBody tr').length === 0) {
-            addBulkRow();
-            addBulkRow();
-            addBulkRow();
-        }
+        window.location.href = "{{ route('mobileshop.accessories.purchase') }}";
     }
 
     function closeBulkRestockModal() {
-        document.getElementById('bulkRestockModal').style.display = 'none';
-    }
-
-    // Uses window.escapeHtml from layout.blade.php
-
-
-    function addBulkRow(itemData = null) {
-        bulkRowIndex++;
-        const idx = bulkRowIndex;
-        const tbody = document.getElementById('bulkTableBody');
-
-        const tr = document.createElement('tr');
-        tr.id = `bulk-row-${idx}`;
-
-        let catOptions = '';
-        catalogCategories.forEach(cat => {
-            const sel = (itemData && (itemData.category === cat.slug || itemData.category === cat.name)) ? 'selected' : '';
-            catOptions += `<option value="${escapeHtml(cat.slug)}" ${sel}>${escapeHtml(cat.name)}</option>`;
-        });
-
-        let partDatalist = '';
-        catalogParts.forEach(p => {
-            partDatalist += `<option value="${escapeHtml(p.name)}" data-id="${p.id}" data-category="${escapeHtml(p.category)}" data-cost="${p.unit_cost}" data-price="${p.selling_price}">${escapeHtml(p.name)} (Stock: ${p.stock_qty})</option>`;
-        });
-
-        const nameVal = escapeHtml(itemData?.name || '');
-        const brandVal = escapeHtml(itemData?.brand || '');
-        const modelVal = escapeHtml(itemData?.compatible_model || '');
-        const folderType = (itemData?.display_type || 'Normal').toUpperCase() === 'OG' ? 'OG' : 'Normal';
-        const descVal = escapeHtml(itemData?.description || '');
-        const alertVal = itemData?.min_stock_alert !== undefined ? itemData.min_stock_alert : 3;
-        const qtyVal = itemData?.qty || 1;
-        const costVal = itemData?.unit_cost ? parseFloat(itemData.unit_cost).toFixed(2) : '0.00';
-        const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2);
-        const isGiftChecked = (itemData?.is_gift_eligible || itemData?.category === 'tempered_glass') ? 'checked' : '';
-        const lineTotal = (qtyVal * parseFloat(costVal)).toFixed(2);
-
-        tr.innerHTML = `
-            <td style="font-size:11px; color:#94A3B8; text-align:center; font-weight:700;">${idx}</td>
-            <td>
-                <input type="text" name="items[${idx}][name]" value="${nameVal}" list="partList_${idx}" placeholder="e.g. Display Folder / 9D Glass" required class="form-control" style="font-size:12px; font-weight:700;" oninput="onBulkPartNameInput(${idx}, this.value)">
-                <datalist id="partList_${idx}">
-                    ${partDatalist}
-                </datalist>
-                <input type="hidden" name="items[${idx}][part_id]" id="partId_${idx}" value="${itemData?.part_id || ''}">
-            </td>
-            <td>
-                <select name="items[${idx}][category]" id="catSelect_${idx}" class="form-control" style="font-size:11.5px; font-weight:600;">
-                    ${catOptions}
-                </select>
-            </td>
-            <td>
-                <input type="text" name="items[${idx}][brand]" id="brand_${idx}" value="${brandVal}" placeholder="e.g. Samsung" class="form-control" style="font-size:11.5px;">
-            </td>
-            <td>
-                <input type="text" name="items[${idx}][compatible_model]" id="model_${idx}" value="${modelVal}" placeholder="e.g. Galaxy A14" class="form-control" style="font-size:11.5px;">
-            </td>
-            <td>
-                <select name="items[${idx}][display_type]" id="displayType_${idx}" class="form-control" style="font-size:11.5px; font-weight:700;">
-                    <option value="Normal" ${folderType === 'Normal' ? 'selected' : ''}>Normal</option>
-                    <option value="OG" ${folderType === 'OG' ? 'selected' : ''}>OG</option>
-                </select>
-            </td>
-            <td>
-                <input type="text" name="items[${idx}][description]" id="desc_${idx}" value="${descVal}" placeholder="Specs, quality..." class="form-control" style="font-size:11px;">
-            </td>
-            <td>
-                <input type="number" name="items[${idx}][qty]" id="qty_${idx}" value="${qtyVal}" min="1" required class="form-control" style="text-align:center; font-weight:800; font-size:12px;" oninput="updateBulkRowTotal(${idx})">
-            </td>
-            <td>
-                <input type="number" name="items[${idx}][min_stock_alert]" id="alert_${idx}" value="${alertVal}" min="0" placeholder="3" class="form-control" style="text-align:center; font-weight:600; font-size:11px;" title="Low stock warning threshold">
-            </td>
-            <td>
-                <input type="number" step="0.01" name="items[${idx}][unit_cost]" id="cost_${idx}" value="${costVal}" min="0" required class="form-control" style="text-align:right; font-weight:700; font-size:12px;" oninput="updateBulkRowTotal(${idx})">
-            </td>
-            <td>
-                <input type="number" step="0.01" name="items[${idx}][selling_price]" id="price_${idx}" value="${priceVal}" min="0" class="form-control" style="text-align:right; font-weight:700; font-size:12px; color:var(--lama-green-dark);">
-            </td>
-            <td style="text-align:center;">
-                <input type="checkbox" name="items[${idx}][is_gift_eligible]" value="1" ${isGiftChecked} style="width:14px; height:14px; accent-color:var(--brand-600);">
-            </td>
-            <td style="text-align:right; font-weight:800; color:#0F172A; font-size:12.5px;" id="lineTotal_${idx}">
-                ₹${lineTotal}
-            </td>
-            <td style="text-align:center;">
-                <button type="button" class="btn-icon" style="color:#DC2626; width:24px; height:24px;" onclick="removeBulkRow(${idx})" title="Remove Line">✕</button>
-            </td>
-        `;
-
-        tbody.appendChild(tr);
-        updateBulkSummary();
-        if (window.refreshIcons) window.refreshIcons();
-        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-    }
-
-    function removeBulkRow(idx) {
-        const row = document.getElementById(`bulk-row-${idx}`);
-        if (row) {
-            row.remove();
-            updateBulkSummary();
-        }
-    }
-
-    function onBulkPartNameInput(idx, val) {
-        const match = catalogParts.find(p => p.name.toLowerCase() === val.toLowerCase().trim());
-        if (match) {
-            document.getElementById(`partId_${idx}`).value = match.id;
-            document.getElementById(`catSelect_${idx}`).value = match.category;
-            if (match.brand) document.getElementById(`brand_${idx}`).value = match.brand;
-            if (match.compatible_model) document.getElementById(`model_${idx}`).value = match.compatible_model;
-            if (match.display_type) document.getElementById(`displayType_${idx}`).value = match.display_type;
-            if (match.description) document.getElementById(`desc_${idx}`).value = match.description;
-            if (match.min_stock_alert !== undefined && match.min_stock_alert !== null) document.getElementById(`alert_${idx}`).value = match.min_stock_alert;
-            document.getElementById(`cost_${idx}`).value = parseFloat(match.unit_cost).toFixed(2);
-            document.getElementById(`price_${idx}`).value = parseFloat(match.selling_price).toFixed(2);
-            updateBulkRowTotal(idx);
-        } else {
-            document.getElementById(`partId_${idx}`).value = '';
-        }
-    }
-
-    function updateBulkRowTotal(idx) {
-        const qty = parseInt(document.getElementById(`qty_${idx}`)?.value || 0);
-        const cost = parseFloat(document.getElementById(`cost_${idx}`)?.value || 0);
-        const total = qty * cost;
-        const lineTotalEl = document.getElementById(`lineTotal_${idx}`);
-        if (lineTotalEl) {
-            lineTotalEl.textContent = '₹' + total.toFixed(2);
-        }
-
-        const priceEl = document.getElementById(`price_${idx}`);
-        if (priceEl && (parseFloat(priceEl.value) === 0 || isNaN(parseFloat(priceEl.value)))) {
-            priceEl.value = (cost * 1.5).toFixed(2);
-        }
-
-        updateBulkSummary();
-    }
-
-    function updateBulkSummary() {
-        const rows = document.querySelectorAll('#bulkTableBody tr');
-        let totalUnits = 0;
-        let totalCost = 0.0;
-
-        rows.forEach(r => {
-            const qtyInput = r.querySelector('input[name*="[qty]"]');
-            const costInput = r.querySelector('input[name*="[unit_cost]"]');
-            if (qtyInput && costInput) {
-                const q = parseInt(qtyInput.value) || 0;
-                const c = parseFloat(costInput.value) || 0;
-                totalUnits += q;
-                totalCost += (q * c);
-            }
-        });
-
-        document.getElementById('bulkRowCount').textContent = rows.length;
-        document.getElementById('lblBulkTotalUnits').textContent = `${totalUnits} units`;
-        document.getElementById('lblBulkTotalCost').textContent = '₹' + totalCost.toFixed(2);
-    }
-
-    function validateAndSubmitBulkRestock(form) {
-        const rows = document.querySelectorAll('#bulkTableBody tr');
-        if (rows.length === 0) {
-            alert('Please add at least 1 line item to the batch restock table.');
-            return false;
-        }
-        const btn = form.querySelector('button[type="submit"]');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = 'Processing Batch Restock...';
-        }
-        return true;
-    }
-
-    function loadScript(src) {
-        return new Promise((resolve, reject) => {
-            if (document.querySelector(`script[src="${src}"]`)) {
-                resolve();
-                return;
-            }
-            const s = document.createElement('script');
-            s.src = src;
-            s.onload = resolve;
-            s.onerror = reject;
-            document.head.appendChild(s);
-        });
-    }
-
-    async function handleInvoiceFile(file) {
-        if (!file) return;
-
-        const progressBox = document.getElementById('ocrProgressBox');
-        const progressBar = document.getElementById('ocrProgressBar');
-        const statusText = document.getElementById('ocrStatusText');
-        const percentText = document.getElementById('ocrPercentText');
-
-        progressBox.style.display = 'block';
-        progressBar.style.width = '10%';
-        statusText.textContent = '🚀 Initializing OCR neural worker...';
-        percentText.textContent = '10%';
-
-        try {
-            if (typeof Tesseract === 'undefined') {
-                statusText.textContent = '📦 Loading OCR engine...';
-                await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-            }
-
-            const worker = await Tesseract.createWorker('eng', 1, {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        const pct = Math.round(m.progress * 100);
-                        progressBar.style.width = `${pct}%`;
-                        statusText.textContent = `🔍 AI scanning invoice lines (${pct}%)...`;
-                        percentText.textContent = `${pct}%`;
-                    }
-                }
-            });
-
-            statusText.textContent = '⚙️ Analyzing invoice text layout...';
-            const ret = await worker.recognize(file);
-            await worker.terminate();
-
-            progressBar.style.width = '100%';
-            statusText.textContent = '✅ Extraction complete! Parsing rows...';
-            percentText.textContent = '100%';
-
-            setTimeout(() => {
-                progressBox.style.display = 'none';
-            }, 1200);
-
-            parseOcrTextToTable(ret.data.text);
-
-        } catch (err) {
-            console.error(err);
-            progressBox.style.display = 'none';
-            alert('OCR extraction encountered an issue. Loading sample demonstration items.');
-            loadSampleInvoiceData();
-        }
-    }
-
-    function parseOcrTextToTable(rawText) {
-        const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        const extractedItems = [];
-
-        lines.forEach(line => {
-            const numberMatches = line.match(/\b\d+(\.\d{1,2})?\b/g);
-            if (numberMatches && numberMatches.length >= 2) {
-                const qty = parseInt(numberMatches[0]) || 5;
-                const cost = parseFloat(numberMatches[1]) || 50;
-
-                let name = line.replace(/\b\d+(\.\d{1,2})?\b/g, '').replace(/[@₹,\-\*\/]/g, '').trim();
-                if (name.length >= 3) {
-                    let cat = 'tempered_glass';
-                    if (/display|folder|combo|lcd|oled|screen/i.test(name)) cat = 'display_folder';
-                    else if (/front\s*glass|touch\s*glass|oca/i.test(name)) cat = 'front_glass';
-                    else if (/pin|charging\s*port|connector|jack/i.test(name)) cat = 'charging_pin';
-                    else if (/ic|motherboard|power\s*ic/i.test(name)) cat = 'ic_motherboard';
-                    else if (/battery|cell|mah/i.test(name)) cat = 'battery';
-                    else if (/cover|case|smoke|pouch|bumper/i.test(name)) cat = 'back_cover_case';
-
-                    extractedItems.push({
-                        name: name,
-                        category: cat,
-                        qty: qty > 500 ? 25 : qty,
-                        unit_cost: cost,
-                        selling_price: Math.round(cost * 1.5),
-                        is_gift_eligible: (cat === 'tempered_glass' || cat === 'back_cover_case') ? 1 : 0
-                    });
-                }
-            }
-        });
-
-        if (extractedItems.length > 0) {
-            document.getElementById('bulkTableBody').innerHTML = '';
-            bulkRowIndex = 0;
-            extractedItems.forEach(item => addBulkRow(item));
-            alert(`🎉 AI OCR Extracted ${extractedItems.length} items from supplier invoice!`);
-        } else {
-            loadSampleInvoiceData();
-        }
-    }
-
-    function loadSampleInvoiceData() {
-        document.getElementById('bulkSupplierName').value = 'National Mobile Wholesale Hub, Mumbai';
-        document.getElementById('bulkInvoiceNo').value = 'INV-2026-8942';
-
-        document.getElementById('bulkTableBody').innerHTML = '';
-        bulkRowIndex = 0;
-
-        const sampleItems = [
-            { name: '9D Super Clear Tempered Glass (iPhone 14/15)', category: 'tempered_glass', qty: 50, unit_cost: 22.00, selling_price: 149.00, is_gift_eligible: 1 },
-            { name: 'Matte Smoke Anti-Drop Bumper Case (Universal)', category: 'back_cover_case', qty: 25, unit_cost: 45.00, selling_price: 199.00, is_gift_eligible: 1 },
-            { name: 'Original OLED Display Screen Folder (iPhone 14)', category: 'display_folder', qty: 5, unit_cost: 1650.00, selling_price: 2499.00, is_gift_eligible: 0 },
-            { name: 'Samsung Galaxy A54 Front Outer Glass with OCA', category: 'front_glass', qty: 15, unit_cost: 110.00, selling_price: 399.00, is_gift_eligible: 0 },
-            { name: 'Type-C 65W Braided Fast Charging Cable (1.5m)', category: 'tempered_glass', qty: 30, unit_cost: 38.00, selling_price: 199.00, is_gift_eligible: 1 },
-            { name: 'Universal Type-C Charging Pin Connector Jack', category: 'charging_pin', qty: 40, unit_cost: 12.00, selling_price: 99.00, is_gift_eligible: 0 },
-            { name: 'High Capacity 5000mAh Battery (Redmi Note 12)', category: 'battery', qty: 8, unit_cost: 340.00, selling_price: 799.00, is_gift_eligible: 0 }
-        ];
-
-        sampleItems.forEach(item => addBulkRow(item));
+        // noop
     }
 
     let currentPurchaseDatePreset = 'all';

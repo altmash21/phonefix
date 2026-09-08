@@ -1,376 +1,510 @@
 @extends('mobileshop.public.layout')
 
 @section('title', 'MobiTrack — Premium Smartphones, Certified Pre-Owned & Express Repairs')
-@section('meta_description', 'Discover official brand new smartphones, 50-point certified pre-owned devices, original mobile accessories, and 45-minute express repair services in Mumbai.')
+@section('meta_description', 'Discover official sealed brand new smartphones, 50-point certified pre-owned devices, and professional 45-minute express repair lab in Mumbai.')
 
 @section('content')
 
-    <!-- ════ HERO SECTION (Calm Neutral B2B Aesthetic) ════ -->
-    <section class="bg-slate-900 text-white py-14 lg:py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
-        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            <!-- Left: Hero Text -->
-            <div class="lg:col-span-7 space-y-5 text-center lg:text-left">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-800 border border-slate-700 text-brand-300 text-xs font-semibold uppercase tracking-wider">
-                    <span class="w-2 h-2 rounded-full bg-brand-500"></span>
-                    <span>Mumbai's Certified Mobile Store & Service Lab</span>
+    <!-- ════ 1. GLOBAL SEARCH BAR & HERO PILL (AIRBNB SIGNATURE COMPONENT) ════ -->
+    <section class="pt-6 pb-4 px-4 sm:px-6 lg:px-8 bg-canvas">
+        <div class="max-w-5xl mx-auto">
+            <form action="{{ route('public.store') }}" method="GET" 
+                  class="bg-canvas border border-hairline rounded-full shadow-airbnb-tier hover:shadow-airbnb-hover transition-airbnb flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-hairline p-1.5 md:p-2">
+                
+                <!-- Segment 1: Search Brand or Model -->
+                <div class="flex-1 w-full px-6 py-2.5 hover:bg-surface-soft rounded-full transition-airbnb cursor-pointer group">
+                    <label for="search-input" class="block text-[12px] font-bold text-ink tracking-tight">Search Device</label>
+                    <input type="text" id="search-input" name="q" value="{{ request('q') }}" placeholder="iPhone 15, Galaxy S24, OnePlus..."
+                           class="w-full bg-transparent border-none text-[14px] text-body placeholder:text-muted focus:outline-none truncate">
                 </div>
 
-                <h1 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight leading-tight text-white">
-                    Smartphones You Love. <br>
-                    Prices & Trust You Deserve.
-                </h1>
-
-                <p class="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                    Get genuine factory-sealed brand new phones with manufacturer warranty, or save up to 45% on 50-point certified pre-owned devices inspected by master technicians.
-                </p>
-
-                <!-- Trust Metrics Under Hero -->
-                <div class="pt-4 border-t border-slate-800 grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0 text-left">
-                    <div>
-                        <div class="font-display font-bold text-2xl text-white">100%</div>
-                        <div class="text-xs text-slate-400 font-medium">Genuine Warranty</div>
-                    </div>
-                    <div>
-                        <div class="font-display font-bold text-2xl text-brand-400">50-Point</div>
-                        <div class="text-xs text-slate-400 font-medium">Pre-Owned Check</div>
-                    </div>
-                    <div>
-                        <div class="font-display font-bold text-2xl text-emerald-400">45 Min</div>
-                        <div class="text-xs text-slate-400 font-medium">Express Repair</div>
-                    </div>
+                <!-- Segment 2: Condition Filter (New or Pre-Owned only) -->
+                <div class="w-full md:w-56 px-6 py-2.5 hover:bg-surface-soft rounded-full transition-airbnb cursor-pointer">
+                    <label class="block text-[12px] font-bold text-ink tracking-tight">Condition</label>
+                    <select name="tab" class="w-full bg-transparent border-none text-[14px] text-body focus:outline-none cursor-pointer">
+                        <option value="all">All Smartphones</option>
+                        <option value="new">Brand New (Sealed)</option>
+                        <option value="second_hand">Certified Pre-Owned</option>
+                    </select>
                 </div>
-            </div>
 
-            <!-- Right: Live Counter Feed Card -->
-            <div class="lg:col-span-5">
-                <div class="mx-auto max-w-md bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-xl space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                        <span class="text-xs font-semibold text-slate-300">Live Store Feed</span>
-                        <span class="text-[11px] font-medium text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded">Counters Open</span>
+                <!-- Segment 3: Service Desk + 48px Rausch Search Orb -->
+                <div class="w-full md:w-auto flex items-center justify-between pl-6 pr-2 py-2 gap-4">
+                    <div class="hidden lg:block text-left">
+                        <span class="block text-[12px] font-bold text-ink tracking-tight">Service Desk</span>
+                        <span class="text-[14px] text-muted">45-min repair lab</span>
                     </div>
 
-                    <!-- Deal 1: Brand New Mobiles -->
-                    <a href="{{ route('public.store') }}?tab=new" class="block bg-slate-900/70 hover:bg-slate-900 rounded-xl p-3.5 border border-slate-700/60 transition-colors text-decoration-none">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-lg bg-brand-900/60 text-brand-400 flex items-center justify-center">
-                                    <i data-lucide="smartphone" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <div class="text-xs font-semibold text-slate-300">Brand New Phones</div>
-                                    <div class="text-sm font-bold text-white">{{ $newCount ?? 12 }} Sealed Models In Stock</div>
-                                </div>
-                            </div>
-                            <span class="text-xs font-semibold text-brand-400">View Stock →</span>
-                        </div>
-                    </a>
-
-                    <!-- Deal 2: Certified Pre-Owned -->
-                    <a href="{{ route('public.store') }}?tab=second_hand" class="block bg-slate-900/70 hover:bg-slate-900 rounded-xl p-3.5 border border-slate-700/60 transition-colors text-decoration-none">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-lg bg-amber-950/60 text-amber-400 flex items-center justify-center">
-                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <div class="text-xs font-semibold text-slate-300">Certified Pre-Owned</div>
-                                    <div class="text-sm font-bold text-white">{{ $secondHandCount ?? 8 }} Tested Devices Ready</div>
-                                </div>
-                            </div>
-                            <span class="text-xs font-semibold text-amber-400">View Stock →</span>
-                        </div>
-                    </a>
-
-                    <!-- Deal 3: Service Lab -->
-                    <a href="{{ route('public.track_repair') }}" class="block bg-slate-900/70 hover:bg-slate-900 rounded-xl p-3.5 border border-slate-700/60 transition-colors text-decoration-none">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-lg bg-sky-950/60 text-sky-400 flex items-center justify-center">
-                                    <i data-lucide="wrench" class="w-4 h-4"></i>
-                                </div>
-                                <div>
-                                    <div class="text-xs font-semibold text-slate-300">Service Desk</div>
-                                    <div class="text-sm font-bold text-white">Express Screen & Battery Repair</div>
-                                </div>
-                            </div>
-                            <span class="text-xs font-semibold text-sky-400">Track Repair →</span>
-                        </div>
-                    </a>
+                    <button type="submit" 
+                            class="w-12 h-12 rounded-full bg-rausch hover:bg-rausch-active text-white flex items-center justify-center transition-airbnb shrink-0 shadow-sm"
+                            title="Search Marketplace">
+                        <svg class="w-4 h-4 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
                 </div>
-            </div>
+            </form>
         </div>
     </section>
 
-    <!-- ════ 4 VALUE PILLARS ════ -->
-    <section class="py-14 bg-white border-b border-slate-200">
+    <!-- ════ 2. CATEGORY STRIP (SMARTPHONES & REPAIR ONLY) ════ -->
+    <section class="border-b border-hairline-soft bg-canvas sticky top-20 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Pillar 1 -->
-                <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
-                        <i data-lucide="shield-check" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-display font-bold text-base text-slate-900">100% Genuine Guarantee</h3>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Official sealed devices directly with manufacturer warranty and IMEI serial bill.</p>
-                    </div>
-                </div>
+            <div class="flex items-center gap-8 overflow-x-auto no-scrollbar py-4 text-center">
+                <!-- All Phones -->
+                <a href="{{ route('public.store') }}" 
+                   class="flex flex-col items-center gap-2 group shrink-0 pb-1 text-decoration-none border-b-2 transition-airbnb {{ !request('tab') ? 'border-ink text-ink font-semibold' : 'border-transparent text-muted hover:text-ink hover:border-hairline' }}">
+                    <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                        <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                        <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                        <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                    </svg>
+                    <span class="text-[12px] tracking-tight">All Smartphones</span>
+                </a>
 
-                <!-- Pillar 2 -->
-                <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-display font-bold text-base text-slate-900">50-Point Certified Lab</h3>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Rigorous hardware, display, camera, and battery health inspection on all pre-owned stock.</p>
-                    </div>
-                </div>
+                <!-- Brand New Sealed -->
+                <a href="{{ route('public.store', ['tab' => 'new']) }}" 
+                   class="flex flex-col items-center gap-2 group shrink-0 pb-1 text-decoration-none border-b-2 transition-airbnb {{ request('tab') === 'new' ? 'border-ink text-ink font-semibold' : 'border-transparent text-muted hover:text-ink hover:border-hairline' }}">
+                    <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+                        <rect x="5" y="2" width="14" height="20" rx="3"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                    <span class="text-[12px] tracking-tight">Brand New</span>
+                </a>
 
-                <!-- Pillar 3 -->
-                <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
-                        <i data-lucide="clock-3" class="w-6 h-6"></i>
+                <!-- Certified Pre-Owned -->
+                <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" 
+                   class="flex flex-col items-center gap-2 group shrink-0 pb-1 text-decoration-none border-b-2 transition-airbnb {{ request('tab') === 'second_hand' ? 'border-ink text-ink font-semibold' : 'border-transparent text-muted hover:text-ink hover:border-hairline' }}">
+                    <div class="relative">
+                        <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                        </svg>
+                        <span class="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-rausch"></span>
                     </div>
-                    <div>
-                        <h3 class="font-display font-bold text-base text-slate-900">45-Min Fast Repair</h3>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Original displays and high-capacity battery replacements done on the spot while you wait.</p>
-                    </div>
-                </div>
+                    <span class="text-[12px] tracking-tight">Certified Pre-Owned</span>
+                </a>
 
-                <!-- Pillar 4 -->
-                <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                        <i data-lucide="badge-percent" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-display font-bold text-base text-slate-900">0% EMI & Instant Buyback</h3>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Bajaj Finserv, HDB & Credit card financing options. Trade in old phone for top cash.</p>
-                    </div>
-                </div>
+                <!-- Express Repair Lab -->
+                <a href="{{ route('public.track_repair') }}" 
+                   class="flex flex-col items-center gap-2 group shrink-0 pb-1 text-decoration-none border-b-2 transition-airbnb {{ request()->routeIs('public.track_repair') ? 'border-ink text-ink font-semibold' : 'border-transparent text-muted hover:text-ink hover:border-hairline' }}">
+                    <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                    </svg>
+                    <span class="text-[12px] tracking-tight">Track Repair</span>
+                </a>
+
+                <!-- 0% EMI Financing -->
+                <a href="{{ route('public.contact') }}" 
+                   class="flex flex-col items-center gap-2 group shrink-0 pb-1 text-decoration-none border-b-2 transition-airbnb border-transparent text-muted hover:text-ink hover:border-hairline">
+                    <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    <span class="text-[12px] tracking-tight">0% EMI Financing</span>
+                </a>
             </div>
         </div>
     </section>
 
-    <!-- ════ LIVE FEATURED INVENTORY (NEW PHONES) ════ -->
-    <section class="py-16 bg-slate-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <!-- ════ 3. SECTION 1: BRAND NEW SMARTPHONES (DEMO SHOWCASE + EXPLORE ALL) ════ -->
+    <section class="py-12 bg-canvas">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            
+            <div class="flex items-baseline justify-between border-b border-hairline-soft pb-4">
                 <div>
-                    <span class="text-xs font-extrabold text-brand-700 uppercase tracking-wider">Sealed With Warranty</span>
-                    <h2 class="font-display font-black text-3xl text-slate-900 mt-1">Trending Brand New Smartphones</h2>
-                    <p class="text-sm text-slate-500 mt-1">Direct from official distributors with free tempered glass and case bundled.</p>
+                    <h2 class="text-[22px] font-semibold text-ink tracking-tight">Brand New Sealed Smartphones</h2>
+                    <p class="text-[14px] text-muted mt-0.5">Official manufacturer warranty, GST invoice, and complimentary tempered glass & case.</p>
                 </div>
-                <a href="{{ route('public.store') }}?tab=new" class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-700 hover:text-brand-800 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-xs hover:shadow transition-all">
-                    <span>View All New Phones</span>
-                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                <a href="{{ route('public.store', ['tab' => 'new']) }}" 
+                   class="px-4 py-2 bg-surface-soft hover:bg-surface-strong border border-hairline rounded-full text-[13px] font-semibold text-ink transition-airbnb flex items-center gap-1.5 shadow-sm">
+                    <span>Explore All New Phones</span>
+                    <span>→</span>
                 </a>
             </div>
 
-            <!-- New Phone Cards Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse($featuredNew as $phone)
-                    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between group">
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-100 text-brand-800">
-                                    Brand New Sealed
-                                </span>
-                                <span class="text-xs font-bold text-slate-400 font-mono">{{ $phone->brand }}</span>
-                            </div>
-
-                            <div>
-                                <h3 class="font-display font-extrabold text-xl text-slate-900 group-hover:text-brand-600 transition-colors">
-                                    {{ $phone->brand }} {{ $phone->model }}
-                                </h3>
-                                <div class="flex flex-wrap gap-2 text-xs text-slate-500 mt-2">
-                                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 font-semibold">{{ $phone->storage ?? '128GB' }}</span>
-                                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 font-semibold">{{ $phone->ram ?? '8GB' }} RAM</span>
-                                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 font-semibold">{{ $phone->color ?? 'Black' }}</span>
+            <!-- Demo Grid (Limited to Top 4 Items) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                @forelse($featuredNew->take(4) as $phone)
+                    <div class="group flex flex-col cursor-pointer">
+                        <div class="relative aspect-square w-full rounded-[14px] overflow-hidden bg-surface-soft border border-hairline-soft mb-3">
+                            <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-surface-soft to-surface-strong group-hover:scale-105 transition-transform duration-300">
+                                <div class="w-20 h-20 rounded-2xl bg-white shadow-airbnb-tier flex items-center justify-center text-ink mb-2">
+                                    <svg class="w-10 h-10 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
+                                        <rect x="5" y="2" width="14" height="20" rx="3"></rect>
+                                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                                    </svg>
                                 </div>
+                                <span class="text-[11px] font-semibold tracking-wider text-muted uppercase">{{ $phone->brand }}</span>
+                                <span class="text-[13px] font-semibold text-ink">{{ $phone->model }}</span>
                             </div>
 
-                            <div class="p-3 bg-brand-50/60 rounded-2xl text-xs space-y-1 text-brand-900">
-                                <p class="flex items-center gap-1.5 font-medium">
-                                    <i data-lucide="gift" class="w-3.5 h-3.5 text-brand-600"></i>
-                                    <span>Free 9D Tempered Glass + Protective Case</span>
-                                </p>
-                                <p class="flex items-center gap-1.5 font-medium">
-                                    <i data-lucide="credit-card" class="w-3.5 h-3.5 text-brand-600"></i>
-                                    <span>0% EMI Available via Store Desk</span>
-                                </p>
+                            <div class="absolute top-3 left-3 bg-canvas text-ink text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-airbnb-tier">
+                                100% Sealed
                             </div>
+
+                            <button type="button" 
+                                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-ink flex items-center justify-center transition-airbnb shadow-airbnb-tier hover:scale-110"
+                                    title="Save to wishlist">
+                                <svg class="w-4 h-4 stroke-current fill-none hover:fill-rausch hover:text-rausch stroke-[2]" viewBox="0 0 24 24">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </button>
                         </div>
 
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                            <div>
-                                <span class="text-[10px] text-slate-400 font-bold uppercase">Store Price</span>
-                                <div class="text-2xl font-black text-slate-900">₹{{ number_format($phone->selling_price, 2) }}</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-[15px]">
+                                <span class="font-semibold text-ink truncate">{{ $phone->brand }} {{ $phone->model }}</span>
+                                <span class="flex items-center gap-1 text-ink font-semibold shrink-0">
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                    <span>4.95</span>
+                                </span>
                             </div>
-                            <a href="https://wa.me/919876543210?text={{ urlencode('Hi MobiTrack, I want to inquire about ' . $phone->brand . ' ' . $phone->model . ' listed on your website.') }}" target="_blank" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-600/20 flex items-center gap-1.5 transition-all">
-                                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-                                <span>Inquire / Buy</span>
-                            </a>
+
+                            <p class="text-[14px] text-muted truncate">
+                                {{ $phone->storage ?? '128GB' }} · {{ $phone->ram ?? '8GB' }} RAM · {{ $phone->color ?? 'Official Edition' }}
+                            </p>
+
+                            <p class="text-[14px] text-muted truncate">
+                                Official 1-Year Brand Warranty
+                            </p>
+
+                            <div class="pt-1 flex items-baseline justify-between">
+                                <div class="text-[15px] font-semibold text-ink">
+                                    <span>₹{{ number_format($phone->selling_price, 2) }}</span>
+                                    <span class="font-normal text-muted text-[13px]"> incl. GST</span>
+                                </div>
+                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi MobiTrack, I want to inquire about ' . $phone->brand . ' ' . $phone->model . ' listed on your website.') }}" 
+                                   target="_blank"
+                                   class="text-[13px] font-semibold text-rausch hover:underline">
+                                    Inquire →
+                                </a>
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-3 bg-white rounded-3xl p-8 text-center text-slate-500 border border-slate-200">
-                        <p class="font-bold text-slate-700">New phone stock arriving this morning!</p>
-                        <p class="text-xs mt-1">Please check our explore store page or call us directly.</p>
+                    <div class="col-span-full py-10 text-center text-muted bg-surface-soft rounded-[14px] border border-hairline-soft">
+                        <p class="font-semibold text-ink">New sealed inventory arriving this morning.</p>
+                        <a href="{{ route('public.store', ['tab' => 'new']) }}" class="text-rausch underline text-sm mt-1 inline-block">Browse all available models</a>
                     </div>
                 @endforelse
             </div>
         </div>
     </section>
 
-    <!-- ════ CERTIFIED PRE-OWNED HIGHLIGHTS ════ -->
-    <section class="py-16 bg-white border-t border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <!-- ════ 4. SECTION 2: CERTIFIED PRE-OWNED (DEMO SHOWCASE + EXPLORE ALL) ════ -->
+    <section class="py-12 bg-canvas border-t border-hairline-soft">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            
+            <div class="flex items-baseline justify-between border-b border-hairline-soft pb-4">
                 <div>
-                    <span class="text-xs font-extrabold text-amber-700 uppercase tracking-wider">Certified Pre-Owned</span>
-                    <h2 class="font-display font-black text-3xl text-slate-900 mt-1">Inspected Second-Hand Smartphones</h2>
-                    <p class="text-sm text-slate-500 mt-1">Save big on Grade A & A+ certified smartphones with battery health guarantee and store warranty.</p>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-[22px] font-semibold text-ink tracking-tight">Certified Pre-Owned Devices</h2>
+                        <span class="px-2 py-0.5 bg-surface-strong text-ink rounded-full text-[10px] font-bold tracking-wide uppercase">50-Point Checked</span>
+                    </div>
+                    <p class="text-[14px] text-muted mt-0.5">Laboratory tested with minimum 80%+ battery health and 30-day store replacement warranty.</p>
                 </div>
-                <a href="{{ route('public.store') }}?tab=second_hand" class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-4 py-2 rounded-xl transition-all">
-                    <span>View All Pre-Owned Deals</span>
-                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" 
+                   class="px-4 py-2 bg-surface-soft hover:bg-surface-strong border border-hairline rounded-full text-[13px] font-semibold text-ink transition-airbnb flex items-center gap-1.5 shadow-sm">
+                    <span>Explore All Pre-Owned</span>
+                    <span>→</span>
                 </a>
             </div>
 
-            <!-- Second Hand Cards Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse($featuredSecondHand as $phone)
-                    <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between group">
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900">
-                                    Grade {{ strtoupper($phone->condition_grade ?? 'A') }}
-                                </span>
-                                @if($phone->battery_health)
-                                    <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg">
-                                        🔋 {{ $phone->battery_health }}% Battery Health
-                                    </span>
-                                @endif
-                            </div>
-
-                            <div>
-                                <h3 class="font-display font-extrabold text-xl text-slate-900 group-hover:text-amber-600 transition-colors">
-                                    {{ $phone->brand }} {{ $phone->model }}
-                                </h3>
-                                <div class="flex flex-wrap gap-2 text-xs text-slate-500 mt-2">
-                                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 font-semibold">{{ $phone->storage ?? '128GB' }}</span>
-                                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 font-semibold">{{ $phone->color ?? 'Graphite' }}</span>
+            <!-- Demo Grid (Limited to Top 4 Items) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                @forelse($featuredSecondHand->take(4) as $phone)
+                    <div class="group flex flex-col cursor-pointer">
+                        <div class="relative aspect-square w-full rounded-[14px] overflow-hidden bg-surface-soft border border-hairline-soft mb-3">
+                            <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-surface-soft to-surface-strong group-hover:scale-105 transition-transform duration-300">
+                                <div class="w-20 h-20 rounded-2xl bg-white shadow-airbnb-tier flex items-center justify-center text-ink mb-2">
+                                    <svg class="w-10 h-10 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
+                                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                                    </svg>
                                 </div>
+                                <span class="text-[11px] font-semibold tracking-wider text-muted uppercase">{{ $phone->brand }}</span>
+                                <span class="text-[13px] font-semibold text-ink">{{ $phone->model }}</span>
                             </div>
 
-                            @if($phone->checklist_notes)
-                                <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-100 line-clamp-2">
-                                    "{{ $phone->checklist_notes }}"
-                                </p>
+                            <div class="absolute top-3 left-3 bg-canvas text-ink text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-airbnb-tier">
+                                Grade {{ strtoupper($phone->condition_grade ?? 'A+') }}
+                            </div>
+
+                            <button type="button" 
+                                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-ink flex items-center justify-center transition-airbnb shadow-airbnb-tier hover:scale-110"
+                                    title="Save to wishlist">
+                                <svg class="w-4 h-4 stroke-current fill-none hover:fill-rausch hover:text-rausch stroke-[2]" viewBox="0 0 24 24">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                            </button>
+
+                            @if($phone->battery_health)
+                                <div class="absolute bottom-3 left-3 bg-canvas/90 backdrop-blur-sm text-ink text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-sm">
+                                    {{ $phone->battery_health }}% Battery Health
+                                </div>
                             @endif
-
-                            <div class="p-3 bg-amber-50/60 rounded-2xl text-xs space-y-1 text-amber-950 font-medium">
-                                <p>✓ 50-Point Hardware & Screen Diagnostic Passed</p>
-                                <p>✓ 30-Day In-Store Replacement Warranty</p>
-                            </div>
                         </div>
 
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                            <div>
-                                <span class="text-[10px] text-slate-400 font-bold uppercase">Deal Price</span>
-                                <div class="text-2xl font-black text-slate-900">₹{{ number_format($phone->selling_price, 2) }}</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-[15px]">
+                                <span class="font-semibold text-ink truncate">{{ $phone->brand }} {{ $phone->model }}</span>
+                                <span class="flex items-center gap-1 text-ink font-semibold shrink-0">
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                    <span>4.90</span>
+                                </span>
                             </div>
-                            <a href="https://wa.me/919876543210?text={{ urlencode('Hi MobiTrack, I want to reserve pre-owned ' . $phone->brand . ' ' . $phone->model . ' for ₹' . number_format($phone->selling_price, 2)) }}" target="_blank" class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-600/20 flex items-center gap-1.5 transition-all">
-                                <i data-lucide="tag" class="w-3.5 h-3.5"></i>
-                                <span>Reserve Device</span>
-                            </a>
+
+                            <p class="text-[14px] text-muted truncate">
+                                {{ $phone->storage ?? '128GB' }} · {{ $phone->color ?? 'Clean Finish' }}
+                            </p>
+
+                            <p class="text-[14px] text-muted truncate">
+                                30-Day Store Replacement Warranty
+                            </p>
+
+                            <div class="pt-1 flex items-baseline justify-between">
+                                <div class="text-[15px] font-semibold text-ink">
+                                    <span>₹{{ number_format($phone->selling_price, 2) }}</span>
+                                    <span class="font-normal text-muted text-[13px]"> tested</span>
+                                </div>
+                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi MobiTrack, I want to reserve pre-owned ' . $phone->brand . ' ' . $phone->model . ' for ₹' . number_format($phone->selling_price, 2)) }}" 
+                                   target="_blank"
+                                   class="text-[13px] font-semibold text-rausch hover:underline">
+                                    Reserve →
+                                </a>
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-3 bg-white rounded-3xl p-8 text-center text-slate-500 border border-slate-200">
-                        <p class="font-bold text-slate-700">Pre-owned devices currently undergoing inspection!</p>
-                        <p class="text-xs mt-1">Visit our store to check walk-in buyback inventory.</p>
+                    <div class="col-span-full py-10 text-center text-muted bg-surface-soft rounded-[14px] border border-hairline-soft">
+                        <p class="font-semibold text-ink">Pre-owned devices currently undergoing inspection.</p>
+                        <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="text-rausch underline text-sm mt-1 inline-block">Browse all pre-owned inventory</a>
                     </div>
                 @endforelse
             </div>
         </div>
     </section>
 
-    <!-- ════ EXPRESS REPAIR SERVICE SECTION ════ -->
-    <section class="py-20 bg-slate-950 text-white relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="max-w-2xl mx-auto text-center space-y-4 mb-16">
-                <span class="px-3.5 py-1.5 rounded-full bg-sky-500/20 text-sky-400 text-xs font-extrabold uppercase tracking-wider border border-sky-500/30">
-                    MobiTrack Service Lab
-                </span>
-                <h2 class="font-display font-black text-3xl sm:text-4xl">Fast, Precision Smartphone Repairs</h2>
-                <p class="text-sm text-slate-400">Broken screen? Draining battery? Water damage? Our chip-level technicians fix over 95% of issues on the exact same day.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Service 1 -->
-                <div class="bg-white/5 border border-white/10 rounded-3xl p-6 hover:bg-white/10 transition-all space-y-3">
-                    <div class="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
-                        <i data-lucide="smartphone" class="w-6 h-6"></i>
+    <!-- ════ 5. SECTION 3: REPAIR TRACK & SERVICE LAB ════ -->
+    <section class="py-14 bg-surface-soft border-t border-hairline-soft">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-canvas rounded-[20px] p-8 md:p-12 border border-hairline shadow-airbnb-tier flex flex-col lg:flex-row items-center justify-between gap-8">
+                <div class="space-y-3 max-w-xl text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-surface-soft border border-hairline rounded-full text-[11px] font-bold uppercase tracking-wide text-ink">
+                        <span class="w-2 h-2 rounded-full bg-rausch"></span>
+                        <span>Level 4 Micro-Soldering Lab</span>
                     </div>
-                    <h3 class="font-display font-bold text-lg text-white">Original Display Glass</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">OLED & Super AMOLED screen replacements with authentic color reproduction and touch responsiveness.</p>
-                    <span class="text-xs font-bold text-sky-400 block pt-1">Time: ~35 Mins</span>
+                    <h2 class="text-[26px] font-bold text-ink tracking-tight">Fast, Precision Smartphone Repairs</h2>
+                    <p class="text-[15px] text-muted leading-relaxed">
+                        Broken OLED screen, draining battery, or liquid damage? Our certified lab fixes over 95% of issues in under 45 minutes with genuine parts.
+                    </p>
+                    <div class="flex flex-wrap items-center gap-4 text-[13px] text-ink font-semibold pt-1 justify-center lg:justify-start">
+                        <span>✓ ~35 Min Screen Replacement</span>
+                        <span>✓ ~25 Min Battery Replacement</span>
+                        <span>✓ Chip-Level Board Diagnosis</span>
+                    </div>
                 </div>
 
-                <!-- Service 2 -->
-                <div class="bg-white/5 border border-white/10 rounded-3xl p-6 hover:bg-white/10 transition-all space-y-3">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                        <i data-lucide="battery-charging" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="font-display font-bold text-lg text-white">Battery Health Boost</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Certified high-capacity battery replacements restoring full day battery life with zero warning popups.</p>
-                    <span class="text-xs font-bold text-emerald-400 block pt-1">Time: ~25 Mins</span>
+                <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full sm:w-auto">
+                    <a href="{{ route('public.track_repair') }}" 
+                       class="px-6 py-3.5 bg-rausch hover:bg-rausch-active text-white rounded-sm text-[14px] font-medium transition-airbnb text-center w-full sm:w-auto shadow-sm">
+                        Track Live Repair Status →
+                    </a>
                 </div>
-
-                <!-- Service 3 -->
-                <div class="bg-white/5 border border-white/10 rounded-3xl p-6 hover:bg-white/10 transition-all space-y-3">
-                    <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                        <i data-lucide="cpu" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="font-display font-bold text-lg text-white">Motherboard IC Repair</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Micro-soldering, audio IC, power management, charging port flex and network receiver repairs.</p>
-                    <span class="text-xs font-bold text-purple-400 block pt-1">Time: Same Day</span>
-                </div>
-
-                <!-- Service 4 -->
-                <div class="bg-white/5 border border-white/10 rounded-3xl p-6 hover:bg-white/10 transition-all space-y-3">
-                    <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                        <i data-lucide="droplet" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="font-display font-bold text-lg text-white">Water Damage Revival</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Ultrasonic board cleansing and short-circuit diagnosis to revive phones exposed to moisture or liquid.</p>
-                    <span class="text-xs font-bold text-amber-400 block pt-1">Time: 24-48 Hours</span>
-                </div>
-            </div>
-
-            <div class="mt-12 text-center">
-                <a href="{{ route('public.track_repair') }}" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-extrabold text-sm shadow-lg shadow-sky-500/20 transition-all">
-                    <i data-lucide="search" class="w-4 h-4"></i>
-                    <span>Already Left a Phone? Track Repair Status Live</span>
-                </a>
             </div>
         </div>
     </section>
 
-    <!-- ════ CTA VISIT / CONTACT (Calm Neutral) ════ -->
-    <section class="py-16 bg-slate-900 border-t border-slate-800 text-white text-center">
-        <div class="max-w-4xl mx-auto px-4 space-y-5">
-            <h2 class="font-display font-bold text-2xl sm:text-3xl text-white">Ready to Upgrade or Fix Your Phone?</h2>
-            <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">Visit our showroom on Linking Road, Bandra West. Open all 7 days with live device demos, instant trade-ins, and free diagnosis.</p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                <a href="{{ route('public.store') }}" class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition-colors">
-                    Explore Store Catalog
-                </a>
-                <a href="{{ route('public.contact') }}" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm border border-slate-700 transition-colors">
-                    Store Location & Directions
-                </a>
+    <!-- ════ 6. RATING DISPLAY MOMENT (AIRBNB GUEST FAVORITE) ════ -->
+    <section class="py-16 bg-canvas border-t border-hairline-soft">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12">
+            <div class="space-y-4">
+                <div class="flex items-center justify-center gap-4">
+                    <svg class="w-12 h-20 text-ink fill-current hidden sm:block opacity-90" viewBox="0 0 48 80">
+                        <path d="M40 70c-3-2-8-6-12-12-5-7-8-15-9-23-1-9 1-18 4-25 1-2 2-3 4-4l-3-4c-2 1-4 3-6 5-4 8-6 18-5 28 1 9 4 18 10 26 5 7 11 11 14 13l2-5zM22 28c-2 4-3 9-3 14 0 5 2 10 4 14l3-2c-2-3-3-7-3-11 0-4 1-8 2-12l-3-3z"/>
+                    </svg>
+
+                    <div class="flex flex-col items-center">
+                        <div class="text-[64px] font-bold text-ink leading-none tracking-tight">4.92</div>
+                        <div class="flex items-center gap-1 mt-2 text-ink">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </div>
+                    </div>
+
+                    <svg class="w-12 h-20 text-ink fill-current hidden sm:block opacity-90 scale-x-[-1]" viewBox="0 0 48 80">
+                        <path d="M40 70c-3-2-8-6-12-12-5-7-8-15-9-23-1-9 1-18 4-25 1-2 2-3 4-4l-3-4c-2 1-4 3-6 5-4 8-6 18-5 28 1 9 4 18 10 26 5 7 11 11 14 13l2-5zM22 28c-2 4-3 9-3 14 0 5 2 10 4 14l3-2c-2-3-3-7-3-11 0-4 1-8 2-12l-3-3z"/>
+                    </svg>
+                </div>
+
+                <div>
+                    <h3 class="text-[22px] font-semibold text-ink">Guest favorite</h3>
+                    <p class="text-[14px] text-muted max-w-lg mx-auto mt-1">
+                        Over 1,850+ verified five-star ratings on Google Maps across Mumbai.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2-Column Review Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                <div class="bg-canvas p-6 rounded-[14px] border border-hairline-soft shadow-airbnb-tier space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-surface-strong text-ink font-bold flex items-center justify-center text-sm">
+                            AK
+                        </div>
+                        <div>
+                            <div class="text-[14px] font-semibold text-ink">Aditya Kulkarni</div>
+                            <div class="text-[12px] text-muted">Mumbai · Sealed iPhone 15</div>
+                        </div>
+                    </div>
+                    <p class="text-[14px] text-body leading-relaxed">
+                        "Got my sealed iPhone within 20 minutes at the Linking Road showroom. Flawless data transfer and genuine warranty bill. Best smartphone buying experience in the city."
+                    </p>
+                </div>
+
+                <div class="bg-canvas p-6 rounded-[14px] border border-hairline-soft shadow-airbnb-tier space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-surface-strong text-ink font-bold flex items-center justify-center text-sm">
+                            SM
+                        </div>
+                        <div>
+                            <div class="text-[14px] font-semibold text-ink">Sneha Mehta</div>
+                            <div class="text-[12px] text-muted">Bandra West · Screen Replacement</div>
+                        </div>
+                    </div>
+                    <p class="text-[14px] text-body leading-relaxed">
+                        "Brought in a shattered Samsung display. Their master technician replaced the OLED panel in 35 minutes and gave me a live repair tracking sheet. Completely transparent."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════ 7. SECTION 4: END CTA — CONTACT (LEFT) & MAP LOCATION (RIGHT) ════ -->
+    <section class="py-16 bg-surface-soft border-t border-hairline-soft">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <div class="text-center max-w-xl mx-auto space-y-2">
+                <h2 class="text-[26px] font-bold text-ink tracking-tight">Visit Our Showroom or Get In Touch</h2>
+                <p class="text-[14px] text-muted">Located on Linking Road, Bandra West. Walk in for device demos, instant trade-in cash, or express repairs.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                
+                <!-- Left: Contact Details (6 Cols) -->
+                <div class="lg:col-span-6 bg-canvas rounded-[14px] p-8 border border-hairline shadow-airbnb-tier flex flex-col justify-between space-y-6">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span class="text-[13px] font-bold text-ink uppercase tracking-wider">Counters Open · 7 Days a Week</span>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-surface-strong text-ink flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-[15px] text-ink">Bandra West Showroom</h4>
+                                <p class="text-[13px] text-muted leading-relaxed mt-0.5">
+                                    Shop #14, Linking Road, Near Bandra Station West,<br>
+                                    Mumbai, Maharashtra 400050
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Phone & Desk -->
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-surface-strong text-ink flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-[15px] text-ink">Phone & WhatsApp Direct</h4>
+                                <p class="text-[13px] text-muted mt-0.5">
+                                    Counter Desk: <a href="tel:9876543210" class="font-semibold text-ink hover:text-rausch">+91 98765 43210</a>
+                                </p>
+                                <p class="text-[13px] text-muted">
+                                    Repair Desk: <a href="tel:9876543211" class="font-semibold text-ink hover:text-rausch">+91 98765 43211</a>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Timings -->
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-surface-strong text-ink flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-[15px] text-ink">Working Hours</h4>
+                                <p class="text-[13px] text-muted mt-0.5">Monday – Sunday: 10:00 AM – 9:30 PM</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-hairline-soft flex flex-wrap items-center gap-3">
+                        <a href="https://wa.me/919876543210" target="_blank"
+                           class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm text-[13px] font-medium transition-airbnb flex items-center gap-1.5 shadow-sm">
+                            <span>Chat Live on WhatsApp</span>
+                        </a>
+                        <a href="{{ route('public.contact') }}"
+                           class="px-5 py-2.5 bg-canvas border border-ink hover:bg-surface-soft text-ink rounded-sm text-[13px] font-medium transition-airbnb">
+                            Send Online Inquiry →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: Map Location Card (6 Cols) -->
+                <div class="lg:col-span-6 bg-canvas rounded-[14px] p-8 border border-hairline shadow-airbnb-tier flex flex-col justify-between space-y-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-[18px] font-bold text-ink">Store Location & Directions</h3>
+                            <span class="text-[12px] font-semibold text-muted">5 min from Bandra Station</span>
+                        </div>
+
+                        <!-- Clean Map Plate Placeholder / Directions Guide -->
+                        <div class="relative aspect-video w-full rounded-[12px] overflow-hidden bg-surface-soft border border-hairline-soft flex flex-col items-center justify-center text-center p-6 space-y-3">
+                            <div class="w-12 h-12 rounded-full bg-rausch/10 text-rausch flex items-center justify-center">
+                                <svg class="w-6 h-6 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-[15px] text-ink">Linking Road Commercial Hub</h4>
+                                <p class="text-[13px] text-muted max-w-sm mx-auto mt-0.5">
+                                    Easily accessible via Western Express Highway and SV Road. Dedicated valet and roadside parking available.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="text-[13px] text-muted space-y-1">
+                            <p><strong>Transit:</strong> Bandra Suburban Railway Station (Western & Harbour line) — 450 meters walk.</p>
+                            <p><strong>Landmark:</strong> Directly opposite Linking Road Shoppers Stop lane.</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-hairline-soft">
+                        <a href="https://maps.google.com/?q=Linking+Road+Bandra+West+Mumbai" target="_blank"
+                           class="w-full py-3 bg-rausch hover:bg-rausch-active text-white rounded-sm text-[14px] font-medium transition-airbnb text-center flex items-center justify-center gap-2 shadow-sm">
+                            <svg class="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24">
+                                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                            </svg>
+                            <span>Open Navigation in Google Maps</span>
+                        </a>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>

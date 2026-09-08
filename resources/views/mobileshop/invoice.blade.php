@@ -65,7 +65,7 @@
         <button onclick="window.print()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0F172A; border-color:#94A3B8;">
             <i data-lucide="printer" style="width:13px;height:13px;"></i> Print / Save as PDF
         </button>
-        <a href="{{ route('mobileshop.invoice.pdf', ['id' => $sale->id]) }}" class="btn btn-primary btn-sm" style="font-weight:700; background:#0F766E;">
+        <a href="{{ route('mobileshop.invoice.pdf', ['id' => $sale->id]) }}" class="btn btn-primary btn-sm" style="font-weight:700; background:#5E6AD2;">
             <i data-lucide="download" style="width:13px;height:13px;"></i> Download PDF
         </a>
         <a href="{{ $waInvoiceUrl }}" target="_blank" class="btn btn-sm" style="font-weight:700; background:#25D366; color:#ffffff; display:inline-flex; align-items:center; gap:6px; border:none; box-shadow:0 2px 5px rgba(37,211,102,0.3);">

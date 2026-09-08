@@ -293,11 +293,17 @@
     var userDD = document.getElementById('user-dropdown');
     if (userBtn && userDD) {
         userBtn.addEventListener('click', function (e) {
+            if (e.target.closest('a')) return;
             e.stopPropagation();
             userDD.classList.toggle('open');
+            userBtn.classList.toggle('open');
+        });
+        userDD.addEventListener('click', function (e) {
+            e.stopPropagation();
         });
         document.addEventListener('click', function () {
             userDD.classList.remove('open');
+            userBtn.classList.remove('open');
         });
     }
 

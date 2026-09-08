@@ -296,7 +296,7 @@
                 <!-- Bill Type / GST Checkbox -->
                 <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px;">
                     <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0; user-select:none;">
-                        <input type="checkbox" name="is_gst" id="shIsGstCheckbox" value="1" style="width:18px; height:18px; accent-color:#0F766E; cursor:pointer;" onchange="document.getElementById('shBillType').value = this.checked ? 'gst' : 'non_gst'">
+                        <input type="checkbox" name="is_gst" id="shIsGstCheckbox" value="1" style="width:18px; height:18px; accent-color:#5E6AD2; cursor:pointer;" onchange="document.getElementById('shBillType').value = this.checked ? 'gst' : 'non_gst'">
                         <div>
                             <span style="font-size:12px; font-weight:700; color:#0F172A;">Make GST Bill (18% Tax Invoice)</span>
                             <p style="font-size:10.5px; color:#64748B; margin:1px 0 0 0;">Unchecked by default (Standard Retail / Non-GST Estimate)</p>

@@ -27,7 +27,7 @@
         </a>
         @endif
         @if(($canManageAccessories ?? false) || ($canManageCovers ?? false))
-        <a href="{{ route('mobileshop.purchase', ['action' => 'restock']) }}" class="btn btn-primary btn-sm" style="background:#16A34A;">
+        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-primary btn-sm" style="background:#16A34A;">
             <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Part / Accessory
         </a>
         @endif

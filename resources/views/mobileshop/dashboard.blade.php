@@ -337,7 +337,7 @@
         <!-- Calm, semantic legend -->
         <div class="chart-legend-row">
             <div class="legend-item">
-                <span class="legend-circle" style="background:#0F766E;"></span>
+                <span class="legend-circle" style="background:#5E6AD2;"></span>
                 <span>Sale Invoice</span>
             </div>
             <div class="legend-item">
@@ -502,12 +502,12 @@
                     {
                         label: 'Sale Invoice',
                         data: saleData,
-                        borderColor: '#0F766E',
-                        backgroundColor: 'rgba(15, 118, 110, 0.04)',
+                        borderColor: '#5E6AD2',
+                        backgroundColor: 'rgba(94, 106, 210, 0.05)',
                         borderWidth: 2.5,
                         tension: 0.4,
                         pointRadius: 3.5,
-                        pointBackgroundColor: '#0F766E',
+                        pointBackgroundColor: '#5E6AD2',
                         pointHoverRadius: 5,
                         fill: false
                     },
