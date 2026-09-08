@@ -31,7 +31,6 @@
             <div class="card-header">
                 <div>
                     <div class="card-title"><i data-lucide="truck" style="width:16px;height:16px; vertical-align:-2px; color:var(--color-primary);"></i> Supplier / Company Details</div>
-                    <div class="card-subtitle">Pick an existing supplier or add a new one. Balances update live in the ledger.</div>
                 </div>
             </div>
             <div class="card-body">
@@ -90,7 +89,6 @@
             <div class="card-header">
                 <div>
                     <div class="card-title"><i data-lucide="package" style="width:16px;height:16px; vertical-align:-2px; color:var(--color-primary);"></i> Stock Items (Bulk)</div>
-                    <div class="card-subtitle">Each line = a model batch. Every unit is added as an individual device in stock. IMEIs optional — auto placeholders assigned otherwise.</div>
                 </div>
                 <button type="button" class="btn btn-primary btn-sm" onclick="addPurchaseItemRow()">
                     <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Item Row
@@ -122,7 +120,6 @@
             <div class="card-header">
                 <div>
                     <div class="card-title"><i data-lucide="wallet" style="width:16px;height:16px; vertical-align:-2px; color:var(--color-primary);"></i> Bill & Payment</div>
-                    <div class="card-subtitle">Any unpaid balance carries forward to the supplier ledger and shows on the next shipment from the same supplier.</div>
                 </div>
             </div>
             <div class="card-body">

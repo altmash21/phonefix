@@ -32,7 +32,6 @@
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title">Parts & Accessories Categories ({{ count($categories) }})</div>
-                    <div class="card-subtitle">Display, Front Glass, Pin, IC, Covers, Batteries</div>
                 </div>
                 <a href="{{ route('mobileshop.stock') }}" class="btn btn-primary btn-sm">View in Stock</a>
             </div>
@@ -61,7 +60,6 @@
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title">Financiers & EMI Providers ({{ count($financiers) }})</div>
-                    <div class="card-subtitle">Bajaj Finserv, TVS Credit, HDB, Home Credit</div>
                 </div>
                 <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm">EMI Ledger</a>
             </div>
@@ -109,7 +107,6 @@
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title">Suppliers & Credit Wallets ({{ count($suppliers) }})</div>
-                    <div class="card-subtitle">Wholesale vendors & distributors</div>
                 </div>
                 <a href="{{ route('mobileshop.purchase_orders') }}" class="btn btn-outline btn-sm">POs & Ledger</a>
             </div>
@@ -146,7 +143,6 @@
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title">Staff Counter Users & Roles ({{ count($staffUsers) }})</div>
-                    <div class="card-subtitle">Manage login credentials and terminal assignments</div>
                 </div>
             </div>
             <div class="card-body" style="padding:14px;">
@@ -196,7 +192,6 @@
                         <i data-lucide="shield-check" style="width:18px;height:18px; color:var(--brand-600);"></i>
                         Device Login Sessions & Security History ({{ count($loginSessions) }})
                     </div>
-                    <div class="card-subtitle">Monitor device logins, online/offline status, and remotely disconnect active sessions. Visible to Main Admin only.</div>
                 </div>
                 <span class="badge badge-purple" style="font-size:11px; font-weight:700;">Admin Protected</span>
             </div>

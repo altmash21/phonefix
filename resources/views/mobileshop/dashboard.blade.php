@@ -206,14 +206,6 @@
             'repairs'     => 'Jobs Received',
             default       => 'Purchase Invoice',
         };
-        $kpiPurchaseSub = match($niche ?? 'admin') {
-            'phones'      => 'Total New Phones Added',
-            'secondhand'  => 'Pre-Owned Phones Purchased',
-            'accessories' => 'Parts & Accessories Inflow',
-            'covers'      => 'Covers & Tempered Added',
-            'repairs'     => 'Repair Jobs Opened',
-            default       => 'Supplier Orders & Stock Inflows',
-        };
         $kpiReturnLabel = match($niche ?? 'admin') {
             'secondhand'  => 'Buyback Total',
             'repairs'     => 'Jobs In Progress',
@@ -227,14 +219,6 @@
             'repairs'     => 'Jobs Completed',
             default       => 'Sale Invoice',
         };
-        $kpiSaleSub = match($niche ?? 'admin') {
-            'phones'      => 'Brand New Phones Billed',
-            'secondhand'  => 'Pre-Owned Phones Sold',
-            'accessories' => 'Accessories Invoiced',
-            'covers'      => 'Covers & Tempered Sold',
-            'repairs'     => 'Delivered to Customers',
-            default       => 'Phones & Accessories Billed',
-        };
     @endphp
     <div class="kpi-row">
         <!-- 1. Purchase / Intake -->
@@ -244,7 +228,6 @@
             </div>
             <div>
                 <div class="kpi-label">{{ $kpiPurchaseLabel }}</div>
-                <div class="kpi-sub">{{ $kpiPurchaseSub }}</div>
             </div>
         </div>
 
@@ -256,11 +239,6 @@
             </div>
             <div>
                 <div class="kpi-label">{{ $kpiReturnLabel }}</div>
-                <div class="kpi-sub">
-                    @if(($niche ?? '') === 'repairs') Jobs Awaiting Delivery
-                    @else Devices Bought Back from Customers
-                    @endif
-                </div>
             </div>
         </div>
         @else
@@ -271,7 +249,6 @@
             </div>
             <div>
                 <div class="kpi-label">{{ ($niche ?? '') === 'repairs' ? 'Open Repairs' : 'Open Repairs' }}</div>
-                <div class="kpi-sub">Active Jobs in Workshop</div>
             </div>
         </div>
         @endif
@@ -283,7 +260,6 @@
             </div>
             <div>
                 <div class="kpi-label">{{ $kpiSaleLabel }}</div>
-                <div class="kpi-sub">{{ $kpiSaleSub }}</div>
             </div>
         </div>
 
@@ -303,13 +279,10 @@
             <div>
                 @if(in_array($niche ?? 'admin', ['admin', 'phones']))
                     <div class="kpi-label">Khata / Udhari</div>
-                    <div class="kpi-sub">₹{{ number_format($totalUdhariDue ?? 0, 2) }} Pending Recovery</div>
                 @elseif(($niche ?? '') === 'repairs')
                     <div class="kpi-label">Active Repairs</div>
-                    <div class="kpi-sub">Jobs Open in Workshop</div>
                 @else
                     <div class="kpi-label">Supplier Credit</div>
-                    <div class="kpi-sub">₹{{ number_format($totalSupplierCredit ?? 0, 2) }} Balance</div>
                 @endif
             </div>
         </div>
@@ -322,7 +295,6 @@
         <div class="chart-header-row">
             <div>
                 <div class="chart-main-title">Store Performance & Inflow Trends</div>
-                <div style="font-size:12px; color:#64748B;">Annual comparison of sales, purchases, buybacks, and credit recovery across all 12 months</div>
             </div>
             <div style="font-size:11px; font-weight:600; color:#475569; background:#F1F5F9; padding:3px 8px; border-radius:5px;">
                 Year: {{ date('Y') }}
@@ -364,7 +336,6 @@
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title" style="font-size:14px; font-weight:800;">Recent Sales Invoices</div>
-                    <div class="card-subtitle" style="font-size:11px;">Live counter sales and customer receipts</div>
                 </div>
                 <a href="{{ route('mobileshop.pos') }}" class="btn btn-outline btn-sm">New POS Sale</a>
             </div>
@@ -419,7 +390,6 @@
                 <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                     <div>
                         <div class="card-title" style="font-size:14px; font-weight:800;">Active Repair Tickets</div>
-                        <div class="card-subtitle" style="font-size:11px;">Devices currently in diagnostic / repair queue</div>
                     </div>
                     <a href="{{ route('mobileshop.repairs') }}" class="btn btn-outline btn-sm">Service Desk</a>
                 </div>

@@ -74,7 +74,6 @@
     <div class="card-header" style="border-bottom:1px solid var(--card-border); padding:16px 20px;">
         <div style="flex:1;">
             <div class="card-title">Certified Pre-Owned & Buyback Inventory</div>
-            <div class="card-subtitle">Showing {{ $mobiles->count() }} registered units with IMEI & condition grading</div>
         </div>
         <div style="display:flex; align-items:center; gap:10px; width:100%; max-width:340px;">
             <div class="search-bar" style="width:100%;">

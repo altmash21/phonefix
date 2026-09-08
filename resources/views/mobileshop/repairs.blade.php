@@ -109,7 +109,6 @@
     <div class="card-header">
         <div>
             <div class="card-title">Repair Service Desk Queue</div>
-            <div class="card-subtitle">Showing {{ count($tickets ?? []) }} active & historical repair job sheets</div>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
             <div class="search-bar">

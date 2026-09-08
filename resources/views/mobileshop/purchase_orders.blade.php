@@ -41,7 +41,6 @@
     <div class="card-header">
         <div>
             <div class="card-title">Purchase Orders & Goods Receipt Batches</div>
-            <div class="card-subtitle">Showing {{ $purchaseOrders->count() }} procurement records</div>
         </div>
         <div class="search-bar">
             <i data-lucide="search" style="width:15px;height:15px;"></i>

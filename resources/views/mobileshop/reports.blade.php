@@ -343,7 +343,6 @@
                 <div style="display:flex; align-items:center; gap:8px;">
                     <div>
                         <div class="card-title">Sales Revenue & Margin Trend</div>
-                        <div class="card-subtitle">Daily turnover vs gross profit (Past 7 Days)</div>
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -364,7 +363,6 @@
                 <div style="display:flex; align-items:center; gap:8px;">
                     <div>
                         <div class="card-title">Payment Collection Split</div>
-                        <div class="card-subtitle">Cash vs UPI vs EMI vs Khata</div>
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -391,7 +389,6 @@
                     <div class="card-title" style="display:flex; align-items:center; gap:8px;">
                         <span>📱 Top Selling Mobile Handsets</span>
                     </div>
-                    <div class="card-subtitle">Ranked by units sold & gross profit generated</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span class="badge badge-blue" style="font-size:10px;">Handset Ranking</span>
@@ -459,7 +456,6 @@
                     <div class="card-title" style="display:flex; align-items:center; gap:8px;">
                         <span>📦 Top Selling Accessories & Parts</span>
                     </div>
-                    <div class="card-subtitle">Fastest moving items & live stock levels</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span class="badge badge-purple" style="font-size:10px;">Fast Moving</span>
@@ -537,7 +533,6 @@
                         <i data-lucide="alert-circle" style="width:18px;height:18px; color:#DC2626;"></i>
                         Top Pending Customer Khata Debtors (<span id="debtorCountSpan">{{ count($debtors) }}</span>)
                     </div>
-                    <div class="card-subtitle">Highest outstanding balances awaiting collection</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <a href="{{ route('mobileshop.khata') }}" onclick="event.stopPropagation();" class="btn btn-outline btn-sm" style="color:#B91C1C; border-color:#FECDD3; font-weight:700; font-size:11px;">
@@ -623,7 +618,6 @@
                         <i data-lucide="alert-triangle" style="width:18px;height:18px; color:#D97706;"></i>
                         Low Stock & Restock Warnings
                     </div>
-                    <div class="card-subtitle">Items reaching critical reorder threshold (<= 5 pcs)</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <a href="{{ route('mobileshop.purchase') }}" onclick="event.stopPropagation();" class="btn btn-outline btn-sm" style="font-weight:700; font-size:11px;">
@@ -683,7 +677,6 @@
                     <i data-lucide="file-check-2" style="width:18px;height:18px; color:#7E22CE;"></i>
                     GST Filing & Tax Audit Statement (GSTR-1 & GSTR-3B)
                 </div>
-                <div class="card-subtitle">Complete outward tax liability, input tax credit (ITC) reconciliation, B2B invoices & HSN summary</div>
             </div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 <span class="badge" style="background:#FAF5FF; color:#7E22CE; border:1px solid #E9D5FF; font-size:11px; font-weight:800;">
@@ -882,7 +875,6 @@
         <div class="card-header collapsible-header" onclick="toggleSection('bodySalesLedger', this)" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
             <div>
                 <div class="card-title">Detailed Sales Invoices Ledger</div>
-                <div class="card-subtitle">Complete line-by-line checkout history with instant filtering</div>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
                 <span class="badge badge-blue" id="ledgerCountBadge" style="font-size:11px; font-weight:800;">

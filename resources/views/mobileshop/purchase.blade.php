@@ -185,25 +185,21 @@
         <div class="card kpi-card">
             <div class="kpi-label">Total Procurement</div>
             <div class="kpi-num">₹{{ fmod($totalPOValue, 1) != 0 ? number_format($totalPOValue, 2) : number_format($totalPOValue, 0) }}</div>
-            <div class="kpi-sub">{{ $totalInvoicesCount }} Invoices Billed</div>
         </div>
 
         <div class="card kpi-card">
             <div class="kpi-label">Vendor Balances Due</div>
             <div class="kpi-num" style="color:var(--color-danger);">₹{{ fmod($totalPODue, 1) != 0 ? number_format($totalPODue, 2) : number_format($totalPODue, 0) }}</div>
-            <div class="kpi-sub">Unpaid Dues</div>
         </div>
 
         <div class="card kpi-card">
             <div class="kpi-label">Units Purchased</div>
             <div class="kpi-num" style="color:#15803D;">{{ number_format($totalUnitsPurchased) }} Units</div>
-            <div class="kpi-sub">Across All Invoices</div>
         </div>
 
         <div class="card kpi-card">
             <div class="kpi-label">Vendors Active</div>
             <div class="kpi-num">{{ count($suppliers) }} Vendors</div>
-            <div class="kpi-sub">Credit Wallets Available</div>
         </div>
     </div>
 
@@ -216,7 +212,6 @@
                 </div>
                 <div>
                     <h2 class="text-xs font-semibold text-ink leading-tight m-0">Live Purchase Invoice Registry</h2>
-                    <p class="hide-on-mobile text-[10px] text-ink-muted leading-none mt-0.5 m-0">Official supplier invoices, wholesale shipments, and device buybacks</p>
                     <span id="purchaseVisibleCountBadge" style="display:none;"></span>
                 </div>
             </div>

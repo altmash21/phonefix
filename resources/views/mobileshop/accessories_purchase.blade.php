@@ -318,7 +318,6 @@
                     <div class="card-title" style="display:flex; align-items:center; gap:8px;">
                         <i data-lucide="truck" style="width:16px;height:16px; color:var(--color-primary);"></i> Supplier & Shipment Metadata
                     </div>
-                    <div class="card-subtitle">Specify the distributor / vendor and invoice reference to link the purchase ledger entry</div>
                 </div>
             </div>
             <div class="card-body" style="padding: 20px;">
@@ -363,7 +362,6 @@
                     <div class="card-title" style="display:flex; align-items:center; gap:8px;">
                         <i data-lucide="layers" style="width:16px;height:16px; color:var(--color-primary);"></i> Batch Restock Items (<span id="bulkRowCount">0</span>)
                     </div>
-                    <div class="card-subtitle">Each item is arranged across 2 clean lines: Device & Part identification on Line 1, Pricing & Stock quantities on Line 2 (No horizontal scrolling).</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <button type="button" onclick="addBulkRow()" class="btn btn-outline btn-sm" style="font-weight:700;">

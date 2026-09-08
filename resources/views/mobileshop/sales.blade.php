@@ -254,7 +254,6 @@
                 <div class="kpi-icon-box"><i data-lucide="banknote"></i></div>
             </div>
             <div class="kpi-num">₹{{ fmod($todaySalesTotal, 1) != 0 ? number_format($todaySalesTotal, 2) : number_format($todaySalesTotal, 0) }}</div>
-            <div class="kpi-sub">Cash, UPI & card inflows</div>
         </div>
 
         <!-- Card 2: Monthly Inflow -->
@@ -264,7 +263,6 @@
                 <div class="kpi-icon-box"><i data-lucide="trending-up"></i></div>
             </div>
             <div class="kpi-num">₹{{ fmod($monthSalesTotal, 1) != 0 ? number_format($monthSalesTotal, 2) : number_format($monthSalesTotal, 0) }}</div>
-            <div class="kpi-sub">Gross revenue this month</div>
         </div>
 
         <!-- Card 3: Total Invoices -->
@@ -274,7 +272,6 @@
                 <div class="kpi-icon-box"><i data-lucide="receipt"></i></div>
             </div>
             <div class="kpi-num">{{ number_format($salesCount) }}</div>
-            <div class="kpi-sub">Filtered transactions</div>
         </div>
 
         <!-- Card 4: Ready Stock -->
@@ -284,7 +281,6 @@
                 <div class="kpi-icon-box"><i data-lucide="package"></i></div>
             </div>
             <div class="kpi-num">{{ $availableNewPhones + $availableSecondHand + $availableParts }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
-            <div class="kpi-sub">Available inventory</div>
         </div>
     </div>
 
@@ -300,7 +296,6 @@
                 </div>
                 <div>
                     <h2 class="text-xs font-semibold text-ink leading-tight m-0">Live Sales Invoice Registry</h2>
-                    <p class="text-[10px] text-ink-muted leading-none mt-0.5 m-0">Recent smartphones, buybacks, and accessories</p>
                 </div>
             </div>
 

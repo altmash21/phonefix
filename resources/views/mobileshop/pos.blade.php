@@ -101,7 +101,6 @@
                 <div class="card-header">
                     <div>
                         <div class="card-title">Customer Details & Khata Lookup</div>
-                        <div class="card-subtitle">Autofill details by mobile number</div>
                     </div>
                     <span class="badge badge-purple">Instant Lookup</span>
                 </div>
@@ -154,7 +153,6 @@
                 <div class="card-header">
                     <div>
                         <div class="card-title">Select Brand New Mobile from Stock</div>
-                        <div class="card-subtitle">Showing {{ count($newPhones) }} boxed units available in store</div>
                     </div>
                     <span class="badge badge-green">Boxed / Sealed Stock</span>
                 </div>
@@ -211,7 +209,6 @@
                 <div class="card-header">
                     <div>
                         <div class="card-title">Promotional Free Gifts & Bundles</div>
-                        <div class="card-subtitle">Deducts stock automatically at ₹0 charge</div>
                     </div>
                     <span class="badge badge-green">0% Cost</span>
                 </div>

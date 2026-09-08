@@ -105,7 +105,6 @@
                     Registered Finance Partners
                     <span class="badge badge-blue" style="font-size:10.5px; font-weight:700;">{{ $providers->count() }} Companies</span>
                 </div>
-                <div class="card-subtitle" style="font-size:11px; color:#64748B;">Configured loan companies, processing fee rates, and live advance pools</div>
             </div>
             <button type="button" class="btn btn-primary btn-sm" onclick="openAddProviderModal()">
                 <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Partner

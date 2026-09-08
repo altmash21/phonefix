@@ -31,7 +31,6 @@
             <div class="card-header">
                 <div>
                     <div class="card-title"><i data-lucide="user" style="width:16px;height:16px; vertical-align:-2px; color:var(--color-primary);"></i> Customer Details</div>
-                    <div class="card-subtitle">Existing customers auto-fill by phone. New customers are created on save.</div>
                 </div>
             </div>
             <div class="card-body">
@@ -62,7 +61,6 @@
             <div class="card-header">
                 <div>
                     <div class="card-title"><i data-lucide="smartphone" style="width:16px;height:16px; vertical-align:-2px; color:var(--color-primary);"></i> Select Devices In This Sale ({{ $inStockDevices->count() }} in stock)</div>
-                    <div class="card-subtitle">Tick the units being sold. You can override the sale price per device. One invoice is generated per unit.</div>
                 </div>
                 <input type="text" class="form-control" id="deviceSearch" placeholder="Search brand / model / IMEI…" style="max-width:280px;" oninput="filterDeviceTable()">
             </div>
@@ -111,7 +109,6 @@
             <div class="card-header">
                 <div>
                     <div class="card-title"><i data-lucide="wallet" style="width:16px;height:16px; vertical-align:-2px; color:var(--color-primary);"></i> Payment</div>
-                    <div class="card-subtitle">Unpaid balance flows to the customer's Khata (udhari). For EMI, the financed amount deducts from the selected company's advance pool.</div>
                 </div>
             </div>
             <div class="card-body">

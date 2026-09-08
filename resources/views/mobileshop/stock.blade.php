@@ -69,7 +69,6 @@
         <div class="kpi-card">
             <div class="kpi-label">Brand New Phones in Stock</div>
             <div class="kpi-num">{{ $totalNewPhonesInStock }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
-            <div class="kpi-sub">Sealed boxed units with IMEI serials</div>
         </div>
         @endif
 
@@ -77,7 +76,6 @@
         <div class="kpi-card">
             <div class="kpi-label">Pre-Owned Phones in Stock</div>
             <div class="kpi-num">{{ $totalSecondHandInStock }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
-            <div class="kpi-sub">Certified refurbished devices</div>
         </div>
         @endif
 
@@ -85,14 +83,12 @@
         <div class="kpi-card">
             <div class="kpi-label">Parts & Accessories Stock</div>
             <div class="kpi-num">{{ number_format($totalPartsInStock) }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
-            <div class="kpi-sub">Displays, tempered glass, cables & ICs</div>
         </div>
         @endif
 
         <div class="kpi-card">
             <div class="kpi-label">Total Stock Valuation</div>
             <div class="kpi-num">₹{{ number_format($valuationRetail, 2) }}</div>
-            <div class="kpi-sub">Cost: ₹{{ number_format($valuationCost, 2) }}</div>
         </div>
     </div>
 
@@ -166,7 +162,6 @@
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title" style="color:var(--color-text-primary);">Brand New Smartphones</div>
-                    <div class="card-subtitle">Boxed stock with individual IMEI 1 & IMEI 2 tracking</div>
                 </div>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
@@ -254,7 +249,6 @@
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title" style="color:var(--color-text-primary);">Pre-Owned & Second Hand Hub</div>
-                    <div class="card-subtitle">Verified devices with condition grading and battery health</div>
                 </div>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
@@ -342,7 +336,6 @@
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title" style="color:var(--color-text-primary);">Spare Parts & Retail Accessories Catalog</div>
-                    <div class="card-subtitle">Displays, Folders, Front Glass, Charging Pins, ICs & Covers</div>
                 </div>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
