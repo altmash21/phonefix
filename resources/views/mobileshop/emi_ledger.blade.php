@@ -564,20 +564,12 @@
 
         const fromInput = document.getElementById('emiFromDate');
         const toInput = document.getElementById('emiToDate');
-        const now = new Date();
-        const formatDate = d => d.toISOString().split('T')[0];
+        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
+            ? window.getDateRangePreset(preset)
+            : { from: '', to: '' };
 
-        if (preset === 'all') {
-            fromInput.value = '';
-            toInput.value = '';
-        } else if (preset === 'today') {
-            fromInput.value = formatDate(now);
-            toInput.value = formatDate(now);
-        } else if (preset === 'month') {
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            fromInput.value = formatDate(firstDay);
-            toInput.value = formatDate(now);
-        }
+        if (fromInput) fromInput.value = range.from || '';
+        if (toInput) toInput.value = range.to || '';
 
         filterEmiLedger();
     }
@@ -599,15 +591,20 @@
             const rowType = row.dataset.type;
             const rowPartnerId = row.dataset.providerId;
             const rowText = (row.dataset.search || row.textContent).toLowerCase();
-            const rowDate = row.dataset.date || '';
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
 
             const matchesType = (activeEmiTypeFilter === 'all') || (rowType === activeEmiTypeFilter);
             const matchesPartner = (selectedPartner === 'all') || (rowPartnerId === selectedPartner);
             const matchesSearch = !searchVal || rowText.includes(searchVal);
 
             let matchesDate = true;
-            if (fromDate && rowDate) matchesDate = matchesDate && (rowDate >= fromDate);
-            if (toDate && rowDate) matchesDate = matchesDate && (rowDate <= toDate);
+            if (fromDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
+            }
+            if (toDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
+            }
 
             const isVisible = matchesType && matchesPartner && matchesSearch && matchesDate;
             row.dataset.mobiHidden = isVisible ? '0' : '1';

@@ -510,7 +510,8 @@
             const rowType = row.dataset.type;
             const rowCustomerId = row.dataset.customerId;
             const rowText = (row.dataset.search || row.textContent).toLowerCase();
-            const rowDate = row.dataset.date || '';
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
 
             // Type filter
             const matchesType = (activeTypeFilter === 'all') || (rowType === activeTypeFilter);
@@ -520,11 +521,11 @@
             const matchesSearch = !searchVal || rowText.includes(searchVal);
             // Date filter
             let matchesDate = true;
-            if (fromDate && rowDate) {
-                matchesDate = matchesDate && (rowDate >= fromDate);
+            if (fromDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
             }
-            if (toDate && rowDate) {
-                matchesDate = matchesDate && (rowDate <= toDate);
+            if (toDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
             }
 
             const isVisible = matchesType && matchesCustomer && matchesSearch && matchesDate;
@@ -538,14 +539,15 @@
             const cardType = card.dataset.type;
             const cardCustomerId = card.dataset.customerId;
             const cardText = (card.dataset.search || card.textContent).toLowerCase();
-            const cardDate = card.dataset.date || '';
+            const rawDate = (card.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
 
             const matchesType = (activeTypeFilter === 'all') || (cardType === activeTypeFilter);
             const matchesCustomer = (selectedCustomer === 'all') || (cardCustomerId === selectedCustomer);
             const matchesSearch = !searchVal || cardText.includes(searchVal);
             let matchesDate = true;
-            if (fromDate && cardDate) matchesDate = matchesDate && (cardDate >= fromDate);
-            if (toDate && cardDate) matchesDate = matchesDate && (cardDate <= toDate);
+            if (fromDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
+            if (toDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
 
             const isCardVisible = matchesType && matchesCustomer && matchesSearch && matchesDate;
             card.dataset.mobiHidden = isCardVisible ? '0' : '1';

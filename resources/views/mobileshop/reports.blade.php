@@ -241,11 +241,11 @@
         <form method="GET" action="{{ route('mobileshop.reports') }}" class="reports-filter-form" style="display:flex; align-items:center; gap:8px; margin:0; flex-wrap:wrap;">
             <div class="reports-date-group">
                 <label for="repFromDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">From:</label>
-                <input type="date" id="repFromDate" name="from_date" value="{{ $fromDate ?? '' }}" class="form-control" style="font-size:12px; padding:5px 9px; height:auto; width:135px; font-weight:500;" required>
+                <input type="date" id="repFromDate" name="from_date" value="{{ $fromDate ?? '' }}" class="form-control" style="font-size:12px; padding:5px 9px; height:auto; width:135px; font-weight:500;">
             </div>
             <div class="reports-date-group">
                 <label for="repToDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">To:</label>
-                <input type="date" id="repToDate" name="to_date" value="{{ $toDate ?? '' }}" class="form-control" style="font-size:12px; padding:5px 9px; height:auto; width:135px; font-weight:500;" required>
+                <input type="date" id="repToDate" name="to_date" value="{{ $toDate ?? '' }}" class="form-control" style="font-size:12px; padding:5px 9px; height:auto; width:135px; font-weight:500;">
             </div>
             <button type="submit" class="btn btn-primary btn-sm" style="padding:6px 14px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
                 <i data-lucide="filter" style="width:13px;height:13px;"></i> Apply Filter

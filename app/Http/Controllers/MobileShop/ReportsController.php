@@ -83,10 +83,12 @@ class ReportsController extends BaseMobileShopController
             ->where('ms_purchase_orders.company_id', $companyId)
             ->whereNotIn('ms_purchase_orders.status', ['cancelled']);
 
-        if ($fromDate && $toDate) {
-            $querySales->whereBetween('ms_mobile_sales.created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
-            $queryAccSales->whereBetween('ms_accessory_sales.created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59']);
-            $queryPurchases->whereBetween('ms_purchase_orders.order_date', [$fromDate, $toDate]);
+        if ($fromDate || $toDate) {
+            $start = $fromDate ? $fromDate . ' 00:00:00' : '1970-01-01 00:00:00';
+            $end   = $toDate   ? $toDate   . ' 23:59:59' : '2099-12-31 23:59:59';
+            $querySales->whereBetween('ms_mobile_sales.created_at', [$start, $end]);
+            $queryAccSales->whereBetween('ms_accessory_sales.created_at', [$start, $end]);
+            $queryPurchases->whereBetween('ms_purchase_orders.order_date', [$fromDate ?: '1970-01-01', $toDate ?: '2099-12-31']);
             $filter = 'custom';
         } elseif ($filter === 'today') {
             $querySales->whereDate('ms_mobile_sales.created_at', today());

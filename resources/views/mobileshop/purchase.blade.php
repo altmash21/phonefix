@@ -874,18 +874,19 @@
         // Desktop Table Rows
         document.querySelectorAll('tr.purchase-invoice-row').forEach(row => {
             const rowText = row.textContent.toLowerCase();
-            const rowDate = row.dataset.date || '';
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const rowType = row.dataset.type || '';
 
             const matchesType = (activePoTypeFilter === 'all') || (rowType === activePoTypeFilter);
             const matchesText = !term || rowText.includes(term);
             let matchesDate = true;
 
-            if (fromDate && rowDate) {
-                matchesDate = matchesDate && (rowDate >= fromDate);
+            if (fromDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
             }
-            if (toDate && rowDate) {
-                matchesDate = matchesDate && (rowDate <= toDate);
+            if (toDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
             }
 
             const isVisible = matchesType && matchesText && matchesDate;
@@ -897,18 +898,19 @@
         // Mobile Flat Cards
         document.querySelectorAll('.purchase-flat-row').forEach(row => {
             const rowText = row.textContent.toLowerCase();
-            const rowDate = row.dataset.date || '';
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const rowType = row.dataset.type || '';
 
             const matchesType = (activePoTypeFilter === 'all') || (rowType === activePoTypeFilter);
             const matchesText = !term || rowText.includes(term);
             let matchesDate = true;
 
-            if (fromDate && rowDate) {
-                matchesDate = matchesDate && (rowDate >= fromDate);
+            if (fromDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
             }
-            if (toDate && rowDate) {
-                matchesDate = matchesDate && (rowDate <= toDate);
+            if (toDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
             }
 
             const isCardVisible = matchesType && matchesText && matchesDate;

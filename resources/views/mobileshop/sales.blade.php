@@ -1548,18 +1548,19 @@
         // 1. Filter Desktop Table Rows
         document.querySelectorAll('#salesTable tbody tr.sales-row').forEach(row => {
             const rowText = row.textContent.toLowerCase();
-            const rowDate = row.dataset.date || '';
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const rowType = row.dataset.type || '';
 
             const matchesCategory = (currentSalesCategoryFilter === 'all') || (rowType === currentSalesCategoryFilter);
             const matchesText = !term || rowText.includes(term);
             let matchesDate = true;
 
-            if (fromDate && rowDate) {
-                matchesDate = matchesDate && (rowDate >= fromDate);
+            if (fromDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
             }
-            if (toDate && rowDate) {
-                matchesDate = matchesDate && (rowDate <= toDate);
+            if (toDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
             }
 
             const isVisible = matchesCategory && matchesText && matchesDate;
@@ -1571,18 +1572,19 @@
         // 2. Filter Mobile Cards View
         document.querySelectorAll('#salesMobileCards .sales-flat-row').forEach(card => {
             const cardText = card.textContent.toLowerCase();
-            const cardDate = card.dataset.date || '';
+            const rawDate = (card.dataset.date || '').trim();
+            const cleanCardDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const cardType = card.dataset.type || '';
 
             const matchesCategory = (currentSalesCategoryFilter === 'all') || (cardType === currentSalesCategoryFilter);
             const matchesText = !term || cardText.includes(term);
             let matchesDate = true;
 
-            if (fromDate && cardDate) {
-                matchesDate = matchesDate && (cardDate >= fromDate);
+            if (fromDate) {
+                matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate >= fromDate);
             }
-            if (toDate && cardDate) {
-                matchesDate = matchesDate && (cardDate <= toDate);
+            if (toDate) {
+                matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate <= toDate);
             }
 
             const isCardVisible = matchesCategory && matchesText && matchesDate;

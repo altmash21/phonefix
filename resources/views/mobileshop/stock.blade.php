@@ -1020,13 +1020,14 @@
         // Desktop Rows
         document.querySelectorAll('.stock-row').forEach(row => {
             const rowText = row.textContent.toLowerCase();
-            const rowDate = row.dataset.date || '';
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const isLow = row.dataset.low === '1';
 
             const matchesText = !term || rowText.includes(term);
             let matchesDate = true;
-            if (fromDate && rowDate) matchesDate = matchesDate && (rowDate >= fromDate);
-            if (toDate && rowDate) matchesDate = matchesDate && (rowDate <= toDate);
+            if (fromDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
+            if (toDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
             let matchesLow = (currentStockTab !== 'low') || isLow;
 
             const isVisible = matchesText && matchesDate && matchesLow;
@@ -1037,14 +1038,15 @@
         // Mobile Cards
         document.querySelectorAll('#stockMobileCards .stock-card').forEach(card => {
             const cardText = (card.dataset.search || card.textContent).toLowerCase();
-            const cardDate = card.dataset.date || '';
+            const rawDate = (card.dataset.date || '').trim();
+            const cleanCardDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const cardType = card.dataset.type || '';
             const isLow = card.dataset.low === '1';
 
             const matchesText = !term || cardText.includes(term);
             let matchesDate = true;
-            if (fromDate && cardDate) matchesDate = matchesDate && (cardDate >= fromDate);
-            if (toDate && cardDate) matchesDate = matchesDate && (cardDate <= toDate);
+            if (fromDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate >= fromDate);
+            if (toDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate <= toDate);
 
             let matchesTab = true;
             if (currentStockTab === 'new_phones') matchesTab = (cardType === 'new_phone');
