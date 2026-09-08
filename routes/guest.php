@@ -25,12 +25,12 @@ Route::group(['prefix' => 'auth', 'middleware' => ['auth.redirect']], function (
 // ══════════════════════════════════════════════════════════
 // MobiTrack Public Website & Customer Portal Routes
 // ══════════════════════════════════════════════════════════
-Route::get('/', 'MobileShopController@publicLanding')->name('public.landing');
-Route::get('shop', 'MobileShopController@publicStore')->name('public.store');
-Route::get('about', 'MobileShopController@publicAbout')->name('public.about');
-Route::get('contact', 'MobileShopController@publicContact')->name('public.contact');
-Route::post('contact', 'MobileShopController@submitContact')->name('public.contact.submit');
-Route::get('track-repair', 'MobileShopController@publicTrackRepair')->name('public.track_repair');
+Route::get('/', 'MobileShop\PublicStoreController@publicLanding')->name('public.landing');
+Route::get('shop', 'MobileShop\PublicStoreController@publicStore')->name('public.store');
+Route::get('about', 'MobileShop\PublicStoreController@publicAbout')->name('public.about');
+Route::get('contact', 'MobileShop\PublicStoreController@publicContact')->name('public.contact');
+Route::post('contact', 'MobileShop\PublicStoreController@submitContact')->name('public.contact.submit');
+Route::get('track-repair', 'MobileShop\PublicStoreController@publicTrackRepair')->name('public.track_repair');
 
 // Compatibility Aliases
 Route::get('home', function() { return redirect()->route('public.landing'); });
