@@ -640,22 +640,30 @@
     }
 
     function openAddProviderModal() {
-        document.getElementById('addEmiModal').style.display = 'flex';
+        const el = document.getElementById('addEmiModal');
+        el.classList.add('show');
+        el.style.display = 'flex';
         if (window.lucide) window.lucide.createIcons();
     }
     function closeAddProviderModal() {
-        document.getElementById('addEmiModal').style.display = 'none';
+        const el = document.getElementById('addEmiModal');
+        el.classList.remove('show');
+        el.style.display = 'none';
     }
 
     function openDepositModal(providerId, providerName) {
         if (providerId) {
             document.getElementById('depositProviderSelect').value = providerId;
         }
-        document.getElementById('depositModal').style.display = 'flex';
+        const el = document.getElementById('depositModal');
+        el.classList.add('show');
+        el.style.display = 'flex';
         if (window.lucide) window.lucide.createIcons();
     }
     function closeDepositModal() {
-        document.getElementById('depositModal').style.display = 'none';
+        const el = document.getElementById('depositModal');
+        el.classList.remove('show');
+        el.style.display = 'none';
     }
 
     function openEditProviderModal(id, name, code, contact, phone, balance, flatFee, pctFee, tenure, interest, notes) {
@@ -670,12 +678,31 @@
         document.getElementById('editEmiPartnerTenure').value = tenure || '';
         document.getElementById('editEmiPartnerInterest').value = interest || '';
         document.getElementById('editEmiPartnerNotes').value = notes || '';
-        document.getElementById('editProviderModal').style.display = 'flex';
+        const el = document.getElementById('editProviderModal');
+        el.classList.add('show');
+        el.style.display = 'flex';
         if (window.lucide) window.lucide.createIcons();
     }
     function closeEditProviderModal() {
-        document.getElementById('editProviderModal').style.display = 'none';
+        const el = document.getElementById('editProviderModal');
+        el.classList.remove('show');
+        el.style.display = 'none';
     }
+
+    // Backdrop click outside to close
+    document.addEventListener('DOMContentLoaded', function() {
+        ['addEmiModal', 'depositModal', 'editProviderModal'].forEach(id => {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('show');
+                        this.style.display = 'none';
+                    }
+                });
+            }
+        });
+    });
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {

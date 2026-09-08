@@ -909,8 +909,21 @@ input:focus, select:focus, textarea:focus {
     display: none !important;
 }
 
-/* Modal backdrop helper class used in several views */
+/* Modal backdrop helper class */
 .mobi-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    display: none;
+}
+.mobi-modal-backdrop.show,
+.mobi-modal-backdrop.active,
+.mobi-modal-backdrop.is-open {
     display: flex !important;
 }
 
