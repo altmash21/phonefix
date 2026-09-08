@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Login — MobiTrack ERP</title>
     <meta name="description" content="Secure terminal access for MobiTrack Mobile Shop ERP staff and store administration.">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -299,14 +303,28 @@
             const formData = new FormData(form);
 
             try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    || document.querySelector('input[name="_token"]')?.value
+                    || '{{ csrf_token() }}';
+
                 const response = await fetch("{{ route('login.store') }}", {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
                     },
                     body: formData
                 });
+
+                if (response.status === 419) {
+                    errAlert.classList.remove('hidden');
+                    errText.innerText = 'Security session expired or token refreshed. Reloading terminal...';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 600);
+                    return;
+                }
 
                 const data = await response.json();
 

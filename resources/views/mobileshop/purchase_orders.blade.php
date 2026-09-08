@@ -12,7 +12,7 @@
 @section('content')
 
 <!-- Supplier Summary Cards -->
-<div class="stat-grid" style="margin-bottom: 24px;">
+<div class="stat-grid" style="margin-bottom: 12px;">
     @foreach($suppliers as $s)
         <div class="stat-card stat-pastel-purple">
             <div class="stat-card-top" style="display:flex; justify-content:space-between; align-items:center;">

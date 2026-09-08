@@ -42,7 +42,7 @@
 </div>
 
 <!-- Desktop Stat Grid (Hidden on Mobile) -->
-<div class="stat-grid" id="shDesktopStatGrid" style="margin-bottom: 20px;">
+<div class="stat-grid" id="shDesktopStatGrid" style="margin-bottom: 12px;">
     <div class="stat-card stat-pastel-purple" style="cursor:pointer;" onclick="applyShFilter('all')">
         <div class="stat-card-top">
             <span class="stat-card-tag">Stock Count</span>

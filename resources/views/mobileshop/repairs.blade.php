@@ -25,7 +25,7 @@
 
 
 <!-- Add Repair Form Card (collapsible) -->
-<div class="card" style="margin-bottom:24px; display:none;" id="add-repair-card">
+<div class="card" style="margin-bottom:12px; display:none;" id="add-repair-card">
     <div class="card-header" style="background:var(--lama-purple-light);">
         <div class="card-title" style="color:var(--brand-700);">
             <i data-lucide="plus-circle" style="width:18px;height:18px;display:inline;vertical-align:-3px;margin-right:6px;"></i>

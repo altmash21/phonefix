@@ -55,8 +55,8 @@
     /* Executive KPI Card Design */
     .executive-kpi-card {
         border: 1px solid #E2E8F0;
-        border-radius: 14px;
-        padding: 18px 20px;
+        border-radius: 8px;
+        padding: 10px 14px;
         background: #FFFFFF;
         position: relative;
         overflow: hidden;
@@ -64,22 +64,22 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .executive-kpi-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 24px -6px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border-color: #CBD5E1;
     }
     .kpi-icon-box {
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
     }
     .kpi-icon-box svg, .kpi-icon-box i {
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
     }
 
 
@@ -254,14 +254,14 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- TOP KPI EXECUTIVE METRIC CARDS (Desktop View)              -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="kpi-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
+    <div class="kpi-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px;">
         <!-- Card 1: Today's Revenue -->
         <div class="executive-kpi-card">
             <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #10B981, #34D399);"></div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div class="kpi-label-text" style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; margin-bottom: 4px;">Today's Revenue</div>
-                    <div class="kpi-num-text" style="font-size: 24px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; line-height: 1.1;">
+                    <div class="kpi-label-text" style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; margin-bottom: 2px;">Today's Revenue</div>
+                    <div class="kpi-num-text" style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; line-height: 1.1;">
                         ₹{{ fmod($todaySalesTotal, 1) != 0 ? number_format($todaySalesTotal, 2) : number_format($todaySalesTotal, 0) }}
                     </div>
                 </div>
@@ -276,8 +276,8 @@
             <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3B82F6, #60A5FA);"></div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div class="kpi-label-text" style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; margin-bottom: 4px;">Monthly Inflow</div>
-                    <div class="kpi-num-text" style="font-size: 24px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; line-height: 1.1;">
+                    <div class="kpi-label-text" style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; margin-bottom: 2px;">Monthly Inflow</div>
+                    <div class="kpi-num-text" style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; line-height: 1.1;">
                         ₹{{ fmod($monthSalesTotal, 1) != 0 ? number_format($monthSalesTotal, 2) : number_format($monthSalesTotal, 0) }}
                     </div>
                 </div>
@@ -292,8 +292,8 @@
             <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #8B5CF6, #A78BFA);"></div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div class="kpi-label-text" style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; margin-bottom: 4px;">Total Invoices</div>
-                    <div class="kpi-num-text" style="font-size: 24px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; line-height: 1.1;">
+                    <div class="kpi-label-text" style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; margin-bottom: 2px;">Total Invoices</div>
+                    <div class="kpi-num-text" style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; line-height: 1.1;">
                         {{ number_format($salesCount) }}
                     </div>
                 </div>
@@ -308,9 +308,9 @@
             <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #F59E0B, #FBBF24);"></div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <div class="kpi-label-text" style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; margin-bottom: 4px;">Ready Stock</div>
-                    <div class="kpi-num-text" style="font-size: 24px; font-weight: 900; color: #0F172A; letter-spacing: -0.5px; line-height: 1.1;">
-                        {{ $availableNewPhones + $availableSecondHand + $availableParts }} <span style="font-size:12px; font-weight:700; color:#64748B;">Units</span>
+                    <div class="kpi-label-text" style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #64748B; margin-bottom: 2px;">Ready Stock</div>
+                    <div class="kpi-num-text" style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.3px; line-height: 1.1;">
+                        {{ $availableNewPhones + $availableSecondHand + $availableParts }} <span style="font-size:11px; font-weight:700; color:#64748B;">Units</span>
                     </div>
                 </div>
                 <div class="kpi-icon-box" style="background: #FEF3C7; border: 1px solid #FDE68A; color: #D97706;">

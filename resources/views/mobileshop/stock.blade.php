@@ -64,42 +64,42 @@
     </div>
 
     <!-- Top Stock KPI Cards (Desktop Only) -->
-    <div id="stockDesktopKpiGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px;">
+    <div id="stockDesktopKpiGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px;">
         @if(($canManagePhones ?? false) || in_array($niche ?? '', ['admin', 'phones']))
         <div class="card kpi-card kpi-info" style="margin:0;">
-            <div class="card-body" style="padding:16px;">
-                <div style="font-size:11px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Brand New Phones in Stock</div>
-                <div style="font-size:24px; font-weight:900; color:var(--color-info); margin-top:4px;">{{ $totalNewPhonesInStock }} Units</div>
-                <div style="font-size:11px; color:var(--color-text-muted); margin-top:2px;">Sealed boxed units with IMEI serials</div>
+            <div class="card-body" style="padding:10px 12px;">
+                <div style="font-size:10.5px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Brand New Phones in Stock</div>
+                <div style="font-size:18px; font-weight:800; color:var(--color-info); margin-top:2px;">{{ $totalNewPhonesInStock }} Units</div>
+                <div style="font-size:10.5px; color:var(--color-text-muted); margin-top:1px;">Sealed boxed units with IMEI serials</div>
             </div>
         </div>
         @endif
 
         @if(($canManageSecondhand ?? false) || in_array($niche ?? '', ['admin', 'secondhand']))
         <div class="card kpi-card kpi-warning" style="margin:0;">
-            <div class="card-body" style="padding:16px;">
-                <div style="font-size:11px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Pre-Owned Phones in Stock</div>
-                <div style="font-size:24px; font-weight:900; color:var(--color-warning); margin-top:4px;">{{ $totalSecondHandInStock }} Units</div>
-                <div style="font-size:11px; color:var(--color-text-muted); margin-top:2px;">Certified refurbished devices</div>
+            <div class="card-body" style="padding:10px 12px;">
+                <div style="font-size:10.5px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Pre-Owned Phones in Stock</div>
+                <div style="font-size:18px; font-weight:800; color:var(--color-warning); margin-top:2px;">{{ $totalSecondHandInStock }} Units</div>
+                <div style="font-size:10.5px; color:var(--color-text-muted); margin-top:1px;">Certified refurbished devices</div>
             </div>
         </div>
         @endif
 
         @if(($canManageAccessories ?? false) || ($canManageCovers ?? false) || in_array($niche ?? '', ['admin', 'accessories', 'covers']))
         <div class="card kpi-card kpi-success" style="margin:0;">
-            <div class="card-body" style="padding:16px;">
-                <div style="font-size:11px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Parts & Accessories Stock</div>
-                <div style="font-size:24px; font-weight:900; color:var(--color-success); margin-top:4px;">{{ number_format($totalPartsInStock) }} Units</div>
-                <div style="font-size:11px; color:var(--color-text-muted); margin-top:2px;">Displays, tempered glass, cables & ICs</div>
+            <div class="card-body" style="padding:10px 12px;">
+                <div style="font-size:10.5px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Parts & Accessories Stock</div>
+                <div style="font-size:18px; font-weight:800; color:var(--color-success); margin-top:2px;">{{ number_format($totalPartsInStock) }} Units</div>
+                <div style="font-size:10.5px; color:var(--color-text-muted); margin-top:1px;">Displays, tempered glass, cables & ICs</div>
             </div>
         </div>
         @endif
 
         <div class="card kpi-card kpi-primary" style="margin:0;">
-            <div class="card-body" style="padding:16px;">
-                <div style="font-size:11px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Total Stock Valuation</div>
-                <div style="font-size:22px; font-weight:900; color:var(--color-text-primary); margin-top:4px;">₹{{ number_format($valuationRetail, 2) }}</div>
-                <div style="font-size:11px; color:var(--color-text-muted); margin-top:2px;">Purchase Cost: ₹{{ number_format($valuationCost, 2) }}</div>
+            <div class="card-body" style="padding:10px 12px;">
+                <div style="font-size:10.5px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Total Stock Valuation</div>
+                <div style="font-size:18px; font-weight:800; color:var(--color-text-primary); margin-top:2px;">₹{{ number_format($valuationRetail, 2) }}</div>
+                <div style="font-size:10.5px; color:var(--color-text-muted); margin-top:1px;">Cost: ₹{{ number_format($valuationCost, 2) }}</div>
             </div>
         </div>
     </div>
@@ -144,33 +144,33 @@
     </div>
 
     <!-- Date Filter Toolbar for Stock Items -->
-    <div style="margin-bottom: 16px; background:#fff; border-radius:10px; border:1px solid #E2E8F0; padding:8px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+    <div style="margin-bottom: 16px; background:var(--color-surface); border-radius:var(--radius-card); border:1px solid var(--color-border-subtle); box-shadow:var(--shadow-card); padding:10px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
             <span style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-right:4px;">Stock Inflow:</span>
-            <button type="button" onclick="setStockDatePreset('all')" id="stockDateBtn_all" class="filter-pill stock-date-pill active" style="padding:3px 9px; font-size:11px; font-weight:700; border:none; cursor:pointer;">All Time</button>
-            <button type="button" onclick="setStockDatePreset('today')" id="stockDateBtn_today" class="filter-pill stock-date-pill" style="padding:3px 9px; font-size:11px; font-weight:700; border:none; cursor:pointer;">Today</button>
-            <button type="button" onclick="setStockDatePreset('yesterday')" id="stockDateBtn_yesterday" class="filter-pill stock-date-pill" style="padding:3px 9px; font-size:11px; font-weight:700; border:none; cursor:pointer;">Yesterday</button>
-            <button type="button" onclick="setStockDatePreset('week')" id="stockDateBtn_week" class="filter-pill stock-date-pill" style="padding:3px 9px; font-size:11px; font-weight:700; border:none; cursor:pointer;">Last 7 Days</button>
-            <button type="button" onclick="setStockDatePreset('month')" id="stockDateBtn_month" class="filter-pill stock-date-pill" style="padding:3px 9px; font-size:11px; font-weight:700; border:none; cursor:pointer;">This Month</button>
+            <button type="button" onclick="setStockDatePreset('all')" id="stockDateBtn_all" class="filter-pill stock-date-pill active" style="padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;">All Time</button>
+            <button type="button" onclick="setStockDatePreset('today')" id="stockDateBtn_today" class="filter-pill stock-date-pill" style="padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;">Today</button>
+            <button type="button" onclick="setStockDatePreset('yesterday')" id="stockDateBtn_yesterday" class="filter-pill stock-date-pill" style="padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;">Yesterday</button>
+            <button type="button" onclick="setStockDatePreset('week')" id="stockDateBtn_week" class="filter-pill stock-date-pill" style="padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;">Last 7 Days</button>
+            <button type="button" onclick="setStockDatePreset('month')" id="stockDateBtn_month" class="filter-pill stock-date-pill" style="padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;">This Month</button>
         </div>
 
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <div style="display:flex; align-items:center; gap:4px;">
+            <div style="display:flex; align-items:center; gap:5px;">
                 <label for="stockFromDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">From:</label>
-                <input type="date" id="stockFromDate" onchange="onStockCustomDateChange()" class="form-control" style="font-size:11px; padding:3px 6px; height:auto; width:auto; font-weight:600; color:#0F172A;">
+                <input type="date" id="stockFromDate" onchange="onStockCustomDateChange()" class="form-control" style="font-size:11px; padding:4px 8px; height:auto; width:auto; font-weight:600; color:#0F172A;">
             </div>
-            <div style="display:flex; align-items:center; gap:4px;">
+            <div style="display:flex; align-items:center; gap:5px;">
                 <label for="stockToDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">To:</label>
-                <input type="date" id="stockToDate" onchange="onStockCustomDateChange()" class="form-control" style="font-size:11px; padding:3px 6px; height:auto; width:auto; font-weight:600; color:#0F172A;">
+                <input type="date" id="stockToDate" onchange="onStockCustomDateChange()" class="form-control" style="font-size:11px; padding:4px 8px; height:auto; width:auto; font-weight:600; color:#0F172A;">
             </div>
-            <button type="button" onclick="setStockDatePreset('all')" title="Reset Date Filter" style="background:#F1F5F9; border:1px solid #CBD5E1; color:#64748B; border-radius:6px; padding:3px 6px; font-size:11px; font-weight:700; cursor:pointer;">Reset</button>
+            <button type="button" onclick="setStockDatePreset('all')" title="Reset Date Filter" class="btn btn-outline btn-xs" style="padding:4px 8px;">Reset</button>
         </div>
     </div>
 
     <div id="stockDesktopTables">
         @if(($canManagePhones ?? false) || in_array($niche ?? '', ['admin', 'phones']))
         <!-- ════ TAB 1: BRAND NEW PHONES ════ -->
-        <div id="stockSection_new_phones" class="stock-section card" style="margin-bottom:24px;">
+        <div id="stockSection_new_phones" class="stock-section card" style="margin-bottom:12px;">
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title" style="color:var(--color-text-primary);">Brand New Smartphones</div>
@@ -258,7 +258,7 @@
 
         @if(($canManageSecondhand ?? false) || in_array($niche ?? '', ['admin', 'secondhand']))
         <!-- ════ TAB 2: SECOND HAND PHONES ════ -->
-        <div id="stockSection_second_hand" class="stock-section card" style="margin-bottom:24px;">
+        <div id="stockSection_second_hand" class="stock-section card" style="margin-bottom:12px;">
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
                     <div class="card-title" style="color:var(--color-text-primary);">Pre-Owned & Second Hand Hub</div>

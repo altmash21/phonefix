@@ -219,15 +219,15 @@
     </div>
 
     <!-- Master Live Purchase Invoice Registry (Single un-nested container) -->
-    <div class="card purchase-registry-card" style="margin-bottom:24px; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
-        <div class="purchase-header-container" style="background:#FFFFFF; border-bottom:1px solid #F1F5F9; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <div class="purchase-header-title-box" style="display:flex; align-items:center; gap:10px;">
-                <div style="width:36px; height:36px; border-radius:10px; background:#0F766E; display:flex; align-items:center; justify-content:center; color:#FFFFFF; flex-shrink:0; box-shadow:0 4px 10px rgba(15,118,110,0.2);">
-                    <i data-lucide="file-spreadsheet" style="width:18px;height:18px;"></i>
+    <div class="card purchase-registry-card" style="margin-bottom:12px; border-radius:8px; border:1px solid #E2E8F0; overflow:hidden;">
+        <div class="purchase-header-container" style="background:#FFFFFF; border-bottom:1px solid #F1F5F9; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div class="purchase-header-title-box" style="display:flex; align-items:center; gap:8px;">
+                <div style="width:30px; height:30px; border-radius:8px; background:#0F766E; display:flex; align-items:center; justify-content:center; color:#FFFFFF; flex-shrink:0; box-shadow:0 2px 6px rgba(15,118,110,0.15);">
+                    <i data-lucide="file-spreadsheet" style="width:16px;height:16px;"></i>
                 </div>
                 <div>
-                    <h2 style="font-size:15px; font-weight:800; color:#0F172A; margin:0; letter-spacing:-0.3px;">Live Purchase Invoice Registry</h2>
-                    <p class="hide-on-mobile" style="font-size:11.5px; color:#64748B; margin:2px 0 0 0;">Official supplier invoices, wholesale shipments, and device buybacks</p>
+                    <h2 style="font-size:14px; font-weight:800; color:#0F172A; margin:0; letter-spacing:-0.2px;">Live Purchase Invoice Registry</h2>
+                    <p class="hide-on-mobile" style="font-size:11px; color:#64748B; margin:1px 0 0 0;">Official supplier invoices, wholesale shipments, and device buybacks</p>
                     <span id="purchaseVisibleCountBadge" style="display:none;"></span>
                 </div>
             </div>

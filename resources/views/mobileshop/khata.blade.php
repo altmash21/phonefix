@@ -33,36 +33,36 @@
 </div>
 
 <!-- Desktop Stat Grid (Hidden on Mobile) -->
-<div class="stat-grid" id="khataDesktopStatGrid" style="margin-bottom: 24px; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
-    <div class="stat-card" style="background:#FFF1F2; border:1px solid #FECDD3; padding:18px; border-radius:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="font-size:11px; font-weight:800; text-transform:uppercase; color:#991B1B;">Total Receivables</span>
-            <i data-lucide="alert-circle" style="width:18px;height:18px; color:#DC2626;"></i>
+<div class="stat-grid" id="khataDesktopStatGrid" style="margin-bottom: 12px; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+    <div class="stat-card" style="background:#FFF1F2; border:1px solid #FECDD3; padding:10px 14px; border-radius:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#991B1B;">Total Receivables</span>
+            <i data-lucide="alert-circle" style="width:15px;height:15px; color:#DC2626;"></i>
         </div>
-        <div style="font-size:24px; font-weight:900; color:#991B1B;">₹{{ number_format($customers->sum('udhari_balance'), 2) }}</div>
-        <div style="font-size:11px; color:#B91C1C; margin-top:4px;">Live Outstanding Across Store</div>
+        <div style="font-size:18px; font-weight:800; color:#991B1B;">₹{{ number_format($customers->sum('udhari_balance'), 2) }}</div>
+        <div style="font-size:10.5px; color:#B91C1C; margin-top:2px;">Live Outstanding Across Store</div>
     </div>
-    <div class="stat-card" onclick="openDebtorsModal()" style="background:#FEFCE8; border:1px solid #FEF08A; padding:18px; border-radius:12px; cursor:pointer; transition:transform 0.15s ease;" title="Click to view all active debtors & WhatsApp reminders">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="font-size:11px; font-weight:800; text-transform:uppercase; color:#854D0E;">Active Debtors (Click to View)</span>
-            <i data-lucide="bell" style="width:18px;height:18px; color:#CA8A04;"></i>
+    <div class="stat-card" onclick="openDebtorsModal()" style="background:#FEFCE8; border:1px solid #FEF08A; padding:10px 14px; border-radius:8px; cursor:pointer; transition:transform 0.15s ease;" title="Click to view all active debtors & WhatsApp reminders">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#854D0E;">Active Debtors (Click to View)</span>
+            <i data-lucide="bell" style="width:15px;height:15px; color:#CA8A04;"></i>
         </div>
-        <div style="font-size:24px; font-weight:900; color:#854D0E;">{{ $customers->where('udhari_balance', '>', 0)->count() }}</div>
-        <div style="font-size:11px; color:#A16207; margin-top:4px;">Customers with Pending Khata • Click to Remind</div>
+        <div style="font-size:18px; font-weight:800; color:#854D0E;">{{ $customers->where('udhari_balance', '>', 0)->count() }}</div>
+        <div style="font-size:10.5px; color:#A16207; margin-top:2px;">Customers with Pending Khata • Click to Remind</div>
     </div>
-    <div class="stat-card" style="background:#F0FDF4; border:1px solid #BBF7D0; padding:18px; border-radius:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="font-size:11px; font-weight:800; text-transform:uppercase; color:#166534;">Settled Accounts</span>
-            <i data-lucide="check-circle" style="width:18px;height:18px; color:#16A34A;"></i>
+    <div class="stat-card" style="background:#F0FDF4; border:1px solid #BBF7D0; padding:10px 14px; border-radius:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#166534;">Settled Accounts</span>
+            <i data-lucide="check-circle" style="width:15px;height:15px; color:#16A34A;"></i>
         </div>
-        <div style="font-size:24px; font-weight:900; color:#166534;">{{ $customers->where('udhari_balance', '<=', 0)->count() }}</div>
-        <div style="font-size:11px; color:#15803D; margin-top:4px;">Cleared / Zero Debt Customers</div>
+        <div style="font-size:18px; font-weight:800; color:#166534;">{{ $customers->where('udhari_balance', '<=', 0)->count() }}</div>
+        <div style="font-size:10.5px; color:#15803D; margin-top:2px;">Cleared / Zero Debt Customers</div>
     </div>
 </div>
 
 <!-- SINGLE UNIFIED KHATA MASTER LIST -->
-<div class="card" style="margin-bottom: 24px; border-radius:12px; border:1px solid #E2E8F0; overflow:hidden;">
-    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:14px 20px; display:flex; flex-direction:column; gap:12px;">
+<div class="card" style="margin-bottom: 12px; border-radius:8px; border:1px solid #E2E8F0; overflow:hidden;">
+    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:10px 14px; display:flex; flex-direction:column; gap:8px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
             <div>
                 <div class="card-title" style="display:flex; align-items:center; gap:8px;">

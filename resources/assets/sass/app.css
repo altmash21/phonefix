@@ -39,7 +39,7 @@
 
     .tabs-link::before {
         content: '';
-        @apply w-full h-0.5 absolute left-0 right-0 bottom-0 bg-purple rounded-tl-md rounded-tr-md opacity-0 invisible transition-all;
+        @apply w-full h-0.5 absolute left-0 right-0 bottom-0 bg-purple-500 rounded-tl-md rounded-tr-md opacity-0 invisible transition-all;
     }
 
     .tabs-link:hover::before {

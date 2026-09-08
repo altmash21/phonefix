@@ -10,13 +10,13 @@
     background: #FFFFFF;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-card);
-    padding: 12px 18px;
-    margin-bottom: 20px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 .reports-filter-form {
@@ -34,30 +34,30 @@
 .reports-kpi-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 .reports-grid-charts {
     display: grid;
     grid-template-columns: 1.55fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 .reports-grid-2col {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 .reports-grid-sub {
     display: grid;
     grid-template-columns: 1.3fr 0.9fr;
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 .chart-box {
     position: relative;
-    height: 250px;
+    height: 200px;
     width: 100%;
 }
 .reports-table-scroll {
@@ -996,7 +996,25 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js (with error boundary) -->
+<script>
+    window.__reportsChartFallback = function () {
+        ['revenueTrendChart', 'paymentModeChart'].forEach(function (id) {
+            var canvas = document.getElementById(id);
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#F1F5F9';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '14px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Chart unavailable — data shown in tables below', canvas.width / 2, canvas.height / 2);
+        });
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" onerror="window.__reportsChartFallback();"></script>
 <script>
 // ─── 1. Collapsible Cards Logic ───
 function toggleSection(bodyId, headerEl) {

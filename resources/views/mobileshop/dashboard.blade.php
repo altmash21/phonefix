@@ -17,9 +17,9 @@
 @section('page-title', $nicheTitle)
 
 @section('page-actions')
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span class="badge badge-gray" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;">
-            <i data-lucide="calendar" style="width:14px;height:14px;color:var(--color-primary);"></i>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span class="badge badge-gray" style="font-size:11px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E2E8F0;">
+            <i data-lucide="calendar" style="width:13px;height:13px;color:var(--color-primary);"></i>
             {{ date('D, d M Y') }}
         </span>
         
@@ -29,7 +29,7 @@
                 <span>New</span>
                 <i data-lucide="chevron-down" style="width:12px;height:12px; opacity:0.8;"></i>
             </button>
-            <div id="new-action-menu" style="display:none; position:absolute; right:0; top:calc(100% + 6px); width:220px; background:#fff; border:1px solid var(--color-border); border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.08); z-index:150; padding:6px 0; overflow:hidden;">
+            <div id="new-action-menu">
                 @if(auth()->user()->can('create-sale-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
                 <a href="{{ route('mobileshop.sales.create') }}" class="dropdown-item-link" style="font-weight:600; color:var(--color-primary);">
                     <i data-lucide="plus-circle" style="width:15px;height:15px;color:var(--color-primary);"></i> Register Sale (Full Page)
@@ -89,20 +89,38 @@
 @push('styles')
 <style>
     /* ─── DROPDOWN MENU ITEMS ─── */
+    #new-action-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        width: 240px;
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 14px;
+        box-shadow: var(--shadow-dropdown);
+        z-index: 150;
+        padding: 6px;
+        overflow: hidden;
+        animation: fadeIn 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     .dropdown-item-link {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 8px 16px;
+        padding: 8px 12px;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         color: var(--color-text-primary);
         text-decoration: none;
-        transition: background 0.12s;
+        border-radius: 8px;
+        transition: all 0.15s ease;
     }
     .dropdown-item-link:hover {
         background: var(--color-primary-light);
         color: var(--color-primary);
+        transform: translateX(2px);
     }
 
     @media (max-width: 600px) {
@@ -113,49 +131,52 @@
         }
     }
 
-
-
     /* ─── MAIN CHART CARD ─── */
     .chart-container-card {
-        background: #ffffff;
-        border-radius: 10px;
-        border: 1px solid #E2E8F0;
-        padding: 20px 22px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        margin-bottom: 24px;
+        background: var(--color-surface);
+        border-radius: var(--radius-card);
+        border: 1px solid var(--color-border-subtle);
+        padding: 12px 16px;
+        box-shadow: var(--shadow-card);
+        margin-bottom: 12px;
+        transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .chart-container-card:hover {
+        box-shadow: var(--shadow-card-hover);
     }
     .chart-header-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 8px;
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 8px;
     }
     .chart-main-title {
-        font-size: 16px;
-        font-weight: 700;
+        font-size: 14px;
+        font-weight: 800;
         color: #0F172A;
+        letter-spacing: -0.2px;
     }
     .chart-legend-row {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 20px;
-        margin-top: 16px;
+        gap: 14px;
+        margin-top: 8px;
         flex-wrap: wrap;
     }
     .legend-item {
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 12px;
+        gap: 5px;
+        font-size: 11px;
         font-weight: 600;
         color: #475569;
     }
     .legend-circle {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
     }
 
@@ -163,7 +184,7 @@
     .dashboard-split-grid {
         display: grid;
         grid-template-columns: 3fr 2fr;
-        gap: 20px;
+        gap: 12px;
     }
     @media (max-width: 992px) {
         .dashboard-split-grid { grid-template-columns: 1fr; }
@@ -303,13 +324,13 @@
                 <div class="chart-main-title">Store Performance & Inflow Trends</div>
                 <div style="font-size:12px; color:#64748B;">Annual comparison of sales, purchases, buybacks, and credit recovery across all 12 months</div>
             </div>
-            <div style="font-size:12px; font-weight:600; color:#475569; background:#F1F5F9; padding:5px 12px; border-radius:6px;">
+            <div style="font-size:11px; font-weight:600; color:#475569; background:#F1F5F9; padding:3px 8px; border-radius:5px;">
                 Year: {{ date('Y') }}
             </div>
         </div>
 
         <!-- Chart.js Spline Canvas -->
-        <div style="height: 260px; width: 100%; position: relative;">
+        <div style="height: 200px; width: 100%; position: relative;">
             <canvas id="performanceSplineChart"></canvas>
         </div>
 

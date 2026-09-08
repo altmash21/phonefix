@@ -32,34 +32,34 @@
     @endif
 
     <!-- Top KPI Cards -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:24px;">
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px;">
         <div class="card kpi-card kpi-primary" style="margin:0;">
-            <div class="card-body" style="padding:16px;">
-                <div style="font-size:11px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Active EMI Partners</div>
-                <div style="font-size:24px; font-weight:900; color:var(--brand-700); margin-top:4px;">{{ $providers->count() }} Companies</div>
-                <div style="font-size:11px; color:var(--color-text-muted); margin-top:2px;">Bajaj Finserv, TVS, Home Credit & more</div>
+            <div class="card-body" style="padding:10px 12px;">
+                <div style="font-size:10.5px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Active EMI Partners</div>
+                <div style="font-size:18px; font-weight:800; color:var(--brand-700); margin-top:2px;">{{ $providers->count() }} Companies</div>
+                <div style="font-size:10.5px; color:var(--color-text-muted); margin-top:1px;">Bajaj Finserv, TVS, Home Credit & more</div>
             </div>
         </div>
 
         <div class="card kpi-card kpi-success" style="margin:0;">
-            <div class="card-body" style="padding:16px;">
-                <div style="font-size:11px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Total Advance Pool Available</div>
-                <div style="font-size:24px; font-weight:900; color:#16A34A; margin-top:4px;">₹{{ number_format($providers->sum('advance_balance'), 2) }}</div>
-                <div style="font-size:11px; color:var(--color-text-muted); margin-top:2px;">Available to finance new customer phones</div>
+            <div class="card-body" style="padding:10px 12px;">
+                <div style="font-size:10.5px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Total Advance Pool Available</div>
+                <div style="font-size:18px; font-weight:800; color:#16A34A; margin-top:2px;">₹{{ number_format($providers->sum('advance_balance'), 2) }}</div>
+                <div style="font-size:10.5px; color:var(--color-text-muted); margin-top:1px;">Available to finance new customer phones</div>
             </div>
         </div>
 
         <div class="card kpi-card kpi-info" style="margin:0;">
-            <div class="card-body" style="padding:16px;">
-                <div style="font-size:11px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Ledger Transactions</div>
-                <div style="font-size:24px; font-weight:900; color:#2563EB; margin-top:4px;">{{ $transactions->count() }} Records</div>
-                <div style="font-size:11px; color:var(--color-text-muted); margin-top:2px;">Recent deposits & customer loan deductions</div>
+            <div class="card-body" style="padding:10px 12px;">
+                <div style="font-size:10.5px; font-weight:700; color:var(--color-text-secondary); text-transform:uppercase;">Ledger Transactions</div>
+                <div style="font-size:18px; font-weight:800; color:#2563EB; margin-top:2px;">{{ $transactions->count() }} Records</div>
+                <div style="font-size:10.5px; color:var(--color-text-muted); margin-top:1px;">Recent deposits & customer loan deductions</div>
             </div>
         </div>
     </div>
 
     <!-- EMI Companies Cards Grid -->
-    <div style="margin-bottom:24px;">
+    <div style="margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="font-size:15px; font-weight:800; color:#0F172A; margin:0; display:flex; align-items:center; gap:8px;">
                 <i data-lucide="building-2" style="width:18px;height:18px;color:#2563EB;"></i>
@@ -133,7 +133,7 @@
     </div>
 
     <!-- Transaction Audit Ledger -->
-    <div class="card" style="margin-bottom:30px;">
+    <div class="card" style="margin-bottom:12px;">
         <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
             <div>
                 <div class="card-title"><i data-lucide="receipt" style="width:16px;height:16px; vertical-align:-2px; color:#2563EB;"></i> EMI Ledger Transaction Log</div>
