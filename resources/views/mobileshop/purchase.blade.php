@@ -650,18 +650,29 @@
 
     function setPurchaseDatePreset(preset) {
         currentPurchaseDatePreset = preset;
-        const fromInput = document.getElementById('purchaseFromDate');
-        const toInput = document.getElementById('purchaseToDate');
+        const mainFrom = document.getElementById('purchaseFromDate');
+        const mainTo = document.getElementById('purchaseToDate');
+        const mobFrom = document.getElementById('mobPurchaseFromDate');
+        const mobTo = document.getElementById('mobPurchaseToDate');
 
         document.querySelectorAll('.purchase-date-pill').forEach(el => el.classList.remove('active'));
-        const btn = document.getElementById('purchaseDateBtn_' + preset);
+        const targetId = 'purchaseDateBtn_' + (preset === '7days' ? 'week' : preset);
+        const btn = document.getElementById(targetId) || document.getElementById('purchaseDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
         const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
             ? window.getDateRangePreset(preset)
             : { from: '', to: '' };
-        if (fromInput) fromInput.value = range.from || '';
-        if (toInput) toInput.value = range.to || '';
+
+        if (mainFrom) mainFrom.value = range.from || '';
+        if (mainTo) mainTo.value = range.to || '';
+        if (mobFrom) mobFrom.value = range.from || '';
+        if (mobTo) mobTo.value = range.to || '';
+
+        const indicator = document.getElementById('purchaseDateFilterActiveIndicator');
+        if (indicator) {
+            indicator.style.display = (range.from || range.to) ? 'inline-block' : 'none';
+        }
 
         filterPurchaseTables();
     }

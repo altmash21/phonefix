@@ -63,25 +63,33 @@
     };
 
     window.getDateRangePreset = function (preset) {
-        var today = new Date();
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = now.getMonth();
+        var d = now.getDate();
+
+        var formatDateStr = function (year, month, day) {
+            var mStr = (month + 1 < 10 ? '0' : '') + (month + 1);
+            var dStr = (day < 10 ? '0' : '') + day;
+            return year + '-' + mStr + '-' + dStr;
+        };
+
+        var todayStr = formatDateStr(y, m, d);
         var from = '';
         var to = '';
 
         if (preset === 'today') {
-            from = to = window.formatDate(today);
+            from = to = todayStr;
         } else if (preset === 'yesterday') {
-            var yest = new Date(today);
-            yest.setDate(yest.getDate() - 1);
-            from = to = window.formatDate(yest);
-        } else if (preset === 'week') {
-            var weekAgo = new Date(today);
-            weekAgo.setDate(weekAgo.getDate() - 6);
-            from = window.formatDate(weekAgo);
-            to = window.formatDate(today);
-        } else if (preset === 'month') {
-            var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            from = window.formatDate(firstDay);
-            to = window.formatDate(today);
+            var yestDate = new Date(y, m, d - 1);
+            from = to = formatDateStr(yestDate.getFullYear(), yestDate.getMonth(), yestDate.getDate());
+        } else if (preset === 'week' || preset === '7days' || preset === '7_days' || preset === '7-days') {
+            var weekAgo = new Date(y, m, d - 6);
+            from = formatDateStr(weekAgo.getFullYear(), weekAgo.getMonth(), weekAgo.getDate());
+            to = todayStr;
+        } else if (preset === 'month' || preset === 'this_month' || preset === 'this-month') {
+            from = formatDateStr(y, m, 1);
+            to = todayStr;
         }
 
         return { from: from, to: to };

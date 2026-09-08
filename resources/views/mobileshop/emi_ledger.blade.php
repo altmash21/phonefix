@@ -245,6 +245,8 @@
                     <div style="display:flex; gap:3px; align-items:center;">
                         <button type="button" onclick="setEmiDatePreset('all')" id="emiDateBtn_all" class="filter-pill emi-date-pill active" style="padding:3px 6px; font-size:10.5px; font-weight:700; border:none; cursor:pointer;">All Time</button>
                         <button type="button" onclick="setEmiDatePreset('today')" id="emiDateBtn_today" class="filter-pill emi-date-pill" style="padding:3px 6px; font-size:10.5px; font-weight:700; border:none; cursor:pointer;">Today</button>
+                        <button type="button" onclick="setEmiDatePreset('yesterday')" id="emiDateBtn_yesterday" class="filter-pill emi-date-pill" style="padding:3px 6px; font-size:10.5px; font-weight:700; border:none; cursor:pointer;">Yesterday</button>
+                        <button type="button" onclick="setEmiDatePreset('week')" id="emiDateBtn_week" class="filter-pill emi-date-pill" style="padding:3px 6px; font-size:10.5px; font-weight:700; border:none; cursor:pointer;">7 Days</button>
                         <button type="button" onclick="setEmiDatePreset('month')" id="emiDateBtn_month" class="filter-pill emi-date-pill" style="padding:3px 6px; font-size:10.5px; font-weight:700; border:none; cursor:pointer;">This Month</button>
                     </div>
 
@@ -559,7 +561,8 @@
 
     function setEmiDatePreset(preset) {
         document.querySelectorAll('.emi-date-pill').forEach(b => b.classList.remove('active'));
-        const btn = document.getElementById('emiDateBtn_' + preset);
+        const targetId = 'emiDateBtn_' + (preset === '7days' ? 'week' : preset);
+        const btn = document.getElementById(targetId) || document.getElementById('emiDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
         const fromInput = document.getElementById('emiFromDate');

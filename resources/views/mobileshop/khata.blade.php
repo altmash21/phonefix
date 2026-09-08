@@ -481,12 +481,14 @@
         const toInput = document.getElementById('khataToDate');
 
         document.querySelectorAll('.khata-date-pill').forEach(el => el.classList.remove('active'));
-        const btn = document.getElementById('khataDateBtn_' + preset);
+        const targetId = 'khataDateBtn_' + (preset === '7days' ? 'week' : preset);
+        const btn = document.getElementById(targetId) || document.getElementById('khataDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
         const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
             ? window.getDateRangePreset(preset)
             : { from: '', to: '' };
+
         if (fromInput) fromInput.value = range.from || '';
         if (toInput) toInput.value = range.to || '';
 

@@ -1507,19 +1507,29 @@
 
     function setSalesDatePreset(preset) {
         currentSalesDatePreset = preset;
-        const fromInput = document.getElementById('salesFromDate');
-        const toInput = document.getElementById('salesToDate');
+        const mainFrom = document.getElementById('salesFromDate');
+        const mainTo = document.getElementById('salesToDate');
+        const drawerFrom = document.getElementById('drawerFromDate');
+        const drawerTo = document.getElementById('drawerToDate');
 
         document.querySelectorAll('.sales-date-pill').forEach(el => el.classList.remove('active'));
-        const btn = document.getElementById('salesDateBtn_' + preset);
+        const targetId = 'salesDateBtn_' + (preset === '7days' ? 'week' : preset);
+        const btn = document.getElementById(targetId) || document.getElementById('salesDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
         const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
             ? window.getDateRangePreset(preset)
             : { from: '', to: '' };
 
-        if (fromInput) fromInput.value = range.from || '';
-        if (toInput) toInput.value = range.to || '';
+        if (mainFrom) mainFrom.value = range.from || '';
+        if (mainTo) mainTo.value = range.to || '';
+        if (drawerFrom) drawerFrom.value = range.from || '';
+        if (drawerTo) drawerTo.value = range.to || '';
+
+        const indicator = document.getElementById('salesDateFilterActiveIndicator');
+        if (indicator) {
+            indicator.style.display = (range.from || range.to) ? 'inline-block' : 'none';
+        }
 
         filterSalesTable();
     }
