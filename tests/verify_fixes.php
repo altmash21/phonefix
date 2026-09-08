@@ -144,6 +144,11 @@ foreach ($staffRoles as $email => $expected) {
             
             $purchaseView = $controller->purchaseHub(request())->render();
             assertCheck("PurchaseHub renders cleanly without syntax errors for $email", strlen($purchaseView) > 0);
+
+            if ($u->can('read-mobileshop-procurement') || $u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('sales-staff')) {
+                $poView = $controller->purchaseOrders()->render();
+                assertCheck("purchaseOrders renders cleanly with supplier wallets for $email", str_contains($poView, 'Prepaid Wallet:'));
+            }
         } catch (\Throwable $e) {
             assertCheck("Render check for $email: " . $e->getMessage(), false);
         }

@@ -27,10 +27,10 @@
                 </div>
             </div>
             <div style="font-size:17px; font-weight:800; color:#0F172A;">{{ $s->name }}</div>
-            <div style="font-size:11px; color:var(--text-secondary); font-family:monospace; margin-top:2px;">GSTIN: {{ $s->gstin }}</div>
+            <div style="font-size:11px; color:var(--text-secondary); font-family:monospace; margin-top:2px;">GSTIN: {{ $s->gstin ?? 'N/A' }}</div>
             <div style="margin-top:8px; padding-top:8px; border-top:1px solid var(--lama-purple); display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:11px; color:var(--text-secondary); font-weight:600;">Prepaid Wallet:</span>
-                <span class="badge badge-green" style="font-size:11px; font-weight:700;">₹{{ number_format($s->credit_balance, 2) }}</span>
+                <span class="badge badge-green" style="font-size:11px; font-weight:700;">₹{{ number_format($s->credit_balance ?? 0, 2) }}</span>
             </div>
         </div>
     @endforeach
