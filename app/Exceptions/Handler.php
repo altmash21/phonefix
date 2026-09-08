@@ -100,6 +100,22 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
+        if ($exception instanceof \Illuminate\Session\TokenMismatchException) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Your security session has expired. Please refresh the page and try again.',
+                    'csrf_error' => true,
+                ], 419);
+            }
+
+            flash('Your security session expired. Please submit the form again.')->warning()->important();
+
+            return redirect()
+                ->back()
+                ->withInput($request->except('password', 'password_confirmation', '_token'))
+                ->withErrors(['csrf' => 'Your security session expired. Please submit the form again.']);
+        }
+
         if (request_is_api($request)) {
             return $this->handleApiExceptions($request, $exception);
         }

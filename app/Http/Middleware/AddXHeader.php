@@ -25,6 +25,13 @@ class AddXHeader
             $response->header('Referrer-Policy', 'strict-origin-when-cross-origin');
             $response->header('X-XSS-Protection', '0');
             $response->header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+            // Prevent caching of HTML/session pages across reverse proxies, CDNs, and browser bfcache
+            if (! $request->is('*.css', '*.js', '*.png', '*.jpg', '*.jpeg', '*.gif', '*.svg', '*.woff', '*.woff2', '*.ico')) {
+                $response->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
+                $response->header('Pragma', 'no-cache');
+                $response->header('Expires', 'Sun, 02 Jan 1990 00:00:00 GMT');
+            }
         }
 
         return $response;
