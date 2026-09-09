@@ -1,32 +1,27 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'System Notice — Maurya Mobile')
-@section('meta_description', 'An unexpected condition occurred on the server.')
+@section('title', 'Under Maintenance — Maurya Mobile')
+@section('meta_description', 'Storefront maintenance in progress.')
 
-@section('subnav_title', 'System Notice')
-@section('subnav_cta')
-    <a href="{{ route('public.landing') }}" class="apple-btn-primary text-[13px] py-1.5 px-4">
-        Home
-    </a>
-@endsection
+@section('subnav_title', 'Maintenance')
 
 @section('content')
 <div class="bg-apple-canvas text-apple-ink py-24 sm:py-36 text-center">
     <div class="max-w-[768px] mx-auto px-4 space-y-5">
         <span class="apple-caption-strong text-apple-muted-48 uppercase tracking-widest text-[12px]">
-            500 Internal Notice
+            503 Maintenance Mode
         </span>
         <h1 class="apple-hero-display text-apple-ink">
-            Something went wrong.
+            Storefront Maintenance in Progress
         </h1>
         <p class="apple-lead text-apple-muted-48 max-w-lg mx-auto">
-            {{ !empty($message) && !app()->isProduction() ? $message : 'Our technicians have been notified and are working on resolving this immediately.' }}
+            {{ !empty($message) ? $message : 'We are performing scheduled updates to improve our store catalog. Please check back shortly.' }}
         </p>
         
         <div class="pt-6 flex items-center justify-center gap-4 flex-wrap">
-            <a href="{{ route('public.landing') }}" class="apple-btn-primary">
-                Return to Storefront
-            </a>
+            <button onclick="window.location.reload()" class="apple-btn-primary">
+                Refresh Page
+            </button>
             <a href="{{ route('public.contact') }}" class="apple-btn-secondary-pill">
                 Contact Store Desk
             </a>

@@ -1,10 +1,8 @@
 <?php
 
 /**
- * @package     Akaunting
- * @copyright   2017-2023 Akaunting. All rights reserved.
- * @license     BSL; see LICENSE.txt
- * @link        https://akaunting.com
+ * @package     Maurya Mobile
+ * @copyright   Maurya Mobile. All rights reserved.
  */
 
 use Illuminate\Contracts\Http\Kernel;

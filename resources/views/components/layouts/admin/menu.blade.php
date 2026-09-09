@@ -6,7 +6,7 @@
     <span class="material-icons text-black js-hamburger-menu">menu</span>
 
     <div class="flex items-center m-auto">
-        <img src="{{ asset('public/img/akaunting-logo-green.svg') }}" class="w-6 m-auto" alt="Akaunting" />
+        <img src="{{ asset('public/img/akaunting-logo-green.svg') }}" class="w-6 m-auto" alt="Maurya Mobile" />
         <span class="ltr:ml-1 rtl:mr-1">{{ Str::limit(setting('company.name'), 18) }}</span>
     </div>
 

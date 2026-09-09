@@ -1,36 +1,36 @@
-<x-layouts.error>
-    <x-slot name="title">
-        {{ trans('errors.title.404') }}
-    </x-slot>
+@extends('mobileshop.public.layout')
 
-    <x-slot name="content">
-        <div class="h-full flex flex-col sm:flex-row items-center justify-center sm:justify-between xl:ltr:-ml-64 xl:rtl:-mr-64">
-            <div class="flex flex-col items-start gap-y-4 mb-10 sm:mb-0 sm:-mt-24">
-                <h1 class="font-medium text-5xl lg:text-8xl">
-                    {{ trans('errors.header.404') }}
-                </h1>
+@section('title', 'Page Not Found — Maurya Mobile')
+@section('meta_description', 'The page you requested could not be found in our store catalog.')
 
-                <span class="text-lg">
-                    {{ trans('errors.title.404') }}
-                </span>
+@section('subnav_title', 'Page Not Found')
+@section('subnav_cta')
+    <a href="{{ route('public.landing') }}" class="apple-btn-primary text-[13px] py-1.5 px-4">
+        Home
+    </a>
+@endsection
 
-                @if (! empty($message))
-                <span class="text-lg">
-                    {{ $message }}
-                </span>
-                @endif
-
-                @php $landing_page = user() ? user()->getLandingPageOfUser() : route('login'); @endphp
-                <x-link
-                    href="{{ $landing_page }}"
-                    class="relative flex items-center justify-center bg-green hover:bg-green-700 text-white px-6 py-1.5 text-base rounded-lg disabled:bg-green-100 mt-3"
-                    override="class"
-                >
-                    {{ trans('general.go_to_dashboard') }}
-                </x-link>
-            </div>
-
-            <img src="{{ asset('public/img/errors/404.png') }}" alt="404" />
+@section('content')
+<div class="bg-apple-canvas text-apple-ink py-24 sm:py-36 text-center">
+    <div class="max-w-[768px] mx-auto px-4 space-y-5">
+        <span class="apple-caption-strong text-apple-muted-48 uppercase tracking-widest text-[12px]">
+            404 Error
+        </span>
+        <h1 class="apple-hero-display text-apple-ink">
+            The page you’re looking for can’t be found.
+        </h1>
+        <p class="apple-lead text-apple-muted-48 max-w-lg mx-auto">
+            {{ !empty($message) ? $message : 'Check the web address and try again, or browse our smartphone showroom.' }}
+        </p>
+        
+        <div class="pt-6 flex items-center justify-center gap-4 flex-wrap">
+            <a href="{{ route('public.landing') }}" class="apple-btn-primary">
+                Return to Storefront
+            </a>
+            <a href="{{ route('public.store') }}" class="apple-btn-secondary-pill">
+                Explore Smartphones
+            </a>
         </div>
-    </x-slot>
-</x-layouts.error>
+    </div>
+</div>
+@endsection

@@ -218,6 +218,25 @@ try {
     assertCheck("Public Contact renders with Apple showroom card layout", 
         str_contains($contactView, 'Visit our showroom or connect with our desk.'));
 
+    // 13. Verify Error Pages (404, 403, 500, 419, 503) Render Cleanly with Apple Layout & No Akaunting Mentions
+    $errorPages = [
+        '404' => 'The page you’re looking for can’t be found.',
+        '403' => 'Access to this section requires authorization.',
+        '500' => 'Something went wrong.',
+        '419' => 'Page Expired',
+        '503' => 'Storefront Maintenance in Progress',
+    ];
+
+    foreach ($errorPages as $code => $expectedHeadline) {
+        $errorHtml = view("errors.$code")->render();
+        $noAkaunting = !str_contains(strtolower($errorHtml), 'akaunting');
+        $hasHeadline = str_contains($errorHtml, $expectedHeadline);
+        $hasAppleLayout = str_contains($errorHtml, 'bg-apple-black') && str_contains($errorHtml, 'bg-apple-canvas');
+
+        assertCheck("Error $code page renders with Apple layout and zero Akaunting mentions", 
+            $noAkaunting && $hasHeadline && $hasAppleLayout);
+    }
+
 } catch (\Throwable $e) {
     assertCheck("View rendering check: " . $e->getMessage(), false);
 }
