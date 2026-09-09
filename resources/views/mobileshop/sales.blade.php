@@ -407,7 +407,7 @@
                                 $mobMsg .= "📋 *INVOICE DETAILS*\n";
                                 $mobMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
                                 $mobMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
-                                $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . ($sale->storage ? " ({$sale->storage})" : "") . "\n";
+                                $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . (!empty($sale->storage) ? " ({$sale->storage})" : "") . "\n";
                                 $mobMsg .= "• *IMEI 1:* `{$sale->imei_1}`\n\n";
                                 $mobMsg .= "💰 *Total Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
                                 if ($sale->udhari_amount > 0) {
@@ -529,7 +529,7 @@
                         $mobMsg .= "📋 *INVOICE DETAILS*\n";
                         $mobMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
                         $mobMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
-                        $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . ($sale->storage ? " ({$sale->storage})" : "") . "\n";
+                        $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . (!empty($sale->storage) ? " ({$sale->storage})" : "") . "\n";
                         $mobMsg .= "• *IMEI 1:* `{$sale->imei_1}`\n\n";
                         $mobMsg .= "💰 *Total Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
                         if ($sale->udhari_amount > 0) {

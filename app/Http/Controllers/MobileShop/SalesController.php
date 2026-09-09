@@ -35,6 +35,7 @@ class SalesController extends BaseMobileShopController
                     ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
                     ->select('ms_mobile_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone',
                              'ms_mobile_devices.brand', 'ms_mobile_devices.model', 'ms_mobile_devices.imei_1',
+                             'ms_mobile_devices.storage', 'ms_mobile_devices.color', 'ms_mobile_devices.ram',
                              DB::raw("'new' as device_type"), DB::raw("'phone' as sale_niche"))
                     ->where('ms_mobile_sales.company_id', $companyId)
                     ->where('ms_mobile_devices.type', 'new')
@@ -48,6 +49,7 @@ class SalesController extends BaseMobileShopController
                     ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
                     ->select('ms_mobile_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone',
                              'ms_mobile_devices.brand', 'ms_mobile_devices.model', 'ms_mobile_devices.imei_1',
+                             'ms_mobile_devices.storage', 'ms_mobile_devices.color', 'ms_mobile_devices.ram',
                              DB::raw("'second_hand' as device_type"), DB::raw("'secondhand' as sale_niche"))
                     ->where('ms_mobile_sales.company_id', $companyId)
                     ->where('ms_mobile_devices.type', 'second_hand')
@@ -87,7 +89,8 @@ class SalesController extends BaseMobileShopController
                     ->join('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
                     ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
                     ->select('ms_mobile_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone',
-                             'ms_mobile_devices.brand', 'ms_mobile_devices.model', 'ms_mobile_devices.imei_1', 'ms_mobile_devices.type as device_type')
+                             'ms_mobile_devices.brand', 'ms_mobile_devices.model', 'ms_mobile_devices.imei_1', 'ms_mobile_devices.type as device_type',
+                             'ms_mobile_devices.storage', 'ms_mobile_devices.color', 'ms_mobile_devices.ram')
                     ->where('ms_mobile_sales.company_id', $companyId)
                     ->where('ms_mobile_sales.status', '!=', 'voided')
                     ->orderBy('ms_mobile_sales.id', 'desc')->get();
