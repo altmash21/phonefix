@@ -7,6 +7,8 @@ use App\Events\Common\CompanyForgettingCurrent;
 use App\Events\Common\CompanyForgotCurrent;
 use App\Events\Common\CompanyMadeCurrent;
 use App\Events\Common\CompanyMakingCurrent;
+use App\Traits\Companies\HasCompanySettings;
+use App\Traits\Companies\HasCompanySortables;
 use App\Traits\Contacts;
 use App\Traits\Media;
 use App\Traits\Owners;
@@ -22,7 +24,7 @@ use Lorisleiva\LaravelSearchString\Concerns\SearchString;
 
 class Company extends Eloquent implements Ownable
 {
-    use Contacts, HasFactory, Media, Owners, SearchString, SoftDeletes, Sortable, Sources, Tenants, Transactions;
+    use Contacts, HasCompanySettings, HasCompanySortables, HasFactory, Media, Owners, SearchString, SoftDeletes, Sortable, Sources, Tenants, Transactions;
 
     protected $table = 'companies';
 
@@ -195,83 +197,6 @@ class Company extends Eloquent implements Ownable
         return $this->hasMany('App\Models\Common\Widget');
     }
 
-    public function setCommonSettingsAsAttributes()
-    {
-        try { // TODO will optimize..
-            $settings = $this->settings;
-
-            $groups = [
-                'company',
-                'default',
-            ];
-
-            foreach ($settings as $setting) {
-                list($group, $key) = explode('.', $setting->getAttribute('key'));
-
-                // Load only general settings
-                if (! in_array($group, $groups)) {
-                    continue;
-                }
-
-                $value = $setting->getAttribute('value');
-
-                if (($key == 'logo') && empty($value)) {
-                    $value = 'public/img/company.png';
-                }
-
-                $this->setAttribute($key, $value);
-            }
-
-            // Set default default company logo if empty
-            if ($this->getAttribute('logo') == '') {
-                $this->setAttribute('logo', 'public/img/company.png');
-            }
-
-            // Set default default company currency if empty
-            if ($this->getAttribute('currency') == '') {
-                $this->setAttribute('currency', config('setting.fallback.default.currency'));
-            }
-        } catch(\Throwable $e) {
-
-        }
-    }
-
-    public function unsetCommonSettingsFromAttributes()
-    {
-        try { // TODO will optimize..
-            $settings = $this->settings;
-
-            $groups = [
-                'company',
-                'default',
-            ];
-
-            foreach ($settings as $setting) {
-                list($group, $key) = explode('.', $setting->getAttribute('key'));
-
-                // Load only general settings
-                if (! in_array($group, $groups)) {
-                    continue;
-                }
-
-                $this->offsetUnset($key);
-            }
-
-            // Always strip virtual attributes that are stored in settings, not in the companies table
-            $virtualAttributes = [
-                'name', 'email', 'locale', 'currency', 'logo',
-                'phone', 'address', 'city', 'state', 'country',
-                'zip_code', 'tax_number',
-            ];
-
-            foreach ($virtualAttributes as $attr) {
-                $this->offsetUnset($attr);
-            }
-        } catch(\Throwable $e) {
-
-        }
-    }
-
     /**
      * Scope to get all rows filtered, sorted and paginated.
      *
@@ -321,102 +246,6 @@ class Company extends Eloquent implements Ownable
         return $query->whereHas('users', function ($query) use ($user_id) {
             $query->where('user_id', $user_id);
         });
-    }
-
-    /**
-     * Sort by company name
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param $direction
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function nameSortable($query, $direction)
-    {
-        return $query->join('settings', 'companies.id', '=', 'settings.company_id')
-            ->where('key', 'company.name')
-            ->orderBy('value', $direction)
-            ->select('companies.*');
-    }
-
-    /**
-     * Sort by company email
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param $direction
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function emailSortable($query, $direction)
-    {
-        return $query->join('settings', 'companies.id', '=', 'settings.company_id')
-            ->where('key', 'company.email')
-            ->orderBy('value', $direction)
-            ->select('companies.*');
-    }
-
-    /**
-     * Sort by company phone
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param $direction
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function phoneSortable($query, $direction)
-    {
-        return $query->join('settings', 'companies.id', '=', 'settings.company_id')
-            ->where('key', 'company.phone')
-            ->orderBy('value', $direction)
-            ->select('companies.*');
-    }
-
-    /**
-     * Sort by company tax number
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param $direction
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function taxNumberSortable($query, $direction)
-    {
-        return $query->join('settings', 'companies.id', '=', 'settings.company_id')
-            ->where('key', 'company.tax_number')
-            ->orderBy('value', $direction)
-            ->select('companies.*');
-    }
-
-    /**
-     * Sort by company country
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param $direction
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function countrySortable($query, $direction)
-    {
-        return $query->join('settings', 'companies.id', '=', 'settings.company_id')
-            ->where('key', 'company.country')
-            ->orderBy('value', $direction)
-            ->select('companies.*');
-    }
-
-    /**
-     * Sort by company currency
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param $direction
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function currencySortable($query, $direction)
-    {
-        return $query->join('settings', 'companies.id', '=', 'settings.company_id')
-            ->where('key', 'default.currency')
-            ->orderBy('value', $direction)
-            ->select('companies.*');
     }
 
     /**
