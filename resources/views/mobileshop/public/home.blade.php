@@ -1,6 +1,6 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'MobiTrack — Premium Smartphones, Certified Pre-Owned & Express Repairs')
+@section('title', 'Maurya Mobile — Premium Smartphones, Certified Pre-Owned & Express Repairs')
 @section('meta_description', 'Discover official sealed brand new smartphones, 50-point certified pre-owned devices, and professional 45-minute express repair lab in Mumbai.')
 
 @section('content')
@@ -16,23 +16,7 @@
                 <!-- Left Column (Span 7): Copy, Badges, Search & Trust Points -->
                 <div class="lg:col-span-7 flex flex-col items-start text-left space-y-6">
                     
-                    <!-- Eyebrow Pill Badge -->
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-canvas border border-hairline shadow-sm hover:border-hairline transition-all cursor-default max-w-full">
-                        <span class="flex h-2 w-2 relative shrink-0">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        <span class="text-[11.5px] sm:text-[12px] font-semibold text-ink tracking-tight truncate">
-                            <span class="sm:hidden">Mumbai's #1 Smartphone Hub</span>
-                            <span class="hidden sm:inline">Mumbai's Premier Certified Smartphone Destination</span>
-                        </span>
-                        <span class="hidden md:inline-block w-1 h-1 rounded-full bg-hairline shrink-0"></span>
-                        <span class="hidden md:inline-flex items-center gap-1 text-[12px] font-medium text-muted shrink-0">
-                            <svg class="w-3 h-3 fill-amber-400 text-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                            <span>4.92 / 5 (1,850+ reviews)</span>
-                        </span>
-                    </div>
-
+                    
                     <!-- Main Hero Typography -->
                     <div class="space-y-2 sm:space-y-3">
                         <h1 class="text-[25px] sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink leading-[1.18] sm:leading-[1.14]">
@@ -85,14 +69,7 @@
                             </div>
                         </form>
 
-                        <!-- Quick Category/Filter Pills Under Search -->
-                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-2.5 text-[12px]">
-                            <span class="text-muted font-medium text-[11.5px] sm:text-[12px]">Popular:</span>
-                            <a href="{{ route('public.store', ['q' => 'iPhone 15']) }}" class="px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-soft hover:bg-surface-strong text-ink transition-airbnb border border-hairline-soft text-[11.5px] sm:text-[12px]">iPhone 15</a>
-                            <a href="{{ route('public.store', ['q' => 'Galaxy S24']) }}" class="px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-soft hover:bg-surface-strong text-ink transition-airbnb border border-hairline-soft text-[11.5px] sm:text-[12px]">Samsung S24</a>
-                            <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-soft hover:bg-surface-strong text-ink transition-airbnb border border-hairline-soft font-medium text-rausch text-[11.5px] sm:text-[12px]">Pre-Owned (A+)</a>
-                            <a href="{{ route('public.track_repair') }}" class="px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-soft hover:bg-surface-strong text-ink transition-airbnb border border-hairline-soft text-[11.5px] sm:text-[12px]">Track Repair</a>
-                        </div>
+                        
                     </div>
 
                     <!-- Dual CTAs -->
@@ -109,49 +86,7 @@
                         </a>
                     </div>
 
-                    <!-- Trust Pillars Strip -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 w-full border-t border-hairline-soft">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                            </div>
-                            <div class="text-left">
-                                <span class="block text-[12px] font-semibold text-ink leading-tight">100% Genuine</span>
-                                <span class="text-[11px] text-muted">GST Bill + Warranty</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
-                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
-                            <div class="text-left">
-                                <span class="block text-[12px] font-semibold text-ink leading-tight">50-Point Tested</span>
-                                <span class="text-[11px] text-muted">Certified Pre-Owned</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                            </div>
-                            <div class="text-left">
-                                <span class="block text-[12px] font-semibold text-ink leading-tight">45-Min Express</span>
-                                <span class="text-[11px] text-muted">Precision Repair</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
-                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                            </div>
-                            <div class="text-left">
-                                <span class="block text-[12px] font-semibold text-ink leading-tight">0% Easy EMI</span>
-                                <span class="text-[11px] text-muted">Instant Paperless</span>
-                            </div>
-                        </div>
-                    </div>
-
+                   
                 </div>
 
                 <!-- Right Column (Span 5): Hero Visual Showcase Card with Floating Glass Elements -->
@@ -163,7 +98,7 @@
                             <!-- Image Container -->
                             <div class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-surface-soft border border-hairline-soft">
                                 <img src="{{ asset('img/hero-smartphones.jpg') }}" 
-                                     alt="Latest Flagship Smartphones at MobiTrack Mumbai" 
+                                     alt="Latest Flagship Smartphones at Maurya Mobile Mumbai" 
                                      class="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700">
                                 
                                 <!-- Subtle Gradient Vignette -->
@@ -205,19 +140,7 @@
                             </div>
                         </div>
 
-                        <!-- Floating Micro-Card 2: 45-Min Express Lab (Top Left) -->
-                        <div class="hidden sm:flex absolute -top-3 -left-3 bg-canvas/95 backdrop-blur-md p-2.5 rounded-2xl border border-hairline shadow-airbnb-tier items-center gap-2.5 z-10">
-                            <div class="w-8 h-8 rounded-xl bg-rausch/10 text-rausch flex items-center justify-center shrink-0">
-                                <svg class="w-4 h-4 stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                            </div>
-                            <div class="text-left pr-1">
-                                <div class="text-[11.5px] font-bold text-ink leading-tight">~45 Min Express Repair</div>
-                                <div class="text-[10.5px] text-muted mt-0.5">Screen &amp; Battery Lab</div>
-                            </div>
-                        </div>
+                       
 
                     </div>
                 </div>
@@ -353,7 +276,7 @@
                                     <span>₹{{ number_format($phone->selling_price, 2) }}</span>
                                     <span class="font-normal text-muted text-[13px]"> incl. GST</span>
                                 </div>
-                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi MobiTrack, I want to inquire about ' . $phone->brand . ' ' . $phone->model . ' listed on your website.') }}" 
+                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi Maurya Mobile, I want to inquire about ' . $phone->brand . ' ' . $phone->model . ' listed on your website.') }}" 
                                    target="_blank"
                                    class="text-[13px] font-semibold text-rausch hover:underline">
                                     Inquire →
@@ -446,7 +369,7 @@
                                     <span>₹{{ number_format($phone->selling_price, 2) }}</span>
                                     <span class="font-normal text-muted text-[13px]"> tested</span>
                                 </div>
-                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi MobiTrack, I want to reserve pre-owned ' . $phone->brand . ' ' . $phone->model . ' for ₹' . number_format($phone->selling_price, 2)) }}" 
+                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi Maurya Mobile, I want to reserve pre-owned ' . $phone->brand . ' ' . $phone->model . ' for ₹' . number_format($phone->selling_price, 2)) }}" 
                                    target="_blank"
                                    class="text-[13px] font-semibold text-rausch hover:underline">
                                     Reserve →

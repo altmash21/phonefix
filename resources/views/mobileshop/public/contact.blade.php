@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Contact & Showroom Location — MobiTrack Mumbai')
-@section('meta_description', 'Visit MobiTrack showroom on Linking Road, Bandra West, Mumbai. Get store directions, contact numbers, WhatsApp chat, and submit smartphone inquiries.')
+@section('title', 'Contact & Showroom Location — Maurya Mobile Mumbai')
+@section('meta_description', 'Visit Maurya Mobile showroom on Linking Road, Bandra West, Mumbai. Get store directions, contact numbers, WhatsApp chat, and submit smartphone inquiries.')
 
 @section('content')
 

@@ -55,7 +55,7 @@ return [
     ],
 
     'invitation' => [
-        'message_1'         => 'You are receiving this email because you are invited to join MobiTrack.',
+        'message_1'         => 'You are receiving this email because you are invited to join Maurya Mobile.',
         'message_2'         => 'If you do not want to join, no further action is required.',
         'button'            => 'Get started',
     ],
@@ -64,17 +64,17 @@ return [
         'invoice'           => 'Create sales invoices easily',
         'reports'           => 'Get detailed reports',
         'expense'           => 'Track any expense',
-        'customize'         => 'Customise your MobiTrack',
+        'customize'         => 'Customise your Maurya Mobile',
     ],
 
     'roles' => [
         'admin' => [
             'name'          => 'Admin',
-            'description'   => 'They get full access to your MobiTrack including devices, inventory, sales, khata, and settings.',
+            'description'   => 'They get full access to your Maurya Mobile including devices, inventory, sales, khata, and settings.',
         ],
         'manager' => [
             'name'          => 'Manager',
-            'description'   => 'They get full access to your MobiTrack, but can\'t manage users and settings.',
+            'description'   => 'They get full access to your Maurya Mobile, but can\'t manage users and settings.',
         ],
         'customer' => [
             'name'          => 'Customer',

@@ -1,15 +1,27 @@
 @extends('mobileshop.layout')
 
-@section('title', ($sale->bill_type === 'non_gst' ? 'Estimate' : 'Tax Invoice') . ' #' . $sale->invoice_number . ' — MobiTrack')
+@section('title', ($sale->bill_type === 'non_gst' ? 'Estimate' : 'Tax Invoice') . ' #' . $sale->invoice_number . ' — Maurya Mobile')
 @section('page-title', $sale->bill_type === 'non_gst' ? 'Estimate & Retail Bill' : 'Accessory Tax Invoice & Receipt')
 
 @php
-    $storeName = setting('company.name', 'MobiTrack Retail Store');
+    $storeName = setting('company.name', 'Maurya Mobile Retail Store');
     $storePhone = setting('company.phone', '+91 98765 43210');
+    $storeEmail = setting('company.email', 'support@mauryamobile.local');
+    $storeAddress = setting('company.address', 'Shop #14, Linking Road Commercial Complex, Bandra West, Mumbai - 400050');
+    $storeGstin = setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5'));
+    $storeState = setting('company.state', 'Maharashtra');
+    $storeStateCode = '27';
+    if (stripos($storeGstin, '09') === 0) {
+        $storeState = 'Uttar Pradesh';
+        $storeStateCode = '09';
+    }
+
     $cleanPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
     if (strlen($cleanPhone) === 10) {
         $cleanPhone = '91' . $cleanPhone;
     }
+
+    $isFullyPaid = ($sale->udhari_amount <= 0 && $sale->amount_paid >= $sale->total_amount);
 
     $waMsg = "🧾 *" . ($sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE RECEIPT') . "*\n";
     $waMsg .= "🏬 *{$storeName}*\n";
@@ -61,7 +73,7 @@
         <button type="button" onclick="switchFormat('thermal')" id="btnThermal" class="btn btn-outline btn-sm" style="font-weight:700;">
             80mm POS Thermal
         </button>
-        <button onclick="window.print()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0F172A; border-color:#94A3B8;">
+        <button onclick="window.print()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0F172A; border-color:#CBD5E1;">
             <i data-lucide="printer" style="width:13px;height:13px;"></i> Print / Save as PDF
         </button>
         <a href="{{ route('mobileshop.accessories.invoice.pdf', ['id' => $sale->id]) }}" class="btn btn-primary btn-sm" style="font-weight:700; background:#5E6AD2;">
@@ -78,224 +90,421 @@
 @endsection
 
 @section('content')
-<div class="invoice-page-wrapper" style="width: 100%; margin: 0; padding-bottom: 40px;">
+<div class="invoice-page-wrapper" style="width: 100%; margin: 0; padding-bottom: 40px; display:flex; justify-content:center;">
 
-    <!-- ─── STANDARD A4 GST TAX INVOICE (ACCESSORIES) ─── -->
-    <div id="viewA4" class="printable-invoice-container" style="background: #ffffff; border: 1px solid #D1D5DB; border-radius: 4px; padding: 28px 32px; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <!-- ─── DESIGNED A4 GST TAX INVOICE (ACCESSORIES & SPARE PARTS) ─── -->
+    <div id="viewA4" class="printable-invoice-container" style="width: 100%; max-width: 860px; background: #ffffff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 0; color: #0F172A; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; position: relative;">
 
-        <!-- TOP CORPORATE HEADER -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border-bottom: 2px solid #1F2937; padding-bottom: 16px;">
-            <tr>
-                <td style="vertical-align: top; width: 55%; padding-bottom: 12px;">
-                    <div style="font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.3px; text-transform: uppercase;">
-                        {{ setting('company.name', 'MobiTrack Retail Store') }}
+        <!-- TOP VIBRANT ACCENT STRIP -->
+        <div style="height: 5px; width: 100%; background: linear-gradient(90deg, #5E6AD2 0%, #7C3AED 40%, #2563EB 80%, #0F172A 100%);"></div>
+
+        <div style="padding: 32px 36px;">
+
+            <!-- ════ 1. HEADER SECTION (BRAND & DOCUMENT METADATA) ════ -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; padding-bottom: 24px; border-bottom: 1px solid #E2E8F0;">
+                
+                <!-- Left: Store Brand & Identity -->
+                <div style="flex: 1; max-width: 58%;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <div style="width: 42px; height: 42px; border-radius: 10px; background: #0F172A; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; letter-spacing: -0.5px; box-shadow: 0 2px 6px rgba(15,23,42,0.25);">
+                            MM
+                        </div>
+                        <div>
+                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; line-height: 1.1; text-transform: uppercase;">
+                                {{ $storeName }}
+                            </div>
+                            <div style="font-size: 11px; font-weight: 600; color: #5E6AD2; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px;">
+                                Accessories, Spare Parts &amp; Express Repair Lab
+                            </div>
+                        </div>
                     </div>
-                    <div style="font-size: 11px; color: #4B5563; margin-top: 4px; line-height: 1.5;">
-                        {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                        Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'support@mobitrack.local') }}
+
+                    <div style="font-size: 11.5px; color: #475569; line-height: 1.5; margin-top: 6px;">
+                        {{ $storeAddress }}<br>
+                        Phone: <strong style="color: #0F172A;">{{ $storePhone }}</strong> &bull; Email: <span style="color: #0F172A;">{{ $storeEmail }}</span>
                     </div>
-                    <div style="font-size: 11px; font-weight: 700; color: #111827; margin-top: 4px;">
-                        GSTIN: <span style="font-family: monospace; font-weight: 700;">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>
-                        &nbsp;|&nbsp; State: {{ setting('company.state', 'Uttar Pradesh') }} (09)
+
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                        <div style="display: inline-flex; align-items: center; gap: 5px; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; color: #0F172A;">
+                            <span style="color: #64748B;">GSTIN:</span>
+                            <span style="font-family: 'JetBrains Mono', monospace;">{{ $storeGstin }}</span>
+                        </div>
+                        <div style="display: inline-flex; align-items: center; gap: 4px; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 600; color: #475569;">
+                            <span>State:</span>
+                            <strong style="color: #0F172A;">{{ $storeState }} ({{ $storeStateCode }})</strong>
+                        </div>
                     </div>
-                </td>
-                <td style="vertical-align: top; width: 45%; text-align: right; padding-bottom: 12px;">
-                    <div style="font-size: 18px; font-weight: 800; color: #111827; letter-spacing: 0.5px; text-transform: uppercase;">
+                </div>
+
+                <!-- Right: Invoice Type, Number & Status Badge -->
+                <div style="text-align: right; min-width: 38%;">
+                    
+                    <!-- Paid / Due Badge -->
+                    <div style="margin-bottom: 8px;">
+                        @if($isFullyPaid)
+                            <span style="display: inline-flex; align-items: center; gap: 5px; background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 1px 2px rgba(16,185,129,0.1);">
+                                <span style="width: 7px; height: 7px; border-radius: 50%; background: #10B981;"></span>
+                                Paid in Full
+                            </span>
+                        @else
+                            <span style="display: inline-flex; align-items: center; gap: 5px; background: #FFF1F2; color: #BE123C; border: 1px solid #FECDD3; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <span style="width: 7px; height: 7px; border-radius: 50%; background: #E11D48;"></span>
+                                Balance Due: ₹{{ number_format($sale->udhari_amount, 2) }}
+                            </span>
+                        @endif
+                    </div>
+
+                    <div style="font-size: 20px; font-weight: 900; color: #0F172A; letter-spacing: -0.2px; text-transform: uppercase; line-height: 1.2;">
                         {{ $sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE' }}
                     </div>
-                    <div style="font-size: 10.5px; color: #6B7280; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px;">
                         Original for Recipient
                     </div>
-                    <div style="font-size: 14px; font-weight: 800; color: #111827; margin-top: 6px;">
-                        Invoice #: <span style="font-family: monospace;">{{ $sale->invoice_number }}</span>
-                    </div>
-                    <div style="font-size: 11px; color: #374151; margin-top: 2px;">
-                        Date: <strong>{{ date('d M Y', strtotime($sale->created_at)) }}</strong> &bull; Time: {{ date('h:i A', strtotime($sale->created_at)) }}
-                    </div>
-                </td>
-            </tr>
-        </table>
 
-        <!-- PARTY & TRANSACTION GRID -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 22px; border: 1px solid #E5E7EB; background: #F9FAFB;">
-            <tr>
-                <td style="width: 50%; padding: 14px 18px; vertical-align: top; border-right: 1px solid #E5E7EB;">
-                    <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #6B7280; margin-bottom: 4px;">
-                        Details of Receiver (Billed To)
+                    <div style="margin-top: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 12px; display: inline-block; text-align: right;">
+                        <div style="font-size: 10px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Invoice Number</div>
+                        <div style="font-size: 15px; font-weight: 800; color: #0F172A; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.3px; margin-top: 1px;">
+                            {{ $sale->invoice_number }}
+                        </div>
                     </div>
-                    <div style="font-size: 15px; font-weight: 800; color: #111827;">{{ $sale->customer_name ?: 'Walk-in Retail Customer' }}</div>
-                    <div style="font-size: 11.5px; color: #374151; margin-top: 3px;">
-                        Phone: <strong>{{ $sale->customer_phone ?: '—' }}</strong>
+
+                    <div style="font-size: 11px; color: #64748B; margin-top: 8px;">
+                        Date: <strong style="color:#0F172A;">{{ date('d M Y', strtotime($sale->created_at)) }}</strong>
+                        &nbsp;&bull;&nbsp; Time: <span style="color:#0F172A;">{{ date('h:i A', strtotime($sale->created_at)) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════ 2. PARTY & PAYMENT METRIC CARDS ════ -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; margin-bottom: 24px;">
+                
+                <!-- Card 1: Billed To (Customer) -->
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #5E6AD2;">
+                            Billed To &bull; Customer Details
+                        </span>
+                        <span style="font-size: 10px; color: #64748B; background: #FFFFFF; border: 1px solid #E2E8F0; padding: 1px 6px; border-radius: 4px; font-weight: 600;">
+                            Counter Bill
+                        </span>
+                    </div>
+                    <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-bottom: 2px;">
+                        {{ $sale->customer_name ?: 'Valued Retail Customer' }}
+                    </div>
+                    <div style="font-size: 12px; color: #334155; margin-bottom: 2px;">
+                        Phone: <strong style="color: #0F172A;">{{ $sale->customer_phone ?: 'Walk-in Counter Customer' }}</strong>
                     </div>
                     @if($sale->customer_gstin)
-                        <div style="font-size: 11px; color: #111827; font-weight: 600; margin-top: 2px; font-family: monospace;">GSTIN: {{ $sale->customer_gstin }}</div>
+                        <div style="font-size: 11px; color: #0F172A; font-weight: 700; margin-top: 3px; font-family: 'JetBrains Mono', monospace; background:#ffffff; display:inline-block; padding:1px 6px; border-radius:4px; border:1px solid #CBD5E1;">
+                            GSTIN: {{ $sale->customer_gstin }}
+                        </div>
                     @endif
-                    <div style="font-size: 11px; color: #4B5563; margin-top: 2px;">{{ $sale->customer_address ?: 'Walk-in Retail Customer' }}</div>
-                    <div style="font-size: 10px; color: #6B7280; margin-top: 3px;">Place of Supply: {{ setting('company.state', 'Uttar Pradesh') }} (09)</div>
-                </td>
-                <td style="width: 50%; padding: 14px 18px; vertical-align: top;">
-                    <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #6B7280; margin-bottom: 4px;">
-                        Payment &amp; Dispatch Details
+                    <div style="font-size: 11px; color: #64748B; margin-top: 4px;">
+                        {{ $sale->customer_address ?: 'Counter Collection · Mumbai Metro' }}
                     </div>
-                    <div style="font-size: 11.5px; color: #111827; margin-bottom: 3px;">
-                        Payment Mode: <strong>{{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</strong>
+                    <div style="font-size: 10px; color: #64748B; margin-top: 4px; font-weight: 500;">
+                        Place of Supply: <strong style="color: #0F172A;">{{ $storeState }} ({{ $storeStateCode }})</strong>
                     </div>
+                </div>
+
+                <!-- Card 2: Payment & Category Details -->
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; flex-col; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #5E6AD2;">
+                                Payment &amp; Terms
+                            </span>
+                            <span style="font-size: 10px; font-weight: 700; background: #0F172A; color: #ffffff; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
+                                {{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}
+                            </span>
+                        </div>
+
+                        <div style="font-size: 12px; color: #334155; line-height: 1.6;">
+                            <div>Payment Method: <strong style="color: #0F172A;">{{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</strong></div>
+
+                            <div style="margin-top: 2px;">
+                                @if($sale->bill_type === 'gst')
+                                    Tax Regime: <strong style="color: #0F172A;">{{ ($sale->igst_amount ?? 0) > 0 ? 'INTER STATE (IGST)' : 'INTRA STATE (CGST + SGST)' }} @ 18% GST</strong>
+                                @else
+                                    Category: <strong style="color: #0F172A;">Retail / Non-GST Estimate</strong>
+                                @endif
+                            </div>
+
+                            <div style="margin-top: 2px; font-size: 11px; color: #64748B;">
+                                Store Guarantee: <strong style="color: #047857;">Original Genuine Accessories &bull; QC Tested</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ════ 3. LINE ITEMS TABLE (ACCESSORIES & PARTS) ════ -->
+            <div style="border: 1px solid #CBD5E1; border-radius: 8px; overflow: hidden; margin-bottom: 22px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
+                    <thead>
+                        <tr style="background: #0F172A; color: #FFFFFF;">
+                            <th style="padding: 10px 12px; text-align: center; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; width: 4%;">#</th>
+                            <th style="padding: 10px 14px; text-align: left; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; width: 44%;">Item Description / Spare Part</th>
+                            <th style="padding: 10px 10px; text-align: center; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; width: 11%;">HSN</th>
+                            <th style="padding: 10px 8px; text-align: center; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; width: 6%;">Qty</th>
+                            <th style="padding: 10px 12px; text-align: right; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; width: 12%;">Unit Price (₹)</th>
+                            <th style="padding: 10px 12px; text-align: right; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; width: 11%;">Taxable (₹)</th>
+                            <th style="padding: 10px 14px; text-align: right; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; width: 12%;">Total (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($items as $idx => $it)
+                        <tr style="border-bottom: 1px solid #E2E8F0; background: #FFFFFF;">
+                            <td style="padding: 12px; text-align: center; font-weight: 700; color: #64748B;">{{ $idx + 1 }}</td>
+                            <td style="padding: 12px 14px;">
+                                <div style="font-size: 13px; font-weight: 800; color: #0F172A; letter-spacing: -0.2px;">
+                                    {{ $it->part_name }}
+                                </div>
+                                <div style="display: flex; gap: 6px; margin-top: 3px;">
+                                    <span style="background: #F1F5F9; color: #475569; font-size: 9.5px; font-weight: 600; padding: 1px 5px; border-radius: 4px; border: 1px solid #E2E8F0; text-transform: uppercase;">
+                                        {{ $it->category ?? 'Accessory' }}
+                                    </span>
+                                    @if(isset($it->warranty_days) && $it->warranty_days > 0)
+                                        <span style="background: #ECFDF5; color: #065F46; font-size: 9.5px; font-weight: 600; padding: 1px 5px; border-radius: 4px; border: 1px solid #A7F3D0;">
+                                            ✓ {{ $it->warranty_days }} Days Warranty
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td style="padding: 12px 10px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #334155;">
+                                85177090
+                            </td>
+                            <td style="padding: 12px 8px; text-align: center; font-weight: 800; color: #0F172A; font-size: 12px;">
+                                {{ $it->quantity }}
+                            </td>
+                            <td style="padding: 12px; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #334155;">
+                                {{ number_format($it->unit_price, 2) }}
+                            </td>
+                            <td style="padding: 12px; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #334155;">
+                                {{ number_format($sale->bill_type === 'gst' ? ($it->line_total / 1.18) : $it->line_total, 2) }}
+                            </td>
+                            <td style="padding: 12px 14px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 13px; color: #0F172A;">
+                                {{ number_format($it->line_total, 2) }}
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ════ 4. FINANCIAL SUMMARY & TAX MATRIX ════ -->
+            <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; align-items: flex-start; margin-bottom: 24px;">
+                
+                <!-- Left: Tax Matrix & Chargeable Words -->
+                <div>
                     @if($sale->bill_type === 'gst')
-                        <div style="font-size: 11px; color: #374151; margin-top: 2px;">Tax Regime: <strong>Intra-State GST @ 18%</strong></div>
-                    @else
-                        <div style="font-size: 11px; color: #374151; margin-top: 2px;">Bill Category: <strong>Retail / Non-GST Estimate</strong></div>
-                    @endif
-                </td>
-            </tr>
-        </table>
-
-        <!-- LINE ITEMS TABLE -->
-        <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 22px;">
-            <thead>
-                <tr style="background: #F3F4F6; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
-                    <th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1F2937; font-size: 9.5px; text-transform: uppercase; width: 5%;">#</th>
-                    <th style="padding: 8px 10px; text-align: left; font-weight: 700; color: #1F2937; font-size: 9.5px; text-transform: uppercase; width: 44%;">Item Description</th>
-                    <th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1F2937; font-size: 9.5px; text-transform: uppercase; width: 12%;">HSN Code</th>
-                    <th style="padding: 8px 10px; text-align: center; font-weight: 700; color: #1F2937; font-size: 9.5px; text-transform: uppercase; width: 7%;">Qty</th>
-                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; color: #1F2937; font-size: 9.5px; text-transform: uppercase; width: 14%;">Unit Price (₹)</th>
-                    <th style="padding: 8px 10px; text-align: right; font-weight: 700; color: #1F2937; font-size: 9.5px; text-transform: uppercase; width: 18%;">Line Total (₹)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($items as $idx => $it)
-                <tr style="border-bottom: 1px solid #E5E7EB;">
-                    <td style="padding: 10px; text-align: center; color: #374151;">{{ $idx + 1 }}</td>
-                    <td style="padding: 10px;">
-                        <div style="font-weight: 800; font-size: 12px; color: #111827;">{{ $it->part_name }}</div>
-                        <div style="font-size: 9.5px; color: #6B7280; margin-top: 1px;">Genuine Accessory / Spare Part</div>
-                    </td>
-                    <td style="padding: 10px; text-align: center; font-family: monospace; font-size: 11px;">85177090</td>
-                    <td style="padding: 10px; text-align: center; font-weight: 700; color: #111827;">{{ $it->quantity }}</td>
-                    <td style="padding: 10px; text-align: right; font-family: monospace;">{{ number_format($it->unit_price, 2) }}</td>
-                    <td style="padding: 10px; text-align: right; font-family: monospace; font-weight: 800; font-size: 12px; color: #111827;">{{ number_format($it->line_total, 2) }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-
-        <!-- TOTALS & GST SUMMARY GRID -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 22px;">
-            <tr>
-                <td style="width: 55%; vertical-align: top; padding-right: 16px;">
-                    @if($sale->bill_type === 'gst')
-                    <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #6B7280; margin-bottom: 6px;">
-                        Tax Breakdown (GST @ 18%)
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 12px; border: 1px solid #E5E7EB;">
-                        <thead>
-                            <tr style="background: #F3F4F6; border-bottom: 1px solid #E5E7EB;">
-                                <th style="padding: 6px 8px; text-align: left; font-weight: 700; color: #1F2937; font-size: 9.5px;">Tax Component</th>
-                                <th style="padding: 6px 8px; text-align: right; font-weight: 700; color: #1F2937; font-size: 9.5px;">Rate</th>
-                                <th style="padding: 6px 8px; text-align: right; font-weight: 700; color: #1F2937; font-size: 9.5px;">Amount (₹)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr style="border-bottom: 1px solid #E5E7EB;">
-                                <td style="padding: 5px 8px; color: #374151;">Central GST (CGST)</td>
-                                <td style="padding: 5px 8px; text-align: right; color: #374151;">9.00%</td>
-                                <td style="padding: 5px 8px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">{{ number_format($sale->cgst_amount, 2) }}</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid #E5E7EB;">
-                                <td style="padding: 5px 8px; color: #374151;">State GST (SGST)</td>
-                                <td style="padding: 5px 8px; text-align: right; color: #374151;">9.00%</td>
-                                <td style="padding: 5px 8px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">{{ number_format($sale->sgst_amount, 2) }}</td>
-                            </tr>
-                            <tr style="background: #F9FAFB; font-weight: 700;">
-                                <td style="padding: 5px 8px; color: #111827;">Total GST Liability</td>
-                                <td style="padding: 5px 8px; text-align: right; color: #111827;">18.00%</td>
-                                <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #111827;">{{ number_format($sale->tax_amount, 2) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                        <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #475569; margin-bottom: 6px;">
+                            GST Tax Computation Matrix (@ 18.00%)
+                        </div>
+                        <div style="border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
+                                <thead>
+                                    <tr style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0; color: #475569;">
+                                        <th style="padding: 6px 10px; text-align: left; font-weight: 700; font-size: 9.5px;">Tax Type</th>
+                                        <th style="padding: 6px 10px; text-align: right; font-weight: 700; font-size: 9.5px;">Rate</th>
+                                        <th style="padding: 6px 10px; text-align: right; font-weight: 700; font-size: 9.5px;">Taxable (₹)</th>
+                                        <th style="padding: 6px 10px; text-align: right; font-weight: 700; font-size: 9.5px;">Tax Amount (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if(($sale->igst_amount ?? 0) <= 0)
+                                        <tr style="border-bottom: 1px solid #F1F5F9;">
+                                            <td style="padding: 6px 10px; font-weight: 600; color: #334155;">Central GST (CGST)</td>
+                                            <td style="padding: 6px 10px; text-align: right; color: #64748B;">9.00%</td>
+                                            <td style="padding: 6px 10px; text-align: right; font-family: 'JetBrains Mono', monospace; color: #334155;">{{ number_format($sale->total_amount / 1.18, 2) }}</td>
+                                            <td style="padding: 6px 10px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0F172A;">{{ number_format($sale->cgst_amount, 2) }}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #F1F5F9;">
+                                            <td style="padding: 6px 10px; font-weight: 600; color: #334155;">State GST (SGST)</td>
+                                            <td style="padding: 6px 10px; text-align: right; color: #64748B;">9.00%</td>
+                                            <td style="padding: 6px 10px; text-align: right; font-family: 'JetBrains Mono', monospace; color: #334155;">{{ number_format($sale->total_amount / 1.18, 2) }}</td>
+                                            <td style="padding: 6px 10px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0F172A;">{{ number_format($sale->sgst_amount, 2) }}</td>
+                                        </tr>
+                                    @else
+                                        <tr style="border-bottom: 1px solid #F1F5F9;">
+                                            <td style="padding: 6px 10px; font-weight: 600; color: #334155;">Integrated GST (IGST)</td>
+                                            <td style="padding: 6px 10px; text-align: right; color: #64748B;">18.00%</td>
+                                            <td style="padding: 6px 10px; text-align: right; font-family: 'JetBrains Mono', monospace; color: #334155;">{{ number_format($sale->total_amount / 1.18, 2) }}</td>
+                                            <td style="padding: 6px 10px; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #0F172A;">{{ number_format($sale->igst_amount, 2) }}</td>
+                                        </tr>
+                                    @endif
+                                    <tr style="background: #F8FAFC; font-weight: 800;">
+                                        <td colspan="3" style="padding: 6px 10px; text-align: right; color: #0F172A;">Total GST Collected</td>
+                                        <td style="padding: 6px 10px; text-align: right; font-family: 'JetBrains Mono', monospace; color: #0F172A;">
+                                            ₹{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     @endif
 
-                    <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 4px; padding: 8px 12px;">
-                        <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: #6B7280;">Amount Chargeable (in Words):</span>
-                        <div style="font-size: 11.5px; font-weight: 700; color: #111827; margin-top: 2px;">
+                    <!-- Amount in Words Card -->
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px;">
+                        <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #64748B;">
+                            Invoice Total in Words:
+                        </div>
+                        <div style="font-size: 12px; font-weight: 700; color: #0F172A; margin-top: 2px; font-style: italic;">
                             {{ $amountInWords ?? 'Rupees Only' }}
                         </div>
                     </div>
-                </td>
+                </div>
 
-                <td style="width: 45%; vertical-align: top;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; border: 1px solid #E5E7EB;">
-                        <tr style="border-bottom: 1px solid #E5E7EB;">
-                            <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563; width: 55%;">Subtotal (Taxable)</td>
-                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($sale->bill_type === 'gst' ? ($sale->subtotal - $sale->tax_amount) : $sale->subtotal, 2) }}</td>
-                        </tr>
+                <!-- Right: Financial Grand Totals Card -->
+                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    
+                    <div style="padding: 14px 16px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #475569; margin-bottom: 6px;">
+                            <span>Subtotal (Taxable):</span>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #0F172A;">
+                                ₹{{ number_format($sale->bill_type === 'gst' ? ($sale->total_amount / 1.18) : $sale->total_amount, 2) }}
+                            </span>
+                        </div>
+
                         @if($sale->bill_type === 'gst')
-                        <tr style="border-bottom: 1px solid #E5E7EB;">
-                            <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563;">Total GST (18%)</td>
-                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($sale->tax_amount, 2) }}</td>
-                        </tr>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #475569; margin-bottom: 6px;">
+                            <span>GST (18% Total):</span>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #0F172A;">
+                                ₹{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}
+                            </span>
+                        </div>
                         @endif
-                        <tr style="background: #F3F4F6; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
-                            <td style="padding: 9px 10px; font-weight: 800; font-size: 13px; color: #111827;">Grand Total</td>
-                            <td style="padding: 9px 10px; text-align: right; font-weight: 900; font-size: 15px; font-family: monospace; color: #111827;">₹{{ number_format($sale->total_amount, 2) }}</td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
 
-        <!-- TERMS & SIGNATURES SECTION -->
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-            <tr>
-                <td style="width: 60%; vertical-align: top; padding-right: 20px;">
-                    <div style="font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: #6B7280; margin-bottom: 4px;">Terms &amp; Conditions</div>
-                    <ol style="font-size: 9px; color: #4B5563; padding-left: 14px; line-height: 1.5; margin: 0;">
-                        <li>Accessories and tempered glass once installed or opened cannot be returned.</li>
-                        <li>Electronic accessories carry standard warranty as specified on the manufacturer package.</li>
-                        <li>Disputes subject to local jurisdiction only.</li>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #166534;">
+                            <span>Discount / Promotion:</span>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">₹0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Grand Total Banner -->
+                    <div style="background: #0F172A; color: #FFFFFF; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94A3B8;">Grand Total</div>
+                            <div style="font-size: 11px; color: #CBD5E1;">All taxes included</div>
+                        </div>
+                        <div style="font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px;">
+                            ₹{{ number_format($sale->total_amount, 2) }}
+                        </div>
+                    </div>
+
+                    <!-- Settlement Breakdown -->
+                    <div style="padding: 12px 16px; background: #FAFAFA; font-size: 11.5px; border-top: 1px solid #E2E8F0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: #475569;">Amount Paid:</span>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #059669;">
+                                ₹{{ number_format($sale->amount_paid, 2) }}
+                            </span>
+                        </div>
+
+                        @if($sale->udhari_amount > 0)
+                            <div style="display: flex; justify-content: space-between; padding-top: 4px; border-top: 1px dashed #CBD5E1; color: #DC2626;">
+                                <span style="font-weight: 700;">Remaining Balance (Udhari):</span>
+                                <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800;">
+                                    ₹{{ number_format($sale->udhari_amount, 2) }}
+                                </span>
+                            </div>
+                        @else
+                            <div style="display: flex; justify-content: space-between; padding-top: 4px; border-top: 1px dashed #E2E8F0; color: #64748B; font-size: 11px;">
+                                <span>Balance Remaining:</span>
+                                <span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #059669;">₹0.00 (Settled)</span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ════ 5. STORE ASSURANCE & QUALITY BADGES ════ -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 22px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 700; color: #0F172A; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    <span>🛡️</span> 100% Genuine Certified Parts
+                </div>
+                <div style="font-size: 11px; font-weight: 700; color: #0F172A; display: flex; align-items: center; justify-content: center; gap: 5px; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0;">
+                    <span>⚡</span> Instant Counter Testing
+                </div>
+                <div style="font-size: 11px; font-weight: 700; color: #0F172A; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                    <span>🧾</span> GST Paid Legal Bill
+                </div>
+            </div>
+
+            <!-- ════ 6. TERMS & SIGNATURE BLOCK ════ -->
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; padding-top: 16px; border-top: 1px solid #E2E8F0; align-items: flex-end;">
+                
+                <!-- Terms -->
+                <div>
+                    <div style="font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #64748B; margin-bottom: 4px;">
+                        Terms &amp; Conditions of Sale
+                    </div>
+                    <ol style="font-size: 9px; color: #64748B; padding-left: 13px; line-height: 1.5; margin: 0;">
+                        <li>Accessories &amp; replacement parts are tested at counter before handover.</li>
+                        <li>Warranty on applicable chargers, cables, and parts as stated on bill.</li>
+                        <li>Goods once sold are not refundable in cash. Physical damage voids warranty.</li>
+                        <li>All disputes subject to local Mumbai jurisdiction.</li>
                     </ol>
-                </td>
-                <td style="width: 40%; vertical-align: top; text-align: right;">
-                    <div style="font-size: 11px; font-weight: 700; color: #111827;">For {{ setting('company.name', 'MobiTrack Retail Store') }}</div>
-                    <div style="height: 48px;"></div>
-                    <div style="border-top: 1px solid #4B5563; display: inline-block; padding-top: 4px; font-size: 9.5px; color: #4B5563; min-width: 170px; text-align: center;">
+                </div>
+
+                <!-- Authorized Signatory Stamp -->
+                <div style="text-align: right;">
+                    <div style="font-size: 11px; font-weight: 800; color: #0F172A;">
+                        For {{ $storeName }}
+                    </div>
+                    
+                    <!-- Digital Seal Stamp Mockup -->
+                    <div style="margin-top: 8px; margin-bottom: 6px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 140px; height: 50px; border: 1.5px dashed #CBD5E1; border-radius: 6px; background: #F8FAFC;">
+                        <span style="font-size: 8.5px; font-weight: 800; color: #5E6AD2; letter-spacing: 0.5px; text-transform: uppercase;">AUTHORIZED SEAL</span>
+                        <span style="font-size: 9.5px; font-weight: 700; color: #0F172A; margin-top: 1px;">MAURYA MOBILE</span>
+                    </div>
+
+                    <div style="font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">
                         Authorised Signatory
                     </div>
-                </td>
-            </tr>
-        </table>
+                </div>
 
-        <!-- BOTTOM DISCLAIMER STRIP -->
-        <div style="margin-top: 24px; padding-top: 8px; border-top: 1px solid #E5E7EB; display: flex; justify-content: space-between; font-size: 9px; color: #9CA3AF;">
-            <div>Computer generated invoice &bull; Original for Recipient</div>
-            <div>{{ setting('company.name', 'MobiTrack') }} &bull; Powered by MobiTrack ERP</div>
+            </div>
+
+            <!-- ════ 7. FOOTER BAR ════ -->
+            <div style="margin-top: 24px; padding-top: 12px; border-top: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 9.5px; color: #94A3B8;">
+                <div>
+                    Computer generated tax invoice &bull; Original for Recipient &bull; Keep safe for warranty claims
+                </div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-weight: 600;">
+                    {{ $storeName }} &bull; Powered by Maurya Mobile Retail System
+                </div>
+            </div>
+
         </div>
-
     </div>
 
     <!-- ─── 80MM THERMAL RECEIPT (COUNTER POS) ─── -->
-    <div id="viewThermal" class="card" style="display:none; max-width: 320px; margin: 0 auto; padding: 18px; font-family: 'Courier New', monospace; font-size: 11px; color: #111827; background:#fff; border:1px dashed #9CA3AF;">
+    <div id="viewThermal" class="card" style="display:none; width: 100%; max-width: 320px; margin: 0 auto; padding: 18px; font-family: 'Courier New', monospace; font-size: 11px; color: #111827; background:#fff; border:1px dashed #9CA3AF; border-radius: 6px;">
         <div style="text-align:center; margin-bottom: 8px;">
-            <div style="font-weight:800; font-size:14px; text-transform:uppercase;">{{ setting('company.name', 'MobiTrack ERP') }}</div>
-            <div style="font-size:10px; color:#6B7280;">{{ setting('company.address', '') }}</div>
-            <div style="font-size:10px; color:#6B7280;">Ph: {{ setting('company.phone', '') }}</div>
-            <div style="font-size:10px; font-weight:700; color:#1E293B;">GSTIN: {{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</div>
+            <div style="font-weight:900; font-size:15px; text-transform:uppercase;">{{ $storeName }}</div>
+            <div style="font-size:10px; color:#475569;">{{ $storeAddress }}</div>
+            <div style="font-size:10px; color:#475569;">Ph: {{ $storePhone }}</div>
+            <div style="font-size:10px; font-weight:700; color:#0F172A; margin-top:2px;">GSTIN: {{ $storeGstin }}</div>
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 6px; font-size:10px; line-height:1.4;">
             <div>Inv: <strong>{{ $sale->invoice_number }}</strong></div>
             <div>Date: {{ date('d-m-Y H:i', strtotime($sale->created_at)) }}</div>
-            <div>Cust: {{ $sale->customer_name }} ({{ $sale->customer_phone }})</div>
+            <div>Cust: {{ $sale->customer_name ?: 'Retail Customer' }} ({{ $sale->customer_phone }})</div>
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 6px; margin-top: 6px;">
             @foreach($items as $it)
             <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:2px;">
-                <span>{{ $it->part_name }} (x{{ $it->quantity }})</span>
+                <span>{{ $it->part_name }} x{{ $it->quantity }}</span>
                 <span>₹{{ number_format($it->line_total, 2) }}</span>
             </div>
             @endforeach
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 6px; margin-top: 6px; font-size:10px;">
-            <div style="display:flex; justify-content:space-between;"><span>Taxable:</span><span>₹{{ number_format($sale->subtotal - $sale->tax_amount, 2) }}</span></div>
-            <div style="display:flex; justify-content:space-between;"><span>GST (18%):</span><span>₹{{ number_format($sale->tax_amount, 2) }}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Taxable:</span><span>₹{{ number_format($sale->total_amount / 1.18, 2) }}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>GST (18%):</span><span>₹{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}</span></div>
             <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>TOTAL:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
             <div style="display:flex; justify-content:space-between; font-weight:700; color:#10B981;"><span>PAID:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
             @if($sale->udhari_amount > 0)
@@ -304,6 +513,7 @@
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 8px; margin-top: 8px; text-align:center; font-size:9px; color:#6B7280; line-height:1.4;">
             <div>Mode: {{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</div>
+            <div>Genuine Accessories &bull; QC Verified</div>
             <div style="font-weight:800; margin-top:4px;">*** THANK YOU - VISIT AGAIN ***</div>
         </div>
     </div>
@@ -314,15 +524,31 @@
 @push('styles')
 <style>
     @media print {
+        @page {
+            size: A4 portrait;
+            margin: 8mm 10mm 8mm 10mm;
+        }
+        body {
+            background: #ffffff !important;
+            color: #0F172A !important;
+        }
+        .page-header, .topbar, .sidebar, .sidebar-footer, #flash-msg, .no-print {
+            display: none !important;
+        }
+        .content-area, .main-content, .invoice-page-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
         #viewA4 {
             border: none !important;
             box-shadow: none !important;
+            border-radius: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
             width: 100% !important;
-        }
-        #viewA4 table {
-            border-color: #374151 !important;
+            max-width: 100% !important;
         }
         #viewThermal {
             border: none !important;

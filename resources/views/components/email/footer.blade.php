@@ -9,7 +9,7 @@
                                 <a href="{!! $url !!}" style="color: #676ba2; text-decoration: none;">{{ trans('footer.powered_by') }}&nbsp;</a>
                             </td>
                             <td align="center" valign="middle" style="text-align: center; padding-top: 5px;">
-                                <a href="{!! $url !!}"><strong style="color:#6D28D9;">MobiTrack</strong></a>
+                                <a href="{!! $url !!}"><strong style="color:#6D28D9;">Maurya Mobile</strong></a>
                             </td>
                         </tr>
                     </tbody>

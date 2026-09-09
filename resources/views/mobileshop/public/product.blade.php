@@ -1,6 +1,6 @@
 @extends('mobileshop.public.layout')
 
-@section('title', $device->brand . ' ' . $device->model . ' — In Stock at MobiTrack Mumbai')
+@section('title', $device->brand . ' ' . $device->model . ' — In Stock at Maurya Mobile Mumbai')
 @section('meta_description', 'Buy authentic ' . $device->brand . ' ' . $device->model . ' (' . ($device->storage ?? '128GB') . ', ' . ($device->color ?? 'Original') . ') with GST invoice and showroom warranty in Mumbai.')
 
 @section('content')
@@ -248,7 +248,7 @@
 
                 <!-- ACTION BUTTONS: WhatsApp & Call & Reserve -->
                 <div class="space-y-3 pt-2">
-                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack Bandra, I would like to buy ' . $device->brand . ' ' . $device->model . ' (' . ($device->storage ?? '128GB') . ', ' . ($device->color ?? 'Standard') . ') listed for ₹' . number_format($device->selling_price, 2) . '. Please share payment details and availability.') }}" 
+                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello Maurya Mobile Bandra, I would like to buy ' . $device->brand . ' ' . $device->model . ' (' . ($device->storage ?? '128GB') . ', ' . ($device->color ?? 'Standard') . ') listed for ₹' . number_format($device->selling_price, 2) . '. Please share payment details and availability.') }}" 
                        target="_blank"
                        class="w-full py-4 px-6 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-[15px] flex items-center justify-center gap-2.5 shadow-airbnb-tier hover:shadow-airbnb-hover transition-all">
                         <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -439,7 +439,7 @@
                 alert('Please enter your name and phone number to hold this device.');
                 return;
             }
-            const text = encodeURIComponent(`Hello MobiTrack Bandra, I would like to hold ${'{{ $device->brand }} {{ $device->model }}'} (₹${'{{ number_format($device->selling_price, 2) }}'}) under name ${name} (Phone: ${phone}) for 2 hours while I come to the store.`);
+            const text = encodeURIComponent(`Hello Maurya Mobile Bandra, I would like to hold ${'{{ $device->brand }} {{ $device->model }}'} (₹${'{{ number_format($device->selling_price, 2) }}'}) under name ${name} (Phone: ${phone}) for 2 hours while I come to the store.`);
             window.open(`https://wa.me/919876543210?text=${text}`, '_blank');
             document.getElementById('reserve-modal').classList.add('hidden');
         }

@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Register Purchase — Bulk Stock Inward — MobiTrack')
+@section('title', 'Register Purchase — Bulk Stock Inward — Maurya Mobile')
 @section('page-title', 'Register Purchase / Stock Inward')
 
 @section('page-actions')

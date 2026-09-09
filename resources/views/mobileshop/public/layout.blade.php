@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'MobiTrack — Smartphones, Certified Pre-Owned & Express Repairs')</title>
-    <meta name="description" content="@yield('meta_description', 'MobiTrack is Mumbai\'s premier smartphone marketplace for brand new sealed devices, 50-point certified pre-owned phones, and professional express repairs.')">
+    <title>@yield('title', 'Maurya Mobile — Smartphones, Certified Pre-Owned & Express Repairs')</title>
+    <meta name="description" content="@yield('meta_description', 'Maurya Mobile is Mumbai\'s premier smartphone marketplace for brand new sealed devices, 50-point certified pre-owned phones, and professional express repairs.')">
 
     <!-- Google Fonts (Inter - matching Airbnb Cereal VF metrics) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -122,7 +122,7 @@
                     </svg>
                 </div>
                 <div class="flex flex-col">
-                    <span class="text-[20px] font-bold text-rausch tracking-tight leading-none">mobitrack</span>
+                    <span class="text-[20px] font-bold text-rausch tracking-tight leading-none">mauryamobile</span>
                     <span class="text-[10px] text-muted font-medium tracking-wide">marketplace</span>
                 </div>
             </a>
@@ -300,9 +300,9 @@
                     </ul>
                 </div>
 
-                <!-- Column 4: MobiTrack -->
+                <!-- Column 4: Maurya Mobile -->
                 <div class="space-y-3">
-                    <h4 class="text-sm font-semibold text-ink">MobiTrack</h4>
+                    <h4 class="text-sm font-semibold text-ink">Maurya Mobile</h4>
                     <ul class="space-y-2.5 text-sm text-muted">
                         <li><a href="{{ route('public.about') }}" class="hover:text-ink hover:underline transition-airbnb">About Showroom</a></li>
                         <li><a href="{{ route('public.contact') }}" class="hover:text-ink hover:underline transition-airbnb">Visit Linking Road Store</a></li>
@@ -315,7 +315,7 @@
             <!-- Legal Band -->
             <div class="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-muted">
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span>© {{ date('Y') }} MobiTrack, Inc.</span>
+                    <span>© {{ date('Y') }} Maurya Mobile, Inc.</span>
                     <span>·</span>
                     <a href="{{ route('public.about') }}" class="hover:text-ink hover:underline">Privacy</a>
                     <span>·</span>

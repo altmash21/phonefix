@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Procurement & POs — MobiTrack')
+@section('title', 'Procurement & POs — Maurya Mobile')
 @section('page-title', 'Procurement & Supplier Ledgers')
 
 @section('page-actions')

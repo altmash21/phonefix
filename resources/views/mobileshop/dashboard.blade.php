@@ -13,7 +13,7 @@
     $nicheTitle = $nicheTitles[$niche ?? 'admin'] ?? 'Dashboard';
 @endphp
 
-@section('title', $nicheTitle . ' — MobiTrack ERP')
+@section('title', $nicheTitle . ' — Maurya Mobile ERP')
 @section('page-title', $nicheTitle)
 
 @section('page-actions')
@@ -615,7 +615,7 @@
                                 Due: ₹{{ number_format($deb->udhari_balance, 2) }}
                             </div>
                         </div>
-                        <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $deb->phone) }}?text={{ urlencode('Dear ' . $deb->name . ', this is a polite reminder from MobiTrack regarding your outstanding balance of ₹' . number_format($deb->udhari_balance, 2) . '. Please settle at your earliest convenience.') }}" 
+                        <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $deb->phone) }}?text={{ urlencode('Dear ' . $deb->name . ', this is a polite reminder from Maurya Mobile regarding your outstanding balance of ₹' . number_format($deb->udhari_balance, 2) . '. Please settle at your earliest convenience.') }}" 
                            target="_blank"
                            class="btn btn-sm btn-outline"
                            style="color:#e11d48; border-color:#fca5a5; gap:4px; font-size:11px;"

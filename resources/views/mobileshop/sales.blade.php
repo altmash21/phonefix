@@ -11,7 +11,7 @@
     };
 @endphp
 
-@section('title', $salesPageTitle . ' — MobiTrack ERP')
+@section('title', $salesPageTitle . ' — Maurya Mobile ERP')
 @section('page-title', $salesPageTitle)
 
 @section('page-actions')
@@ -398,7 +398,7 @@
                             @php
                                 $cPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
                                 if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
-                                $sName = setting('company.name', 'MobiTrack');
+                                $sName = setting('company.name', 'Maurya Mobile');
                                 $mobMsg = "🧾 *Invoice {$sale->invoice_number}* from {$sName}\n";
                                 $mobMsg .= "Customer: {$sale->customer_name}\n";
                                 $mobMsg .= "Item: {$sale->brand} {$sale->model} (IMEI: {$sale->imei_1})\n";
@@ -457,7 +457,7 @@
                             @php
                                 $acPhone = preg_replace('/[^0-9]/', '', $asale->customer_phone ?? '');
                                 if (strlen($acPhone) === 10) $acPhone = '91' . $acPhone;
-                                $sName = setting('company.name', 'MobiTrack');
+                                $sName = setting('company.name', 'Maurya Mobile');
                                 $accMsg = "🧾 *Invoice {$asale->invoice_number}* from {$sName}\n";
                                 $accMsg .= "Customer: " . ($asale->customer_name ?: 'Valued Customer') . "\n";
                                 $accMsg .= "Total: ₹" . number_format($asale->total_amount, 2) . "\n";
@@ -494,7 +494,7 @@
                     @php
                         $cPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
                         if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
-                        $sName = setting('company.name', 'MobiTrack');
+                        $sName = setting('company.name', 'Maurya Mobile');
                         $mobMsg = "🧾 *Invoice {$sale->invoice_number}* from {$sName}\nCustomer: {$sale->customer_name}\nItem: {$sale->brand} {$sale->model} (IMEI: {$sale->imei_1})\nTotal: ₹" . number_format($sale->total_amount, 2) . "\nThank you for your purchase!";
                         $mobWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($mobMsg);
 
@@ -560,7 +560,7 @@
                     @php
                         $acPhone = preg_replace('/[^0-9]/', '', $asale->customer_phone ?? '');
                         if (strlen($acPhone) === 10) $acPhone = '91' . $acPhone;
-                        $sName = setting('company.name', 'MobiTrack');
+                        $sName = setting('company.name', 'Maurya Mobile');
                         $accMsg = "🧾 *Invoice {$asale->invoice_number}* from {$sName}\nCustomer: " . ($asale->customer_name ?: 'Valued Customer') . "\nTotal: ₹" . number_format($asale->total_amount, 2) . "\nThank you for your purchase!";
                         $accWaUrl = 'https://wa.me/' . $acPhone . '?text=' . rawurlencode($accMsg);
 

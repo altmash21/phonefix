@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Second Hand Hub & POS — MobiTrack')
+@section('title', 'Second Hand Hub & POS — Maurya Mobile')
 @section('page-title', 'Second Hand Mobiles & POS Hub')
 
 @section('page-actions')

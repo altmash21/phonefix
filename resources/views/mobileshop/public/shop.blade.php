@@ -1,6 +1,6 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Explore Marketplace Catalog — MobiTrack Store')
+@section('title', 'Explore Marketplace Catalog — Maurya Mobile Store')
 @section('meta_description', 'Browse official brand new smartphones and 50-point certified pre-owned devices in stock at our Mumbai showroom.')
 
 @section('content')
@@ -137,7 +137,7 @@
                                         Details
                                     </a>
                                     <span class="text-muted text-[11px]">·</span>
-                                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack, I would like to buy brand new ' . $np->brand . ' ' . $np->model . ' for ₹' . number_format($np->selling_price, 2)) }}" 
+                                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello Maurya Mobile, I would like to buy brand new ' . $np->brand . ' ' . $np->model . ' for ₹' . number_format($np->selling_price, 2)) }}" 
                                        target="_blank"
                                        class="text-[11px] sm:text-[13px] font-bold text-rausch hover:underline">
                                         Buy →
@@ -237,7 +237,7 @@
                                         Details
                                     </a>
                                     <span class="text-muted text-[11px]">·</span>
-                                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack, I want to reserve pre-owned ' . $sp->brand . ' ' . $sp->model . ' for ₹' . number_format($sp->selling_price, 2)) }}" 
+                                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello Maurya Mobile, I want to reserve pre-owned ' . $sp->brand . ' ' . $sp->model . ' for ₹' . number_format($sp->selling_price, 2)) }}" 
                                        target="_blank"
                                        class="text-[11px] sm:text-[13px] font-bold text-rausch hover:underline">
                                         Reserve →

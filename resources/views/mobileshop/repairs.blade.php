@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Repair Desk — MobiTrack')
+@section('title', 'Repair Desk — Maurya Mobile')
 @section('page-title', 'Repair Service Desk & Job Sheets')
 
 @section('page-actions')

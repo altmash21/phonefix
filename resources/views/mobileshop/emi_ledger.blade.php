@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'EMI Finance Companies Ledger — MobiTrack ERP')
+@section('title', 'EMI Finance Companies Ledger — Maurya Mobile ERP')
 @section('page-title', 'EMI Companies & Finance Partner Ledger')
 
 @section('page-actions')

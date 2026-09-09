@@ -11,7 +11,7 @@
     };
 @endphp
 
-@section('title', $purchasePageTitle . ' — MobiTrack ERP')
+@section('title', $purchasePageTitle . ' — Maurya Mobile ERP')
 @section('page-title', $purchasePageTitle)
 
 @section('page-actions')

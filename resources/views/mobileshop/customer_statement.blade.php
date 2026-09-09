@@ -1,10 +1,10 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Statement of Account — ' . $customer->name . ' — MobiTrack')
+@section('title', 'Statement of Account — ' . $customer->name . ' — Maurya Mobile')
 @section('page-title', 'Statement of Account')
 
 @php
-    $storeName = setting('company.name', 'MobiTrack Store');
+    $storeName = setting('company.name', 'Maurya Mobile Store');
     $storePhone = setting('company.phone', '+91 98765 43210');
     $storeAddress = setting('company.address', 'Store Location, Commercial Complex');
     $storeGstin = setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5'));

@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Customer Khata (Udhari) — MobiTrack')
+@section('title', 'Customer Khata (Udhari) — Maurya Mobile')
 @section('page-title', 'Customer Khata & Repayments')
 
 @section('page-actions')
@@ -142,7 +142,7 @@
             </thead>
             <tbody>
                 @php
-                    $stName = setting('company.name', 'MobiTrack');
+                    $stName = setting('company.name', 'Maurya Mobile');
                     $stPhone = setting('company.phone', '+91 98765 43210');
                 @endphp
                 @forelse($customers as $c)
@@ -611,7 +611,7 @@
                 <tbody>
                     @php
                         $activeDebtors = $customers->where('udhari_balance', '>', 0)->sortByDesc('udhari_balance');
-                        $stName = setting('company.name', 'MobiTrack');
+                        $stName = setting('company.name', 'Maurya Mobile');
                         $stPhone = setting('company.phone', '+91 98765 43210');
                     @endphp
                     @forelse($activeDebtors as $d)

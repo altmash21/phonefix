@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Live Repair Status Tracker — MobiTrack Service Lab')
-@section('meta_description', 'Track real-time service progression of your smartphone at MobiTrack Service Lab. View live diagnostic stages, parts replacement, and ready-for-pickup alerts.')
+@section('title', 'Live Repair Status Tracker — Maurya Mobile Service Lab')
+@section('meta_description', 'Track real-time service progression of your smartphone at Maurya Mobile Service Lab. View live diagnostic stages, parts replacement, and ready-for-pickup alerts.')
 
 @section('content')
 
@@ -147,7 +147,7 @@
                         </div>
                         @if($ticket->status === 'ready')
                             <div class="text-right">
-                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi MobiTrack, I am on my way to collect repaired phone ticket ' . $ticket->ticket_number) }}" 
+                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi Maurya Mobile, I am on my way to collect repaired phone ticket ' . $ticket->ticket_number) }}" 
                                    target="_blank"
                                    class="px-5 py-2.5 bg-rausch hover:bg-rausch-active text-white font-medium text-[13px] rounded-sm transition-airbnb inline-flex items-center gap-1.5 shadow-sm">
                                     <span>Confirm Pickup on WhatsApp</span>

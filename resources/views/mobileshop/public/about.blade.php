@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'About Us — MobiTrack Marketplace & Service Lab')
-@section('meta_description', 'Learn about MobiTrack, Mumbai’s trusted mobile retail showroom and certified smartphone repair center on Linking Road, Bandra West.')
+@section('title', 'About Us — Maurya Mobile Marketplace & Service Lab')
+@section('meta_description', 'Learn about Maurya Mobile, Mumbai’s trusted mobile retail showroom and certified smartphone repair center on Linking Road, Bandra West.')
 
 @section('content')
 
@@ -33,7 +33,7 @@
                     Transforming how Mumbai discovers, trades and repairs personal technology.
                 </h2>
                 <p class="text-[15px] text-body leading-relaxed">
-                    MobiTrack is an authorized retailer and multi-brand smartphone hub located on Linking Road, Bandra West. We bridge the gap between expensive brand-new devices and risky street markets by offering <strong>100% genuine sealed smartphones</strong> alongside <strong>laboratory-tested certified pre-owned devices</strong>.
+                    Maurya Mobile is an authorized retailer and multi-brand smartphone hub located on Linking Road, Bandra West. We bridge the gap between expensive brand-new devices and risky street markets by offering <strong>100% genuine sealed smartphones</strong> alongside <strong>laboratory-tested certified pre-owned devices</strong>.
                 </p>
                 <p class="text-[15px] text-body leading-relaxed">
                     Our in-house micro-soldering laboratory is staffed by certified technicians capable of diagnosing and reviving complex board-level faults in under 45 minutes, saving thousands of customer devices from being discarded prematurely.
@@ -59,7 +59,7 @@
             <!-- Right: Clean Host-Card Style Feature Box -->
             <div class="lg:col-span-5 bg-surface-soft rounded-[14px] p-8 border border-hairline shadow-airbnb-tier space-y-6">
                 <div>
-                    <span class="text-[11px] font-bold text-rausch uppercase tracking-wider">The MobiTrack Standard</span>
+                    <span class="text-[11px] font-bold text-rausch uppercase tracking-wider">The Maurya Mobile Standard</span>
                     <h3 class="text-[20px] font-bold text-ink mt-1">Why Customers Choose Us Every Single Day</h3>
                 </div>
 
@@ -104,7 +104,7 @@
                     Quality Assurance
                 </span>
                 <h2 class="text-[26px] font-bold text-ink">Our 50-Point Diagnostic Checklist</h2>
-                <p class="text-[15px] text-muted">Every certified pre-owned smartphone sold at MobiTrack must pass all 50 benchmarks before hitting our display shelves.</p>
+                <p class="text-[15px] text-muted">Every certified pre-owned smartphone sold at Maurya Mobile must pass all 50 benchmarks before hitting our display shelves.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-[13px] text-body">

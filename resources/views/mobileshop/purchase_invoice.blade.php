@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', ($po->bill_type === 'non_gst' ? 'Estimate Purchase' : 'Purchase Invoice') . ' #' . $po->po_number . ' — MobiTrack')
+@section('title', ($po->bill_type === 'non_gst' ? 'Estimate Purchase' : 'Purchase Invoice') . ' #' . $po->po_number . ' — Maurya Mobile')
 @section('page-title', $po->bill_type === 'non_gst' ? 'Estimate & Retail Purchase Bill' : 'Purchase Invoice & Delivery Bill')
 
 @section('page-actions')
@@ -29,11 +29,11 @@
             <tr>
                 <td style="vertical-align: top; width: 55%; padding-bottom: 12px;">
                     <div style="font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.3px; text-transform: uppercase;">
-                        {{ setting('company.name', 'MobiTrack Retail Store') }}
+                        {{ setting('company.name', 'Maurya Mobile Retail Store') }}
                     </div>
                     <div style="font-size: 11px; color: #4B5563; margin-top: 4px; line-height: 1.5;">
                         {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                        Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'procurement@mobitrack.local') }}
+                        Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'procurement@mauryamobile.local') }}
                     </div>
                     <div style="font-size: 11px; font-weight: 700; color: #111827; margin-top: 4px;">
                         Store GSTIN: <span style="font-family: monospace; font-weight: 700;">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>
@@ -136,7 +136,7 @@
                     </div>
 
                     <div style="margin-top: 12px; font-size: 10px; color: #6B7280; line-height: 1.5;">
-                        &bull; All inventory quantities received and booked into MobiTrack inventory ledger.<br>
+                        &bull; All inventory quantities received and booked into Maurya Mobile inventory ledger.<br>
                         &bull; Handset IMEI numbers logged into active inventory database.
                     </div>
                 </td>
@@ -181,7 +181,7 @@
                     </div>
                 </td>
                 <td style="width: 50%; vertical-align: top; text-align: right;">
-                    <div style="font-size: 11px; font-weight: 700; color: #111827;">For {{ setting('company.name', 'MobiTrack Retail Store') }}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #111827;">For {{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
                     <div style="height: 48px;"></div>
                     <div style="border-top: 1px solid #4B5563; display: inline-block; padding-top: 4px; font-size: 9.5px; color: #4B5563; min-width: 180px; text-align: center;">
                         Authorized Procurement &amp; Stamp
@@ -193,7 +193,7 @@
         <!-- BOTTOM DISCLAIMER STRIP -->
         <div style="margin-top: 24px; padding-top: 8px; border-top: 1px solid #E5E7EB; display: flex; justify-content: space-between; font-size: 9px; color: #9CA3AF;">
             <div>Computer generated purchase record &bull; Official Inward Stock Bill</div>
-            <div>{{ setting('company.name', 'MobiTrack') }} &bull; Powered by MobiTrack ERP</div>
+            <div>{{ setting('company.name', 'Maurya Mobile') }} &bull; Powered by Maurya Mobile ERP</div>
         </div>
 
     </div>

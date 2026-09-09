@@ -420,7 +420,7 @@ class ReportsController extends BaseMobileShopController
         $mobileSales = $data['mobileSales'];
         $accSales    = $data['accSales'];
 
-        $filename = 'mobitrack_sales_' . date('Y-m-d_His') . '.csv';
+        $filename = 'mauryamobile_sales_' . date('Y-m-d_His') . '.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv; charset=UTF-8',
@@ -526,7 +526,7 @@ class ReportsController extends BaseMobileShopController
         $accSales    = $data['accSales'];
         $purchases   = $data['purchases'];
 
-        $filename = 'mobitrack_gstr1_' . date('Y-m-d_His') . '.csv';
+        $filename = 'mauryamobile_gstr1_' . date('Y-m-d_His') . '.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv; charset=UTF-8',

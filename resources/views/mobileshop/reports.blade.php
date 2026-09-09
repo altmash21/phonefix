@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Reports & Business Analytics — MobiTrack ERP')
+@section('title', 'Reports & Business Analytics — Maurya Mobile ERP')
 @section('page-title', 'Financial Analytics & Store Intelligence')
 
 @push('styles')
@@ -571,7 +571,7 @@
                             @php
                                 $dPhone = preg_replace('/[^0-9]/', '', $debtor->phone ?? '');
                                 if (strlen($dPhone) === 10) $dPhone = '91' . $dPhone;
-                                $stName = setting('company.name', 'MobiTrack');
+                                $stName = setting('company.name', 'Maurya Mobile');
                                 $dMsg = "🔔 *PAYMENT REMINDER*\n🏪 *{$stName}*\nDear *{$debtor->name}*,\nPending Khata Due: *₹" . number_format($debtor->udhari_balance, 2) . "*.\nKindly clear your balance. Thank you!";
                                 $dWaUrl = 'https://wa.me/' . $dPhone . '?text=' . rawurlencode($dMsg);
                             @endphp

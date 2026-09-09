@@ -108,10 +108,10 @@
     <table class="table header-table">
         <tr>
             <td style="width: 58%; vertical-align: top;">
-                <div class="company-name">{{ setting('company.name', 'MobiTrack Retail Store') }}</div>
+                <div class="company-name">{{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
                 <div style="font-size: 9.5px; color: #4b5563; margin-top: 3px;">
                     {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                    Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'procurement@mobitrack.local') }}
+                    Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'procurement@mauryamobile.local') }}
                 </div>
                 <div style="font-size: 9.5px; font-weight: bold; color: #111827; margin-top: 3px;">
                     Store GSTIN: <span class="font-mono">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>
@@ -202,7 +202,7 @@
                 </div>
 
                 <div style="margin-top: 10px; font-size: 8.5px; color: #6b7280; line-height: 1.4;">
-                    &bull; All inventory quantities received and booked into MobiTrack inventory ledger.<br>
+                    &bull; All inventory quantities received and booked into Maurya Mobile inventory ledger.<br>
                     &bull; Handset IMEI numbers logged into active inventory tracking database.
                 </div>
             </td>
@@ -247,7 +247,7 @@
                 </div>
             </td>
             <td style="width: 50%; vertical-align: top; text-align: right;">
-                <div style="font-size: 10px; font-weight: bold; color: #111827;">For {{ setting('company.name', 'MobiTrack Retail Store') }}</div>
+                <div style="font-size: 10px; font-weight: bold; color: #111827;">For {{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
                 <div style="height: 42px;"></div>
                 <div style="border-top: 1px solid #4b5563; display: inline-block; padding-top: 3px; font-size: 9px; color: #4b5563; min-width: 170px; text-align: center;">
                     Authorized Procurement &amp; Stamp

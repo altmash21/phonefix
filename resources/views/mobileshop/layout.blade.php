@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#5E6AD2">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'MobiTrack — Mobile Shop ERP')</title>
+    <title>@yield('title', 'Maurya Mobile — Mobile Shop ERP')</title>
 
     <script>
         window.mobiShopRoutes = {
@@ -143,7 +143,7 @@
         }
     </script>
 
-    <!-- MobiTrack Admin Panel Design System (Linear Light System) -->
+    <!-- Maurya Mobile Admin Panel Design System (Linear Light System) -->
     <link rel="stylesheet" href="{{ url('/css/admin-panel.css') }}?v={{ time() }}">
 
     <!-- Dedicated Print Media Engine: Eliminates UI chrome, sidebars, headers, and buttons on Print/PDF -->
@@ -375,7 +375,7 @@
                 <i data-lucide="smartphone" style="width:18px;height:18px;"></i>
             </div>
             <div>
-                <div class="topbar-logo-text">MobiTrack <span class="topbar-logo-dot"></span></div>
+                <div class="topbar-logo-text">Maurya Mobile <span class="topbar-logo-dot"></span></div>
                 <div class="topbar-logo-sub topbar-subtitle">Retail & Service Console</div>
             </div>
         </a>
@@ -538,7 +538,7 @@
                         <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
                     </a>
                 @endif
-                <h1 class="page-title">@yield('page-title', 'MobiTrack')</h1>
+                <h1 class="page-title">@yield('page-title', 'Maurya Mobile')</h1>
                 <div class="page-header-right">
                     @yield('page-actions')
                 </div>

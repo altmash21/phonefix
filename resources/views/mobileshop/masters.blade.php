@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Masters & Store Configuration — MobiTrack ERP')
+@section('title', 'Masters & Store Configuration — Maurya Mobile ERP')
 @section('page-title', 'Store Masters & Master Configuration')
 
 @section('page-actions')
