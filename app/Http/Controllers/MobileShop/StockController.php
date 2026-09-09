@@ -8,6 +8,7 @@ use App\Services\MobileShop\Stock\StockHistoryService;
 use App\Services\MobileShop\Stock\StockDeletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Carbon\Carbon;
 
 class StockController extends BaseMobileShopController
@@ -176,7 +177,7 @@ class StockController extends BaseMobileShopController
      */
     public function storeNewMobile(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-pos') || auth()->user()->can('read-mobileshop-new') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+        Gate::authorize('stock.create');
 
         $request->validate([
             'brand' => 'required|string|max:100',
@@ -211,7 +212,7 @@ class StockController extends BaseMobileShopController
      */
     public function storeSecondHand(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized action.');
+        Gate::authorize('stock.create');
 
         $request->validate([
             'brand' => 'required',
@@ -240,7 +241,7 @@ class StockController extends BaseMobileShopController
      */
     public function sellSecondHand(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('sell-mobileshop-secondhand') || auth()->user()->can('create-mobileshop-pos') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized action.');
+        Gate::authorize('sale.create');
 
         $request->validate([
             'customer_phone' => 'required',
@@ -289,7 +290,7 @@ class StockController extends BaseMobileShopController
      */
     public function deleteStockItem(Request $request)
     {
-        abort_unless(auth()->check(), 401);
+        Gate::authorize('stock.delete');
 
         $request->validate([
             'item_type' => 'required|in:part,new_phone,second_hand',

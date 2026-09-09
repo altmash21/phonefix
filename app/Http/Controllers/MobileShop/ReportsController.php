@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\MobileShop;
 
+use App\Services\MobileShop\Common\PendingJobService;
 use App\Services\MobileShop\Reports\GstExportService;
 use App\Services\MobileShop\Reports\ReportsQueryService;
 use App\Services\MobileShop\Reports\SalesExportService;
@@ -72,6 +73,16 @@ class ReportsController extends BaseMobileShopController
             auth()->user()->hasRole('store-admin')
         ), 403, 'Unauthorized access to export reports.');
 
+        if ($request->boolean('async')) {
+            $jobId = PendingJobService::queueExport($this->getCompanyId(), 'sales', $request->all());
+            return response()->json([
+                'success' => true,
+                'queued'  => true,
+                'job_id'  => $jobId,
+                'message' => 'Sales export job queued for background generation.',
+            ]);
+        }
+
         $data = $this->getSalesAndPurchasesForReports($request);
         return $this->salesExportService->exportSalesCsv($data);
     }
@@ -87,6 +98,16 @@ class ReportsController extends BaseMobileShopController
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin')
         ), 403, 'Unauthorized access to export GST report.');
+
+        if ($request->boolean('async')) {
+            $jobId = PendingJobService::queueExport($this->getCompanyId(), 'gst', $request->all());
+            return response()->json([
+                'success' => true,
+                'queued'  => true,
+                'job_id'  => $jobId,
+                'message' => 'GST export job queued for background generation.',
+            ]);
+        }
 
         $data = $this->getSalesAndPurchasesForReports($request);
         return $this->gstExportService->exportGstCsv($data);

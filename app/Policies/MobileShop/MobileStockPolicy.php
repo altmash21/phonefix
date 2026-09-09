@@ -8,7 +8,7 @@ class MobileStockPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->can('read-admin-panel') && ($user->isOwner() || $user->hasRole('admin') || $user->hasRole('owner'))) {
+        if ($user->can('read-admin-panel') && ($user->isOwner() || $user->hasRole('admin') || $user->hasRole('owner') || $user->hasRole('store-admin'))) {
             return true;
         }
 
@@ -23,7 +23,9 @@ class MobileStockPolicy
 
         return $user->can('read-mobileshop-stock')
             || $user->can('create-mobileshop-stock')
-            || $user->can('manage-stock-phones');
+            || $user->can('manage-stock-phones')
+            || $user->hasRole('sales-staff')
+            || $user->hasRole('secondhand-staff');
     }
 
     public function create(User $user): bool
@@ -33,7 +35,11 @@ class MobileStockPolicy
         }
 
         return $user->can('create-mobileshop-stock')
-            || $user->can('manage-stock-phones');
+            || $user->can('manage-stock-phones')
+            || $user->can('create-mobileshop-pos')
+            || $user->can('create-mobileshop-secondhand')
+            || $user->hasRole('sales-staff')
+            || $user->hasRole('secondhand-staff');
     }
 
     public function update(User $user): bool

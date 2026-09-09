@@ -108,21 +108,25 @@ class MobileShopInvoiceHelper
     }
 
     /**
-     * Find existing customer by phone or create a new customer record
+     * Find existing customer by phone (cached 5 min) or create a new customer record
      */
     public static function findOrCreateCustomer(int $companyId, Request $request): object
     {
         $storeState = self::getStoreStateCode();
-        $customer = DB::table('ms_customers')
-            ->where('company_id', $companyId)
-            ->where('phone', trim($request->customer_phone))
-            ->first();
+        $phone = trim($request->customer_phone);
+
+        $customer = Cache::remember("ms_cust_{$companyId}_{$phone}", 300, function () use ($companyId, $phone) {
+            return DB::table('ms_customers')
+                ->where('company_id', $companyId)
+                ->where('phone', $phone)
+                ->first();
+        });
 
         if (!$customer) {
             $customerId = DB::table('ms_customers')->insertGetId([
                 'company_id' => $companyId,
                 'name' => trim($request->customer_name),
-                'phone' => trim($request->customer_phone),
+                'phone' => $phone,
                 'address' => $request->customer_address,
                 'gstin' => $request->customer_gstin,
                 'state_code' => $request->customer_state_code ?: $storeState,
@@ -131,7 +135,13 @@ class MobileShopInvoiceHelper
                 'updated_at' => now(),
             ]);
             $customer = DB::table('ms_customers')->where('id', $customerId)->first();
+            Cache::put("ms_cust_{$companyId}_{$phone}", $customer, 300);
         }
         return $customer;
+    }
+
+    public static function clearCustomerCache(int $companyId, string $phone): void
+    {
+        Cache::forget("ms_cust_{$companyId}_" . trim($phone));
     }
 }

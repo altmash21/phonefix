@@ -2,8 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Services\MobileShop\Common\MobileShopInvoiceResolver;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ProcessPendingJobs extends Command
@@ -51,6 +55,9 @@ class ProcessPendingJobs extends Command
 
             try {
                 $payload = json_decode($job->payload, true) ?: [];
+                if (!isset($payload['company_id']) && isset($job->company_id)) {
+                    $payload['company_id'] = (int) $job->company_id;
+                }
 
                 switch ($job->job_type) {
                     case 'pdf:invoice':
@@ -72,8 +79,8 @@ class ProcessPendingJobs extends Command
                 }
 
                 DB::table('ms_pending_jobs')->where('id', $job->id)->update([
-                    'status'       => 'completed',
-                    'completed_at' => now(),
+                    'status'        => 'completed',
+                    'completed_at'  => now(),
                     'error_message' => null,
                 ]);
 
@@ -106,19 +113,142 @@ class ProcessPendingJobs extends Command
 
     protected function handleInvoicePdf(array $payload): void
     {
-        // Invoice PDF pre-generation hook
-        Log::info("PendingJobs: Pre-generated PDF invoice for sale ID: " . ($payload['sale_id'] ?? 'unknown'));
+        $companyId = (int) ($payload['company_id'] ?? 1);
+        $saleId = isset($payload['sale_id']) ? (int) $payload['sale_id'] : null;
+
+        if (!$saleId) {
+            Log::warning("PendingJobs: Missing sale_id for invoice PDF job.");
+            return;
+        }
+
+        $saleExists = DB::table('ms_mobile_sales')
+            ->where('company_id', $companyId)
+            ->where('id', $saleId)
+            ->exists();
+
+        if (!$saleExists) {
+            Log::warning("PendingJobs: Sale #{$saleId} not found for company #{$companyId}. Skipping PDF generation.");
+            return;
+        }
+
+        $data = MobileShopInvoiceResolver::resolvePhoneSaleDetails($companyId, $saleId);
+
+        $pdf = Pdf::loadView('mobileshop.pdf.phone_invoice', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        $storageDir = storage_path('app/public/invoices');
+        if (!File::isDirectory($storageDir)) {
+            File::makeDirectory($storageDir, 0755, true, true);
+        }
+
+        $invNum = $data['sale']->invoice_number ?? "INV-{$saleId}";
+        $filename = "Invoice-{$invNum}.pdf";
+        $pdf->save($storageDir . '/' . $filename);
+
+        Log::info("PendingJobs: Pre-generated PDF invoice: {$storageDir}/{$filename}");
     }
 
     protected function handleExport(string $type, array $payload): void
     {
-        // Export file generation hook
-        Log::info("PendingJobs: Export {$type} prepared for company: " . ($payload['company_id'] ?? 'unknown'));
+        $companyId = (int) ($payload['company_id'] ?? 1);
+        $storageDir = storage_path('app/public/exports');
+        if (!File::isDirectory($storageDir)) {
+            File::makeDirectory($storageDir, 0755, true, true);
+        }
+
+        $timestamp = date('Ymd_His');
+        $filename = ($type === 'export:gst' ? "gst_export_{$companyId}_{$timestamp}.csv" : "sales_export_{$companyId}_{$timestamp}.csv");
+        $filepath = $storageDir . '/' . $filename;
+
+        // Compile CSV data
+        $file = fopen($filepath, 'w');
+        if ($type === 'export:gst') {
+            fputcsv($file, ['GSTIN', 'Invoice Number', 'Invoice Date', 'Customer Name', 'State Code', 'Taxable Amount', 'Tax Rate', 'CGST', 'SGST', 'IGST', 'Total Invoice Value']);
+            $sales = DB::table('ms_mobile_sales')
+                ->leftJoin('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
+                ->where('ms_mobile_sales.company_id', $companyId)
+                ->where('ms_mobile_sales.status', '!=', 'voided')
+                ->select(
+                    'ms_mobile_sales.*',
+                    'ms_customers.name as customer_name',
+                    'ms_customers.phone as customer_phone',
+                    'ms_customers.gstin as customer_gstin',
+                    'ms_customers.state_code as customer_state_code'
+                )
+                ->limit(500)
+                ->get();
+
+            foreach ($sales as $s) {
+                $tax = (float) (($s->cgst_amount ?? 0) + ($s->sgst_amount ?? 0) + ($s->igst_amount ?? 0));
+                $total = (float) ($s->final_amount ?? $s->total_amount ?? 0);
+                $taxable = max(0, $total - $tax);
+                fputcsv($file, [
+                    $s->customer_gstin ?: 'URP',
+                    $s->invoice_number ?? "INV-{$s->id}",
+                    $s->created_at,
+                    $s->customer_name ?? 'Walk-in Customer',
+                    $s->customer_state_code ?? '09',
+                    $taxable,
+                    $tax > 0 ? 18.00 : 0.00,
+                    $s->cgst_amount ?? 0,
+                    $s->sgst_amount ?? 0,
+                    $s->igst_amount ?? 0,
+                    $total,
+                ]);
+            }
+        } else {
+            fputcsv($file, ['ID', 'Invoice Number', 'Date', 'Customer', 'Phone', 'Payment Mode', 'Final Amount', 'Status']);
+            $sales = DB::table('ms_mobile_sales')
+                ->leftJoin('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
+                ->where('ms_mobile_sales.company_id', $companyId)
+                ->select(
+                    'ms_mobile_sales.*',
+                    'ms_customers.name as customer_name',
+                    'ms_customers.phone as customer_phone'
+                )
+                ->limit(500)
+                ->get();
+
+            foreach ($sales as $s) {
+                fputcsv($file, [
+                    $s->id,
+                    $s->invoice_number ?? "INV-{$s->id}",
+                    $s->created_at,
+                    $s->customer_name ?? 'Walk-in Customer',
+                    $s->customer_phone ?? '',
+                    $s->payment_mode ?? 'Cash',
+                    $s->final_amount ?? $s->total_amount ?? 0,
+                    $s->status ?? 'completed',
+                ]);
+            }
+        }
+        fclose($file);
+
+        Log::info("PendingJobs: Export {$type} saved to: {$filepath}");
     }
 
     protected function handleWhatsAppReceipt(array $payload): void
     {
-        // WhatsApp notification gateway dispatch hook
-        Log::info("PendingJobs: WhatsApp receipt dispatched to: " . ($payload['phone'] ?? 'unknown'));
+        $phone = $payload['phone'] ?? null;
+        $customer = $payload['customer_name'] ?? 'Valued Customer';
+        $invoice = $payload['invoice_number'] ?? 'N/A';
+        $amount = number_format((float) ($payload['amount'] ?? 0), 2);
+
+        $message = "Dear {$customer}, thank you for your purchase at MobiTrack! Invoice #{$invoice} for Rs. {$amount} has been generated successfully.";
+
+        $webhook = config('services.whatsapp.webhook');
+        if (!empty($webhook) && !empty($phone)) {
+            try {
+                Http::timeout(5)->post($webhook, [
+                    'phone'   => $phone,
+                    'message' => $message,
+                    'invoice' => $invoice,
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning("WhatsApp dispatch webhook failed: " . $e->getMessage());
+            }
+        }
+
+        Log::info("PendingJobs: WhatsApp receipt queued for {$phone}: {$message}");
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\MobileShop;
 
+use App\Services\MobileShop\Common\PendingJobService;
 use App\Services\MobileShop\Sales\EmiBillScannerService;
 use App\Services\MobileShop\Sales\PosSaleService;
 use App\Services\MobileShop\Sales\MultiSaleService;
@@ -9,6 +10,7 @@ use App\Services\MobileShop\Sales\SaleVoidService;
 use App\Services\MobileShop\Sales\WhatsAppReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class SalesController extends BaseMobileShopController
@@ -185,7 +187,7 @@ class SalesController extends BaseMobileShopController
      */
     public function scanEmiBill(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-pos') || auth()->user()->can('create-mobileshop-pos') || auth()->user()->can('create-sale-phones') || auth()->user()->can('read-mobileshop-sales') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized.');
+        Gate::authorize('sale.viewAny');
 
         $request->validate([
             'bill_image' => 'required|file|mimes:jpeg,png,jpg,webp,pdf,heic|max:10240',
@@ -204,7 +206,7 @@ class SalesController extends BaseMobileShopController
      */
     public function processSale(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-pos') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized action.');
+        Gate::authorize('sale.create');
         
         $request->validate([
             'customer_phone' => 'required|string|min:7|max:20',
@@ -227,6 +229,18 @@ class SalesController extends BaseMobileShopController
                 ->with('success', "Sale invoice #{$result['invoice_number']} already processed (Idempotent response).");
         }
 
+        // Asynchronously pre-generate invoice PDF and WhatsApp receipt in background
+        PendingJobService::queueInvoicePdf($companyId, (int) $result['sale_id'], (string) $result['invoice_number']);
+        if (!empty($request->customer_phone)) {
+            PendingJobService::queueWhatsAppReceipt(
+                $companyId,
+                (string) $request->customer_phone,
+                (string) $request->customer_name,
+                (string) $result['invoice_number'],
+                (float) $request->sale_price
+            );
+        }
+
         return redirect()->route('mobileshop.invoice', ['id' => $result['sale_id']])
             ->with('success', "Sale #{$result['invoice_number']} successfully recorded!");
     }
@@ -236,14 +250,7 @@ class SalesController extends BaseMobileShopController
      */
     public function invoice($id)
     {
-        abort_unless(auth()->check() && (
-            auth()->user()->can('read-mobileshop-pos') || 
-            auth()->user()->can('read-mobileshop-secondhand') ||
-            auth()->user()->hasRole('admin') || 
-            auth()->user()->hasRole('store-admin') || 
-            auth()->user()->hasRole('sales-staff') ||
-            auth()->user()->hasRole('secondhand-staff')
-        ), 403, 'Unauthorized access to invoices.');
+        Gate::authorize('sale.printInvoice');
 
         $data = $this->resolvePhoneSaleDetails($this->getCompanyId(), (int) $id);
         return view('mobileshop.invoice', $data);
@@ -254,14 +261,7 @@ class SalesController extends BaseMobileShopController
      */
     public function invoicePdf($id)
     {
-        abort_unless(auth()->check() && (
-            auth()->user()->can('read-mobileshop-pos') || 
-            auth()->user()->can('read-mobileshop-secondhand') ||
-            auth()->user()->hasRole('admin') || 
-            auth()->user()->hasRole('store-admin') || 
-            auth()->user()->hasRole('sales-staff') ||
-            auth()->user()->hasRole('secondhand-staff')
-        ), 403, 'Unauthorized access to invoice PDF.');
+        Gate::authorize('sale.printInvoice');
 
         $data = $this->resolvePhoneSaleDetails($this->getCompanyId(), (int) $id);
         $pdf = Pdf::loadView('mobileshop.pdf.phone_invoice', $data);
@@ -274,14 +274,7 @@ class SalesController extends BaseMobileShopController
      */
     public function voidMobileSale(Request $request, $id)
     {
-        abort_unless(auth()->check() && (
-            auth()->user()->can('void-mobileshop-sales') ||
-            auth()->user()->can('read-mobileshop-sales') ||
-            auth()->user()->can('create-mobileshop-pos') ||
-            auth()->user()->can('create-sale-phones') ||
-            auth()->user()->hasRole('admin') ||
-            auth()->user()->hasRole('store-admin')
-        ), 403, 'Unauthorized to process sales return.');
+        Gate::authorize('sale.void');
 
         $request->validate([
             'void_reason' => 'nullable|string',
@@ -340,7 +333,7 @@ class SalesController extends BaseMobileShopController
      */
     public function saleCreate()
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-sale-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized access to sale registration.');
+        Gate::authorize('sale.create');
 
         $companyId = $this->getCompanyId();
         $inStockDevices = DB::table('ms_mobile_devices')
@@ -367,7 +360,7 @@ class SalesController extends BaseMobileShopController
      */
     public function storeMultiSale(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-sale-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+        Gate::authorize('sale.create');
 
         $request->validate([
             'customer_phone'   => 'required|string|min:7|max:20',
