@@ -1252,9 +1252,10 @@
         container.innerHTML = '';
 
         modal.style.display = 'flex';
-        if (window.lucide) window.lucide.createIcons();
+        const historyUrlTemplate = "{{ route('mobileshop.stock.history', ['type' => 'ITEM_TYPE', 'id' => 'ITEM_ID'], false) }}";
+        const historyUrl = historyUrlTemplate.replace('ITEM_TYPE', encodeURIComponent(item.type)).replace('ITEM_ID', encodeURIComponent(item.id));
 
-        fetch(`/admin/mobileshop/stock/history/${item.type}/${item.id}`, {
+        fetch(historyUrl, {
             headers: { 'Accept': 'application/json' }
         })
         .then(res => res.json())

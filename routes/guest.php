@@ -27,6 +27,7 @@ Route::group(['prefix' => 'auth', 'middleware' => ['auth.redirect']], function (
 // ══════════════════════════════════════════════════════════
 Route::get('/', 'MobileShop\PublicStoreController@publicLanding')->name('public.landing');
 Route::get('shop', 'MobileShop\PublicStoreController@publicStore')->name('public.store');
+Route::get('shop/{id}', 'MobileShop\PublicStoreController@publicProductDetail')->name('public.product.show');
 Route::get('about', 'MobileShop\PublicStoreController@publicAbout')->name('public.about');
 Route::get('contact', 'MobileShop\PublicStoreController@publicContact')->name('public.contact');
 Route::post('contact', 'MobileShop\PublicStoreController@submitContact')->name('public.contact.submit');

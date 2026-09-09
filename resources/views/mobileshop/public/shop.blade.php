@@ -31,7 +31,15 @@
     <!-- ════ 2. AIRBNB CATEGORY FILTER PILLS ════ -->
     <div class="bg-canvas border-b border-hairline-soft sticky top-20 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            @php $currentTab = request('tab', 'all'); @endphp
+            @php 
+                $currentTab = request('tab', 'all'); 
+                $gradeLabels = [
+                    'like_new_A_plus' => 'A+ (Like New)',
+                    'good_A'          => 'A (Good)',
+                    'fair_B'          => 'B (Fair)',
+                    'brand_new'       => 'Brand New'
+                ];
+            @endphp
             <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
                 <a href="{{ route('public.store', ['tab' => 'all', 'q' => request('q')]) }}" 
                    class="px-4 py-2 rounded-full text-[13px] font-medium transition-airbnb shrink-0 border {{ $currentTab === 'all' ? 'bg-ink text-white border-ink' : 'bg-canvas text-ink border-hairline hover:border-ink' }}">
@@ -63,65 +71,78 @@
                 <span class="text-[12px] font-medium text-muted">Official Brand Warranty</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Responsive Grid: 2 on mobile, 4 on desktop -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 @forelse($newPhones as $np)
-                    <div class="group flex flex-col cursor-pointer">
-                        <!-- Photo Plate -->
-                        <div class="relative aspect-square w-full rounded-[14px] overflow-hidden bg-surface-soft border border-hairline-soft mb-3">
-                            <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-surface-soft to-surface-strong group-hover:scale-105 transition-transform duration-300">
-                                <div class="w-20 h-20 rounded-2xl bg-white shadow-airbnb-tier flex items-center justify-center text-ink mb-2">
-                                    <svg class="w-10 h-10 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
+                    <div class="group flex flex-col">
+                        <!-- Photo Plate with link to PDP -->
+                        <a href="{{ route('public.product.show', $np->id) }}" class="relative aspect-square w-full rounded-[14px] overflow-hidden bg-surface-soft border border-hairline-soft mb-3 block">
+                            <div class="w-full h-full flex flex-col items-center justify-center p-4 sm:p-6 text-center bg-gradient-to-b from-surface-soft to-surface-strong group-hover:scale-105 transition-transform duration-300">
+                                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white shadow-airbnb-tier flex items-center justify-center text-ink mb-2">
+                                    <svg class="w-8 h-8 sm:w-10 sm:h-10 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
                                         <rect x="5" y="2" width="14" height="20" rx="3"></rect>
                                         <line x1="12" y1="18" x2="12.01" y2="18"></line>
                                     </svg>
                                 </div>
-                                <span class="text-[11px] font-semibold tracking-wider text-muted uppercase">{{ $np->brand }}</span>
-                                <span class="text-[13px] font-semibold text-ink">{{ $np->model }}</span>
+                                <span class="text-[10px] sm:text-[11px] font-semibold tracking-wider text-muted uppercase">{{ $np->brand }}</span>
+                                <span class="text-[12px] sm:text-[14px] font-semibold text-ink truncate max-w-full px-2">{{ $np->model }}</span>
                             </div>
 
                             <!-- Top-Left Badge -->
-                            <div class="absolute top-3 left-3 bg-canvas text-ink text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-airbnb-tier">
+                            <div class="absolute top-2.5 left-2.5 bg-canvas/95 backdrop-blur-sm text-ink text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">
                                 100% Sealed
                             </div>
 
                             <!-- Top-Right Heart Button -->
                             <button type="button" 
-                                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-ink flex items-center justify-center transition-airbnb shadow-airbnb-tier hover:scale-110"
-                                    title="Save to wishlist">
-                                <svg class="w-4 h-4 stroke-current fill-none hover:fill-rausch hover:text-rausch stroke-[2]" viewBox="0 0 24 24">
+                                    class="absolute top-2.5 right-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 hover:bg-white text-ink flex items-center justify-center transition-airbnb shadow-sm hover:scale-110"
+                                    title="Save to wishlist"
+                                    onclick="event.stopPropagation(); event.preventDefault();">
+                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-current fill-none hover:fill-rausch hover:text-rausch stroke-[2]" viewBox="0 0 24 24">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
                             </button>
-                        </div>
+                        </a>
 
                         <!-- Metadata Block -->
-                        <div class="space-y-1">
-                            <div class="flex items-center justify-between text-[15px]">
-                                <span class="font-semibold text-ink truncate">{{ $np->brand }} {{ $np->model }}</span>
-                                <span class="flex items-center gap-1 text-ink font-semibold shrink-0">
-                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                    <span>4.95</span>
-                                </span>
+                        <div class="space-y-1 sm:space-y-1.5 flex-1 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between text-[13px] sm:text-[15px]">
+                                    <a href="{{ route('public.product.show', $np->id) }}" class="font-bold text-ink hover:text-rausch transition-colors truncate">
+                                        {{ $np->brand }} {{ $np->model }}
+                                    </a>
+                                    <span class="hidden sm:flex items-center gap-1 text-ink font-semibold shrink-0 text-[12px]">
+                                        <svg class="w-3 h-3 fill-current text-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                        <span>4.95</span>
+                                    </span>
+                                </div>
+
+                                <p class="text-[12px] sm:text-[13px] text-muted truncate">
+                                    {{ $np->storage ?? '128GB' }} · {{ $np->ram ?? '8GB' }} RAM · {{ $np->color ?? 'Official' }}
+                                </p>
+
+                                <p class="hidden sm:block text-[12px] text-muted truncate">
+                                    Free 9D Tempered Glass + Protective Case
+                                </p>
                             </div>
 
-                            <p class="text-[14px] text-muted truncate">
-                                {{ $np->storage ?? '128GB' }} · {{ $np->ram ?? '8GB' }} RAM · {{ $np->color ?? 'Official Edition' }}
-                            </p>
-
-                            <p class="text-[14px] text-muted truncate">
-                                Free 9D Tempered Glass + Protective Case
-                            </p>
-
-                            <div class="pt-1 flex items-baseline justify-between">
-                                <div class="text-[15px] font-semibold text-ink">
+                            <div class="pt-2 border-t border-hairline-soft flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                                <div class="text-[14px] sm:text-[16px] font-bold text-ink">
                                     <span>₹{{ number_format($np->selling_price, 2) }}</span>
-                                    <span class="font-normal text-muted text-[13px]"> incl. GST</span>
+                                    <span class="font-normal text-muted text-[11px] sm:text-[12px]"> incl. GST</span>
                                 </div>
-                                <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack, I would like to buy brand new ' . $np->brand . ' ' . $np->model . ' for ₹' . number_format($np->selling_price, 2)) }}" 
-                                   target="_blank"
-                                   class="text-[13px] font-semibold text-rausch hover:underline">
-                                    Buy / Inquire →
-                                </a>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('public.product.show', $np->id) }}" 
+                                       class="text-[11px] sm:text-[13px] font-semibold text-ink hover:underline">
+                                        Details
+                                    </a>
+                                    <span class="text-muted text-[11px]">·</span>
+                                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack, I would like to buy brand new ' . $np->brand . ' ' . $np->model . ' for ₹' . number_format($np->selling_price, 2)) }}" 
+                                       target="_blank"
+                                       class="text-[11px] sm:text-[13px] font-bold text-rausch hover:underline">
+                                        Buy →
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -145,70 +166,83 @@
                 <span class="text-[12px] font-medium text-muted">50-Point Inspection Guaranteed</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Responsive Grid: 2 on mobile, 4 on desktop -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 @forelse($secondHandPhones as $sp)
-                    <div class="group flex flex-col cursor-pointer">
-                        <!-- Photo Plate -->
-                        <div class="relative aspect-square w-full rounded-[14px] overflow-hidden bg-surface-soft border border-hairline-soft mb-3">
-                            <div class="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-surface-soft to-surface-strong group-hover:scale-105 transition-transform duration-300">
-                                <div class="w-20 h-20 rounded-2xl bg-white shadow-airbnb-tier flex items-center justify-center text-ink mb-2">
-                                    <svg class="w-10 h-10 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
+                    <div class="group flex flex-col">
+                        <!-- Photo Plate with link to PDP -->
+                        <a href="{{ route('public.product.show', $sp->id) }}" class="relative aspect-square w-full rounded-[14px] overflow-hidden bg-surface-soft border border-hairline-soft mb-3 block">
+                            <div class="w-full h-full flex flex-col items-center justify-center p-4 sm:p-6 text-center bg-gradient-to-b from-surface-soft to-surface-strong group-hover:scale-105 transition-transform duration-300">
+                                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white shadow-airbnb-tier flex items-center justify-center text-ink mb-2">
+                                    <svg class="w-8 h-8 sm:w-10 sm:h-10 stroke-current fill-none stroke-[1.5]" viewBox="0 0 24 24">
                                         <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
                                     </svg>
                                 </div>
-                                <span class="text-[11px] font-semibold tracking-wider text-muted uppercase">{{ $sp->brand }}</span>
-                                <span class="text-[13px] font-semibold text-ink">{{ $sp->model }}</span>
+                                <span class="text-[10px] sm:text-[11px] font-semibold tracking-wider text-muted uppercase">{{ $sp->brand }}</span>
+                                <span class="text-[12px] sm:text-[14px] font-semibold text-ink truncate max-w-full px-2">{{ $sp->model }}</span>
                             </div>
 
                             <!-- Top-Left Badge -->
-                            <div class="absolute top-3 left-3 bg-canvas text-ink text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-airbnb-tier">
-                                Grade {{ strtoupper($sp->condition_grade ?? 'A+') }}
+                            <div class="absolute top-2.5 left-2.5 bg-canvas/95 backdrop-blur-sm text-ink text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">
+                                Grade {{ $gradeLabels[$sp->condition_grade] ?? strtoupper(str_replace('_', ' ', $sp->condition_grade ?? 'A+')) }}
                             </div>
 
                             <!-- Top-Right Heart Button -->
                             <button type="button" 
-                                    class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-ink flex items-center justify-center transition-airbnb shadow-airbnb-tier hover:scale-110"
-                                    title="Save to wishlist">
-                                <svg class="w-4 h-4 stroke-current fill-none hover:fill-rausch hover:text-rausch stroke-[2]" viewBox="0 0 24 24">
+                                    class="absolute top-2.5 right-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 hover:bg-white text-ink flex items-center justify-center transition-airbnb shadow-sm hover:scale-110"
+                                    title="Save to wishlist"
+                                    onclick="event.stopPropagation(); event.preventDefault();">
+                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-current fill-none hover:fill-rausch hover:text-rausch stroke-[2]" viewBox="0 0 24 24">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
                             </button>
 
                             @if($sp->battery_health)
-                                <div class="absolute bottom-3 left-3 bg-canvas/90 backdrop-blur-sm text-ink text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-sm">
-                                    {{ $sp->battery_health }}% Battery Health
+                                <div class="absolute bottom-2.5 left-2.5 bg-canvas/90 backdrop-blur-sm text-ink text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-md shadow-sm">
+                                    🔋 {{ $sp->battery_health }}%
                                 </div>
                             @endif
-                        </div>
+                        </a>
 
                         <!-- Metadata Block -->
-                        <div class="space-y-1">
-                            <div class="flex items-center justify-between text-[15px]">
-                                <span class="font-semibold text-ink truncate">{{ $sp->brand }} {{ $sp->model }}</span>
-                                <span class="flex items-center gap-1 text-ink font-semibold shrink-0">
-                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                    <span>4.90</span>
-                                </span>
+                        <div class="space-y-1 sm:space-y-1.5 flex-1 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between text-[13px] sm:text-[15px]">
+                                    <a href="{{ route('public.product.show', $sp->id) }}" class="font-bold text-ink hover:text-rausch transition-colors truncate">
+                                        {{ $sp->brand }} {{ $sp->model }}
+                                    </a>
+                                    <span class="hidden sm:flex items-center gap-1 text-ink font-semibold shrink-0 text-[12px]">
+                                        <svg class="w-3 h-3 fill-current text-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                        <span>4.90</span>
+                                    </span>
+                                </div>
+
+                                <p class="text-[12px] sm:text-[13px] text-muted truncate">
+                                    {{ $sp->storage ?? '128GB' }} · {{ $sp->color ?? 'Clean' }}
+                                </p>
+
+                                <p class="hidden sm:block text-[12px] text-muted truncate">
+                                    30-Day Testing & Replacement Warranty
+                                </p>
                             </div>
 
-                            <p class="text-[14px] text-muted truncate">
-                                {{ $sp->storage ?? '128GB' }} · {{ $sp->color ?? 'Clean Condition' }}
-                            </p>
-
-                            <p class="text-[14px] text-muted truncate">
-                                30-Day Testing & Replacement Warranty
-                            </p>
-
-                            <div class="pt-1 flex items-baseline justify-between">
-                                <div class="text-[15px] font-semibold text-ink">
+                            <div class="pt-2 border-t border-hairline-soft flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                                <div class="text-[14px] sm:text-[16px] font-bold text-ink">
                                     <span>₹{{ number_format($sp->selling_price, 2) }}</span>
-                                    <span class="font-normal text-muted text-[13px]"> tested</span>
+                                    <span class="font-normal text-muted text-[11px] sm:text-[12px]"> tested</span>
                                 </div>
-                                <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack, I want to reserve pre-owned ' . $sp->brand . ' ' . $sp->model . ' for ₹' . number_format($sp->selling_price, 2)) }}" 
-                                   target="_blank"
-                                   class="text-[13px] font-semibold text-rausch hover:underline">
-                                    Reserve →
-                                </a>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('public.product.show', $sp->id) }}" 
+                                       class="text-[11px] sm:text-[13px] font-semibold text-ink hover:underline">
+                                        Details
+                                    </a>
+                                    <span class="text-muted text-[11px]">·</span>
+                                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello MobiTrack, I want to reserve pre-owned ' . $sp->brand . ' ' . $sp->model . ' for ₹' . number_format($sp->selling_price, 2)) }}" 
+                                       target="_blank"
+                                       class="text-[11px] sm:text-[13px] font-bold text-rausch hover:underline">
+                                        Reserve →
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -92,6 +92,59 @@ class PublicStoreController extends BaseMobileShopController
     }
 
     /**
+     * Public Website — Single Product Detail Page
+     */
+    public function publicProductDetail($id)
+    {
+        $companyId = company_id() ?? session('company_id') ?? 1;
+
+        $device = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->where('id', $id)
+            ->first();
+
+        if (!$device) {
+            abort(404, 'The requested mobile device was not found in our catalog.');
+        }
+
+        // Related in-stock devices (same brand or same type, excluding current)
+        $relatedDevices = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->where('id', '!=', $id)
+            ->where('status', 'in_stock')
+            ->where(function($q) use ($device) {
+                $q->where('brand', $device->brand)
+                  ->orWhere('type', $device->type);
+            })
+            ->orderBy('id', 'desc')
+            ->limit(4)
+            ->get();
+
+        if ($relatedDevices->count() < 4) {
+            $excludeIds = $relatedDevices->pluck('id')->push($id)->toArray();
+            $moreDevices = DB::table('ms_mobile_devices')
+                ->where('company_id', $companyId)
+                ->whereNotIn('id', $excludeIds)
+                ->where('status', 'in_stock')
+                ->orderBy('id', 'desc')
+                ->limit(4 - $relatedDevices->count())
+                ->get();
+            $relatedDevices = $relatedDevices->merge($moreDevices);
+        }
+
+        // Calculate approximate EMI plans
+        $price = (float) $device->selling_price;
+        $emiPlans = [
+            ['months' => 3, 'monthly' => round($price / 3), 'down_payment' => 0, 'bank' => 'Bajaj Finserv'],
+            ['months' => 6, 'monthly' => round(($price * 1.04) / 6), 'down_payment' => 0, 'bank' => 'HDFC / ICICI'],
+            ['months' => 9, 'monthly' => round(($price * 1.06) / 9), 'down_payment' => 0, 'bank' => 'IDFC First'],
+            ['months' => 12, 'monthly' => round(($price * 1.08) / 12), 'down_payment' => 0, 'bank' => 'Credit Card EMI'],
+        ];
+
+        return view('mobileshop.public.product', compact('device', 'relatedDevices', 'emiPlans'));
+    }
+
+    /**
      * Public Website — About Us Page
      */
     public function publicAbout()
