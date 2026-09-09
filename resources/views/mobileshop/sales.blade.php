@@ -980,7 +980,7 @@
 
 @push('scripts')
 <script>
-    const companyId = {{ company_id() }};
+    const companyId = {{ json_encode(company_id()) }};
     let cart = [];
     let userEditedPaidAmount = false;
     const allCatalogParts = {!! json_encode($partsList ?? []) !!};

@@ -637,7 +637,7 @@
     }
     window.escapeHtml = escapeHtml;
 
-    const companyId = {{ company_id() }};
+    const companyId = {{ json_encode(company_id()) }};
     function openBulkRestockModal() {
         window.location.href = "{{ route('mobileshop.accessories.purchase') }}";
     }

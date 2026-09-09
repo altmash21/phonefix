@@ -61,74 +61,81 @@
 </div>
 
 <!-- SINGLE UNIFIED KHATA MASTER LIST -->
-<div class="card" style="margin-bottom: 12px; border-radius:8px; border:1px solid #E2E8F0; overflow:hidden;">
-    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:10px 14px; display:flex; flex-direction:column; gap:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+<div class="card khata-registry-card" style="margin-bottom: 12px; border-radius:10px; border:1px solid #E2E8F0; overflow:hidden;">
+    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:28px; height:28px; border-radius:6px; background:#EFF6FF; color:var(--brand-700); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i data-lucide="book-open" style="width: 16px; height: 16px;"></i>
+            </div>
             <div>
-                <div class="card-title" style="display:flex; align-items:center; gap:8px;">
+                <div class="card-title" style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:14px; color:#0F172A; margin:0;">
                     Customer Khata & Credit Ledger
                     <span id="khataVisibleCountBadge" class="badge badge-blue" style="font-size:11px; font-weight:700;"></span>
                 </div>
-                <div style="font-size:12px; color:#64748B;">Unified register of all credit sales, payments, and ledger balances</div>
-            </div>
-
-            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                <!-- Filter By Customer Dropdown -->
-                <select id="customerFilterSelect" onchange="filterKhataLedger()" class="form-control" style="font-size:12px; font-weight:700; width:auto; border-color:#CBD5E1; padding:6px 12px; height:auto; color:#0F172A;">
-                    <option value="all">👤 All Customers</option>
-                    @foreach($customers as $c)
-                        <option value="{{ $c->id }}">{{ $c->name }} (Due: ₹{{ number_format($c->udhari_balance, 2) }})</option>
-                    @endforeach
-                </select>
-
-                <!-- Search input -->
-                <div class="search-bar" style="background:#fff; border:1px solid #CBD5E1; border-radius:8px; padding:5px 12px; display:flex; align-items:center; gap:6px;">
-                    <i data-lucide="search" style="width:14px;height:14px; color:#94A3B8;"></i>
-                    <input type="text" id="khataSearchInput" placeholder="Search bill #, customer, phone..." oninput="filterKhataLedger()" style="border:none; outline:none; font-size:12px; color:#0F172A; width:180px;">
-                </div>
+                <div style="font-size:11.5px; color:#64748B; margin-top:2px;">Unified register of all credit sales, payments, and ledger balances</div>
             </div>
         </div>
 
-        <!-- Filter Controls Row: Type Pills & Date Toolbar -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:#fff; border:1px solid #E2E8F0; padding:8px 12px; border-radius:8px;">
-            <!-- Type Filter Pills -->
-            <div style="display:flex; gap:5px; background:#E2E8F0; padding:3px; border-radius:8px; flex-wrap:wrap;">
-                <button type="button" onclick="setKhataFilterType('all')" id="btnFilterAll" class="filter-pill active" style="padding:4px 10px; border-radius:6px; font-size:11px; font-weight:800; border:none; cursor:pointer;">
-                    All ({{ $transactions->count() }})
-                </button>
-                <button type="button" onclick="setKhataFilterType('udhari_sale')" id="btnFilterUdhari" class="filter-pill" style="padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer;">
-                    🔴 Udhari Dues ({{ $transactions->where('type', 'udhari_sale')->count() }})
-                </button>
-                <button type="button" onclick="setKhataFilterType('payment_received')" id="btnFilterPayment" class="filter-pill" style="padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer;">
-                    🟢 Repayments ({{ $transactions->where('type', 'payment_received')->count() }})
-                </button>
-                <button type="button" onclick="setKhataFilterType('adjustment')" id="btnFilterAdjustment" class="filter-pill" style="padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; border:none; cursor:pointer;">
-                    🔵 Adjustments ({{ $transactions->where('type', 'adjustment')->count() }})
-                </button>
-            </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <!-- Filter By Customer Dropdown -->
+            <select id="customerFilterSelect" onchange="filterKhataLedger()" class="form-control" style="font-size:12px; font-weight:700; width:auto; border-color:#CBD5E1; padding:6px 12px; height:auto; color:#0F172A; background:#FFFFFF; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                <option value="all">👤 All Customers</option>
+                @foreach($customers as $c)
+                    <option value="{{ $c->id }}">{{ $c->name }} (Due: ₹{{ number_format($c->udhari_balance, 2) }})</option>
+                @endforeach
+            </select>
 
-            <!-- Date Range Filters -->
-            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <!-- Date Presets -->
-                <div style="display:flex; gap:4px; align-items:center;">
-                    <button type="button" onclick="setKhataDatePreset('all')" id="khataDateBtn_all" class="filter-pill khata-date-pill active" style="padding:4px 8px; font-size:11px; font-weight:700; border:none; cursor:pointer;">All Time</button>
-                    <button type="button" onclick="setKhataDatePreset('today')" id="khataDateBtn_today" class="filter-pill khata-date-pill" style="padding:4px 8px; font-size:11px; font-weight:700; border:none; cursor:pointer;">Today</button>
-                    <button type="button" onclick="setKhataDatePreset('yesterday')" id="khataDateBtn_yesterday" class="filter-pill khata-date-pill" style="padding:4px 8px; font-size:11px; font-weight:700; border:none; cursor:pointer;">Yesterday</button>
-                    <button type="button" onclick="setKhataDatePreset('week')" id="khataDateBtn_week" class="filter-pill khata-date-pill" style="padding:4px 8px; font-size:11px; font-weight:700; border:none; cursor:pointer;">7 Days</button>
-                    <button type="button" onclick="setKhataDatePreset('month')" id="khataDateBtn_month" class="filter-pill khata-date-pill" style="padding:4px 8px; font-size:11px; font-weight:700; border:none; cursor:pointer;">This Month</button>
-                </div>
-
-                <!-- Custom Range -->
-                <div style="display:flex; align-items:center; gap:4px;">
-                    <label for="khataFromDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">From:</label>
-                    <input type="date" id="khataFromDate" onchange="onKhataCustomDateChange()" class="form-control" style="font-size:11px; padding:3px 6px; height:auto; width:auto; font-weight:600; color:#0F172A;">
-                </div>
-                <div style="display:flex; align-items:center; gap:4px;">
-                    <label for="khataToDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">To:</label>
-                    <input type="date" id="khataToDate" onchange="onKhataCustomDateChange()" class="form-control" style="font-size:11px; padding:3px 6px; height:auto; width:auto; font-weight:600; color:#0F172A;">
-                </div>
-                <button type="button" onclick="setKhataDatePreset('all')" title="Reset Date Filter" style="background:#F1F5F9; border:1px solid #CBD5E1; color:#64748B; border-radius:6px; padding:3px 6px; font-size:11px; font-weight:700; cursor:pointer;">Reset</button>
+            <!-- Search input -->
+            <div class="search-bar" style="background:#fff; border:1px solid #CBD5E1; border-radius:8px; padding:5px 12px; display:flex; align-items:center; gap:6px; min-width:240px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                <i data-lucide="search" style="width:14px;height:14px; color:#94A3B8;"></i>
+                <input type="text" id="khataSearchInput" placeholder="Search bill #, customer, phone..." oninput="filterKhataLedger()" style="border:none; outline:none; font-size:12px; color:#0F172A; width:100%; background:transparent;">
+                <button type="button" onclick="clearKhataSearch()" id="btnClearKhataSearch" style="display:none; background:#e2e4e8; border:none; border-radius:50%; width:16px; height:16px; color:#4f535b; cursor:pointer; font-size:10px; line-height:16px; text-align:center; padding:0;">✕</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Integrated Filter Toolbar (Matching Sales & Purchase Hubs) -->
+    <div class="filter-bar khata-filter-toolbar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:#FFFFFF; border-bottom:1px solid #E2E8F0; padding:8px 16px;">
+        <!-- Left: Horizontal Scrollable Type & Date Preset Pills -->
+        <div class="date-pills-scroll-rail" style="display:flex; align-items:center; gap:5px; overflow-x:auto; padding-bottom:2px; flex-wrap:nowrap;">
+            <button type="button" onclick="setKhataFilterType('all')" id="btnFilterAll" class="filter-pill khata-type-pill active">
+                All ({{ $transactions->count() }})
+            </button>
+            <button type="button" onclick="setKhataFilterType('udhari_sale')" id="btnFilterUdhari" class="filter-pill khata-type-pill">
+                🔴 Udhari Dues ({{ $transactions->where('type', 'udhari_sale')->count() }})
+            </button>
+            <button type="button" onclick="setKhataFilterType('payment_received')" id="btnFilterPayment" class="filter-pill khata-type-pill">
+                🟢 Repayments ({{ $transactions->where('type', 'payment_received')->count() }})
+            </button>
+            <button type="button" onclick="setKhataFilterType('adjustment')" id="btnFilterAdjustment" class="filter-pill khata-type-pill">
+                🔵 Adjustments ({{ $transactions->where('type', 'adjustment')->count() }})
+            </button>
+
+            <div style="width:1px; height:18px; background:#CBD5E1; margin:0 6px; flex-shrink:0; display:inline-block; vertical-align:middle;"></div>
+
+            <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748B; margin-right: 4px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+            </span>
+            <button type="button" onclick="setKhataDatePreset('all')" id="khataDateBtn_all" class="filter-pill khata-date-pill active">All Time</button>
+            <button type="button" onclick="setKhataDatePreset('today')" id="khataDateBtn_today" class="filter-pill khata-date-pill">Today</button>
+            <button type="button" onclick="setKhataDatePreset('yesterday')" id="khataDateBtn_yesterday" class="filter-pill khata-date-pill">Yesterday</button>
+            <button type="button" onclick="setKhataDatePreset('week')" id="khataDateBtn_week" class="filter-pill khata-date-pill">Last 7 Days</button>
+            <button type="button" onclick="setKhataDatePreset('month')" id="khataDateBtn_month" class="filter-pill khata-date-pill">This Month</button>
+        </div>
+
+        <!-- Right: Desktop Custom Date Range Inputs & Reset Button -->
+        <div class="desktop-date-inputs" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 3px 8px; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                <span style="font-size: 11px; font-weight: 700; color: #64748B;">From:</span>
+                <input type="date" id="khataFromDate" onchange="onKhataCustomDateChange()" style="border: none; outline: none; font-size: 11px; font-weight: 700; color: #0F172A; background: transparent; cursor: pointer;">
+            </div>
+            <div style="display: flex; align-items: center; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 3px 8px; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                <span style="font-size: 11px; font-weight: 700; color: #64748B;">To:</span>
+                <input type="date" id="khataToDate" onchange="onKhataCustomDateChange()" style="border: none; outline: none; font-size: 11px; font-weight: 700; color: #0F172A; background: transparent; cursor: pointer;">
+            </div>
+            <button type="button" onclick="setKhataDatePreset('all')" title="Reset Date Filter" style="background: #FFFFFF; border: 1px solid #CBD5E1; color: #475569; font-weight: 700; font-size: 11px; border-radius: 8px; padding: 5px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='#FFFFFF';">
+                <i data-lucide="rotate-ccw" style="width: 12px; height: 12px;"></i> Reset
+            </button>
         </div>
     </div>
 
@@ -500,11 +507,26 @@
         filterKhataLedger();
     }
 
+    function clearKhataSearch() {
+        const input = document.getElementById('khataSearchInput');
+        if (input) {
+            input.value = '';
+            const btn = document.getElementById('btnClearKhataSearch');
+            if (btn) btn.style.display = 'none';
+            filterKhataLedger();
+        }
+    }
+
     function filterKhataLedger() {
         const selectedCustomer = document.getElementById('customerFilterSelect').value;
         const searchVal = document.getElementById('khataSearchInput').value.toLowerCase().trim();
         const fromDate = document.getElementById('khataFromDate')?.value || '';
         const toDate = document.getElementById('khataToDate')?.value || '';
+
+        const clearBtn = document.getElementById('btnClearKhataSearch');
+        if (clearBtn) {
+            clearBtn.style.display = searchVal ? 'inline-block' : 'none';
+        }
 
         let visibleCount = 0;
 
