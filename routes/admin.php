@@ -183,7 +183,7 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:create-mobileshop-pos')
         ->name('pos.sale');
     Route::post('pos/scan-emi-bill', 'MobileShop\SalesController@scanEmiBill')
-        ->middleware('permission:read-mobileshop-pos|create-mobileshop-pos')
+        ->middleware('permission:read-mobileshop-pos|create-mobileshop-pos|create-sale-phones|read-mobileshop-sales')
         ->name('pos.scan_emi_bill');
     Route::get('new-mobiles', 'MobileShop\StockController@newMobiles')
         ->middleware('permission:read-mobileshop-new')

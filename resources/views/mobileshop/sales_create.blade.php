@@ -4,6 +4,9 @@
 @section('page-title', 'Register Sale')
 
 @section('page-actions')
+    <button type="button" class="btn btn-primary btn-sm" onclick="triggerEmiScan()" style="display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); border:none; box-shadow:0 2px 6px rgba(79,70,229,0.35); font-weight:600;">
+        <i data-lucide="scan" style="width:14px;height:14px;"></i> ⚡ Scan EMI Slip / Bill
+    </button>
     <a href="{{ route('mobileshop.sales') }}" class="btn btn-outline btn-sm">
         <i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Back to Sales
     </a>
@@ -11,6 +14,30 @@
 
 @section('content')
 <div style="max-width: 1280px; margin: 0 auto; padding-bottom: 50px;">
+
+    <!-- ═══════════ AI OCR SLIP SCAN BANNER ═══════════ -->
+    <div style="background: linear-gradient(135deg, #EEF2FF 0%, #FAF5FF 100%); border: 1px solid #C7D2FE; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 2px 8px rgba(79,70,229,0.06);">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, #4F46E5, #7C3AED); display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
+                <i data-lucide="scan-line" style="width:20px; height:20px;"></i>
+            </div>
+            <div>
+                <div style="font-weight:700; font-size:14px; color:#1E1B4B; display:flex; align-items:center; gap:6px;">
+                    Instant EMI Bill & Receipt Auto-Fill (AI OCR)
+                    <span class="badge" style="background:#4F46E5; color:#fff; font-size:10px; padding:2px 7px; border-radius:999px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Gemini 1.5</span>
+                </div>
+                <div style="font-size:12px; color:#4338CA; margin-top:2px;">
+                    Upload customer finance slip, challan, or invoice photo/PDF. Review and edit extracted fields, confirm, and boom — form is populated!
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <input type="file" id="emiBillFileInput" accept="image/*,application/pdf" style="display:none;" onchange="handleEmiBillUpload(this)">
+            <button type="button" class="btn btn-sm" onclick="triggerEmiScan()" style="background:#4F46E5; color:#fff; border:none; font-weight:600; padding:8px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(79,70,229,0.3); cursor:pointer;">
+                <i data-lucide="upload-cloud" style="width:14px; height:14px;"></i> Upload Slip / Invoice
+            </button>
+        </div>
+    </div>
 
     @if(session('success'))
         <div class="flash-success" style="border-radius:10px; margin-bottom:16px; padding:12px 16px; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; display:flex; align-items:center; gap:8px;">
@@ -323,7 +350,7 @@
 
                             <div class="form-group" style="margin:0;">
                                 <label class="form-label" style="font-size:11px; font-weight:600; color:#64748B; margin-bottom:3px;">Loan / File Reference No.</label>
-                                <input type="text" class="form-control" name="emi_loan_no" placeholder="e.g. BJF-982310" style="font-size:12px;">
+                                <input type="text" class="form-control" name="emi_loan_no" id="emiLoanNo" placeholder="e.g. BJF-982310" style="font-size:12px;">
                             </div>
                         </div>
 
@@ -380,7 +407,134 @@
     </form>
 </div>
 
+<!-- ═══════════ OCR LOADING MODAL ═══════════ -->
+<div id="ocrLoadingModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; padding:32px 36px; max-width:440px; width:90%; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.25);">
+        <div style="width:52px; height:52px; border:4px solid #EEF2FF; border-top-color:#4F46E5; border-radius:50%; margin:0 auto 18px; animation:spin 1s linear infinite;"></div>
+        <h3 style="font-size:17px; font-weight:800; color:#1E293B; margin-bottom:6px;">Analyzing Document with AI</h3>
+        <p style="font-size:13px; color:#64748B; margin:0; line-height:1.5;">Reading customer details, device IMEI, EMI partner, loan reference number, and downpayment…</p>
+        <div style="margin-top:14px; display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#4F46E5; background:#EEF2FF; padding:4px 10px; border-radius:999px;">
+            <i data-lucide="sparkles" style="width:13px; height:13px;"></i> Powered by Gemini 1.5 Flash AI
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ OCR REVIEW & CONFIRM MODAL ═══════════ -->
+<div id="ocrReviewModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:16px; max-width:640px; width:100%; box-shadow:0 20px 40px rgba(0,0,0,0.25); overflow:hidden; display:flex; flex-direction:column; max-height:90vh;">
+        
+        <!-- Modal Header -->
+        <div style="background:linear-gradient(135deg, #1E1B4B 0%, #312E81 100%); color:#fff; padding:16px 22px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center;">
+                    <i data-lucide="scan-text" style="width:18px; height:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:15px; font-weight:800;">Review Extracted Bill Details</div>
+                    <div style="font-size:11.5px; color:#C7D2FE;">Verify or edit fields before applying to the sale form</div>
+                </div>
+            </div>
+            <button type="button" onclick="closeOcrModal()" style="background:transparent; border:none; color:#CBD5E1; cursor:pointer; padding:4px;">
+                <i data-lucide="x" style="width:20px; height:20px;"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding:20px 22px; overflow-y:auto; flex:1;">
+            
+            <!-- Notice / Demo Banner -->
+            <div id="ocrModalNotice" style="display:none; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:#1E40AF;">
+                <span id="ocrNoticeText"></span>
+            </div>
+
+            <!-- Stock Device Match Status Card -->
+            <div id="ocrStockMatchCard" style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:12px 14px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div id="ocrMatchIcon" style="width:32px; height:32px; border-radius:50%; background:#DCFCE7; color:#16A34A; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i data-lucide="check" style="width:18px; height:18px;"></i>
+                    </div>
+                    <div>
+                        <div id="ocrMatchTitle" style="font-size:13px; font-weight:700; color:#166534;">Device Matched in Stock</div>
+                        <div id="ocrMatchSubtitle" style="font-size:11.5px; color:#15803D;">Ready to auto-add to phone cart</div>
+                    </div>
+                </div>
+                <span id="ocrMatchBadge" class="badge" style="background:#22C55E; color:#fff; font-size:11px; padding:3px 8px; border-radius:6px; font-weight:700;">In Stock</span>
+            </div>
+
+            <!-- Form Fields Grid -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Customer Phone <span style="color:#EF4444;">*</span></label>
+                    <input type="text" id="ocrCustomerPhone" class="form-control" style="font-weight:600; font-size:13px;">
+                </div>
+
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Customer Name <span style="color:#EF4444;">*</span></label>
+                    <input type="text" id="ocrCustomerName" class="form-control" style="font-weight:600; font-size:13px;">
+                </div>
+
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Phone Brand</label>
+                    <input type="text" id="ocrBrand" class="form-control" style="font-weight:600; font-size:13px;">
+                </div>
+
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Phone Model / Variant</label>
+                    <input type="text" id="ocrModel" class="form-control" style="font-weight:600; font-size:13px;">
+                </div>
+
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Device IMEI</label>
+                    <input type="text" id="ocrImei" class="form-control" style="font-family:monospace; font-weight:600; font-size:13px;">
+                </div>
+
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Sale / Invoiced Price (₹)</label>
+                    <input type="number" step="0.01" id="ocrSalePrice" class="form-control" style="font-weight:700; font-size:13px; color:#1E293B;">
+                </div>
+
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">EMI Finance Partner</label>
+                    <select id="ocrProviderSelect" class="form-control" style="font-weight:700; font-size:12px;">
+                        <option value="">— Select Partner —</option>
+                        @foreach($emiProviders as $p)
+                            <option value="{{ $p->id }}">{{ $p->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Loan Ref / Agreement No.</label>
+                    <input type="text" id="ocrLoanNo" class="form-control" style="font-size:13px;">
+                </div>
+
+                <div style="grid-column: span 2;">
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Downpayment (₹)</label>
+                    <input type="number" step="0.01" id="ocrDownpayment" class="form-control" style="font-size:15px; font-weight:800; color:#059669;">
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="background:#F8FAFC; border-top:1px solid #E2E8F0; padding:14px 22px; display:flex; justify-content:space-between; align-items:center;">
+            <button type="button" onclick="closeOcrModal()" class="btn btn-outline btn-sm" style="font-weight:600;">
+                Cancel
+            </button>
+            <button type="button" onclick="applyOcrDataToForm()" class="btn btn-sm" style="background:linear-gradient(135deg, #10B981 0%, #059669 100%); color:#fff; border:none; font-weight:800; font-size:13px; padding:9px 20px; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(16,185,129,0.35); cursor:pointer;">
+                <i data-lucide="zap" style="width:15px; height:15px;"></i> Apply & Auto-Fill ("Boom!")
+            </button>
+        </div>
+
+    </div>
+</div>
+
 <style>
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
     .pay-mode-card {
         border: 1px solid #CBD5E1;
         border-radius: 8px;
@@ -882,6 +1036,251 @@
             }
         }
         return true;
+    }
+
+    /* ─── AI OCR EMI BILL / RECEIPT UPLOAD & AUTO-FILL ─── */
+    var currentOcrData = null;
+    var currentOcrMatchedDevice = null;
+    var currentOcrMatchedProviderId = null;
+
+    function triggerEmiScan() {
+        document.getElementById('emiBillFileInput').click();
+    }
+
+    function handleEmiBillUpload(input) {
+        if (!input.files || !input.files[0]) return;
+        var file = input.files[0];
+
+        // Check file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size exceeds 10MB limit. Please upload a smaller image or document.');
+            input.value = '';
+            return;
+        }
+
+        var loadingModal = document.getElementById('ocrLoadingModal');
+        loadingModal.style.display = 'flex';
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+
+        var formData = new FormData();
+        formData.append('bill_image', file);
+
+        fetch("{{ route('mobileshop.pos.scan_emi_bill') }}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(function(res) {
+            return res.json().then(function(json) {
+                return { status: res.status, ok: res.ok, data: json };
+            });
+        })
+        .then(function(res) {
+            loadingModal.style.display = 'none';
+            if (!res.ok || !res.data.success) {
+                alert(res.data.message || 'Failed to scan receipt. Please verify image clarity.');
+                input.value = '';
+                return;
+            }
+
+            populateOcrModal(res.data);
+            input.value = '';
+        })
+        .catch(function(err) {
+            loadingModal.style.display = 'none';
+            alert('Network error while processing document: ' + err.message);
+            input.value = '';
+        });
+    }
+
+    function populateOcrModal(res) {
+        currentOcrData = res.data || {};
+        currentOcrMatchedDevice = res.matched_device || null;
+        currentOcrMatchedProviderId = res.matched_provider_id || null;
+
+        // If matched device not provided by server, try local match against rawDevices by IMEI
+        if (!currentOcrMatchedDevice && currentOcrData.imei) {
+            var cleanImei = String(currentOcrData.imei).replace(/\D/g, '');
+            if (cleanImei) {
+                currentOcrMatchedDevice = rawDevices.find(function(d) {
+                    return String(d.imei_1).replace(/\D/g, '') === cleanImei ||
+                           String(d.imei_2 || '').replace(/\D/g, '') === cleanImei;
+                }) || null;
+            }
+        }
+
+        // Fill review modal inputs
+        document.getElementById('ocrCustomerPhone').value = currentOcrData.customer_phone || '';
+        document.getElementById('ocrCustomerName').value = currentOcrData.customer_name || '';
+        document.getElementById('ocrBrand').value = currentOcrData.brand || '';
+        document.getElementById('ocrModel').value = currentOcrData.model || '';
+        document.getElementById('ocrImei').value = currentOcrData.imei || '';
+        document.getElementById('ocrSalePrice').value = currentOcrData.sale_price || '';
+        document.getElementById('ocrLoanNo').value = currentOcrData.emi_loan_no || '';
+        document.getElementById('ocrDownpayment').value = currentOcrData.emi_downpayment || '';
+
+        // Provider match
+        var provSelect = document.getElementById('ocrProviderSelect');
+        if (currentOcrMatchedProviderId) {
+            provSelect.value = currentOcrMatchedProviderId;
+        } else if (currentOcrData.emi_provider) {
+            var matchProv = false;
+            var searchName = currentOcrData.emi_provider.toLowerCase();
+            for (var i = 0; i < provSelect.options.length; i++) {
+                if (provSelect.options[i].text.toLowerCase().indexOf(searchName) !== -1) {
+                    provSelect.selectedIndex = i;
+                    matchProv = true;
+                    break;
+                }
+            }
+            if (!matchProv) provSelect.value = '';
+        } else {
+            provSelect.value = '';
+        }
+
+        // Stock match card display
+        var matchCard = document.getElementById('ocrStockMatchCard');
+        var matchTitle = document.getElementById('ocrMatchTitle');
+        var matchSubtitle = document.getElementById('ocrMatchSubtitle');
+        var matchBadge = document.getElementById('ocrMatchBadge');
+        var matchIcon = document.getElementById('ocrMatchIcon');
+
+        if (currentOcrMatchedDevice) {
+            matchCard.style.background = '#F0FDF4';
+            matchCard.style.borderColor = '#BBF7D0';
+            matchIcon.style.background = '#DCFCE7';
+            matchIcon.style.color = '#16A34A';
+            matchIcon.innerHTML = '<i data-lucide="check" style="width:18px; height:18px;"></i>';
+            matchTitle.textContent = 'Matched: ' + currentOcrMatchedDevice.brand + ' ' + currentOcrMatchedDevice.model;
+            matchSubtitle.textContent = 'IMEI: ' + currentOcrMatchedDevice.imei_1 + ' • ₹' + Number(currentOcrMatchedDevice.selling_price).toLocaleString('en-IN');
+            matchBadge.textContent = 'In Stock';
+            matchBadge.style.background = '#22C55E';
+        } else {
+            matchCard.style.background = '#FFFBEB';
+            matchCard.style.borderColor = '#FDE68A';
+            matchIcon.style.background = '#FEF3C7';
+            matchIcon.style.color = '#D97706';
+            matchIcon.innerHTML = '<i data-lucide="alert-triangle" style="width:18px; height:18px;"></i>';
+            matchTitle.textContent = 'Device Not Found in Active Stock';
+            matchSubtitle.textContent = 'You can select the phone manually from stock after confirming';
+            matchBadge.textContent = 'Manual Pick';
+            matchBadge.style.background = '#F59E0B';
+        }
+
+        // Notice text
+        var noticeEl = document.getElementById('ocrModalNotice');
+        if (res.notice) {
+            document.getElementById('ocrNoticeText').textContent = res.notice;
+            noticeEl.style.display = 'block';
+        } else {
+            noticeEl.style.display = 'none';
+        }
+
+        var reviewModal = document.getElementById('ocrReviewModal');
+        reviewModal.style.display = 'flex';
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
+
+    function closeOcrModal() {
+        document.getElementById('ocrReviewModal').style.display = 'none';
+    }
+
+    function applyOcrDataToForm() {
+        var phone = document.getElementById('ocrCustomerPhone').value.trim();
+        var name = document.getElementById('ocrCustomerName').value.trim();
+        var salePrice = parseFloat(document.getElementById('ocrSalePrice').value) || 0;
+        var provId = document.getElementById('ocrProviderSelect').value;
+        var loanNo = document.getElementById('ocrLoanNo').value.trim();
+        var dp = parseFloat(document.getElementById('ocrDownpayment').value) || 0;
+        var imeiVal = document.getElementById('ocrImei').value.trim();
+
+        // 1. Customer
+        if (phone) {
+            document.getElementById('customerPhone').value = phone;
+            checkCustomerPhone();
+        }
+        if (name) {
+            document.getElementById('customerName').value = name;
+        }
+
+        // 2. Device Cart
+        var targetDevice = currentOcrMatchedDevice;
+        if (!targetDevice && imeiVal) {
+            var cleanImei = imeiVal.replace(/\D/g, '');
+            targetDevice = rawDevices.find(function(d) {
+                return String(d.imei_1).replace(/\D/g, '') === cleanImei;
+            });
+        }
+
+        if (targetDevice) {
+            if (!isDeviceSelected(targetDevice.id)) {
+                addDeviceById(targetDevice.id);
+            }
+            if (salePrice > 0) {
+                var found = selectedDevices.find(function(d) { return d.id === targetDevice.id; });
+                if (found) {
+                    found.sale_price = salePrice;
+                    renderSelectedDevices();
+                }
+            }
+        }
+
+        // 3. Switch to EMI Mode
+        onPaymentModeToggle('emi');
+
+        // 4. Select EMI Provider
+        if (provId) {
+            document.getElementById('emiProviderSelect').value = provId;
+            onEmiProviderSelectChange();
+        }
+
+        // 5. Loan Ref Number
+        if (loanNo) {
+            var loanInput = document.getElementById('emiLoanNo');
+            if (loanInput) loanInput.value = loanNo;
+        }
+
+        // 6. Downpayment
+        if (dp > 0) {
+            document.getElementById('emiDownpaymentRequired').value = dp.toFixed(2);
+            document.getElementById('emiAmountPaid').value = dp.toFixed(2);
+            document.getElementById('amountPaid').value = dp.toFixed(2);
+        }
+
+        // 7. Recalculate
+        recalcSaleFinancials();
+
+        // Close Modal
+        closeOcrModal();
+
+        // Display success banner
+        var successBanner = document.createElement('div');
+        successBanner.className = 'flash-success';
+        successBanner.style.cssText = 'border-radius:10px; margin-bottom:16px; padding:12px 16px; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; display:flex; align-items:center; gap:8px;';
+        successBanner.innerHTML = '<i data-lucide="check-circle-2" style="width:18px;height:18px; color:#10B981;"></i> <strong>Boom! Extracted slip details applied successfully!</strong> Customer, device, and EMI setup are populated.';
+        
+        var container = document.querySelector('div[style*="max-width: 1280px"]');
+        if (container) {
+            container.insertBefore(successBanner, container.firstChild);
+            setTimeout(function() {
+                if (successBanner.parentNode) successBanner.remove();
+            }, 6000);
+        }
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+
+        // Scroll to customer details
+        document.getElementById('customerPhone').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 </script>
 @endpush

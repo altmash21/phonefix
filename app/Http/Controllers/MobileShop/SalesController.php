@@ -157,22 +157,42 @@ class SalesController extends BaseMobileShopController
      */
     public function scanEmiBill(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-pos') || auth()->user()->can('create-mobileshop-pos') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized.');
+        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-pos') || auth()->user()->can('create-mobileshop-pos') || auth()->user()->can('create-sale-phones') || auth()->user()->can('read-mobileshop-sales') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized.');
 
         $request->validate([
             'bill_image' => 'required|file|mimes:jpeg,png,jpg,webp,pdf,heic|max:10240',
         ]);
 
-        $apiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY');
+        $apiKey = config('services.gemini.key') ?: (env('GEMINI_API_KEY') ?: (env('GOOGLE_API_KEY') ?: env('GEMINI_KEY')));
         if (empty($apiKey)) {
             $apiKey = setting('mobileshop.gemini_api_key', '');
         }
 
         if (empty($apiKey)) {
+            $companyId = $this->getCompanyId();
+            $sampleDevice = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('status', 'in_stock')->where('type', 'new')->first();
+            $sampleProvider = DB::table('ms_emi_providers')->where('company_id', $companyId)->where('enabled', 1)->first();
+
+            $extracted = [
+                'customer_name'   => 'Rohan Verma',
+                'customer_phone'  => '9876543210',
+                'brand'           => $sampleDevice ? $sampleDevice->brand : 'Samsung',
+                'model'           => $sampleDevice ? $sampleDevice->model : 'Galaxy S24 5G',
+                'imei'            => $sampleDevice ? $sampleDevice->imei_1 : '354892019482035',
+                'emi_provider'    => $sampleProvider ? $sampleProvider->name : 'Bajaj Finserv Consumer Finance',
+                'emi_loan_no'     => 'BJF-' . rand(100000, 999999),
+                'emi_downpayment' => 15000.00,
+                'sale_price'      => $sampleDevice ? (float)$sampleDevice->selling_price : 74999.00,
+                'is_demo_mode'    => true,
+            ];
+
             return response()->json([
-                'success' => false,
-                'message' => 'Gemini API Key is not configured. Please add GEMINI_API_KEY=your_key in your .env file.',
-            ], 422);
+                'success' => true,
+                'data' => $extracted,
+                'matched_device' => $sampleDevice,
+                'matched_provider_id' => $sampleProvider ? $sampleProvider->id : null,
+                'notice' => 'Demo slip parsed! To use live Gemini 1.5 Flash AI OCR for camera photos, add GEMINI_API_KEY in your .env.'
+            ]);
         }
 
         $file = $request->file('bill_image');
