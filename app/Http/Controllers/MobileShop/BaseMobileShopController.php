@@ -496,10 +496,10 @@ abstract class BaseMobileShopController extends Controller
         $gifts = DB::table('ms_sale_gifts')
             ->leftJoin('ms_parts_inventory', 'ms_sale_gifts.gift_id', '=', 'ms_parts_inventory.id')
             ->where('ms_sale_gifts.sale_id', $id)
-            ->select('ms_parts_inventory.name', 'ms_sale_gifts.qty')
+            ->select('ms_parts_inventory.name', 'ms_sale_gifts.gift_name', 'ms_sale_gifts.purchase_cost', 'ms_sale_gifts.qty')
             ->get();
         foreach ($gifts as $g) {
-            $g->name = $g->name ?: 'Promotional Gift Item';
+            $g->name = $g->name ?: ($g->gift_name ?: 'Promotional Gift Item');
         }
 
         $emiProvider = $sale->emi_provider_id ? DB::table('ms_emi_providers')->where('company_id', $companyId)->where('id', $sale->emi_provider_id)->first() : null;
