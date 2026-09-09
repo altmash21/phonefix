@@ -30,8 +30,11 @@
         </button>
         @endif
         @if(($canAddAccessories ?? false) || ($canAddCovers ?? false))
+        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-outline btn-sm" style="color: #7C3AED; border-color: #DDD6FE;">
+            <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Bulk Accessories & Invoice Scan
+        </a>
         <button type="button" onclick="openPurchaseAddPartModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Restock Parts & Accessories
+            <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Restock Part (Quick)
         </button>
         @endif
         @if(($isAdmin ?? false) || ($canAddPhones ?? false) || auth()->user()->hasRole('sales-staff') || auth()->user()->can('read-mobileshop-procurement'))
@@ -505,14 +508,22 @@
             @if(($isAdmin ?? false) || ($canAddPhones ?? false))
             <button type="button" class="fab-menu-item" style="color: #5E6AD2;" onclick="closePurchaseFabMenu(); openPurchaseAddMobileModal();">
                 <i data-lucide="smartphone" style="width:16px;height:16px;"></i>
-                <span>Add Phone Stock</span>
+                <span>Add Phone Stock (Quick)</span>
             </button>
+            <a href="{{ route('mobileshop.purchase.create') }}" class="fab-menu-item" style="color: #4338CA; text-decoration:none;">
+                <i data-lucide="truck" style="width:16px;height:16px;"></i>
+                <span>Bulk Phones Inward</span>
+            </a>
             @endif
             @if(($isAdmin ?? false) || ($canAddAccessories ?? false) || ($canAddCovers ?? false))
             <button type="button" class="fab-menu-item" style="color: #059669;" onclick="closePurchaseFabMenu(); openPurchaseAddPartModal();">
                 <i data-lucide="package" style="width:16px;height:16px;"></i>
-                <span>Add Part / Accessory</span>
+                <span>Add Part (Quick)</span>
             </button>
+            <a href="{{ route('mobileshop.accessories.purchase') }}" class="fab-menu-item" style="color: #7C3AED; text-decoration:none;">
+                <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
+                <span>Bulk Parts & Invoice Scan</span>
+            </a>
             @endif
             @if(($isAdmin ?? false) || ($canAddSecondhand ?? false))
             <button type="button" class="fab-menu-item" style="color: #EA580C;" onclick="closePurchaseFabMenu(); openPurchaseBuybackModal();">
@@ -520,10 +531,6 @@
                 <span>Register Buyback</span>
             </button>
             @endif
-            <button type="button" class="fab-menu-item" style="color: #475569;" onclick="closePurchaseFabMenu(); openBulkRestockModal();">
-                <i data-lucide="file-plus" style="width:16px;height:16px;"></i>
-                <span>New Purchase Invoice</span>
-            </button>
         </div>
         <button type="button" class="btn-purchase-fab" onclick="togglePurchaseFabMenu(event)" title="Quick Actions">
             <i data-lucide="plus" id="purchaseFabIcon" style="width:22px;height:22px;transition:transform 0.2s ease;"></i>

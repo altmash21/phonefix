@@ -160,6 +160,23 @@ foreach ($staffRoles as $email => $expected) {
     }
 }
 
+// 7. Verify Bulk Purchase and AI Invoice Photo Scanner Views
+try {
+    auth()->loginUsingId(1);
+    session(['company_id' => 1]);
+    $accCtrl = app(\App\Http\Controllers\MobileShop\AccessoriesController::class);
+    $accRes = $accCtrl->accessoriesPurchase(request());
+    $accView = $accRes->render();
+    assertCheck("Bulk Accessories & AI Invoice Scanner renders cleanly", str_contains($accView, 'AI Invoice Scanner & OCR Intake') && str_contains($accView, 'Upload Invoice Photo'));
+
+    $purCtrl = app(\App\Http\Controllers\MobileShop\PurchaseController::class);
+    $purRes = $purCtrl->purchaseCreate(request());
+    $purView = $purRes->render();
+    assertCheck("Bulk Phones Purchase Inward renders cleanly", str_contains($purView, 'Stock Items (Bulk)') && str_contains($purView, 'bulkPurchaseForm'));
+} catch (\Throwable $e) {
+    assertCheck("Bulk Purchase & Invoice Scanner check: " . $e->getMessage(), false);
+}
+
 echo "\n==========================================\n";
 echo "Total Checks: " . ($passed + $failed) . " | Passed: $passed | Failed: $failed\n";
 echo "==========================================\n";
