@@ -381,12 +381,16 @@ abstract class BaseMobileShopController extends Controller
 
         $prefix = DB::getTablePrefix();
 
-        // 1. Mobile Sales
+        // 1. Mobile Sales (Only include sales where a balance was left)
         $mobileSales = DB::table('ms_mobile_sales')
             ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
             ->where('ms_mobile_sales.company_id', $companyId)
             ->where('ms_mobile_sales.customer_id', $customerId)
             ->where('ms_mobile_sales.status', '!=', 'voided')
+            ->where(function ($q) {
+                $q->where('ms_mobile_sales.udhari_amount', '>', 0)
+                  ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
+            })
             ->select(
                 'ms_mobile_sales.id',
                 'ms_mobile_sales.created_at',
@@ -399,11 +403,15 @@ abstract class BaseMobileShopController extends Controller
             )
             ->get();
 
-        // 2. Accessory Sales
+        // 2. Accessory Sales (Only include sales where a balance was left)
         $accSales = DB::table('ms_accessory_sales')
             ->where('ms_accessory_sales.company_id', $companyId)
             ->where('ms_accessory_sales.customer_id', $customerId)
             ->where('ms_accessory_sales.status', '!=', 'voided')
+            ->where(function ($q) {
+                $q->where('ms_accessory_sales.udhari_amount', '>', 0)
+                  ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
+            })
             ->select(
                 'ms_accessory_sales.id',
                 'ms_accessory_sales.created_at',
