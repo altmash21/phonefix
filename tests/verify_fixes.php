@@ -173,6 +173,11 @@ try {
     $purRes = $purCtrl->purchaseCreate(request());
     $purView = $purRes->render();
     assertCheck("Bulk Phones Purchase Inward renders cleanly", str_contains($purView, 'Stock Items (Bulk)') && str_contains($purView, 'bulkPurchaseForm'));
+
+    $repairsCtrl = app(\App\Http\Controllers\MobileShop\RepairsController::class);
+    $repairsRes = $repairsCtrl->repairs(request());
+    $repairsView = $repairsRes->render();
+    assertCheck("Repairs view renders cleanly without route or syntax errors", strlen($repairsView) > 0);
 } catch (\Throwable $e) {
     assertCheck("Bulk Purchase & Invoice Scanner check: " . $e->getMessage(), false);
 }

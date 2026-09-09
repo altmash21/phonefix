@@ -658,7 +658,7 @@ function performRepairPartsSearch(query) {
     resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#64748B; font-size:12px;"><i data-lucide="loader-2" style="width:14px;height:14px;display:inline-block;animation:spin 1s linear infinite;"></i> Searching parts inventory...</div>';
     if (window.refreshIcons) window.refreshIcons();
 
-    fetch("{{ route('mobileshop.accessories.search_parts') }}?q=" + encodeURIComponent(query))
+    fetch("{{ route('mobileshop.parts.search') }}?q=" + encodeURIComponent(query))
     .then(function(res) { return res.json(); })
     .then(function(data) {
         if (!data.success || !data.parts || data.parts.length === 0) {

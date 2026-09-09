@@ -274,6 +274,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('parts/search', 'MobileShop\AccessoriesController@searchParts')
         ->middleware('permission:read-mobileshop-repairs|read-mobileshop-accessories')
         ->name('parts.search');
+    Route::get('accessories/search-parts', 'MobileShop\AccessoriesController@searchParts')
+        ->middleware('permission:read-mobileshop-repairs|read-mobileshop-accessories')
+        ->name('accessories.search_parts');
 });
 
 // Static asset fallback for company-prefixed requests (e.g. /{company_id}/js/mobileshop/ui-utils.js)
