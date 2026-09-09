@@ -345,25 +345,57 @@ class DashboardController extends BaseMobileShopController
         if ($isAdmin) {
             $todaySales  = (float) DB::table('ms_mobile_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->sum('total_amount')
                          + (float) DB::table('ms_accessory_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->sum('total_amount');
-            $monthSales  = (float) DB::table('ms_mobile_sales')->where('company_id', $companyId)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->where('status', '!=', 'voided')->sum('total_amount')
-                         + (float) DB::table('ms_accessory_sales')->where('company_id', $companyId)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->where('status', '!=', 'voided')->sum('total_amount');
-            $grossSalesTotal = (float) DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->sum('total_amount')
-                             + (float) DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->sum('total_amount');
-            $totalSalesCount = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count()
-                             + DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
-            $cogsTotal = (float) DB::table('ms_mobile_sales')
+            
+            $todayCogs = (float) DB::table('ms_mobile_sales')
                 ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
                 ->where('ms_mobile_sales.company_id', $companyId)->where('ms_mobile_sales.status', '!=', 'voided')
+                ->whereDate('ms_mobile_sales.created_at', today())
                 ->sum('ms_mobile_devices.purchase_cost');
-            $netProfitTotal    = max(0, $grossSalesTotal - $cogsTotal);
-            $profitMarginPct   = $grossSalesTotal > 0 ? round(($netProfitTotal / $grossSalesTotal) * 100, 1) : 0;
-            $totalInventoryCost   = (float) DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('status', 'in_stock')->sum('purchase_cost')
-                                  + (float) DB::table('ms_parts_inventory')->where('company_id', $companyId)->sum(DB::raw('unit_cost * stock_qty'));
-            $totalInventoryRetail = (float) DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('status', 'in_stock')->sum('selling_price')
-                                  + (float) DB::table('ms_parts_inventory')->where('company_id', $companyId)->sum(DB::raw('selling_price * stock_qty'));
-            $expectedInventoryMargin = max(0, $totalInventoryRetail - $totalInventoryCost);
-            $totalSupplierDebt    = (float) DB::table('ms_purchase_orders')->where('company_id', $companyId)->where('status', '!=', 'paid')->sum('balance_due');
-            $totalRepairRevenue   = (float) DB::table('ms_repair_tickets')->where('company_id', $companyId)->where('status', 'delivered')->sum('total_amount');
+
+            $todayProfit = max(0, $todaySales - $todayCogs);
+            $todayProfitMargin = $todaySales > 0 ? round(($todayProfit / $todaySales) * 100, 1) : 0;
+
+            // Cash in drawer today (cash payments from sales)
+            $cashInDrawer = (float) DB::table('ms_mobile_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->where('payment_mode', 'cash')->sum('total_amount')
+                          + (float) DB::table('ms_accessory_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->where('payment_mode', 'cash')->sum('total_amount');
+
+            // UPI In-flow today
+            $todayUpi = (float) DB::table('ms_mobile_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->whereIn('payment_mode', ['upi', 'gpay', 'phonepe', 'paytm', 'online'])->sum('total_amount')
+                      + (float) DB::table('ms_accessory_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->whereIn('payment_mode', ['upi', 'gpay', 'phonepe', 'paytm', 'online'])->sum('total_amount');
+            $todayUpiCount = DB::table('ms_mobile_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->whereIn('payment_mode', ['upi', 'gpay', 'phonepe', 'paytm', 'online'])->count()
+                           + DB::table('ms_accessory_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->whereIn('payment_mode', ['upi', 'gpay', 'phonepe', 'paytm', 'online'])->count();
+
+            // MTD Sales & Growth
+            $monthSales  = (float) DB::table('ms_mobile_sales')->where('company_id', $companyId)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->where('status', '!=', 'voided')->sum('total_amount')
+                         + (float) DB::table('ms_accessory_sales')->where('company_id', $companyId)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->where('status', '!=', 'voided')->sum('total_amount');
+            $lastMonth = now()->subMonth();
+            $prevMonthSales = (float) DB::table('ms_mobile_sales')->where('company_id', $companyId)->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->where('status', '!=', 'voided')->sum('total_amount')
+                            + (float) DB::table('ms_accessory_sales')->where('company_id', $companyId)->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->where('status', '!=', 'voided')->sum('total_amount');
+            $monthGrowthPct = $prevMonthSales > 0 ? round((($monthSales - $prevMonthSales) / $prevMonthSales) * 100, 1) : 0;
+
+            // Khata / Customer Debt
+            $totalUdhariDue   = (float) DB::table('ms_customers')->where('company_id', $companyId)->sum('udhari_balance');
+            $totalUdhariCount = DB::table('ms_customers')->where('company_id', $companyId)->where('udhari_balance', '>', 0)->count();
+
+            // Supplier Debt
+            $totalSupplierDebt = (float) DB::table('ms_purchase_orders')->where('company_id', $companyId)->where('status', '!=', 'paid')->sum('balance_due');
+            $unpaidPoCount     = DB::table('ms_purchase_orders')->where('company_id', $companyId)->where('status', '!=', 'paid')->count();
+
+            // Repairs Ready for Pickup (Collectable revenue)
+            $readyRepairs = DB::table('ms_repair_tickets')
+                ->join('ms_customers', 'ms_repair_tickets.customer_id', '=', 'ms_customers.id')
+                ->select('ms_repair_tickets.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
+                ->where('ms_repair_tickets.company_id', $companyId)
+                ->where('ms_repair_tickets.status', 'ready')
+                ->orderBy('ms_repair_tickets.id', 'desc')
+                ->limit(5)
+                ->get();
+            $readyRepairsCollectable = (float) $readyRepairs->sum('total_amount');
+
+            // High risk debtors (>= 5000)
+            $highRiskDebtors = DB::table('ms_customers')->where('company_id', $companyId)->where('udhari_balance', '>=', 5000)->orderBy('udhari_balance', 'desc')->limit(5)->get();
+
+            // 7-day trend
             $sevenDayTrend = [];
             for ($d = 6; $d >= 0; $d--) {
                 $dateObj = now()->subDays($d);
@@ -374,25 +406,40 @@ class DashboardController extends BaseMobileShopController
                     ->join('ms_mobile_devices','ms_mobile_sales.device_id','=','ms_mobile_devices.id')
                     ->where('ms_mobile_sales.company_id',$companyId)->where('ms_mobile_sales.status','!=','voided')
                     ->whereDate('ms_mobile_sales.created_at',$dateStr)->sum('ms_mobile_devices.purchase_cost');
-                $sevenDayTrend[] = ['label'=>$dateObj->format('D, d M'),'short_label'=>$dateObj->format('d M'),'sales'=>$daySales,'profit'=>max(0,$daySales-$dayCogs)];
+                $sevenDayTrend[] = [
+                    'label'       => $dateObj->format('D, d M'),
+                    'short_label' => $dateObj->format('d M'),
+                    'sales'       => $daySales,
+                    'profit'      => max(0, $daySales - $dayCogs)
+                ];
             }
-            $paymentModes = DB::table('ms_mobile_sales')->where('company_id',$companyId)->where('status','!=','voided')
-                ->select('payment_mode',DB::raw('count(*) as total_txns'),DB::raw('sum(total_amount) as total_amount'))->groupBy('payment_mode')->get();
-            $topBrands = DB::table('ms_mobile_sales')->join('ms_mobile_devices','ms_mobile_sales.device_id','=','ms_mobile_devices.id')
-                ->where('ms_mobile_sales.company_id',$companyId)->where('ms_mobile_sales.status','!=','voided')
-                ->select('ms_mobile_devices.brand',DB::raw('count(*) as units_sold'),DB::raw('sum(total_amount) as revenue'))
-                ->groupBy('ms_mobile_devices.brand')->orderBy('revenue','desc')->limit(5)->get();
-            $repairSla = [
-                'received'    => DB::table('ms_repair_tickets')->where('company_id',$companyId)->where('status','received')->count(),
-                'diagnosed'   => DB::table('ms_repair_tickets')->where('company_id',$companyId)->whereIn('status',['in_diagnosis','waiting_for_parts','waiting_approval'])->count(),
-                'in_progress' => DB::table('ms_repair_tickets')->where('company_id',$companyId)->where('status','in_repair')->count(),
-                'ready'       => DB::table('ms_repair_tickets')->where('company_id',$companyId)->where('status','ready')->count(),
-                'delivered'   => DB::table('ms_repair_tickets')->where('company_id',$companyId)->where('status','delivered')->count(),
-            ];
-            $highRiskDebtors = DB::table('ms_customers')->where('company_id',$companyId)->where('udhari_balance','>=',5000)->orderBy('udhari_balance','desc')->limit(5)->get();
-            $analytics = compact('todaySales','monthSales','grossSalesTotal','totalSalesCount','netProfitTotal','profitMarginPct',
-                'totalInventoryCost','totalInventoryRetail','expectedInventoryMargin','totalSupplierDebt','totalRepairRevenue',
-                'sevenDayTrend','paymentModes','topBrands','repairSla','highRiskDebtors');
+
+            // Payment modes breakdown (Today first; fallback to all time if today has 0 txns)
+            $paymentModes = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')
+                ->whereDate('created_at', today())
+                ->select('payment_mode', DB::raw('count(*) as total_txns'), DB::raw('sum(total_amount) as total_amount'))
+                ->groupBy('payment_mode')->get();
+            
+            $isTodayPaymentMode = true;
+            if ($paymentModes->isEmpty()) {
+                $isTodayPaymentMode = false;
+                $paymentModes = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')
+                    ->select('payment_mode', DB::raw('count(*) as total_txns'), DB::raw('sum(total_amount) as total_amount'))
+                    ->groupBy('payment_mode')->get();
+            }
+
+            $lowStockCount = count($lowStockParts);
+
+            $analytics = compact(
+                'todaySales', 'todayCogs', 'todayProfit', 'todayProfitMargin',
+                'cashInDrawer', 'todayUpi', 'todayUpiCount',
+                'monthSales', 'prevMonthSales', 'monthGrowthPct',
+                'totalUdhariDue', 'totalUdhariCount',
+                'totalSupplierDebt', 'unpaidPoCount',
+                'readyRepairs', 'readyRepairsCollectable',
+                'highRiskDebtors', 'sevenDayTrend',
+                'paymentModes', 'isTodayPaymentMode', 'lowStockCount'
+            );
         }
 
         // Role flags for view compatibility

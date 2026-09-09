@@ -5,46 +5,224 @@
 
 @section('content')
 
-    <!-- ════ 1. GLOBAL SEARCH BAR & HERO PILL (AIRBNB SIGNATURE COMPONENT) ════ -->
-    <section class="pt-6 pb-4 px-4 sm:px-6 lg:px-8 bg-canvas">
-        <div class="max-w-5xl mx-auto">
-            <form action="{{ route('public.store') }}" method="GET" 
-                  class="bg-canvas border border-hairline rounded-full shadow-airbnb-tier hover:shadow-airbnb-hover transition-airbnb flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-hairline p-1.5 md:p-2">
+    <!-- ════ 1. PROPER EDITORIAL HERO SECTION (AIRBNB X CONSUMER TECH) ════ -->
+    <section class="relative overflow-hidden bg-gradient-to-b from-surface-soft/80 via-canvas to-canvas border-b border-hairline-soft pt-8 pb-12 lg:pt-14 lg:pb-16">
+        <!-- Ambient decorative glow elements -->
+        <div class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-rausch/10 via-amber-100/30 to-purple-100/20 blur-3xl opacity-70 -z-10 rounded-full"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
                 
-                <!-- Segment 1: Search Brand or Model -->
-                <div class="flex-1 w-full px-6 py-2.5 hover:bg-surface-soft rounded-full transition-airbnb cursor-pointer group">
-                    <label for="search-input" class="block text-[12px] font-bold text-ink tracking-tight">Search Device</label>
-                    <input type="text" id="search-input" name="q" value="{{ request('q') }}" placeholder="iPhone 15, Galaxy S24, OnePlus..."
-                           class="w-full bg-transparent border-none text-[14px] text-body placeholder:text-muted focus:outline-none truncate">
-                </div>
-
-                <!-- Segment 2: Condition Filter (New or Pre-Owned only) -->
-                <div class="w-full md:w-56 px-6 py-2.5 hover:bg-surface-soft rounded-full transition-airbnb cursor-pointer">
-                    <label class="block text-[12px] font-bold text-ink tracking-tight">Condition</label>
-                    <select name="tab" class="w-full bg-transparent border-none text-[14px] text-body focus:outline-none cursor-pointer">
-                        <option value="all">All Smartphones</option>
-                        <option value="new">Brand New (Sealed)</option>
-                        <option value="second_hand">Certified Pre-Owned</option>
-                    </select>
-                </div>
-
-                <!-- Segment 3: Service Desk + 48px Rausch Search Orb -->
-                <div class="w-full md:w-auto flex items-center justify-between pl-6 pr-2 py-2 gap-4">
-                    <div class="hidden lg:block text-left">
-                        <span class="block text-[12px] font-bold text-ink tracking-tight">Service Desk</span>
-                        <span class="text-[14px] text-muted">45-min repair lab</span>
+                <!-- Left Column (Span 7): Copy, Badges, Search & Trust Points -->
+                <div class="lg:col-span-7 flex flex-col items-start text-left space-y-6">
+                    
+                    <!-- Eyebrow Pill Badge -->
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-canvas border border-hairline shadow-sm hover:border-hairline transition-all cursor-default max-w-full">
+                        <span class="flex h-2 w-2 relative shrink-0">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span class="text-[11.5px] sm:text-[12px] font-semibold text-ink tracking-tight truncate">
+                            <span class="sm:hidden">Mumbai's #1 Smartphone Hub</span>
+                            <span class="hidden sm:inline">Mumbai's Premier Certified Smartphone Destination</span>
+                        </span>
+                        <span class="hidden md:inline-block w-1 h-1 rounded-full bg-hairline shrink-0"></span>
+                        <span class="hidden md:inline-flex items-center gap-1 text-[12px] font-medium text-muted shrink-0">
+                            <svg class="w-3 h-3 fill-amber-400 text-amber-400" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            <span>4.92 / 5 (1,850+ reviews)</span>
+                        </span>
                     </div>
 
-                    <button type="submit" 
-                            class="w-12 h-12 rounded-full bg-rausch hover:bg-rausch-active text-white flex items-center justify-center transition-airbnb shrink-0 shadow-sm"
-                            title="Search Marketplace">
-                        <svg class="w-4 h-4 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </button>
+                    <!-- Main Hero Typography -->
+                    <div class="space-y-2 sm:space-y-3">
+                        <h1 class="text-[25px] sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink leading-[1.18] sm:leading-[1.14]">
+                            Buy Sealed. Upgrade Certified.<br/>
+                            <span class="text-rausch">Repair in 45 Minutes.</span>
+                        </h1>
+                        <p class="text-[14px] sm:text-[16px] text-muted leading-relaxed max-w-xl">
+                            Official sealed flagship smartphones with genuine GST invoices, 50-point certified pre-owned devices with guaranteed battery health, and high-precision express repairs.
+                        </p>
+                    </div>
+
+                    <!-- Signature Airbnb Omni-Search Bar Pill -->
+                    <div class="w-full max-w-2xl pt-1">
+                        <form action="{{ route('public.store') }}" method="GET" 
+                              class="bg-canvas border border-hairline rounded-2xl sm:rounded-full shadow-airbnb-tier hover:shadow-airbnb-hover transition-airbnb flex flex-col sm:flex-row items-stretch sm:items-center divide-y sm:divide-y-0 sm:divide-x divide-hairline p-1.5 sm:p-2">
+                            
+                            <!-- Segment 1: Search Device -->
+                            <div class="flex-1 px-4 sm:px-5 py-2 hover:bg-surface-soft rounded-xl sm:rounded-full transition-airbnb cursor-pointer group">
+                                <label for="search-input" class="block text-[11px] font-bold uppercase tracking-wider text-ink">Search Device</label>
+                                <input type="text" id="search-input" name="q" value="{{ request('q') }}" placeholder="iPhone 15 Pro, S24 Ultra, OnePlus..."
+                                       class="w-full bg-transparent border-none text-[13.5px] sm:text-[14px] text-body placeholder:text-muted focus:outline-none truncate mt-0.5">
+                            </div>
+
+                            <!-- Segment 2: Condition Filter -->
+                            <div class="w-full sm:w-44 px-4 sm:px-5 py-2 hover:bg-surface-soft rounded-xl sm:rounded-full transition-airbnb cursor-pointer">
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-ink">Condition</label>
+                                <select name="tab" class="w-full bg-transparent border-none text-[13.5px] sm:text-[14px] text-body focus:outline-none cursor-pointer mt-0.5">
+                                    <option value="all">All Devices</option>
+                                    <option value="new">Brand New (Sealed)</option>
+                                    <option value="second_hand">Certified Pre-Owned</option>
+                                </select>
+                            </div>
+
+                            <!-- Segment 3: Service Lab & Rausch Orb Button -->
+                            <div class="w-full sm:w-auto flex items-center justify-between pl-4 pr-1 py-1 sm:py-1.5 gap-2">
+                                <div class="hidden xl:block text-left pr-2">
+                                    <span class="block text-[11px] font-bold uppercase tracking-wider text-ink">Lab Ready</span>
+                                    <span class="text-[13px] text-muted font-normal">Express Service</span>
+                                </div>
+
+                                <button type="submit" 
+                                        class="w-full sm:w-11 sm:h-11 h-10 rounded-xl sm:rounded-full bg-rausch hover:bg-rausch-active text-white flex items-center justify-center transition-airbnb shrink-0 shadow-sm font-semibold text-sm gap-2"
+                                        title="Search Device Catalog">
+                                    <svg class="w-4 h-4 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <span class="inline sm:hidden font-medium">Search Devices</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Quick Category/Filter Pills Under Search -->
+                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-2.5 text-[12px]">
+                            <span class="text-muted font-medium text-[11.5px] sm:text-[12px]">Popular:</span>
+                            <a href="{{ route('public.store', ['q' => 'iPhone 15']) }}" class="px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-soft hover:bg-surface-strong text-ink transition-airbnb border border-hairline-soft text-[11.5px] sm:text-[12px]">iPhone 15</a>
+                            <a href="{{ route('public.store', ['q' => 'Galaxy S24']) }}" class="px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-soft hover:bg-surface-strong text-ink transition-airbnb border border-hairline-soft text-[11.5px] sm:text-[12px]">Samsung S24</a>
+                            <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-soft hover:bg-surface-strong text-ink transition-airbnb border border-hairline-soft font-medium text-rausch text-[11.5px] sm:text-[12px]">Pre-Owned (A+)</a>
+                            <a href="{{ route('public.track_repair') }}" class="px-2.5 py-0.5 sm:py-1 rounded-full bg-surface-soft hover:bg-surface-strong text-ink transition-airbnb border border-hairline-soft text-[11.5px] sm:text-[12px]">Track Repair</a>
+                        </div>
+                    </div>
+
+                    <!-- Dual CTAs -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1 w-full sm:w-auto">
+                        <a href="{{ route('public.store') }}" 
+                           class="px-5 py-3 rounded-full bg-rausch hover:bg-rausch-active text-white text-[14px] font-semibold transition-airbnb shadow-sm flex items-center justify-center gap-2">
+                            <span>Explore Smartphones</span>
+                            <svg class="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </a>
+                        <a href="{{ route('public.track_repair') }}" 
+                           class="px-5 py-3 rounded-full bg-canvas hover:bg-surface-soft border border-hairline text-ink text-[14px] font-semibold transition-airbnb flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 stroke-current fill-none stroke-[2] text-rausch" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                            <span>Book / Track Repair</span>
+                        </a>
+                    </div>
+
+                    <!-- Trust Pillars Strip -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 w-full border-t border-hairline-soft">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            </div>
+                            <div class="text-left">
+                                <span class="block text-[12px] font-semibold text-ink leading-tight">100% Genuine</span>
+                                <span class="text-[11px] text-muted">GST Bill + Warranty</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
+                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </div>
+                            <div class="text-left">
+                                <span class="block text-[12px] font-semibold text-ink leading-tight">50-Point Tested</span>
+                                <span class="text-[11px] text-muted">Certified Pre-Owned</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                            </div>
+                            <div class="text-left">
+                                <span class="block text-[12px] font-semibold text-ink leading-tight">45-Min Express</span>
+                                <span class="text-[11px] text-muted">Precision Repair</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            </div>
+                            <div class="text-left">
+                                <span class="block text-[12px] font-semibold text-ink leading-tight">0% Easy EMI</span>
+                                <span class="text-[11px] text-muted">Instant Paperless</span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-            </form>
+
+                <!-- Right Column (Span 5): Hero Visual Showcase Card with Floating Glass Elements -->
+                <div class="lg:col-span-5 relative mt-4 lg:mt-0">
+                    <div class="relative mx-auto max-w-md lg:max-w-none">
+                        
+                        <!-- Main Frame Card -->
+                        <div class="relative rounded-3xl overflow-hidden bg-white border border-hairline shadow-airbnb-tier hover:shadow-airbnb-hover transition-airbnb p-3">
+                            <!-- Image Container -->
+                            <div class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-surface-soft border border-hairline-soft">
+                                <img src="{{ asset('img/hero-smartphones.jpg') }}" 
+                                     alt="Latest Flagship Smartphones at MobiTrack Mumbai" 
+                                     class="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700">
+                                
+                                <!-- Subtle Gradient Vignette -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
+
+                                <!-- In-image Live Badge (Bottom Left) -->
+                                <div class="absolute bottom-3 left-3 bg-canvas/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 border border-hairline">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span class="text-[11px] font-semibold text-ink">In Stock &amp; Verified in Mumbai</span>
+                                </div>
+                            </div>
+
+                            <!-- Showcase Sub-panel with Stats & Links (Clean & Zero Overlap) -->
+                            <div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-canvas">
+                                <div>
+                                    <div class="text-[10.5px] font-bold uppercase tracking-wider text-muted">Live Inventory</div>
+                                    <div class="text-[14px] font-bold text-ink mt-0.5">
+                                        {{ $newCount ?? 18 }} Sealed Phones · {{ $secondHandCount ?? 12 }} Pre-Owned
+                                    </div>
+                                </div>
+                                <a href="{{ route('public.store') }}" 
+                                   class="px-4 py-2 rounded-full bg-surface-soft hover:bg-surface-strong border border-hairline text-ink text-[12px] font-semibold transition-airbnb shrink-0 text-center shadow-xs">
+                                    View Live Catalog →
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Floating Micro-Card 1: Certified Pre-Owned (Top Right) -->
+                        <div class="hidden sm:flex absolute -top-3 -right-3 bg-canvas/95 backdrop-blur-md p-2.5 rounded-2xl border border-hairline shadow-airbnb-tier items-center gap-2.5 z-10">
+                            <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                A+
+                            </div>
+                            <div class="text-left pr-1">
+                                <div class="text-[11.5px] font-bold text-ink leading-tight">Grade A+ Certified</div>
+                                <div class="text-[10.5px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
+                                    <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <span>85%+ Battery Health</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Micro-Card 2: 45-Min Express Lab (Top Left) -->
+                        <div class="hidden sm:flex absolute -top-3 -left-3 bg-canvas/95 backdrop-blur-md p-2.5 rounded-2xl border border-hairline shadow-airbnb-tier items-center gap-2.5 z-10">
+                            <div class="w-8 h-8 rounded-xl bg-rausch/10 text-rausch flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4 stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div class="text-left pr-1">
+                                <div class="text-[11.5px] font-bold text-ink leading-tight">~45 Min Express Repair</div>
+                                <div class="text-[10.5px] text-muted mt-0.5">Screen &amp; Battery Lab</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
         </div>
     </section>
 
