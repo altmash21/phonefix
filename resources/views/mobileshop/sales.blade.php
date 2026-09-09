@@ -399,11 +399,24 @@
                                 $cPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
                                 if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
                                 $sName = setting('company.name', 'Maurya Mobile');
-                                $mobMsg = "🧾 *Invoice {$sale->invoice_number}* from {$sName}\n";
-                                $mobMsg .= "Customer: {$sale->customer_name}\n";
-                                $mobMsg .= "Item: {$sale->brand} {$sale->model} (IMEI: {$sale->imei_1})\n";
-                                $mobMsg .= "Total: ₹" . number_format($sale->total_amount, 2) . "\n";
-                                $mobMsg .= "Thank you for your purchase!";
+                                $mobMsg = "🧾 *TAX INVOICE & RECEIPT*\n";
+                                $mobMsg .= "🏪 *{$sName}*\n";
+                                $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                                $mobMsg .= "Dear *{$sale->customer_name}*,\n";
+                                $mobMsg .= "Thank you for purchasing at *{$sName}*!\n\n";
+                                $mobMsg .= "📋 *INVOICE DETAILS*\n";
+                                $mobMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
+                                $mobMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
+                                $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . ($sale->storage ? " ({$sale->storage})" : "") . "\n";
+                                $mobMsg .= "• *IMEI 1:* `{$sale->imei_1}`\n\n";
+                                $mobMsg .= "💰 *Total Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
+                                if ($sale->udhari_amount > 0) {
+                                    $mobMsg .= "⚠️ *Balance Due:* *₹" . number_format($sale->udhari_amount, 2) . "*\n";
+                                }
+                                $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                                $mobMsg .= "🛡️ Official Warranty & Genuine GST Bill\n";
+                                $mobMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
+                                $mobMsg .= "_Please retain this digital receipt for your records._";
                                 $mobWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($mobMsg);
                             @endphp
                             <div style="display:inline-flex; gap:6px; align-items:center;">
@@ -458,10 +471,24 @@
                                 $acPhone = preg_replace('/[^0-9]/', '', $asale->customer_phone ?? '');
                                 if (strlen($acPhone) === 10) $acPhone = '91' . $acPhone;
                                 $sName = setting('company.name', 'Maurya Mobile');
-                                $accMsg = "🧾 *Invoice {$asale->invoice_number}* from {$sName}\n";
-                                $accMsg .= "Customer: " . ($asale->customer_name ?: 'Valued Customer') . "\n";
-                                $accMsg .= "Total: ₹" . number_format($asale->total_amount, 2) . "\n";
-                                $accMsg .= "Thank you for your purchase!";
+                                $accMsg = "🧾 *PURCHASE INVOICE & RECEIPT*\n";
+                                $accMsg .= "🏪 *{$sName}*\n";
+                                $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                                $accMsg .= "Dear *" . ($asale->customer_name ?: 'Valued Customer') . "*,\n";
+                                $accMsg .= "Thank you for shopping at *{$sName}*!\n\n";
+                                $accMsg .= "📋 *INVOICE DETAILS*\n";
+                                $accMsg .= "• *Invoice #:* {$asale->invoice_number}\n";
+                                $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($asale->created_at)->format('d M Y, h:i A') . "\n";
+                                if (!empty($asale->items) && count($asale->items) > 0) {
+                                    $accMsg .= "• *Items:* " . $asale->items->pluck('part_name')->implode(', ') . "\n";
+                                }
+                                $accMsg .= "\n💰 *Total Amount:* ₹" . number_format($asale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $asale->payment_mode)) . ")\n";
+                                if ($asale->udhari_amount > 0) {
+                                    $accMsg .= "⚠️ *Balance Due:* *₹" . number_format($asale->udhari_amount, 2) . "*\n";
+                                }
+                                $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                                $accMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
+                                $accMsg .= "_Visit us again soon!_";
                                 $accWaUrl = 'https://wa.me/' . $acPhone . '?text=' . rawurlencode($accMsg);
                             @endphp
                             <div style="display:inline-flex; gap:6px; align-items:center;">
@@ -494,8 +521,24 @@
                     @php
                         $cPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
                         if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
-                        $sName = setting('company.name', 'Maurya Mobile');
-                        $mobMsg = "🧾 *Invoice {$sale->invoice_number}* from {$sName}\nCustomer: {$sale->customer_name}\nItem: {$sale->brand} {$sale->model} (IMEI: {$sale->imei_1})\nTotal: ₹" . number_format($sale->total_amount, 2) . "\nThank you for your purchase!";
+                        $mobMsg = "🧾 *TAX INVOICE & RECEIPT*\n";
+                        $mobMsg .= "🏪 *{$sName}*\n";
+                        $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                        $mobMsg .= "Dear *{$sale->customer_name}*,\n";
+                        $mobMsg .= "Thank you for purchasing at *{$sName}*!\n\n";
+                        $mobMsg .= "📋 *INVOICE DETAILS*\n";
+                        $mobMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
+                        $mobMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
+                        $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . ($sale->storage ? " ({$sale->storage})" : "") . "\n";
+                        $mobMsg .= "• *IMEI 1:* `{$sale->imei_1}`\n\n";
+                        $mobMsg .= "💰 *Total Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
+                        if ($sale->udhari_amount > 0) {
+                            $mobMsg .= "⚠️ *Balance Due:* *₹" . number_format($sale->udhari_amount, 2) . "*\n";
+                        }
+                        $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                        $mobMsg .= "🛡️ Official Warranty & Genuine GST Bill\n";
+                        $mobMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
+                        $mobMsg .= "_Please retain this digital receipt for your records._";
                         $mobWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($mobMsg);
 
                         $pm = strtolower($sale->payment_mode ?? 'cash');
@@ -561,7 +604,24 @@
                         $acPhone = preg_replace('/[^0-9]/', '', $asale->customer_phone ?? '');
                         if (strlen($acPhone) === 10) $acPhone = '91' . $acPhone;
                         $sName = setting('company.name', 'Maurya Mobile');
-                        $accMsg = "🧾 *Invoice {$asale->invoice_number}* from {$sName}\nCustomer: " . ($asale->customer_name ?: 'Valued Customer') . "\nTotal: ₹" . number_format($asale->total_amount, 2) . "\nThank you for your purchase!";
+                        $accMsg = "🧾 *PURCHASE INVOICE & RECEIPT*\n";
+                        $accMsg .= "🏪 *{$sName}*\n";
+                        $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                        $accMsg .= "Dear *" . ($asale->customer_name ?: 'Valued Customer') . "*,\n";
+                        $accMsg .= "Thank you for shopping at *{$sName}*!\n\n";
+                        $accMsg .= "📋 *INVOICE DETAILS*\n";
+                        $accMsg .= "• *Invoice #:* {$asale->invoice_number}\n";
+                        $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($asale->created_at)->format('d M Y, h:i A') . "\n";
+                        if (!empty($asale->items) && count($asale->items) > 0) {
+                            $accMsg .= "• *Items:* " . $asale->items->pluck('part_name')->implode(', ') . "\n";
+                        }
+                        $accMsg .= "\n💰 *Total Amount:* ₹" . number_format($asale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $asale->payment_mode)) . ")\n";
+                        if ($asale->udhari_amount > 0) {
+                            $accMsg .= "⚠️ *Balance Due:* *₹" . number_format($asale->udhari_amount, 2) . "*\n";
+                        }
+                        $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                        $accMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
+                        $accMsg .= "_Visit us again soon!_";
                         $accWaUrl = 'https://wa.me/' . $acPhone . '?text=' . rawurlencode($accMsg);
 
                         $apm = strtolower($asale->payment_mode ?? 'cash');

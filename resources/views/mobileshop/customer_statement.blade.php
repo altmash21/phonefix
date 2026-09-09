@@ -15,27 +15,38 @@
     }
 
     $waMsg = "📊 *STATEMENT OF ACCOUNT*\n";
-    $waMsg .= "👤 *Account holder:* {$customer->name} (" . ($customer->phone ?: 'N/A') . ")\n";
     $waMsg .= "🏪 *{$storeName}*\n";
-    $waMsg .= "--------------------------------------------------\n";
-    $waMsg .= "📅 Date | Particulars | Billed | Received | Balance\n";
-    $waMsg .= "--------------------------------------------------\n";
+    $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    $waMsg .= "👤 *Account Holder:* *{$customer->name}*\n";
+    if (!empty($customer->phone)) {
+        $waMsg .= "📱 *Mobile:* {$customer->phone}\n";
+    }
+    $waMsg .= "📅 *Statement Date:* " . date('d M Y') . "\n";
+    $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    $waMsg .= "📋 *CREDIT & TRANSACTION LEDGER*\n\n";
     
     foreach ($ledger as $item) {
-        $bStr = $item->billed > 0 ? "₹" . number_format($item->billed, 2) : "—";
-        $rStr = $item->paid > 0 ? "₹" . number_format($item->paid, 2) : "—";
-        $balStr = "₹" . number_format($item->balance_left, 2);
-        $part = $item->particulars ?: ($item->billed > 0 ? 'Bill ' . $item->ref_no : 'Khata repayment received');
-        $waMsg .= "{$item->date} | {$part} | {$bStr} | {$rStr} | {$balStr}\n";
+        $part = $item->particulars ?: ($item->billed > 0 ? 'Bill #' . $item->ref_no : 'Khata Repayment Received');
+        $waMsg .= "▪️ *{$item->date}* — {$part}\n";
+        if ($item->billed > 0) {
+            $waMsg .= "   • Billed: ₹" . number_format($item->billed, 2) . "\n";
+        }
+        if ($item->paid > 0) {
+            $waMsg .= "   • Received: ₹" . number_format($item->paid, 2) . "\n";
+        }
+        $waMsg .= "   • Remaining Balance: *₹" . number_format($item->balance_left, 2) . "*\n\n";
     }
     
-    $waMsg .= "--------------------------------------------------\n";
-    $waMsg .= "*Total Billed:* ₹" . number_format($totalBilled, 2) . "\n";
-    $waMsg .= "*Total Received:* ₹" . number_format($totalPaid, 2) . "\n";
-    $waMsg .= "*NET OUTSTANDING BALANCE:* ₹" . number_format($closingBalance, 2) . "\n";
-    $waMsg .= "--------------------------------------------------\n";
-    $waMsg .= "Report discrepancies within 7 business days.\n";
-    $waMsg .= "📞 *Contact:* {$storePhone}";
+    $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    $waMsg .= "📈 *ACCOUNT FINANCIAL SUMMARY*\n";
+    $waMsg .= "• *Total Credit Billed:* ₹" . number_format($totalBilled, 2) . "\n";
+    $waMsg .= "• *Total Amount Received:* ₹" . number_format($totalPaid, 2) . "\n";
+    $waMsg .= "👉 *NET OUTSTANDING BALANCE:* *₹" . number_format($closingBalance, 2) . "*\n";
+    $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    $waMsg .= "💡 _Please clear the pending balance via UPI or Cash at our store counter at your earliest convenience._\n\n";
+    $waMsg .= "📞 *Accounts Desk:* {$storePhone}\n";
+    $waMsg .= "🏢 *Showroom:* Shop #14, Linking Road, Bandra West, Mumbai\n";
+    $waMsg .= "_Note: Please report any discrepancies within 7 business days._";
 
     $waStatementUrl = 'https://wa.me/' . $cleanPhone . '?text=' . rawurlencode($waMsg);
 @endphp

@@ -151,14 +151,16 @@
                         if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
                         $cMsg = "🔔 *PAYMENT REMINDER*\n";
                         $cMsg .= "🏪 *{$stName}*\n";
-                        $cMsg .= "------------------------------------\n";
+                        $cMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                         $cMsg .= "Dear *{$c->name}*,\n\n";
-                        $cMsg .= "This is a friendly reminder regarding your pending store credit balance:\n";
-                        $cMsg .= "📌 *Outstanding Due Amount:* *₹" . number_format($c->udhari_balance, 2) . "*\n\n";
-                        $cMsg .= "Kindly clear this balance at your earliest convenience via Cash or UPI at our counter.\n";
-                        $cMsg .= "If already paid, please disregard this message.\n\n";
-                        $cMsg .= "Thank you for your valued business!\n";
-                        $cMsg .= "📞 *Store Support:* {$stPhone}";
+                        $cMsg .= "Greetings from *{$stName}*!\n\n";
+                        $cMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
+                        $cMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($c->udhari_balance, 2) . "*\n\n";
+                        $cMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
+                        $cMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                        $cMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
+                        $cMsg .= "🏢 *Showroom:* Shop #14, Linking Road, Bandra West, Mumbai\n";
+                        $cMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                         $cWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($cMsg);
                         $isDebtor = ($c->udhari_balance > 0);
                     @endphp
@@ -242,7 +244,15 @@
                 $isDebtor = ($c->udhari_balance > 0);
                 $cPhone = preg_replace('/[^0-9]/', '', $c->phone ?? '');
                 if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
-                $cMsg = "🔔 Payment reminder from {$stName}: Outstanding due is ₹" . number_format($c->udhari_balance, 2);
+                $cMsg = "🔔 *PAYMENT REMINDER*\n";
+                $cMsg .= "🏪 *{$stName}*\n";
+                $cMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                $cMsg .= "Dear *{$c->name}*,\n";
+                $cMsg .= "Greetings from *{$stName}*!\n\n";
+                $cMsg .= "This is a polite reminder regarding your pending balance: *₹" . number_format($c->udhari_balance, 2) . "*.\n\n";
+                $cMsg .= "Kindly arrange payment via UPI or Cash at our store counter.\n";
+                $cMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
+                $cMsg .= "_Thank you!_";
                 $cWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($cMsg);
             @endphp
             <div class="app-flat-row cust-udhari-mobile-card" data-debtor="{{ $isDebtor ? '1' : '0' }}" data-due="{{ $c->udhari_balance }}" data-search="{{ strtolower($c->name . ' ' . ($c->phone ?? '') . ' ' . ($c->address ?? '')) }}" style="padding:12px 14px; background:#fff; border:1px solid #E2E8F0; border-radius:10px;">
@@ -620,14 +630,16 @@
                             if (strlen($dPhone) === 10) $dPhone = '91' . $dPhone;
                             $dMsg = "🔔 *PAYMENT REMINDER*\n";
                             $dMsg .= "🏪 *{$stName}*\n";
-                            $dMsg .= "------------------------------------\n";
+                            $dMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                             $dMsg .= "Dear *{$d->name}*,\n\n";
-                            $dMsg .= "This is a friendly reminder regarding your pending store credit balance:\n";
-                            $dMsg .= "📌 *Outstanding Due Amount:* *₹" . number_format($d->udhari_balance, 2) . "*\n\n";
-                            $dMsg .= "Kindly clear this balance at your earliest convenience via Cash or UPI at our counter.\n";
-                            $dMsg .= "If already paid, please disregard this message.\n\n";
-                            $dMsg .= "Thank you for your valued business!\n";
-                            $dMsg .= "📞 *Store Support:* {$stPhone}";
+                            $dMsg .= "Greetings from *{$stName}*!\n\n";
+                            $dMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
+                            $dMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($d->udhari_balance, 2) . "*\n\n";
+                            $dMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
+                            $dMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                            $dMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
+                            $dMsg .= "🏢 *Showroom:* Shop #14, Linking Road, Bandra West, Mumbai\n";
+                            $dMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                             $dWaUrl = 'https://wa.me/' . $dPhone . '?text=' . rawurlencode($dMsg);
                         @endphp
                         <tr class="debtor-item-row" data-name="{{ strtolower($d->name) }}" data-phone="{{ $d->phone }}">

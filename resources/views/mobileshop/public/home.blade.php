@@ -276,7 +276,7 @@
                                     <span>₹{{ number_format($phone->selling_price, 2) }}</span>
                                     <span class="font-normal text-muted text-[13px]"> incl. GST</span>
                                 </div>
-                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi Maurya Mobile, I want to inquire about ' . $phone->brand . ' ' . $phone->model . ' listed on your website.') }}" 
+                                <a href="https://wa.me/919876543210?text={{ rawurlencode("Hello Maurya Mobile Team,\n\nI would like to inquire about the brand new sealed *" . $phone->brand . ' ' . $phone->model . "* (₹" . number_format($phone->selling_price, 2) . ") listed on your website.\n\nPlease confirm availability and current offers. Thank you!") }}" 
                                    target="_blank"
                                    class="text-[13px] font-semibold text-rausch hover:underline">
                                     Inquire →
@@ -369,7 +369,7 @@
                                     <span>₹{{ number_format($phone->selling_price, 2) }}</span>
                                     <span class="font-normal text-muted text-[13px]"> tested</span>
                                 </div>
-                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi Maurya Mobile, I want to reserve pre-owned ' . $phone->brand . ' ' . $phone->model . ' for ₹' . number_format($phone->selling_price, 2)) }}" 
+                                <a href="https://wa.me/919876543210?text={{ rawurlencode("Hello Maurya Mobile Team,\n\nI would like to reserve the certified pre-owned *" . $phone->brand . ' ' . $phone->model . "* (Grade " . strtoupper($phone->condition_grade ?? 'A+') . ", ₹" . number_format($phone->selling_price, 2) . ") listed on your website.\n\nPlease confirm hold duration and showroom pickup details. Thank you!") }}" 
                                    target="_blank"
                                    class="text-[13px] font-semibold text-rausch hover:underline">
                                     Reserve →

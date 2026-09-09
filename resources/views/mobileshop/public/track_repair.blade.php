@@ -147,7 +147,7 @@
                         </div>
                         @if($ticket->status === 'ready')
                             <div class="text-right">
-                                <a href="https://wa.me/919876543210?text={{ urlencode('Hi Maurya Mobile, I am on my way to collect repaired phone ticket ' . $ticket->ticket_number) }}" 
+                                <a href="https://wa.me/919876543210?text={{ rawurlencode("Hello Maurya Mobile Service Lab,\n\nI am on my way to collect my repaired device (Job Ticket #{$ticket->ticket_number}).\n\nPlease keep the handover receipt ready. Thank you!") }}" 
                                    target="_blank"
                                    class="px-5 py-2.5 bg-rausch hover:bg-rausch-active text-white font-medium text-[13px] rounded-sm transition-airbnb inline-flex items-center gap-1.5 shadow-sm">
                                     <span>Confirm Pickup on WhatsApp</span>

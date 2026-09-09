@@ -3,24 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Tax Invoice #{{ $sale->invoice_number }}</title>
-    @php
-        $storeName = setting('company.name', 'Maurya Mobile Retail Store');
-        $storePhone = setting('company.phone', '+91 98765 43210');
-        $storeEmail = setting('company.email', 'support@mauryamobile.local');
-        $storeAddress = setting('company.address', 'Shop #14, Linking Road Commercial Complex, Bandra West, Mumbai - 400050');
-        $storeGstin = setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5'));
-        $storeState = setting('company.state', 'Maharashtra');
-        $storeStateCode = '27';
-        if (stripos($storeGstin, '09') === 0) {
-            $storeState = 'Uttar Pradesh';
-            $storeStateCode = '09';
-        }
-        $isFullyPaid = ($sale->udhari_amount <= 0 && $sale->amount_paid >= $sale->total_amount);
-    @endphp
     <style>
         @page {
             size: a4 portrait;
-            margin: 8mm 10mm 8mm 10mm;
+            margin: 12mm 14mm 12mm 14mm;
         }
         * {
             box-sizing: border-box;
@@ -29,9 +15,9 @@
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 10px;
+            font-size: 10.5px;
             line-height: 1.4;
-            color: #0f172a;
+            color: #111827;
             background: #ffffff;
         }
         .container {
@@ -41,440 +27,302 @@
             width: 100%;
             border-collapse: collapse;
         }
-        .top-accent {
-            height: 4px;
-            width: 100%;
-            background-color: #5e6ad2;
-            margin-bottom: 16px;
-        }
         .header-table {
             width: 100%;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 14px;
-            margin-bottom: 14px;
+            border-bottom: 2px solid #1f2937;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
         }
         .company-name {
-            font-size: 19px;
+            font-size: 18px;
             font-weight: bold;
-            color: #0f172a;
+            color: #111827;
             text-transform: uppercase;
             letter-spacing: -0.3px;
         }
-        .tagline {
-            font-size: 9.5px;
-            font-weight: bold;
-            color: #5e6ad2;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-top: 2px;
-        }
         .doc-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            color: #0f172a;
+            color: #111827;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .badge-paid {
-            background-color: #ecfdf5;
-            color: #047857;
-            border: 1px solid #a7f3d0;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 9px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .badge-due {
-            background-color: #fff1f2;
-            color: #be123c;
-            border: 1px solid #fecdd3;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 9px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .party-table {
+        .party-box {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 10px 0;
-            margin-bottom: 16px;
+            border: 1px solid #d1d5db;
+            background-color: #f9fafb;
+            margin-bottom: 18px;
         }
-        .party-card {
-            border: 1px solid #e2e8f0;
-            background-color: #f8fafc;
-            border-radius: 6px;
-            padding: 10px 12px;
+        .party-box td {
+            padding: 10px 14px;
             vertical-align: top;
-        }
-        .party-label {
-            font-size: 8.5px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #5e6ad2;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
         }
         .items-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 10px;
-            margin-bottom: 16px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            margin-bottom: 18px;
         }
         .items-table th {
-            background-color: #0f172a;
-            color: #ffffff;
+            background-color: #f3f4f6;
+            color: #1f2937;
             font-weight: bold;
-            font-size: 8.5px;
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 8px 10px;
+            letter-spacing: 0.4px;
+            padding: 6px 8px;
+            border-top: 1.5px solid #374151;
+            border-bottom: 1.5px solid #374151;
             text-align: left;
         }
         .items-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e2e8f0;
-            color: #0f172a;
-        }
-        .summary-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 12px 0;
-            margin-bottom: 16px;
+            padding: 7px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #111827;
         }
         .tax-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 9px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            margin-bottom: 8px;
+            font-size: 9.5px;
+            border: 1px solid #d1d5db;
+            margin-bottom: 10px;
         }
         .tax-table th {
-            background-color: #f8fafc;
+            background-color: #f3f4f6;
             padding: 4px 6px;
             font-size: 8.5px;
             font-weight: bold;
-            color: #475569;
-            border-bottom: 1px solid #e2e8f0;
+            color: #1f2937;
+            border-bottom: 1px solid #d1d5db;
         }
         .tax-table td {
             padding: 4px 6px;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid #e5e7eb;
         }
-        .totals-card {
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            background-color: #ffffff;
-            overflow: hidden;
-        }
-        .grand-total-bar {
-            background-color: #0f172a;
-            color: #ffffff;
-            padding: 8px 12px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        .trust-strip {
+        .summary-table {
             width: 100%;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            background-color: #f8fafc;
-            padding: 6px;
-            margin-bottom: 14px;
-            text-align: center;
-            font-size: 9.5px;
-            font-weight: bold;
-            color: #0f172a;
+            border-collapse: collapse;
+            font-size: 10.5px;
+            border: 1px solid #d1d5db;
         }
+        .summary-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-mono { font-family: 'Courier New', Courier, monospace; }
         .footer-table {
             width: 100%;
-            border-top: 1px solid #e2e8f0;
+            margin-top: 18px;
+            border-top: 1px solid #e5e7eb;
             padding-top: 12px;
-        }
-        .stamp-box {
-            border: 1.5px dashed #cbd5e1;
-            border-radius: 6px;
-            background-color: #f8fafc;
-            padding: 6px 14px;
-            display: inline-block;
-            text-align: center;
-            margin: 6px 0;
         }
     </style>
 </head>
 <body>
+
 <div class="container">
-
-    <div class="top-accent"></div>
-
-    <!-- HEADER TABLE -->
-    <table class="header-table">
+    <!-- TOP CORPORATE HEADER -->
+    <table class="table header-table">
         <tr>
-            <td style="width: 60%; vertical-align: top;">
-                <div class="company-name">{{ $storeName }}</div>
-                <div class="tagline">Flagship Retail &amp; Authorized Smartphone Hub</div>
-                <div style="font-size: 9.5px; color: #475569; margin-top: 4px; line-height: 1.4;">
-                    {{ $storeAddress }}<br>
-                    Phone: <strong>{{ $storePhone }}</strong> &bull; Email: {{ $storeEmail }}
+            <td style="width: 58%; vertical-align: top;">
+                <div class="company-name">{{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
+                <div style="font-size: 9.5px; color: #4b5563; margin-top: 3px;">
+                    {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
+                    Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'support@mauryamobile.local') }}
                 </div>
-                <div style="margin-top: 6px; font-size: 9.5px;">
-                    <span style="background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
-                        GSTIN: {{ $storeGstin }}
-                    </span>
-                    &nbsp;
-                    <span style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 2px 6px; border-radius: 4px;">
-                        State: <strong>{{ $storeState }} ({{ $storeStateCode }})</strong>
-                    </span>
+                <div style="font-size: 9.5px; font-weight: bold; color: #111827; margin-top: 3px;">
+                    GSTIN: <span class="font-mono">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>
+                    &nbsp;|&nbsp; State: {{ setting('company.state', 'Uttar Pradesh') }} (09)
                 </div>
             </td>
-            <td style="width: 40%; text-align: right; vertical-align: top;">
-                <div style="margin-bottom: 6px;">
-                    @if($isFullyPaid)
-                        <span class="badge-paid">&bull; Paid in Full</span>
-                    @else
-                        <span class="badge-due">&bull; Due: ₹{{ number_format($sale->udhari_amount, 2) }}</span>
-                    @endif
-                </div>
+            <td style="width: 42%; vertical-align: top; text-align: right;">
                 <div class="doc-title">{{ $sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE' }}</div>
-                <div style="font-size: 8.5px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Original for Recipient</div>
-                
-                <div style="margin-top: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; display: inline-block;">
-                    <div style="font-size: 8px; color: #64748b; text-transform: uppercase;">Invoice Number</div>
-                    <div style="font-size: 13px; font-weight: bold; color: #0f172a; font-family: monospace;">{{ $sale->invoice_number }}</div>
+                <div style="font-size: 9px; color: #6b7280; margin-top: 2px; text-transform: uppercase;">Original for Recipient</div>
+                <div style="font-size: 13px; font-weight: bold; color: #111827; margin-top: 6px;">
+                    Invoice #: <span class="font-mono">{{ $sale->invoice_number }}</span>
                 </div>
-                <div style="font-size: 9.5px; color: #64748b; margin-top: 4px;">
-                    Date: <strong>{{ date('d M Y', strtotime($sale->created_at)) }}</strong> &bull; Time: {{ date('h:i A', strtotime($sale->created_at)) }}
+                <div style="font-size: 10px; color: #374151; margin-top: 2px;">
+                    Date: <strong>{{ date('d M Y', strtotime($sale->created_at)) }}</strong> &bull; {{ date('h:i A', strtotime($sale->created_at)) }}
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- PARTY DETAILS (CUSTOMER & PAYMENT) -->
-    <table class="party-table">
+    <!-- PARTY & DISPATCH GRID -->
+    <table class="table party-box">
         <tr>
-            <td class="party-card" style="width: 50%;">
-                <div class="party-label">Billed To &bull; Customer Details</div>
-                <div style="font-size: 14px; font-weight: bold; color: #0f172a;">{{ $sale->customer_name }}</div>
-                <div style="font-size: 10.5px; color: #334155; margin-top: 2px;">Phone: <strong>{{ $sale->customer_phone ?: 'Walk-in Customer' }}</strong></div>
+            <td style="width: 50%; border-right: 1px solid #d1d5db;">
+                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Details of Receiver (Billed To)</div>
+                <div style="font-size: 13px; font-weight: bold; color: #111827; margin-top: 2px;">{{ $sale->customer_name }}</div>
+                <div style="font-size: 10px; color: #374151; margin-top: 2px;">Phone: <strong>{{ $sale->customer_phone }}</strong></div>
                 @if($sale->customer_gstin)
-                    <div style="font-size: 9.5px; font-family: monospace; font-weight: bold; margin-top: 2px;">GSTIN: {{ $sale->customer_gstin }}</div>
+                    <div style="font-size: 9.5px; color: #111827; margin-top: 2px;">GSTIN: <span class="font-mono">{{ $sale->customer_gstin }}</span></div>
                 @endif
-                <div style="font-size: 9.5px; color: #64748b; margin-top: 2px;">{{ $sale->customer_address ?: 'Store Counter Delivery · Mumbai Metro' }}</div>
-                <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Place of Supply: <strong>{{ $storeState }} ({{ $storeStateCode }})</strong></div>
+                <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">{{ $sale->customer_address ?: setting('company.state', 'Uttar Pradesh') }}</div>
+                <div style="font-size: 8.5px; color: #6b7280; margin-top: 2px;">Place of Supply: {{ setting('company.state', 'Uttar Pradesh') }} (09)</div>
             </td>
-            <td class="party-card" style="width: 50%;">
-                <div class="party-label">Payment &amp; Terms</div>
-                <div style="font-size: 10.5px; color: #334155; line-height: 1.5;">
-                    <div>Payment Method: <strong>{{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</strong></div>
-                    @if($sale->payment_mode === 'emi' && $emiProvider)
-                        <div style="color: #4338ca; font-weight: bold;">Financier: {{ $emiProvider->name }} (Loan: {{ $sale->emi_loan_no ?: 'N/A' }})</div>
-                    @endif
-                    <div>Tax Regime: <strong>{{ strtoupper(str_replace('_', ' ', $sale->tax_type)) }} @ 18% GST</strong></div>
-                    <div style="color: #047857; font-weight: bold; margin-top: 2px;">✓ 1 Year Official Manufacturer Warranty</div>
-                </div>
+            <td style="width: 50%;">
+                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Payment &amp; Dispatch Information</div>
+                <div style="font-size: 10px; color: #111827; margin-top: 2px;">Mode: <strong>{{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</strong></div>
+                @if($sale->payment_mode === 'emi' && $emiProvider)
+                    <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Financier: <strong>{{ $emiProvider->name }}</strong> (Loan: {{ $sale->emi_loan_no ?: 'N/A' }})</div>
+                @endif
+                @if($sale->bill_type === 'gst')
+                    <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Tax Regime: <strong>{{ strtoupper(str_replace('_', ' ', $sale->tax_type)) }} (18% GST)</strong></div>
+                @else
+                    <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Bill Category: <strong>Retail / Non-GST Estimate</strong></div>
+                @endif
             </td>
         </tr>
     </table>
 
-    <!-- LINE ITEMS -->
-    <table class="items-table">
+    <!-- LINE ITEMS TABLE -->
+    <table class="table items-table">
         <thead>
             <tr>
                 <th style="width: 5%; text-align: center;">#</th>
-                <th style="width: 45%;">Item Description &amp; Hardware Details</th>
-                <th style="width: 12%; text-align: center;">HSN</th>
+                <th style="width: 42%;">Description of Goods / Handset</th>
+                <th style="width: 12%; text-align: center;">HSN Code</th>
                 <th style="width: 6%; text-align: center;">Qty</th>
-                <th style="width: 11%; text-align: right;">Rate (₹)</th>
-                <th style="width: 10%; text-align: right;">Taxable (₹)</th>
-                <th style="width: 11%; text-align: right;">Total (₹)</th>
+                <th style="width: 12%; text-align: right;">Rate (Rs.)</th>
+                <th style="width: 11%; text-align: right;">Taxable (Rs.)</th>
+                <th style="width: 12%; text-align: right;">Total (Rs.)</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td style="text-align: center; color: #64748b;">1</td>
+                <td class="text-center" style="color: #4b5563;">1</td>
                 <td>
-                    <div style="font-size: 12px; font-weight: bold; color: #0f172a;">{{ $sale->brand }} {{ $sale->model }}</div>
-                    <div style="font-size: 9px; color: #475569; margin-top: 1px;">
-                        {{ $sale->ram ? $sale->ram . ' RAM / ' . $sale->storage : 'Standard' }}
-                        @if($sale->color) &bull; {{ $sale->color }} @endif
-                        &bull; <span style="color: #047857; font-weight: bold;">1-Yr Warranty</span>
+                    <div style="font-weight: bold; font-size: 11px; color: #111827;">{{ $sale->brand }} {{ $sale->model }}</div>
+                    <div style="font-size: 9px; color: #4b5563; margin-top: 1px;">
+                        Spec: {{ $sale->ram ?: 'Std' }} RAM / {{ $sale->storage ?: 'Std' }} Storage &bull; Color: {{ $sale->color ?: 'Standard' }}
                     </div>
-                    <div style="margin-top: 3px; font-family: monospace; font-size: 9px; background: #f8fafc; padding: 2px 5px; border: 1px solid #e2e8f0; display: inline-block;">
-                        IMEI 1: <strong>{{ $sale->imei_1 }}</strong>
-                        @if($sale->imei_2) &bull; IMEI 2: <strong>{{ $sale->imei_2 }}</strong> @endif
+                    <div class="font-mono" style="font-size: 9px; font-weight: bold; color: #111827; margin-top: 2px;">
+                        IMEI 1: {{ $sale->imei_1 }}
+                        @if($sale->imei_2) &bull; IMEI 2: {{ $sale->imei_2 }} @endif
                     </div>
                 </td>
-                <td style="text-align: center; font-family: monospace;">{{ $sale->hsn_code ?: '85171300' }}</td>
-                <td style="text-align: center; font-weight: bold;">1</td>
-                <td style="text-align: right; font-family: monospace;">{{ number_format($sale->sale_price / 1.18, 2) }}</td>
-                <td style="text-align: right; font-family: monospace;">{{ number_format($sale->sale_price / 1.18, 2) }}</td>
-                <td style="text-align: right; font-family: monospace; font-weight: bold; font-size: 11px;">{{ number_format($sale->total_amount, 2) }}</td>
+                <td class="text-center font-mono" style="font-size: 9.5px;">{{ $sale->hsn_code ?: '85171300' }}</td>
+                <td class="text-center font-mono" style="font-weight: bold;">1</td>
+                <td class="text-right font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->sale_price, 2) }}</td>
+                <td class="text-right font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->sale_price, 2) }}</td>
+                <td class="text-right font-mono" style="font-weight: bold;">{{ number_format($sale->total_amount, 2) }}</td>
             </tr>
 
             @if(isset($gifts) && $gifts->count() > 0)
                 @foreach($gifts as $idx => $g)
-                <tr style="background-color: #f0fdf4;">
-                    <td style="text-align: center; color: #166534;">{{ $idx + 2 }}</td>
+                <tr style="background-color: #fafafa;">
+                    <td class="text-center" style="color: #6b7280;">{{ $idx + 2 }}</td>
                     <td>
-                        <div style="font-weight: bold; color: #166534; font-size: 10px;">🎁 Free Gift Promo: {{ $g->name }}</div>
-                        <div style="font-size: 8.5px; color: #15803d;">Store complimentary bundled accessory</div>
+                        <div style="font-weight: bold; color: #111827; font-size: 9.5px;">Promotional Free Gift: {{ $g->name }}</div>
+                        <div style="font-size: 8.5px; color: #6b7280;">Bundled accessory item</div>
                     </td>
-                    <td style="text-align: center; font-family: monospace; color: #166534;">85177090</td>
-                    <td style="text-align: center; font-weight: bold; color: #166534;">{{ $g->qty }}</td>
-                    <td style="text-align: right; font-family: monospace; color: #166534;">0.00</td>
-                    <td style="text-align: right; font-family: monospace; color: #166534;">0.00</td>
-                    <td style="text-align: right; font-weight: bold; font-family: monospace; color: #15803d;">FREE</td>
+                    <td class="text-center font-mono" style="font-size: 9px; color: #6b7280;">85177090</td>
+                    <td class="text-center font-mono" style="font-weight: bold;">{{ $g->qty }}</td>
+                    <td class="text-right font-mono" style="color: #6b7280;">0.00</td>
+                    <td class="text-right font-mono" style="color: #6b7280;">0.00</td>
+                    <td class="text-right font-mono" style="font-weight: bold;">FREE</td>
                 </tr>
                 @endforeach
             @endif
         </tbody>
     </table>
 
-    <!-- SUMMARY & TOTALS -->
-    <table class="summary-table">
+    <!-- TOTALS & GST SUMMARY -->
+    <table class="table" style="margin-bottom: 16px;">
         <tr>
-            <!-- Left Column: Tax & Words -->
-            <td style="width: 55%; vertical-align: top;">
+            <td style="width: 55%; vertical-align: top; padding-right: 14px;">
                 @if($sale->bill_type === 'gst')
-                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #475569; margin-bottom: 3px;">
-                    GST Tax Computation Matrix (@ 18.00%)
-                </div>
+                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280; margin-bottom: 4px;">Tax Calculation (GST @ 18%)</div>
                 <table class="tax-table">
                     <thead>
                         <tr>
-                            <th>Tax Type</th>
+                            <th>Tax Component</th>
                             <th style="text-align: right;">Rate</th>
-                            <th style="text-align: right;">Taxable (₹)</th>
-                            <th style="text-align: right;">Tax (₹)</th>
+                            <th style="text-align: right;">Tax Amount (Rs.)</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if($sale->tax_type === 'intra_state')
-                        <tr>
-                            <td>Central GST (CGST)</td>
-                            <td style="text-align: right;">9.00%</td>
-                            <td style="text-align: right; font-family: monospace;">{{ number_format($sale->sale_price / 1.18, 2) }}</td>
-                            <td style="text-align: right; font-family: monospace; font-weight: bold;">{{ number_format($sale->cgst_amount, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td>State GST (SGST)</td>
-                            <td style="text-align: right;">9.00%</td>
-                            <td style="text-align: right; font-family: monospace;">{{ number_format($sale->sale_price / 1.18, 2) }}</td>
-                            <td style="text-align: right; font-family: monospace; font-weight: bold;">{{ number_format($sale->sgst_amount, 2) }}</td>
-                        </tr>
+                            <tr>
+                                <td>Central GST (CGST)</td>
+                                <td class="text-right">9.00%</td>
+                                <td class="text-right font-mono">{{ number_format($sale->cgst_amount, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td>State GST (SGST)</td>
+                                <td class="text-right">9.00%</td>
+                                <td class="text-right font-mono">{{ number_format($sale->sgst_amount, 2) }}</td>
+                            </tr>
                         @else
-                        <tr>
-                            <td>Integrated GST (IGST)</td>
-                            <td style="text-align: right;">18.00%</td>
-                            <td style="text-align: right; font-family: monospace;">{{ number_format($sale->sale_price / 1.18, 2) }}</td>
-                            <td style="text-align: right; font-family: monospace; font-weight: bold;">{{ number_format($sale->igst_amount, 2) }}</td>
-                        </tr>
+                            <tr>
+                                <td>Integrated GST (IGST)</td>
+                                <td class="text-right">18.00%</td>
+                                <td class="text-right font-mono">{{ number_format($sale->igst_amount, 2) }}</td>
+                            </tr>
                         @endif
-                        <tr style="background: #f8fafc; font-weight: bold;">
-                            <td colspan="3" style="text-align: right;">Total GST Collected</td>
-                            <td style="text-align: right; font-family: monospace;">₹{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}</td>
+                        <tr style="background-color: #f9fafb; font-weight: bold;">
+                            <td>Total GST Liability</td>
+                            <td class="text-right">18.00%</td>
+                            <td class="text-right font-mono">{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}</td>
                         </tr>
                     </tbody>
                 </table>
                 @endif
 
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 8px; margin-top: 4px;">
-                    <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; color: #64748b;">Amount in Words:</div>
-                    <div style="font-size: 10px; font-weight: bold; color: #0f172a; font-style: italic; margin-top: 1px;">
+                <div style="background-color: #f9fafb; border: 1px solid #d1d5db; padding: 6px 8px;">
+                    <span style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280;">Amount Chargeable (in Words):</span>
+                    <div style="font-size: 10px; font-weight: bold; color: #111827; margin-top: 2px;">
                         {{ $amountInWords ?? 'Rupees Only' }}
                     </div>
                 </div>
             </td>
 
-            <!-- Right Column: Grand Totals -->
             <td style="width: 45%; vertical-align: top;">
-                <div class="totals-card">
-                    <table style="width: 100%; font-size: 10px; padding: 6px 10px;">
-                        <tr>
-                            <td style="color: #475569; padding: 3px 0;">Subtotal (Taxable):</td>
-                            <td style="text-align: right; font-family: monospace; font-weight: bold;">₹{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->total_amount, 2) }}</td>
-                        </tr>
-                        @if($sale->bill_type === 'gst')
-                        <tr>
-                            <td style="color: #475569; padding: 3px 0;">Total GST (18%):</td>
-                            <td style="text-align: right; font-family: monospace; font-weight: bold;">₹{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}</td>
-                        </tr>
-                        @endif
-                        <tr>
-                            <td style="color: #166534; padding: 3px 0;">Discount:</td>
-                            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #166534;">₹0.00</td>
-                        </tr>
-                    </table>
-
-                    <div class="grand-total-bar">
-                        <table style="width: 100%; color: #ffffff;">
-                            <tr>
-                                <td>GRAND TOTAL</td>
-                                <td style="text-align: right; font-family: monospace; font-size: 16px;">₹{{ number_format($sale->total_amount, 2) }}</td>
-                            </tr>
-                        </table>
-                    </div>
-
-                    <table style="width: 100%; font-size: 9.5px; padding: 6px 10px; background: #fafafa;">
-                        <tr>
-                            <td style="color: #475569;">Amount Paid:</td>
-                            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #059669;">₹{{ number_format($sale->amount_paid, 2) }}</td>
-                        </tr>
-                        @if($sale->udhari_amount > 0)
-                        <tr>
-                            <td style="color: #dc2626; font-weight: bold;">Balance Remaining:</td>
-                            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #dc2626;">₹{{ number_format($sale->udhari_amount, 2) }}</td>
-                        </tr>
-                        @else
-                        <tr>
-                            <td style="color: #64748b;">Balance:</td>
-                            <td style="text-align: right; font-family: monospace; color: #059669;">₹0.00 (Settled)</td>
-                        </tr>
-                        @endif
-                    </table>
-                </div>
+                <table class="summary-table">
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Subtotal (Taxable Value)</td>
+                        <td style="text-align: right;" class="font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->total_amount, 2) }}</td>
+                    </tr>
+                    @if($sale->bill_type === 'gst')
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #4b5563;">Total Tax (GST 18%)</td>
+                        <td style="text-align: right;" class="font-mono">{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}</td>
+                    </tr>
+                    @endif
+                    <tr style="background-color: #f3f4f6; font-size: 12px; font-weight: bold; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
+                        <td style="color: #111827;">Invoice Grand Total</td>
+                        <td style="text-align: right; color: #111827;" class="font-mono">Rs. {{ number_format($sale->total_amount, 2) }}</td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
 
-    <!-- TRUST STRIP -->
-    <div class="trust-strip">
-        🛡️ 100% Genuine Handset &nbsp;&bull;&nbsp; ⚡ 7-Day Replacement Support &nbsp;&bull;&nbsp; 🧾 GST Paid Legal Bill
-    </div>
-
-    <!-- TERMS & SIGNATURE -->
-    <table class="footer-table">
+    <!-- TERMS & SIGNATURES SECTION -->
+    <table class="table footer-table">
         <tr>
-            <td style="width: 65%; vertical-align: top; padding-right: 14px;">
-                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 2px;">
-                    Terms &amp; Conditions of Sale
-                </div>
-                <div style="font-size: 8px; color: #64748b; line-height: 1.4;">
-                    1. 1-Year manufacturer warranty on brand new smartphones is honored directly at official brand service centers.<br>
-                    2. Physical drop damage, screen cracks, or liquid intrusion void the manufacturer warranty.<br>
-                    3. Dead-on-Arrival (DOA) replacement is covered within 7 days from purchase date subject to brand inspection.<br>
-                    4. Goods once sold cannot be returned for cash refund. All disputes subject to local Mumbai jurisdiction.
-                </div>
+            <td style="width: 60%; vertical-align: top; padding-right: 15px;">
+                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280; margin-bottom: 2px;">Terms &amp; Conditions:</div>
+                <ol style="font-size: 8px; color: #4b5563; padding-left: 12px; line-height: 1.35; margin: 0;">
+                    <li>1-Year manufacturer warranty on brand new handsets as per brand ASC policy.</li>
+                    <li>Physical damage, water intrusion, or unauthorized repairs void warranty.</li>
+                    <li>Replacement for hardware defects within 7 days of invoice subject to brand approval.</li>
+                    <li>Goods once sold will not be refunded in cash. Disputes subject to local jurisdiction.</li>
+                </ol>
             </td>
-            <td style="width: 35%; text-align: right; vertical-align: top;">
-                <div style="font-size: 10px; font-weight: bold; color: #0f172a;">For {{ $storeName }}</div>
-                <div class="stamp-box">
-                    <span style="font-size: 7.5px; font-weight: bold; color: #5e6ad2; letter-spacing: 0.5px; text-transform: uppercase;">AUTHORIZED SEAL</span><br>
-                    <span style="font-size: 8.5px; font-weight: bold; color: #0f172a;">MAURYA MOBILE</span>
+            <td style="width: 40%; vertical-align: top; text-align: right;">
+                <div style="font-size: 10px; font-weight: bold; color: #111827;">For {{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
+                <div style="height: 42px;"></div>
+                <div style="border-top: 1px solid #4b5563; display: inline-block; padding-top: 3px; font-size: 9px; color: #4b5563; min-width: 160px; text-align: center;">
+                    Authorised Signatory
                 </div>
-                <div style="font-size: 8.5px; font-weight: bold; color: #475569; text-transform: uppercase;">Authorised Signatory</div>
             </td>
         </tr>
     </table>
-
-    <div style="margin-top: 14px; padding-top: 8px; border-top: 1px solid #f1f5f9; font-size: 8px; color: #94a3b8; text-align: center;">
-        Computer generated tax invoice &bull; Original for Recipient &bull; Powered by Maurya Mobile Retail System
-    </div>
-
 </div>
+
 </body>
 </html>

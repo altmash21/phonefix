@@ -577,7 +577,20 @@
                                 {{ $rep->customer_name }} · <span style="font-weight:700; color:#16a34a; font-family:var(--font-mono);">₹{{ number_format($rep->total_amount, 2) }}</span>
                             </div>
                         </div>
-                        <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $rep->customer_phone) }}?text={{ urlencode('Hi ' . $rep->customer_name . ', your ' . $rep->brand . ' ' . $rep->model . ' is ready for pickup! Total amount: ₹' . number_format($rep->total_amount, 2)) }}" 
+                        @php
+                            $rNotifyMsg = "🔧 *DEVICE READY FOR PICKUP*\n";
+                            $rNotifyMsg .= "🏪 *Maurya Mobile Service Lab*\n";
+                            $rNotifyMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                            $rNotifyMsg .= "Dear *{$rep->customer_name}*,\n\n";
+                            $rNotifyMsg .= "Great news! Your *{$rep->brand} {$rep->model}* has been successfully serviced and passed quality inspection.\n\n";
+                            $rNotifyMsg .= "📋 *Job Ticket #:* {$rep->ticket_number}\n";
+                            $rNotifyMsg .= "💰 *Service Amount:* *₹" . number_format($rep->total_amount, 2) . "*\n\n";
+                            $rNotifyMsg .= "📍 *Pickup Location:* Shop #14, Linking Road, Bandra West\n";
+                            $rNotifyMsg .= "🕒 *Store Hours:* 10:00 AM – 9:30 PM (Daily)\n";
+                            $rNotifyMsg .= "📞 *Helpdesk:* +91 98765 43210\n";
+                            $rNotifyMsg .= "_Please show this message at our counter to collect your device._";
+                        @endphp
+                        <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $rep->customer_phone) }}?text={{ rawurlencode($rNotifyMsg) }}" 
                            target="_blank"
                            class="btn btn-sm btn-outline"
                            style="color:#16a34a; border-color:#86efac; gap:4px; font-size:11px;"
@@ -615,7 +628,20 @@
                                 Due: ₹{{ number_format($deb->udhari_balance, 2) }}
                             </div>
                         </div>
-                        <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $deb->phone) }}?text={{ urlencode('Dear ' . $deb->name . ', this is a polite reminder from Maurya Mobile regarding your outstanding balance of ₹' . number_format($deb->udhari_balance, 2) . '. Please settle at your earliest convenience.') }}" 
+                        @php
+                            $debMsg = "🔔 *PAYMENT REMINDER*\n";
+                            $debMsg .= "🏪 *Maurya Mobile Store*\n";
+                            $debMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                            $debMsg .= "Dear *{$deb->name}*,\n\n";
+                            $debMsg .= "Greetings from *Maurya Mobile*!\n\n";
+                            $debMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
+                            $debMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($deb->udhari_balance, 2) . "*\n\n";
+                            $debMsg .= "Kindly arrange to clear this balance via UPI or Cash at our store counter.\n";
+                            $debMsg .= "📞 *Accounts Desk:* +91 98765 43210\n";
+                            $debMsg .= "🏢 *Showroom:* Shop #14, Linking Road, Bandra West\n";
+                            $debMsg .= "_If already settled recently, please disregard this message. Thank you!_";
+                        @endphp
+                        <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $deb->phone) }}?text={{ rawurlencode($debMsg) }}" 
                            target="_blank"
                            class="btn btn-sm btn-outline"
                            style="color:#e11d48; border-color:#fca5a5; gap:4px; font-size:11px;"

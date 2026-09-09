@@ -137,7 +137,7 @@
                                         Details
                                     </a>
                                     <span class="text-muted text-[11px]">·</span>
-                                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello Maurya Mobile, I would like to buy brand new ' . $np->brand . ' ' . $np->model . ' for ₹' . number_format($np->selling_price, 2)) }}" 
+                                    <a href="https://wa.me/919876543210?text={{ rawurlencode("Hello Maurya Mobile Team,\n\nI am interested in purchasing the brand new sealed *" . $np->brand . ' ' . $np->model . "* (₹" . number_format($np->selling_price, 2) . ") from your catalog.\n\nPlease share payment details and store pickup timings. Thank you!") }}" 
                                        target="_blank"
                                        class="text-[11px] sm:text-[13px] font-bold text-rausch hover:underline">
                                         Buy →
@@ -237,7 +237,7 @@
                                         Details
                                     </a>
                                     <span class="text-muted text-[11px]">·</span>
-                                    <a href="https://wa.me/919876543210?text={{ urlencode('Hello Maurya Mobile, I want to reserve pre-owned ' . $sp->brand . ' ' . $sp->model . ' for ₹' . number_format($sp->selling_price, 2)) }}" 
+                                    <a href="https://wa.me/919876543210?text={{ rawurlencode("Hello Maurya Mobile Team,\n\nI would like to reserve the certified pre-owned *" . $sp->brand . ' ' . $sp->model . "* (₹" . number_format($sp->selling_price, 2) . ") from your catalog.\n\nPlease confirm battery health and showroom hold details. Thank you!") }}" 
                                        target="_blank"
                                        class="text-[11px] sm:text-[13px] font-bold text-rausch hover:underline">
                                         Reserve →

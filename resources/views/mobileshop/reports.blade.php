@@ -572,7 +572,17 @@
                                 $dPhone = preg_replace('/[^0-9]/', '', $debtor->phone ?? '');
                                 if (strlen($dPhone) === 10) $dPhone = '91' . $dPhone;
                                 $stName = setting('company.name', 'Maurya Mobile');
-                                $dMsg = "🔔 *PAYMENT REMINDER*\n🏪 *{$stName}*\nDear *{$debtor->name}*,\nPending Khata Due: *₹" . number_format($debtor->udhari_balance, 2) . "*.\nKindly clear your balance. Thank you!";
+                                $stPhone = setting('company.phone', '+91 98765 43210');
+                                $dMsg = "🔔 *PAYMENT REMINDER*\n";
+                                $dMsg .= "🏪 *{$stName}*\n";
+                                $dMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                                $dMsg .= "Dear *{$debtor->name}*,\n\n";
+                                $dMsg .= "Greetings from *{$stName}*!\n\n";
+                                $dMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
+                                $dMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($debtor->udhari_balance, 2) . "*\n\n";
+                                $dMsg .= "Kindly arrange to clear this balance via UPI or Cash at our store counter.\n";
+                                $dMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
+                                $dMsg .= "_If already settled recently, please disregard this message. Thank you!_";
                                 $dWaUrl = 'https://wa.me/' . $dPhone . '?text=' . rawurlencode($dMsg);
                             @endphp
                             <tr class="debtor-row" data-amount="{{ (float) $debtor->udhari_balance }}" data-search="{{ strtolower($debtor->name . ' ' . $debtor->phone . ' ' . $debtor->address) }}">
