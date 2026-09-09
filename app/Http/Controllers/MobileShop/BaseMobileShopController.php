@@ -267,16 +267,44 @@ abstract class BaseMobileShopController extends Controller
     }
 
     /**
-     * Upload mobile device photo and return public relative path
+     * Upload mobile device photo and return public relative path.
+     * Enforces strict image MIME validation, ignores client extension, and generates UUID filenames.
      */
     protected function uploadMobilePhoto(Request $request, string $prefix): ?string
     {
         if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
             $file = $request->file('photo');
-            $filename = $prefix . '_' . time() . '_' . rand(100, 999) . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/mobiles'), $filename);
+
+            // Strict MIME type verification via file contents
+            $allowedMimes = [
+                'image/jpeg' => 'jpg',
+                'image/png'  => 'png',
+                'image/webp' => 'webp',
+                'image/gif'  => 'gif',
+            ];
+
+            $mime = $file->getMimeType();
+            if (!array_key_exists($mime, $allowedMimes)) {
+                throw new \InvalidArgumentException('Invalid file type. Only JPG, PNG, WEBP, and GIF images are allowed.');
+            }
+
+            // Size guard: max 5MB
+            if ($file->getSize() > 5 * 1024 * 1024) {
+                throw new \InvalidArgumentException('Uploaded image exceeds the 5MB size limit.');
+            }
+
+            $ext = $allowedMimes[$mime];
+            $filename = $prefix . '_' . Str::uuid()->toString() . '.' . $ext;
+
+            $uploadDir = public_path('uploads/mobiles');
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $file->move($uploadDir, $filename);
             return 'uploads/mobiles/' . $filename;
         }
+
         return null;
     }
 
