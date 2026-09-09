@@ -16,52 +16,274 @@
 
 <!-- Mobile Horizontal Stat Strip -->
 <div class="mobile-stat-strip">
-    <div class="stat-strip-item" onclick="openDebtorsModal()">
+    <div class="stat-strip-item" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('debtors');">
         <span class="stat-label">Receivables</span>
         <span class="stat-val" style="color:#DC2626;">₹{{ number_format($customers->sum('udhari_balance'), 0) }}</span>
     </div>
     <div class="stat-divider"></div>
-    <div class="stat-strip-item" onclick="openDebtorsModal()">
+    <div class="stat-strip-item" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('debtors');">
         <span class="stat-label">Debtors</span>
         <span class="stat-val" style="color:#CA8A04;">{{ $customers->where('udhari_balance', '>', 0)->count() }}</span>
     </div>
     <div class="stat-divider"></div>
-    <div class="stat-strip-item">
+    <div class="stat-strip-item" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('settled');">
         <span class="stat-label">Settled</span>
         <span class="stat-val" style="color:#16A34A;">{{ $customers->where('udhari_balance', '<=', 0)->count() }}</span>
     </div>
 </div>
 
 <!-- Desktop Stat Grid (Hidden on Mobile) -->
-<div class="stat-grid" id="khataDesktopStatGrid" style="margin-bottom: 12px; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
-    <div class="stat-card" style="background:#FFF1F2; border:1px solid #FECDD3; padding:10px 14px; border-radius:8px;">
+<div class="stat-grid" id="khataDesktopStatGrid" style="margin-bottom: 14px; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+    <div class="stat-card" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('debtors');" style="background:#FFF1F2; border:1px solid #FECDD3; padding:12px 14px; border-radius:10px; cursor:pointer; transition:transform 0.15s ease;" title="Click to view all active debtors">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <span style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#991B1B;">Total Receivables</span>
             <i data-lucide="alert-circle" style="width:15px;height:15px; color:#DC2626;"></i>
         </div>
-        <div style="font-size:18px; font-weight:800; color:#991B1B;">₹{{ number_format($customers->sum('udhari_balance'), 2) }}</div>
-        <div style="font-size:10.5px; color:#B91C1C; margin-top:2px;">Live Outstanding Across Store</div>
+        <div style="font-size:19px; font-weight:800; color:#991B1B;">₹{{ number_format($customers->sum('udhari_balance'), 2) }}</div>
+        <div style="font-size:11px; color:#B91C1C; margin-top:3px;">Live Outstanding Across Store • Click to View</div>
     </div>
-    <div class="stat-card" onclick="openDebtorsModal()" style="background:#FEFCE8; border:1px solid #FEF08A; padding:10px 14px; border-radius:8px; cursor:pointer; transition:transform 0.15s ease;" title="Click to view all active debtors & WhatsApp reminders">
+    <div class="stat-card" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('debtors');" style="background:#FEFCE8; border:1px solid #FEF08A; padding:12px 14px; border-radius:10px; cursor:pointer; transition:transform 0.15s ease;" title="Click to view all active debtors & WhatsApp reminders">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <span style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#854D0E;">Active Debtors (Click to View)</span>
             <i data-lucide="bell" style="width:15px;height:15px; color:#CA8A04;"></i>
         </div>
-        <div style="font-size:18px; font-weight:800; color:#854D0E;">{{ $customers->where('udhari_balance', '>', 0)->count() }}</div>
-        <div style="font-size:10.5px; color:#A16207; margin-top:2px;">Customers with Pending Khata • Click to Remind</div>
+        <div style="font-size:19px; font-weight:800; color:#854D0E;">{{ $customers->where('udhari_balance', '>', 0)->count() }}</div>
+        <div style="font-size:11px; color:#A16207; margin-top:3px;">Customers with Pending Khata • Click to View List</div>
     </div>
-    <div class="stat-card" style="background:#F0FDF4; border:1px solid #BBF7D0; padding:10px 14px; border-radius:8px;">
+    <div class="stat-card" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('settled');" style="background:#F0FDF4; border:1px solid #BBF7D0; padding:12px 14px; border-radius:10px; cursor:pointer; transition:transform 0.15s ease;" title="Click to view cleared accounts">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <span style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#166534;">Settled Accounts</span>
             <i data-lucide="check-circle" style="width:15px;height:15px; color:#16A34A;"></i>
         </div>
-        <div style="font-size:18px; font-weight:800; color:#166534;">{{ $customers->where('udhari_balance', '<=', 0)->count() }}</div>
-        <div style="font-size:10.5px; color:#15803D; margin-top:2px;">Cleared / Zero Debt Customers</div>
+        <div style="font-size:19px; font-weight:800; color:#166534;">{{ $customers->where('udhari_balance', '<=', 0)->count() }}</div>
+        <div style="font-size:11px; color:#15803D; margin-top:3px;">Cleared / Zero Debt Customers • Click to View</div>
     </div>
 </div>
 
-<!-- SINGLE UNIFIED KHATA MASTER LIST -->
-<div class="card khata-registry-card" style="margin-bottom: 12px; border-radius:10px; border:1px solid #E2E8F0; overflow:hidden;">
+<!-- ════════════════ MAIN TAB SWITCHER (UDHARI LIST vs TRANSACTION LEDGER) ════════════════ -->
+<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+    <div style="display:inline-flex; background:#F1F5F9; border:1px solid #CBD5E1; padding:4px; border-radius:10px; gap:4px;">
+        <button type="button" onclick="switchKhataMainTab('udhari_list')" id="tabBtn_udhari_list" class="btn btn-sm" style="font-weight:800; font-size:13px; display:inline-flex; align-items:center; gap:6px; border-radius:7px; padding:7px 16px; border:none; background:#4F46E5; color:#fff; box-shadow:0 2px 5px rgba(79,70,229,0.25); cursor:pointer;">
+            <i data-lucide="users" style="width:15px; height:15px;"></i>
+            Customer Udhari List
+            <span id="badgeDebtorsCount" class="badge" style="background:#EF4444; color:#fff; font-size:10px; padding:2px 7px; border-radius:999px; font-weight:800;">{{ $customers->where('udhari_balance', '>', 0)->count() }} Debtors</span>
+        </button>
+        <button type="button" onclick="switchKhataMainTab('ledger')" id="tabBtn_ledger" class="btn btn-sm" style="font-weight:700; font-size:13px; display:inline-flex; align-items:center; gap:6px; border-radius:7px; padding:7px 16px; border:none; background:transparent; color:#64748B; cursor:pointer;">
+            <i data-lucide="book-open" style="width:15px; height:15px;"></i>
+            Transaction Ledger
+            <span class="badge" style="background:#E2E8F0; color:#475569; font-size:10px; padding:2px 7px; border-radius:999px; font-weight:700;">{{ $transactions->count() }}</span>
+        </button>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" onclick="openRepayModal()" class="btn btn-primary btn-sm" style="background:#16A34A; color:#fff; font-weight:800; border:none; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px;">
+            <i data-lucide="plus-circle" style="width:14px;height:14px;"></i> Record Repayment
+        </button>
+    </div>
+</div>
+
+<!-- ════════════════ VIEW 1: CUSTOMER UDHARI LIST DIRECTORY ════════════════ -->
+<div id="viewCustomerUdhariList" class="card" style="margin-bottom: 12px; border-radius:10px; border:1px solid #E2E8F0; overflow:hidden;">
+    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:30px; height:30px; border-radius:7px; background:#EEF2FF; color:#4F46E5; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i data-lucide="users" style="width: 17px; height: 17px;"></i>
+            </div>
+            <div>
+                <div class="card-title" style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:14px; color:#0F172A; margin:0;">
+                    Customer Udhari & Balance Directory
+                    <span id="custUdhariCountBadge" class="badge" style="background:#EF4444; color:#fff; font-size:11px; font-weight:800; border-radius:6px; padding:2px 7px;">
+                        {{ $customers->where('udhari_balance', '>', 0)->count() }} Debtors
+                    </span>
+                </div>
+                <div style="font-size:11.5px; color:#64748B; margin-top:2px;">Customers with credit balances, pending dues, statements, and 1-click WhatsApp reminders</div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <!-- Customer Search Input -->
+            <div class="search-bar" style="background:#fff; border:1px solid #CBD5E1; border-radius:8px; padding:5px 12px; display:flex; align-items:center; gap:6px; min-width:260px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                <i data-lucide="search" style="width:14px;height:14px; color:#94A3B8;"></i>
+                <input type="text" id="custUdhariSearchInput" placeholder="Search customer, phone, address..." oninput="filterCustomerUdhariList()" style="border:none; outline:none; font-size:12px; color:#0F172A; width:100%; background:transparent;">
+                <button type="button" onclick="clearCustUdhariSearch()" id="btnClearCustUdhariSearch" style="display:none; background:#e2e4e8; border:none; border-radius:50%; width:16px; height:16px; color:#4f535b; cursor:pointer; font-size:10px; line-height:16px; text-align:center; padding:0;">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Toolbar for Customer Udhari List -->
+    <div class="filter-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:#FFFFFF; border-bottom:1px solid #E2E8F0; padding:8px 16px;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <button type="button" onclick="setCustomerUdhariFilter('debtors')" id="btnCustFilterDebtors" class="filter-pill active" style="font-weight:700; font-size:12px;">
+                🔴 Active Debtors Only ({{ $customers->where('udhari_balance', '>', 0)->count() }})
+            </button>
+            <button type="button" onclick="setCustomerUdhariFilter('all')" id="btnCustFilterAll" class="filter-pill" style="font-weight:700; font-size:12px;">
+                👥 All Store Customers ({{ $customers->count() }})
+            </button>
+            <button type="button" onclick="setCustomerUdhariFilter('settled')" id="btnCustFilterSettled" class="filter-pill" style="font-weight:700; font-size:12px;">
+                🟢 Settled Accounts ({{ $customers->where('udhari_balance', '<=', 0)->count() }})
+            </button>
+        </div>
+        <div style="font-size:12px; font-weight:700; color:#64748B;">
+            Filtered Due: <strong id="custFilteredDueSum" style="color:#DC2626; font-size:13px;">₹{{ number_format($customers->sum('udhari_balance'), 2) }}</strong>
+        </div>
+    </div>
+
+    <!-- Desktop Customers Table -->
+    <div class="data-table-wrap" id="custUdhariDesktopWrap">
+        <table class="data-table" id="customerUdhariTable" style="margin:0; width:100%;">
+            <thead style="background:#F1F5F9;">
+                <tr>
+                    <th style="color:#475569; font-weight:700; font-size:12px; padding:12px 16px;">Customer Name & Info</th>
+                    <th style="color:#475569; font-weight:700; font-size:12px;">Mobile Phone</th>
+                    <th style="color:#475569; font-weight:700; font-size:12px; text-align:right;">Outstanding Due (₹)</th>
+                    <th style="color:#475569; font-weight:700; font-size:12px;">Last Activity</th>
+                    <th style="color:#475569; font-weight:700; font-size:12px; text-align:center;">Transactions</th>
+                    <th style="color:#475569; font-weight:700; font-size:12px; text-align:center;">Quick Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $stName = setting('company.name', 'MobiTrack');
+                    $stPhone = setting('company.phone', '+91 98765 43210');
+                @endphp
+                @forelse($customers as $c)
+                    @php
+                        $cPhone = preg_replace('/[^0-9]/', '', $c->phone ?? '');
+                        if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
+                        $cMsg = "🔔 *PAYMENT REMINDER*\n";
+                        $cMsg .= "🏪 *{$stName}*\n";
+                        $cMsg .= "------------------------------------\n";
+                        $cMsg .= "Dear *{$c->name}*,\n\n";
+                        $cMsg .= "This is a friendly reminder regarding your pending store credit balance:\n";
+                        $cMsg .= "📌 *Outstanding Due Amount:* *₹" . number_format($c->udhari_balance, 2) . "*\n\n";
+                        $cMsg .= "Kindly clear this balance at your earliest convenience via Cash or UPI at our counter.\n";
+                        $cMsg .= "If already paid, please disregard this message.\n\n";
+                        $cMsg .= "Thank you for your valued business!\n";
+                        $cMsg .= "📞 *Store Support:* {$stPhone}";
+                        $cWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($cMsg);
+                        $isDebtor = ($c->udhari_balance > 0);
+                    @endphp
+                    <tr class="cust-udhari-row" data-debtor="{{ $isDebtor ? '1' : '0' }}" data-due="{{ $c->udhari_balance }}" data-search="{{ strtolower($c->name . ' ' . ($c->phone ?? '') . ' ' . ($c->address ?? '')) }}">
+                        <td style="padding:12px 16px;">
+                            <div style="font-weight:800; font-size:13.5px; color:#0F172A;">
+                                <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" style="color:#0F172A; text-decoration:none;" onmouseover="this.style.color='#4F46E5';" onmouseout="this.style.color='#0F172A';">
+                                    {{ $c->name }}
+                                </a>
+                            </div>
+                            @if(!empty($c->address))
+                                <div style="font-size:11px; color:#64748B; margin-top:1px;">{{ Str::limit($c->address, 35) }}</div>
+                            @endif
+                        </td>
+                        <td>
+                            <div style="font-family:monospace; font-weight:700; color:#334155; font-size:12.5px; display:inline-flex; align-items:center; gap:5px;">
+                                <i data-lucide="phone" style="width:12px; height:12px; color:#94A3B8;"></i>
+                                {{ $c->phone ?: '—' }}
+                            </div>
+                        </td>
+                        <td style="text-align:right;">
+                            @if($isDebtor)
+                                <div style="font-weight:900; color:#DC2626; font-size:15px; font-family:monospace;">
+                                    ₹{{ number_format($c->udhari_balance, 2) }}
+                                </div>
+                                <span class="badge" style="background:#FEE2E2; color:#B91C1C; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:4px;">PENDING DUE</span>
+                            @else
+                                <div style="font-weight:800; color:#16A34A; font-size:13px; font-family:monospace;">
+                                    ₹0.00
+                                </div>
+                                <span class="badge" style="background:#DCFCE7; color:#15803D; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:4px;">SETTLED</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($c->last_tx_date)
+                                <div style="font-size:12px; font-weight:600; color:#334155;">{{ date('d M Y', strtotime($c->last_tx_date)) }}</div>
+                                <div style="font-size:10.5px; color:#94A3B8;">{{ date('h:i A', strtotime($c->last_tx_date)) }}</div>
+                            @else
+                                <span style="font-size:11.5px; color:#94A3B8;">No records</span>
+                            @endif
+                        </td>
+                        <td style="text-align:center;">
+                            <span class="badge" style="background:#F1F5F9; color:#475569; font-weight:700; font-size:11px;">
+                                {{ $c->total_tx_count }} txs
+                            </span>
+                        </td>
+                        <td style="text-align:center; white-space:nowrap;">
+                            <div style="display:inline-flex; gap:6px; align-items:center;">
+                                @if($isDebtor)
+                                    <button type="button" onclick="openRepayForCustomer({{ $c->id }}, '{{ addslashes($c->name) }}', {{ $c->udhari_balance }})" class="btn btn-primary btn-sm" style="background:#16A34A; color:#fff; font-weight:700; border:none; padding:5px 11px; border-radius:6px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;" title="Collect pending due">
+                                        <i data-lucide="wallet" style="width:13px;height:13px;"></i> Collect
+                                    </button>
+                                    @if(!empty($c->phone))
+                                        <a href="{{ $cWaUrl }}" target="_blank" class="btn btn-sm" style="background:#25D366; color:#fff; font-weight:700; border:none; padding:5px 10px; border-radius:6px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px; text-decoration:none;" title="Send WhatsApp payment reminder">
+                                            <svg style="width:13px;height:13px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                            Remind
+                                        </a>
+                                    @endif
+                                @endif
+                                <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; text-decoration:none; color:#0F172A;" title="View Statement">
+                                    <i data-lucide="file-text" style="width:13px;height:13px;"></i> Statement
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding: 40px 20px; color:#94A3B8;">
+                            No customers found.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobile Customers Cards -->
+    <div id="custUdhariMobileCards" style="display:none; padding:10px 12px; flex-direction:column; gap:8px;">
+        @foreach($customers as $c)
+            @php
+                $isDebtor = ($c->udhari_balance > 0);
+                $cPhone = preg_replace('/[^0-9]/', '', $c->phone ?? '');
+                if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
+                $cMsg = "🔔 Payment reminder from {$stName}: Outstanding due is ₹" . number_format($c->udhari_balance, 2);
+                $cWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($cMsg);
+            @endphp
+            <div class="app-flat-row cust-udhari-mobile-card" data-debtor="{{ $isDebtor ? '1' : '0' }}" data-due="{{ $c->udhari_balance }}" data-search="{{ strtolower($c->name . ' ' . ($c->phone ?? '') . ' ' . ($c->address ?? '')) }}" style="padding:12px 14px; background:#fff; border:1px solid #E2E8F0; border-radius:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
+                    <div>
+                        <div style="font-weight:800; font-size:14px; color:#0F172A;">{{ $c->name }}</div>
+                        <div style="font-size:11.5px; color:#64748B; font-family:monospace; margin-top:2px;">
+                            {{ $c->phone ?: 'No phone' }}
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:900; font-size:16px; color:{{ $isDebtor ? '#DC2626' : '#16A34A' }}; font-family:monospace;">
+                            ₹{{ number_format($c->udhari_balance, 2) }}
+                        </div>
+                        <span class="badge" style="background:{{ $isDebtor ? '#FEE2E2' : '#DCFCE7' }}; color:{{ $isDebtor ? '#B91C1C' : '#15803D' }}; font-size:9.5px; font-weight:800;">
+                            {{ $isDebtor ? 'PENDING' : 'SETTLED' }}
+                        </span>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:10px; padding-top:8px; border-top:1px solid #F1F5F9;">
+                    @if($isDebtor)
+                        <button type="button" onclick="openRepayForCustomer({{ $c->id }}, '{{ addslashes($c->name) }}', {{ $c->udhari_balance }})" class="btn btn-primary btn-sm" style="font-size:11px; padding:4px 10px; background:#16A34A;">
+                            <i data-lucide="wallet" style="width:12px;height:12px;"></i> Collect
+                        </button>
+                        @if(!empty($c->phone))
+                            <a href="{{ $cWaUrl }}" target="_blank" class="btn btn-sm" style="background:#25D366; color:#fff; font-size:11px; padding:4px 8px; border-radius:6px; text-decoration:none;">
+                                WhatsApp
+                            </a>
+                        @endif
+                    @endif
+                    <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" class="btn btn-outline btn-sm" style="font-size:11px; padding:4px 8px; text-decoration:none; color:#0F172A;">
+                        Statement
+                    </a>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+
+<!-- ════════════════ VIEW 2: TRANSACTION LEDGER ════════════════ -->
+<div id="viewKhataLedger" style="display:none;">
     <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div style="display:flex; align-items:center; gap:8px;">
             <div style="width:28px; height:28px; border-radius:6px; background:#EFF6FF; color:var(--brand-700); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
@@ -275,6 +497,7 @@
     </div>
     <div id="khataPagination"></div>
 </div>
+</div> <!-- End #viewKhataLedger -->
 
 <!-- Mobile Floating Action Button -->
 <div class="mobile-fab-container">
@@ -616,6 +839,8 @@
     #khataDesktopStatGrid { display: none !important; }
     #khataDesktopTableWrap { display: none !important; }
     #khataMobileCards { display: flex !important; }
+    #custUdhariDesktopWrap { display: none !important; }
+    #custUdhariMobileCards { display: flex !important; }
 }
 </style>
 <script>
@@ -664,11 +889,8 @@
     }
 
     function openDebtorsModal() {
-        const modal = document.getElementById('debtorsModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            if (window.lucide) window.lucide.createIcons();
-        }
+        switchKhataMainTab('udhari_list');
+        setCustomerUdhariFilter('debtors');
     }
 
     function closeDebtorsModal() {
@@ -688,5 +910,121 @@
             }
         });
     }
+
+    /* ─── TAB SWITCHING & CUSTOMER UDHARI LIST LOGIC ─── */
+    function switchKhataMainTab(tab) {
+        var viewUdhari = document.getElementById('viewCustomerUdhariList');
+        var viewLedger = document.getElementById('viewKhataLedger');
+        var btnUdhari = document.getElementById('tabBtn_udhari_list');
+        var btnLedger = document.getElementById('tabBtn_ledger');
+
+        if (tab === 'udhari_list') {
+            viewUdhari.style.display = 'block';
+            viewLedger.style.display = 'none';
+            btnUdhari.style.background = '#4F46E5';
+            btnUdhari.style.color = '#fff';
+            btnUdhari.style.boxShadow = '0 2px 5px rgba(79,70,229,0.25)';
+            btnLedger.style.background = 'transparent';
+            btnLedger.style.color = '#64748B';
+            btnLedger.style.boxShadow = 'none';
+            filterCustomerUdhariList();
+        } else {
+            viewUdhari.style.display = 'none';
+            viewLedger.style.display = 'block';
+            btnLedger.style.background = '#4F46E5';
+            btnLedger.style.color = '#fff';
+            btnLedger.style.boxShadow = '0 2px 5px rgba(79,70,229,0.25)';
+            btnUdhari.style.background = 'transparent';
+            btnUdhari.style.color = '#64748B';
+            btnUdhari.style.boxShadow = 'none';
+            filterKhataLedger();
+        }
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
+
+    var activeCustFilter = 'debtors';
+
+    function setCustomerUdhariFilter(filter) {
+        activeCustFilter = filter;
+        document.getElementById('btnCustFilterDebtors')?.classList.remove('active');
+        document.getElementById('btnCustFilterAll')?.classList.remove('active');
+        document.getElementById('btnCustFilterSettled')?.classList.remove('active');
+
+        if (filter === 'debtors') {
+            document.getElementById('btnCustFilterDebtors')?.classList.add('active');
+        } else if (filter === 'settled') {
+            document.getElementById('btnCustFilterSettled')?.classList.add('active');
+        } else {
+            document.getElementById('btnCustFilterAll')?.classList.add('active');
+        }
+
+        filterCustomerUdhariList();
+    }
+
+    function filterCustomerUdhariList() {
+        var query = (document.getElementById('custUdhariSearchInput')?.value || '').toLowerCase().trim();
+        var clearBtn = document.getElementById('btnClearCustUdhariSearch');
+        if (clearBtn) clearBtn.style.display = query ? 'inline-block' : 'none';
+
+        var visibleCount = 0;
+        var sumDue = 0;
+
+        // Desktop Rows
+        document.querySelectorAll('#customerUdhariTable tbody tr.cust-udhari-row').forEach(function(row) {
+            var isDebtor = row.dataset.debtor === '1';
+            var due = parseFloat(row.dataset.due) || 0;
+            var text = (row.dataset.search || row.textContent).toLowerCase();
+
+            var matchesFilter = (activeCustFilter === 'all') ||
+                                (activeCustFilter === 'debtors' && isDebtor) ||
+                                (activeCustFilter === 'settled' && !isDebtor);
+            var matchesSearch = !query || text.includes(query);
+
+            var show = matchesFilter && matchesSearch;
+            row.style.display = show ? '' : 'none';
+            if (show) {
+                visibleCount++;
+                sumDue += due;
+            }
+        });
+
+        // Mobile Cards
+        document.querySelectorAll('#custUdhariMobileCards .cust-udhari-mobile-card').forEach(function(card) {
+            var isDebtor = card.dataset.debtor === '1';
+            var due = parseFloat(card.dataset.due) || 0;
+            var text = (card.dataset.search || card.textContent).toLowerCase();
+
+            var matchesFilter = (activeCustFilter === 'all') ||
+                                (activeCustFilter === 'debtors' && isDebtor) ||
+                                (activeCustFilter === 'settled' && !isDebtor);
+            var matchesSearch = !query || text.includes(query);
+
+            card.style.display = (matchesFilter && matchesSearch) ? 'flex' : 'none';
+        });
+
+        var badge = document.getElementById('custUdhariCountBadge');
+        if (badge) badge.textContent = visibleCount + (visibleCount === 1 ? ' Customer' : ' Customers');
+
+        var sumEl = document.getElementById('custFilteredDueSum');
+        if (sumEl) sumEl.textContent = '₹' + sumDue.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    }
+
+    function clearCustUdhariSearch() {
+        var input = document.getElementById('custUdhariSearchInput');
+        if (input) input.value = '';
+        filterCustomerUdhariList();
+    }
+
+    // Default initialization check on load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash === '#ledger') {
+            switchKhataMainTab('ledger');
+        } else {
+            switchKhataMainTab('udhari_list');
+            setCustomerUdhariFilter('debtors');
+        }
+    });
 </script>
 @endpush

@@ -77,30 +77,24 @@ class KhataController extends BaseMobileShopController
 
         $transactions = $txQuery->orderBy('ms_customer_khata_transactions.id', 'desc')->get();
 
-        // Scope customers list
-        if ($isAdmin) {
-            $customers = DB::table('ms_customers')
-                ->where('company_id', $companyId)
-                ->orderBy('udhari_balance', 'desc')
-                ->orderBy('name', 'asc')
-                ->get();
-        } else {
-            $relevantCustomerIds = $transactions->pluck('customer_id')->unique()->toArray();
-            $customers = DB::table('ms_customers')
-                ->where('company_id', $companyId)
-                ->whereIn('id', $relevantCustomerIds)
-                ->orderBy('udhari_balance', 'desc')
-                ->orderBy('name', 'asc')
-                ->get();
+        // Always fetch all customers for the store so operators can view and search any customer's udhari
+        $customers = DB::table('ms_customers')
+            ->where('company_id', $companyId)
+            ->orderBy('udhari_balance', 'desc')
+            ->orderBy('name', 'asc')
+            ->get();
 
-            // If empty, fetch all to allow selecting any customer for repayment
-            if ($customers->isEmpty()) {
-                $customers = DB::table('ms_customers')
-                    ->where('company_id', $companyId)
-                    ->orderBy('udhari_balance', 'desc')
-                    ->orderBy('name', 'asc')
-                    ->get();
-            }
+        // Enrich customers with their last transaction date and activity count
+        $lastTxs = DB::table('ms_customer_khata_transactions')
+            ->where('company_id', $companyId)
+            ->select('customer_id', DB::raw('MAX(created_at) as last_tx_date'), DB::raw('COUNT(id) as total_tx_count'))
+            ->groupBy('customer_id')
+            ->get()
+            ->keyBy('customer_id');
+
+        foreach ($customers as $c) {
+            $c->last_tx_date = isset($lastTxs[$c->id]) ? $lastTxs[$c->id]->last_tx_date : null;
+            $c->total_tx_count = isset($lastTxs[$c->id]) ? (int)$lastTxs[$c->id]->total_tx_count : 0;
         }
 
         $accessoryInvoices = DB::table('ms_accessory_sales')
