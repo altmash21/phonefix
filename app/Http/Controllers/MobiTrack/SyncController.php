@@ -26,15 +26,25 @@ class SyncController extends Controller
 
     /**
      * Resolve and strictly enforce authenticated company context.
+     * Denies guest requests, validates user session/token, and enforces company tenancy.
      */
     protected function resolveCompanyId(Request $request): int
     {
-        $companyId = company_id() ?? $request->user()?->current_company_id ?? $request->user()?->companies()->first()?->id;
+        $user = $request->user();
 
-        if (!$companyId) {
+        if (!$user) {
             abort(response()->json([
                 'success' => false,
-                'message' => 'Unauthenticated or unauthorized: unable to identify active store company context.',
+                'message' => 'Unauthenticated: Valid OAuth Bearer token or API credentials required.',
+            ], 401));
+        }
+
+        $companyId = company_id() ?? $user->current_company_id ?? $user->companies()->first()?->id;
+
+        if (!$companyId || !$user->companies()->where('companies.id', $companyId)->exists()) {
+            abort(response()->json([
+                'success' => false,
+                'message' => 'Unauthorized: User has no access to the requested company context.',
             ], 403));
         }
 

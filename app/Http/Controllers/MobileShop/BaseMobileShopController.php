@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -47,6 +49,84 @@ abstract class BaseMobileShopController extends Controller
     }
 
     /**
+     * Safe internal redirect to prevent Open Redirect vulnerabilities.
+     * Only allows local relative URLs or absolute URLs matching current application host.
+     */
+    protected function safeRedirect(Request $request, string $fallbackRoute, array $routeParams = [], string $statusKey = 'success', string $statusMsg = '')
+    {
+        $redirectTo = $request->input('redirect_to');
+
+        if ($redirectTo && is_string($redirectTo)) {
+            $trimmed = trim($redirectTo);
+
+            // Valid relative path: must start with single '/' and not protocol-relative '//' or Windows path '/\\'
+            if (str_starts_with($trimmed, '/') && !str_starts_with($trimmed, '//') && !str_starts_with($trimmed, '/\\')) {
+                return redirect($trimmed)->with($statusKey, $statusMsg);
+            }
+
+            // If absolute URL provided, verify host matches current request host exactly
+            $host = parse_url($trimmed, PHP_URL_HOST);
+            if ($host && strtolower($host) === strtolower($request->getHost())) {
+                return redirect($trimmed)->with($statusKey, $statusMsg);
+            }
+        }
+
+        if (!isset($routeParams['company_id'])) {
+            try {
+                $routeParams['company_id'] = $this->getCompanyId();
+            } catch (\Throwable) {
+                $routeParams['company_id'] = company_id() ?? session('company_id') ?? 1;
+            }
+        }
+
+        return redirect()->route($fallbackRoute, $routeParams)->with($statusKey, $statusMsg);
+    }
+
+    /**
+     * Mask customer phone number for non-admin/owner roles (e.g., 98****1234).
+     */
+    public static function maskPhone(?string $phone): string
+    {
+        if (empty($phone)) {
+            return '—';
+        }
+
+        $clean = preg_replace('/[^0-9]/', '', $phone);
+        $len = strlen($clean);
+
+        if ($len <= 4) {
+            return str_repeat('*', $len);
+        }
+
+        if ($len >= 10) {
+            // Keep first 2 and last 4 digits
+            return substr($clean, 0, 2) . str_repeat('*', $len - 6) . substr($clean, -4);
+        }
+
+        return substr($clean, 0, 1) . str_repeat('*', $len - 3) . substr($clean, -2);
+    }
+
+    /**
+     * Mask device IMEI for non-admin/owner roles (e.g., 864818******123).
+     */
+    public static function maskImei(?string $imei): string
+    {
+        if (empty($imei)) {
+            return '—';
+        }
+
+        $clean = trim($imei);
+        $len = strlen($clean);
+
+        if ($len < 10) {
+            return substr($clean, 0, 2) . str_repeat('*', max(1, $len - 4)) . substr($clean, -2);
+        }
+
+        // Standard TAC prefix (6 digits) + masked serial + last 3 digits
+        return substr($clean, 0, 6) . str_repeat('*', $len - 9) . substr($clean, -3);
+    }
+
+    /**
      * Resolve store owner's email address for security OTP notifications.
      */
     protected function getOwnerEmail(int $companyId): string
@@ -78,9 +158,24 @@ abstract class BaseMobileShopController extends Controller
 
     /**
      * Generate and dispatch a 6-digit OTP to the store owner's email.
+     * Rate-limited to 3 requests per 5 minutes per user/IP.
+     * Token is hashed using bcrypt before database persistence.
      */
     protected function generateOtp(int $companyId, string $action, string $itemReference, ?int $userId): array
     {
+        $throttleKey = 'otp_gen:' . ($userId ?? auth()->id() ?? request()->ip()) . ':' . $action;
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return [
+                'sent'         => false,
+                'error'        => "Too many OTP requests. Please wait {$seconds} seconds before requesting a new code.",
+                'available_in' => $seconds,
+            ];
+        }
+
+        RateLimiter::hit($throttleKey, 300);
+
         $otp = sprintf('%06d', mt_rand(100000, 999999));
         $ownerEmail = $this->getOwnerEmail($companyId);
 
@@ -89,7 +184,7 @@ abstract class BaseMobileShopController extends Controller
             'requested_by'   => $userId ?? (auth()->check() ? auth()->id() : 1),
             'action'         => $action,
             'item_reference' => $itemReference,
-            'otp_code'       => $otp,
+            'otp_code'       => Hash::make($otp),
             'expires_at'     => Carbon::now()->addMinutes(10),
             'created_at'     => Carbon::now(),
         ]);
@@ -120,6 +215,7 @@ abstract class BaseMobileShopController extends Controller
 
     /**
      * Verify OTP token for a specific action and item reference.
+     * Uses constant-time hash comparison (Hash::check) with backward compatibility.
      */
     protected function verifyOtp(int $companyId, string $action, string $itemReference, ?string $code): bool
     {
@@ -131,21 +227,25 @@ abstract class BaseMobileShopController extends Controller
             return false;
         }
 
-        $token = DB::table('ms_otp_tokens')
+        $submittedCode = trim($code);
+
+        $tokens = DB::table('ms_otp_tokens')
             ->where('company_id', $companyId)
             ->where('action', $action)
             ->where('item_reference', $itemReference)
-            ->where('otp_code', trim($code))
             ->where('expires_at', '>', Carbon::now())
             ->whereNull('verified_at')
             ->latest('id')
-            ->first();
+            ->limit(5)
+            ->get();
 
-        if ($token) {
-            DB::table('ms_otp_tokens')->where('id', $token->id)->update([
-                'verified_at' => Carbon::now(),
-            ]);
-            return true;
+        foreach ($tokens as $token) {
+            if (Hash::check($submittedCode, $token->otp_code) || hash_equals($token->otp_code, $submittedCode)) {
+                DB::table('ms_otp_tokens')->where('id', $token->id)->update([
+                    'verified_at' => Carbon::now(),
+                ]);
+                return true;
+            }
         }
 
         return false;

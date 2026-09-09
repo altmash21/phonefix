@@ -160,11 +160,7 @@ class AccessoriesController extends BaseMobileShopController
             'updated_at'    => now(),
         ]);
 
-        if ($request->filled('redirect_to')) {
-            return redirect($request->input('redirect_to'))->with('success', 'Part/Accessory successfully added to inventory!');
-        }
-
-        return redirect()->route('mobileshop.purchase')->with('success', 'Part/Accessory successfully added to inventory!');
+        return $this->safeRedirect($request, 'mobileshop.purchase', [], 'success', 'Part/Accessory successfully added to inventory!');
     }
 
     /**
@@ -394,11 +390,7 @@ class AccessoriesController extends BaseMobileShopController
             ]);
         }
 
-        if ($request->filled('redirect_to')) {
-            return redirect($request->input('redirect_to'))->with('success', "Bulk restock successful! Added {$summary['totalUnits']} units (Value: ₹" . number_format($summary['totalCost'], 2) . ") into inventory.");
-        }
-
-        return redirect()->route('mobileshop.purchase')->with('success', "Bulk restock successful! Added {$summary['totalUnits']} units (Value: ₹" . number_format($summary['totalCost'], 2) . ") into inventory.");
+        return $this->safeRedirect($request, 'mobileshop.purchase', [], 'success', "Bulk restock successful! Added {$summary['totalUnits']} units (Value: ₹" . number_format($summary['totalCost'], 2) . ") into inventory.");
     }
 
     /**
@@ -848,5 +840,46 @@ class AccessoriesController extends BaseMobileShopController
             ]);
 
         return response()->json(['success' => true, 'parts' => $parts]);
+    }
+
+    /**
+     * Secure WhatsApp share redirect for accessories.
+     */
+    public function shareWhatsApp(int $id)
+    {
+        $companyId = $this->getCompanyId();
+
+        $sale = DB::table('ms_accessory_sales')
+            ->leftJoin('ms_customers', 'ms_accessory_sales.customer_id', '=', 'ms_customers.id')
+            ->select('ms_accessory_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
+            ->where('ms_accessory_sales.id', $id)
+            ->where('ms_accessory_sales.company_id', $companyId)
+            ->first();
+
+        if (!$sale) {
+            abort(404, 'Accessory sale not found.');
+        }
+
+        $cPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
+        if (strlen($cPhone) === 10) {
+            $cPhone = '91' . $cPhone;
+        }
+
+        $sName = setting('company.name', 'Maurya Mobile');
+        $accMsg = "🧾 *PURCHASE INVOICE & RECEIPT*\n";
+        $accMsg .= "🏪 *{$sName}*\n";
+        $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        $accMsg .= "Dear *" . ($sale->customer_name ?: 'Valued Customer') . "*,\n";
+        $accMsg .= "Thank you for shopping at *{$sName}*!\n\n";
+        $accMsg .= "📋 *INVOICE DETAILS*\n";
+        $accMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
+        $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
+        $accMsg .= "• *Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n\n";
+        $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        $accMsg .= "🛡️ Genuine Accessories & GST Receipt\n";
+        $accMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
+        $accMsg .= "_Thank you for choosing {$sName}!_";
+
+        return redirect()->away('https://wa.me/' . $cPhone . '?text=' . rawurlencode($accMsg));
     }
 }

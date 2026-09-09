@@ -382,11 +382,11 @@
                         </td>
                         <td>
                             <div style="font-weight:700; color:#0F172A; font-size:13px;">{{ $sale->customer_name }}</div>
-                            <div style="font-size:11px; color:#64748B;">{{ $sale->customer_phone }}</div>
+                            <div style="font-size:11px; color:#64748B;">{{ !empty($isOwner) ? ($sale->customer_phone ?: '—') : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskPhone($sale->customer_phone) }}</div>
                         </td>
                         <td>
                             <div style="font-weight:700; font-size:12px;">{{ $sale->brand }} {{ $sale->model }}</div>
-                            <div style="font-size:10px; color:#64748B; font-family:monospace;">IMEI: {{ $sale->imei_1 }}</div>
+                            <div style="font-size:10px; color:#64748B; font-family:monospace;">IMEI: {{ !empty($isOwner) ? $sale->imei_1 : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskImei($sale->imei_1) }}</div>
                         </td>
                         <td>
                             <span class="badge badge-blue" style="text-transform:uppercase; font-size:10px;">{{ $sale->payment_mode }}</span>
@@ -395,35 +395,11 @@
                             ₹{{ number_format($sale->total_amount, 2) }}
                         </td>
                         <td style="text-align:center; white-space:nowrap;">
-                            @php
-                                $cPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
-                                if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
-                                $sName = setting('company.name', 'Maurya Mobile');
-                                $mobMsg = "🧾 *TAX INVOICE & RECEIPT*\n";
-                                $mobMsg .= "🏪 *{$sName}*\n";
-                                $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                                $mobMsg .= "Dear *{$sale->customer_name}*,\n";
-                                $mobMsg .= "Thank you for purchasing at *{$sName}*!\n\n";
-                                $mobMsg .= "📋 *INVOICE DETAILS*\n";
-                                $mobMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
-                                $mobMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
-                                $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . (!empty($sale->storage) ? " ({$sale->storage})" : "") . "\n";
-                                $mobMsg .= "• *IMEI 1:* `{$sale->imei_1}`\n\n";
-                                $mobMsg .= "💰 *Total Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
-                                if ($sale->udhari_amount > 0) {
-                                    $mobMsg .= "⚠️ *Balance Due:* *₹" . number_format($sale->udhari_amount, 2) . "*\n";
-                                }
-                                $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                                $mobMsg .= "🛡️ Official Warranty & Genuine GST Bill\n";
-                                $mobMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
-                                $mobMsg .= "_Please retain this digital receipt for your records._";
-                                $mobWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($mobMsg);
-                            @endphp
                             <div style="display:inline-flex; gap:6px; align-items:center;">
                                 <a href="{{ route('mobileshop.invoice', ['id' => $sale->id]) }}" class="btn btn-outline btn-icon" title="View Bill & Print">
                                     <i data-lucide="printer" style="width:14px;height:14px;"></i>
                                 </a>
-                                <a href="{{ $mobWaUrl }}" target="_blank" class="btn btn-outline btn-icon" style="color:#16A34A; border-color:#BBF7D0; background:#F0FDF4;" title="Share Invoice on WhatsApp">
+                                <a href="{{ route('mobileshop.sales.whatsapp', ['id' => $sale->id]) }}" target="_blank" class="btn btn-outline btn-icon" style="color:#16A34A; border-color:#BBF7D0; background:#F0FDF4;" title="Share Invoice on WhatsApp">
                                     <svg style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
                                 </a>
                                 @if(($sale->status ?? '') !== 'voided')
@@ -448,7 +424,7 @@
                         </td>
                         <td>
                             <div style="font-weight:700; color:#0F172A; font-size:13px;">{{ $asale->customer_name ?: 'Walk-in Retail' }}</div>
-                            <div style="font-size:11px; color:#64748B;">{{ $asale->customer_phone ?: '—' }}</div>
+                            <div style="font-size:11px; color:#64748B;">{{ !empty($isOwner) ? ($asale->customer_phone ?: '—') : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskPhone($asale->customer_phone) }}</div>
                         </td>
                         <td>
                             @if(!empty($asale->items) && count($asale->items) > 0)
@@ -467,35 +443,11 @@
                             ₹{{ number_format($asale->total_amount, 2) }}
                         </td>
                         <td style="text-align:center; white-space:nowrap;">
-                            @php
-                                $acPhone = preg_replace('/[^0-9]/', '', $asale->customer_phone ?? '');
-                                if (strlen($acPhone) === 10) $acPhone = '91' . $acPhone;
-                                $sName = setting('company.name', 'Maurya Mobile');
-                                $accMsg = "🧾 *PURCHASE INVOICE & RECEIPT*\n";
-                                $accMsg .= "🏪 *{$sName}*\n";
-                                $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                                $accMsg .= "Dear *" . ($asale->customer_name ?: 'Valued Customer') . "*,\n";
-                                $accMsg .= "Thank you for shopping at *{$sName}*!\n\n";
-                                $accMsg .= "📋 *INVOICE DETAILS*\n";
-                                $accMsg .= "• *Invoice #:* {$asale->invoice_number}\n";
-                                $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($asale->created_at)->format('d M Y, h:i A') . "\n";
-                                if (!empty($asale->items) && count($asale->items) > 0) {
-                                    $accMsg .= "• *Items:* " . $asale->items->pluck('part_name')->implode(', ') . "\n";
-                                }
-                                $accMsg .= "\n💰 *Total Amount:* ₹" . number_format($asale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $asale->payment_mode)) . ")\n";
-                                if ($asale->udhari_amount > 0) {
-                                    $accMsg .= "⚠️ *Balance Due:* *₹" . number_format($asale->udhari_amount, 2) . "*\n";
-                                }
-                                $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                                $accMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
-                                $accMsg .= "_Visit us again soon!_";
-                                $accWaUrl = 'https://wa.me/' . $acPhone . '?text=' . rawurlencode($accMsg);
-                            @endphp
                             <div style="display:inline-flex; gap:6px; align-items:center;">
                                 <a href="{{ route('mobileshop.accessories.invoice', ['id' => $asale->id]) }}" class="btn btn-outline btn-icon" title="View Bill & Print">
                                     <i data-lucide="printer" style="width:14px;height:14px;"></i>
                                 </a>
-                                <a href="{{ $accWaUrl }}" target="_blank" class="btn btn-outline btn-icon" style="color:#16A34A; border-color:#BBF7D0; background:#F0FDF4;" title="Share Invoice on WhatsApp">
+                                <a href="{{ route('mobileshop.accessories.whatsapp', ['id' => $asale->id]) }}" target="_blank" class="btn btn-outline btn-icon" style="color:#16A34A; border-color:#BBF7D0; background:#F0FDF4;" title="Share Invoice on WhatsApp">
                                     <svg style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
                                 </a>
                                 @if(($asale->status ?? '') !== 'voided')
@@ -533,28 +485,6 @@
             <div id="salesMobileCards" class="mobile-sales-cards">
                 @forelse($mobileSales as $sale)
                     @php
-                        $cPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
-                        if (strlen($cPhone) === 10) $cPhone = '91' . $cPhone;
-                        $mobMsg = "🧾 *TAX INVOICE & RECEIPT*\n";
-                        $mobMsg .= "🏪 *{$sName}*\n";
-                        $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                        $mobMsg .= "Dear *{$sale->customer_name}*,\n";
-                        $mobMsg .= "Thank you for purchasing at *{$sName}*!\n\n";
-                        $mobMsg .= "📋 *INVOICE DETAILS*\n";
-                        $mobMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
-                        $mobMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
-                        $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . (!empty($sale->storage) ? " ({$sale->storage})" : "") . "\n";
-                        $mobMsg .= "• *IMEI 1:* `{$sale->imei_1}`\n\n";
-                        $mobMsg .= "💰 *Total Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
-                        if ($sale->udhari_amount > 0) {
-                            $mobMsg .= "⚠️ *Balance Due:* *₹" . number_format($sale->udhari_amount, 2) . "*\n";
-                        }
-                        $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                        $mobMsg .= "🛡️ Official Warranty & Genuine GST Bill\n";
-                        $mobMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
-                        $mobMsg .= "_Please retain this digital receipt for your records._";
-                        $mobWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($mobMsg);
-
                         $pm = strtolower($sale->payment_mode ?? 'cash');
                         if (str_contains($pm, 'cash')) {
                             $badgeBg = '#DCFCE7'; $badgeColor = '#15803D';
@@ -583,7 +513,7 @@
                         <!-- Row 2: Customer Name + Phone -->
                         <div class="row-line2">
                             <div class="cust-name">{{ $sale->customer_name }}</div>
-                            <div class="cust-phone">{{ $sale->customer_phone ?: '—' }}</div>
+                            <div class="cust-phone">{{ !empty($isOwner) ? ($sale->customer_phone ?: '—') : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskPhone($sale->customer_phone) }}</div>
                         </div>
 
                         <!-- Row 3: Items Summary + Compact Actions -->
@@ -591,10 +521,10 @@
                             <div class="items-summary">
                                 <strong>{{ $sale->brand }} {{ $sale->model }}</strong>
                                 @if(!empty($sale->ram))<span>({{ $sale->ram }}/{{ $sale->storage ?? '' }})</span>@endif
-                                • IMEI: {{ $sale->imei_1 }}
+                                • IMEI: {{ !empty($isOwner) ? $sale->imei_1 : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskImei($sale->imei_1) }}
                             </div>
                             <div class="row-actions">
-                                <a href="{{ $mobWaUrl }}" target="_blank" class="compact-action-btn mobile-whatsapp-btn" title="Share on WhatsApp">
+                                <a href="{{ route('mobileshop.sales.whatsapp', ['id' => $sale->id]) }}" target="_blank" class="compact-action-btn mobile-whatsapp-btn" title="Share on WhatsApp">
                                     <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
                                 </a>
                                 <a href="{{ route('mobileshop.invoice', ['id' => $sale->id]) }}" class="compact-action-btn mobile-print-btn" title="View Bill & Print">
@@ -615,29 +545,6 @@
 
                 @forelse($accSales as $asale)
                     @php
-                        $acPhone = preg_replace('/[^0-9]/', '', $asale->customer_phone ?? '');
-                        if (strlen($acPhone) === 10) $acPhone = '91' . $acPhone;
-                        $sName = setting('company.name', 'Maurya Mobile');
-                        $accMsg = "🧾 *PURCHASE INVOICE & RECEIPT*\n";
-                        $accMsg .= "🏪 *{$sName}*\n";
-                        $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                        $accMsg .= "Dear *" . ($asale->customer_name ?: 'Valued Customer') . "*,\n";
-                        $accMsg .= "Thank you for shopping at *{$sName}*!\n\n";
-                        $accMsg .= "📋 *INVOICE DETAILS*\n";
-                        $accMsg .= "• *Invoice #:* {$asale->invoice_number}\n";
-                        $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($asale->created_at)->format('d M Y, h:i A') . "\n";
-                        if (!empty($asale->items) && count($asale->items) > 0) {
-                            $accMsg .= "• *Items:* " . $asale->items->pluck('part_name')->implode(', ') . "\n";
-                        }
-                        $accMsg .= "\n💰 *Total Amount:* ₹" . number_format($asale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $asale->payment_mode)) . ")\n";
-                        if ($asale->udhari_amount > 0) {
-                            $accMsg .= "⚠️ *Balance Due:* *₹" . number_format($asale->udhari_amount, 2) . "*\n";
-                        }
-                        $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                        $accMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
-                        $accMsg .= "_Visit us again soon!_";
-                        $accWaUrl = 'https://wa.me/' . $acPhone . '?text=' . rawurlencode($accMsg);
-
                         $apm = strtolower($asale->payment_mode ?? 'cash');
                         if (str_contains($apm, 'cash')) {
                             $badgeBg = '#DCFCE7'; $badgeColor = '#15803D';
@@ -674,7 +581,7 @@
                         <!-- Row 2: Customer Name + Phone -->
                         <div class="row-line2">
                             <div class="cust-name">{{ $asale->customer_name ?: 'Walk-in Retail' }}</div>
-                            <div class="cust-phone">{{ $asale->customer_phone ?: '—' }}</div>
+                            <div class="cust-phone">{{ !empty($isOwner) ? ($asale->customer_phone ?: '—') : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskPhone($asale->customer_phone) }}</div>
                         </div>
 
                         <!-- Row 3: Items Summary + Compact Actions -->
@@ -683,7 +590,7 @@
                                 {{ $itemsSummary }}
                             </div>
                             <div class="row-actions">
-                                <a href="{{ $accWaUrl }}" target="_blank" class="compact-action-btn mobile-whatsapp-btn" title="Share on WhatsApp">
+                                <a href="{{ route('mobileshop.accessories.whatsapp', ['id' => $asale->id]) }}" target="_blank" class="compact-action-btn mobile-whatsapp-btn" title="Share on WhatsApp">
                                     <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
                                 </a>
                                 <a href="{{ route('mobileshop.accessories.invoice', ['id' => $asale->id]) }}" class="compact-action-btn mobile-print-btn" title="View Bill & Print">

@@ -46,8 +46,8 @@ Route::group(['as' => 'api.'], function () {
     Route::get('translations/{locale}/all', 'Common\Translations@all')->name('translations.all');
     Route::get('translations/{locale}/{file}', 'Common\Translations@file')->name('translations.file');
 
-    // MobiTrack Offline Sync Queue
-    Route::prefix('sync')->middleware(['auth.dynamic.once', 'company.identify'])->group(function () {
+    // MobiTrack Offline Sync Queue — Secured with Dynamic Bearer/Basic Auth, company check, rate limiting
+    Route::prefix('sync')->middleware(['auth.dynamic.once', 'company.identify', 'permission:read-api', 'throttle:60,1'])->group(function () {
         Route::get('pending', [\App\Http\Controllers\MobiTrack\SyncController::class, 'pending'])->name('sync.pending');
         Route::post('upload', [\App\Http\Controllers\MobiTrack\SyncController::class, 'upload'])->name('sync.upload');
         Route::post('offset', [\App\Http\Controllers\MobiTrack\SyncController::class, 'offset'])->name('sync.offset');

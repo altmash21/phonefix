@@ -33,11 +33,11 @@ class StockController extends BaseMobileShopController
 
         switch ($niche) {
             case 'phones':
-                $newPhones  = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', '!=', 'deleted')->orderBy('id', 'desc')->get();
+                $newPhones  = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->whereNotIn('status', ['deleted', 'scraped'])->orderBy('id', 'desc')->get();
                 break;
 
             case 'secondhand':
-                $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', '!=', 'deleted')->orderBy('id', 'desc')->get();
+                $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->whereNotIn('status', ['deleted', 'scraped'])->orderBy('id', 'desc')->get();
                 break;
 
             case 'accessories':
@@ -60,8 +60,8 @@ class StockController extends BaseMobileShopController
                 break;
 
             default: // admin — all stock
-                $newPhones        = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', '!=', 'deleted')->orderBy('id', 'desc')->get();
-                $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', '!=', 'deleted')->orderBy('id', 'desc')->get();
+                $newPhones        = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->whereNotIn('status', ['deleted', 'scraped'])->orderBy('id', 'desc')->get();
+                $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->whereNotIn('status', ['deleted', 'scraped'])->orderBy('id', 'desc')->get();
                 $parts            = DB::table('ms_parts_inventory')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
                 $categories       = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
                 $repairTickets    = DB::table('ms_repair_tickets')
@@ -236,11 +236,7 @@ class StockController extends BaseMobileShopController
             'updated_at' => now(),
         ]);
 
-        if ($request->filled('redirect_to')) {
-            return redirect($request->input('redirect_to'))->with('success', "New mobile device {$request->brand} {$request->model} (IMEI: {$request->imei_1}) added to stock (PO #{$poNum})!");
-        }
-
-        return redirect()->route('mobileshop.stock', ['tab' => 'new_phones'])->with('success', "New mobile device {$request->brand} {$request->model} (IMEI: {$request->imei_1}) added to stock (PO #{$poNum})!");
+        return $this->safeRedirect($request, 'mobileshop.stock', ['tab' => 'new_phones'], 'success', "New mobile device {$request->brand} {$request->model} (IMEI: {$request->imei_1}) added to stock (PO #{$poNum})!");
     }
 
     /**
@@ -353,11 +349,7 @@ class StockController extends BaseMobileShopController
             'updated_at' => now(),
         ]);
 
-        if ($request->filled('redirect_to')) {
-            return redirect($request->input('redirect_to'))->with('success', "Second-hand mobile buyback registered (Invoice #{$bbNum})!");
-        }
-
-        return redirect()->route('mobileshop.stock', ['tab' => 'second_hand'])->with('success', "Second-hand mobile buyback registered (Invoice #{$bbNum})!");
+        return $this->safeRedirect($request, 'mobileshop.stock', ['tab' => 'second_hand'], 'success', "Second-hand mobile buyback registered (Invoice #{$bbNum})!");
     }
 
     /**

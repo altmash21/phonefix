@@ -119,6 +119,15 @@ class MastersController extends BaseMobileShopController
 
         $result = $this->generateOtp($companyId, $action, $itemReference, auth()->id());
 
+        if (empty($result['sent'])) {
+            return response()->json([
+                'success'      => false,
+                'is_owner'     => false,
+                'message'      => $result['error'] ?? 'Too many attempts. Please wait before requesting another OTP.',
+                'available_in' => $result['available_in'] ?? 300,
+            ], 429);
+        }
+
         return response()->json([
             'success'      => true,
             'is_owner'     => false,

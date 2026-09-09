@@ -153,6 +153,12 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('invoice/{id}/pdf', 'MobileShop\SalesController@invoicePdf')
         ->middleware('permission:read-mobileshop-sales')
         ->name('invoice.pdf');
+    Route::get('sales/{id}/whatsapp', 'MobileShop\SalesController@shareWhatsApp')
+        ->middleware('permission:read-mobileshop-sales')
+        ->name('sales.whatsapp');
+    Route::get('accessories/{id}/whatsapp', 'MobileShop\AccessoriesController@shareWhatsApp')
+        ->middleware('permission:read-mobileshop-sales')
+        ->name('accessories.whatsapp');
 
     Route::get('invoice/purchase/{id}', 'MobileShop\PurchaseController@purchaseInvoice')
         ->middleware('permission:read-mobileshop-purchase')
