@@ -111,7 +111,7 @@
                 <div class="company-name">{{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
                 <div style="font-size: 9.5px; color: #4b5563; margin-top: 3px;">
                     {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                    Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'procurement@mauryamobile.local') }}
+                    Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'procurement@mobitrack.local') }}
                 </div>
                 <div style="font-size: 9.5px; font-weight: bold; color: #111827; margin-top: 3px;">
                     Store GSTIN: <span class="font-mono">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>

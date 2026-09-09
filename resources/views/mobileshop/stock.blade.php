@@ -1476,7 +1476,7 @@
         const link = document.createElement("a");
         const today = new Date().toISOString().slice(0, 10);
         link.setAttribute("href", url);
-        link.setAttribute("download", `mauryamobile_low_stock_report_${today}.csv`);
+        link.setAttribute("download", `mobitrack_low_stock_report_${today}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

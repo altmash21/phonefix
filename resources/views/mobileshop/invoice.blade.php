@@ -96,7 +96,7 @@
                     </div>
                     <div style="font-size: 11px; color: #4B5563; margin-top: 4px; line-height: 1.5;">
                         {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                        Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'support@mauryamobile.local') }}
+                        Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'support@mobitrack.local') }}
                     </div>
                     <div style="font-size: 11px; font-weight: 700; color: #111827; margin-top: 4px;">
                         GSTIN: <span style="font-family: monospace; font-weight: 700;">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>

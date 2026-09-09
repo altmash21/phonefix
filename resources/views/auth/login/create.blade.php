@@ -163,37 +163,37 @@
                 <div class="space-y-2">
                     <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Quick Station Selection:</label>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        <button type="button" onclick="fillCreds('admin@mauryamobile.local', 'password', 'Store Admin')"
+                        <button type="button" onclick="fillCreds('admin@mobitrack.local', 'password', 'Store Admin')"
                                 class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
                             <span class="block font-semibold text-slate-900 text-[11px]">Store Admin</span>
                             <span class="text-[10px] text-slate-400 font-mono">admin@</span>
                         </button>
 
-                        <button type="button" onclick="fillCreds('sales@mauryamobile.local', 'password', 'New Phones POS')"
+                        <button type="button" onclick="fillCreds('sales@mobitrack.local', 'password', 'New Phones POS')"
                                 class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
                             <span class="block font-semibold text-slate-900 text-[11px]">New Phones POS</span>
                             <span class="text-[10px] text-slate-400 font-mono">sales@</span>
                         </button>
 
-                        <button type="button" onclick="fillCreds('buyback@mauryamobile.local', 'password', 'Buyback Specialist')"
+                        <button type="button" onclick="fillCreds('buyback@mobitrack.local', 'password', 'Buyback Specialist')"
                                 class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
                             <span class="block font-semibold text-slate-900 text-[11px]">Buyback Desk</span>
                             <span class="text-[10px] text-slate-400 font-mono">buyback@</span>
                         </button>
 
-                        <button type="button" onclick="fillCreds('accessories@mauryamobile.local', 'password', 'Accessories Staff')"
+                        <button type="button" onclick="fillCreds('accessories@mobitrack.local', 'password', 'Accessories Staff')"
                                 class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
                             <span class="block font-semibold text-slate-900 text-[11px]">Accessories</span>
                             <span class="text-[10px] text-slate-400 font-mono">accessories@</span>
                         </button>
 
-                        <button type="button" onclick="fillCreds('cover@mauryamobile.local', 'password', 'Cover Staff')"
+                        <button type="button" onclick="fillCreds('cover@mobitrack.local', 'password', 'Cover Staff')"
                                 class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
                             <span class="block font-semibold text-slate-900 text-[11px]">Cover & Glass</span>
                             <span class="text-[10px] text-slate-400 font-mono">cover@</span>
                         </button>
 
-                        <button type="button" onclick="fillCreds('tech@mauryamobile.local', 'password', 'Service Tech')"
+                        <button type="button" onclick="fillCreds('tech@mobitrack.local', 'password', 'Service Tech')"
                                 class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
                             <span class="block font-semibold text-slate-900 text-[11px]">Service Tech</span>
                             <span class="text-[10px] text-slate-400 font-mono">tech@</span>
@@ -207,8 +207,8 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Staff Email Address</label>
                         <div class="relative">
-                            <input type="email" id="emailInput" name="email" value="{{ old('email', 'admin@mauryamobile.local') }}" required
-                                   placeholder="name@mauryamobile.local"
+                            <input type="email" id="emailInput" name="email" value="{{ old('email', 'admin@mobitrack.local') }}" required
+                                   placeholder="name@mobitrack.local"
                                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
                             <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                         </div>
