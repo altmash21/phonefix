@@ -158,7 +158,6 @@
                             <option value="repair_quote">Express Repair / Diagnostic Quote</option>
                             <option value="trade_in">Device Trade-in / Sell My Phone</option>
                             <option value="emi_inquiry">0% EMI Financing Eligibility</option>
-                            <option value="accessories">Genuine Accessories / Bulk Orders</option>
                             <option value="other">Other Inquiry</option>
                         </select>
                     </div>

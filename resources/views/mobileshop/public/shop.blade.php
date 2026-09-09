@@ -1,14 +1,13 @@
 @extends('mobileshop.public.layout')
 
 @section('title', 'Store — Flagship Smartphones & Certified Pre-Owned Catalog | Maurya Mobile')
-@section('meta_description', 'Explore brand new sealed smartphones, 50-point certified pre-owned devices, and genuine accessories in stock at Maurya Mobile Mumbai.')
+@section('meta_description', 'Explore brand new sealed smartphones and 50-point certified pre-owned devices in stock at Maurya Mobile Mumbai.')
 
 @section('subnav_title', 'Store')
 @section('subnav_links')
-    <a href="{{ route('public.store', ['tab' => 'all', 'q' => $query]) }}" class="{{ $tab === 'all' ? 'text-apple-ink font-semibold' : 'hover:text-apple-ink' }}">All Products</a>
+    <a href="{{ route('public.store', ['tab' => 'all', 'q' => $query]) }}" class="{{ $tab === 'all' ? 'text-apple-ink font-semibold' : 'hover:text-apple-ink' }}">All Smartphones</a>
     <a href="{{ route('public.store', ['tab' => 'new', 'q' => $query]) }}" class="{{ $tab === 'new' ? 'text-apple-ink font-semibold' : 'hover:text-apple-ink' }}">Flagships ({{ $newPhones->count() }})</a>
     <a href="{{ route('public.store', ['tab' => 'second_hand', 'q' => $query]) }}" class="{{ $tab === 'second_hand' ? 'text-apple-ink font-semibold' : 'hover:text-apple-ink' }}">Pre-Owned ({{ $secondHandPhones->count() }})</a>
-    <a href="{{ route('public.store', ['tab' => 'covers', 'q' => $query]) }}" class="{{ $tab === 'covers' ? 'text-apple-ink font-semibold' : 'hover:text-apple-ink' }}">Accessories ({{ $accessories->count() }})</a>
 @endsection
 @section('subnav_cta')
     <a href="{{ route('public.track_repair') }}" class="apple-btn-secondary-pill text-[13px] py-1.5 px-3.5">
@@ -49,7 +48,7 @@
             <div class="flex items-center gap-2 pt-8 overflow-x-auto no-scrollbar">
                 <a href="{{ route('public.store', ['tab' => 'all', 'q' => $query]) }}" 
                    class="px-4 py-2 rounded-full text-[14px] transition-all shrink-0 {{ $tab === 'all' ? 'bg-apple-ink text-white font-medium' : 'bg-white text-apple-ink border border-apple-hairline hover:border-apple-ink' }}">
-                    All Devices ({{ $newPhones->count() + $secondHandPhones->count() + $accessories->count() }})
+                    All Smartphones ({{ $newPhones->count() + $secondHandPhones->count() }})
                 </a>
                 <a href="{{ route('public.store', ['tab' => 'new', 'q' => $query]) }}" 
                    class="px-4 py-2 rounded-full text-[14px] transition-all shrink-0 {{ $tab === 'new' ? 'bg-apple-ink text-white font-medium' : 'bg-white text-apple-ink border border-apple-hairline hover:border-apple-ink' }}">
@@ -58,10 +57,6 @@
                 <a href="{{ route('public.store', ['tab' => 'second_hand', 'q' => $query]) }}" 
                    class="px-4 py-2 rounded-full text-[14px] transition-all shrink-0 {{ $tab === 'second_hand' ? 'bg-apple-ink text-white font-medium' : 'bg-white text-apple-ink border border-apple-hairline hover:border-apple-ink' }}">
                     Certified Pre-Owned ({{ $secondHandPhones->count() }})
-                </a>
-                <a href="{{ route('public.store', ['tab' => 'covers', 'q' => $query]) }}" 
-                   class="px-4 py-2 rounded-full text-[14px] transition-all shrink-0 {{ $tab === 'covers' ? 'bg-apple-ink text-white font-medium' : 'bg-white text-apple-ink border border-apple-hairline hover:border-apple-ink' }}">
-                    Genuine Accessories ({{ $accessories->count() }})
                 </a>
             </div>
         </div>
@@ -197,66 +192,16 @@
         </div>
         @endif
 
-        <!-- SECTION C: ACCESSORIES & COVERS (When tab is 'all' or 'covers') -->
-        @if(($tab === 'all' || $tab === 'covers') && $accessories->count() > 0)
-        <div>
-            <div class="flex items-center justify-between pb-4 mb-6 border-b border-apple-hairline">
-                <div>
-                    <h2 class="apple-tagline text-apple-ink">Genuine Accessories & MagSafe</h2>
-                    <p class="apple-caption text-apple-muted-48 mt-0.5">Military-grade protection, fast GaN power, and certified audio.</p>
-                </div>
-                <span class="apple-caption text-apple-muted-48">{{ $accessories->count() }} Items</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($accessories as $acc)
-                <div class="apple-utility-card flex flex-col justify-between group">
-                    <div>
-                        <div class="w-full aspect-square bg-apple-parchment rounded-[8px] p-6 flex items-center justify-center relative overflow-hidden mb-4">
-                            <span class="absolute top-3 left-3 text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-                                {{ ucfirst($acc->category ?? 'Accessory') }}
-                            </span>
-                            <div class="w-20 h-20 rounded-full bg-white apple-product-shadow flex items-center justify-center text-apple-ink">
-                                <i data-lucide="package" class="w-8 h-8 text-apple-primary"></i>
-                            </div>
-                        </div>
-
-                        <div class="text-[12px] text-apple-muted-48 uppercase tracking-wider font-semibold">
-                            {{ $acc->brand ?? 'Genuine OEM' }}
-                        </div>
-                        <h3 class="apple-body-strong text-apple-ink group-hover:text-apple-primary transition-colors truncate mt-1">
-                            {{ $acc->name }}
-                        </h3>
-                        <div class="apple-caption text-apple-muted-48 mt-0.5">
-                            Stock: {{ $acc->stock_qty }} Units In Store
-                        </div>
-                    </div>
-
-                    <div class="mt-6 pt-4 border-t border-apple-hairline flex items-center justify-between">
-                        <div>
-                            <span class="text-[11px] text-apple-muted-48 block">Counter Price</span>
-                            <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($acc->selling_price, 0) }}</span>
-                        </div>
-                        <a href="{{ route('public.contact') }}" class="apple-btn-secondary-pill text-[13px] py-1.5 px-3.5">
-                            Inquire Store
-                        </a>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-        </div>
-        @endif
-
         <!-- Empty State -->
-        @if($newPhones->count() === 0 && $secondHandPhones->count() === 0 && $accessories->count() === 0)
+        @if($newPhones->count() === 0 && $secondHandPhones->count() === 0)
         <div class="text-center py-24 bg-apple-parchment rounded-[18px] border border-apple-hairline p-8 space-y-4">
             <h3 class="apple-display-md text-apple-ink">No devices found.</h3>
             <p class="apple-body text-apple-muted-48 max-w-md mx-auto">
-                We could not find any in-stock products matching your criteria. Try searching for a broader term or contact our store desk.
+                We could not find any in-stock smartphones matching your criteria. Try searching for a broader term or contact our store desk.
             </p>
             <div class="pt-2">
                 <a href="{{ route('public.store') }}" class="apple-btn-primary">
-                    View All Products
+                    View All Smartphones
                 </a>
             </div>
         </div>

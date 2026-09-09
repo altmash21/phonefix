@@ -74,21 +74,7 @@ class PublicStoreController extends BaseMobileShopController
         }
         $secondHandPhones = $secondHandQuery->orderBy('id', 'desc')->get();
 
-        // Query Accessories & Covers
-        $accQuery = DB::table('ms_parts_inventory')
-            ->where('company_id', $companyId)
-            ->where('stock_qty', '>', 0);
-
-        if ($tab === 'covers') {
-            $accQuery->whereIn('category', $this->coverCategories);
-        }
-
-        if (!empty($query)) {
-            $accQuery->where('name', 'like', "%{$query}%");
-        }
-        $accessories = $accQuery->orderBy('name', 'asc')->limit(24)->get();
-
-        return view('mobileshop.public.shop', compact('newPhones', 'secondHandPhones', 'accessories', 'tab', 'query'));
+        return view('mobileshop.public.shop', compact('newPhones', 'secondHandPhones', 'tab', 'query'));
     }
 
     /**

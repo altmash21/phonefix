@@ -8,7 +8,7 @@
     <a href="#flagships" class="hover:text-apple-ink transition-colors">Flagships</a>
     <a href="#pre-owned" class="hover:text-apple-ink transition-colors">Pre-Owned</a>
     <a href="#repair-lab" class="hover:text-apple-ink transition-colors">Repair Lab</a>
-    <a href="#accessories" class="hover:text-apple-ink transition-colors">Accessories</a>
+    <a href="#trade-in" class="hover:text-apple-ink transition-colors">Trade-in & EMI</a>
 @endsection
 @section('subnav_cta')
     <a href="{{ route('public.store') }}" class="apple-btn-primary text-[14px] py-1.5 px-4">
@@ -207,57 +207,57 @@
         </div>
     </section>
 
-    <!-- ════ TILE 4: DARK 2 CANVAS (#2a2a2c — 2-Up Genuine Accessories Gallery) ════ -->
-    <section id="accessories" class="bg-apple-tile-2 text-apple-body-dark pt-20 pb-24 sm:pt-28 sm:pb-32 border-b border-white/10 overflow-hidden">
+    <!-- ════ TILE 4: DARK 2 CANVAS (#2a2a2c — 2-Up Trade-in & Instant Financing) ════ -->
+    <section id="trade-in" class="bg-apple-tile-2 text-apple-body-dark pt-20 pb-24 sm:pt-28 sm:pb-32 border-b border-white/10 overflow-hidden">
         <div class="max-w-[1024px] mx-auto px-4">
             
             <div class="text-center max-w-2xl mx-auto mb-14 space-y-3">
                 <div class="apple-tagline text-apple-primary-dark uppercase tracking-widest text-[13px]">
-                    Engineered Ecosystem
+                    Trade-in & Upgrades
                 </div>
                 <h2 class="apple-display-lg text-white">
-                    Genuine Accessories. MagSafe & Fast Power.
+                    Trade in. Upgrade to Pro. Instant counter valuation.
                 </h2>
                 <p class="apple-lead text-white/70">
-                    Precision-matched silicone shells, 15W wireless pucks, and 120W GaN adapters.
+                    Get credit toward a brand new sealed or certified pre-owned smartphone today.
                 </p>
             </div>
 
             <!-- 2-Up Side-by-Side Canvas Tiles -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
-                <!-- Tile A: MagSafe & Covers -->
+                <!-- Tile A: Smartphone Exchange -->
                 <div class="bg-apple-tile-1 border border-white/10 rounded-[18px] p-8 sm:p-10 flex flex-col justify-between">
                     <div>
-                        <span class="apple-caption text-apple-primary-dark uppercase tracking-wider font-semibold">MagSafe Ecosystem</span>
+                        <span class="apple-caption text-apple-primary-dark uppercase tracking-wider font-semibold">Maurya Trade-In</span>
                         <h3 class="apple-display-md text-white mt-2">
-                            Snaps into place.<br>Charges seamlessly.
+                            Exchange your device.<br>Get instant valuation.
                         </h3>
                         <p class="apple-body text-white/70 mt-3">
-                            Official military-grade drop-certified silicone, carbon-fiber cases, and magnetic kickstand wallets for iPhone & Galaxy.
+                            Bring your old iPhone, Samsung Galaxy, or OnePlus device to our Linking Road counter for a real-time diagnostic evaluation and immediate trade credit.
                         </p>
                     </div>
                     <div class="mt-8 pt-6 border-t border-white/10">
-                        <a href="{{ route('public.store', ['tab' => 'covers']) }}" class="apple-btn-primary text-[14px]">
-                            Explore Covers & Wallets
+                        <a href="{{ route('public.contact') }}" class="apple-btn-primary text-[14px]">
+                            Get Trade-in Estimate
                         </a>
                     </div>
                 </div>
 
-                <!-- Tile B: High-Speed GaN Power -->
+                <!-- Tile B: 0% EMI Financing -->
                 <div class="bg-apple-tile-1 border border-white/10 rounded-[18px] p-8 sm:p-10 flex flex-col justify-between">
                     <div>
-                        <span class="apple-caption text-apple-primary-dark uppercase tracking-wider font-semibold">GaN Fast Charging</span>
+                        <span class="apple-caption text-apple-primary-dark uppercase tracking-wider font-semibold">0% EMI Financing</span>
                         <h3 class="apple-display-md text-white mt-2">
-                            Up to 120W.<br>Zero thermal throttle.
+                            Zero down payment.<br>Instant approval.
                         </h3>
                         <p class="apple-body text-white/70 mt-3">
-                            Multi-port Gallium Nitride bricks, braided Kevlar Type-C cords, and shatterproof 9D edge-to-edge tempered glass.
+                            Flexible monthly tenures from 3 to 12 months with Bajaj Finserv, HDFC, ICICI, and IDFC First Bank. Approvals in under 5 minutes with Aadhaar + PAN.
                         </p>
                     </div>
                     <div class="mt-8 pt-6 border-t border-white/10">
-                        <a href="{{ route('public.store') }}" class="apple-btn-primary text-[14px]">
-                            Shop Fast Chargers & Audio
+                        <a href="{{ route('public.contact') }}" class="apple-btn-primary text-[14px]">
+                            Check EMI Eligibility
                         </a>
                     </div>
                 </div>

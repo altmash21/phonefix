@@ -364,7 +364,6 @@
                 <a href="{{ route('public.store', ['tab' => 'new']) }}" class="hover:text-white transition-colors {{ request('tab') === 'new' ? 'text-white' : '' }}">Flagship Phones</a>
                 <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="hover:text-white transition-colors {{ request('tab') === 'second_hand' ? 'text-white' : '' }}">Certified Pre-Owned</a>
                 <a href="{{ route('public.track_repair') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.track_repair') ? 'text-white' : '' }}">Express Repair</a>
-                <a href="{{ route('public.store', ['tab' => 'covers']) }}" class="hover:text-white transition-colors {{ request('tab') === 'covers' ? 'text-white' : '' }}">Accessories</a>
                 <a href="{{ route('public.about') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.about') ? 'text-white' : '' }}">Environment</a>
                 <a href="{{ route('public.contact') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.contact') ? 'text-white' : '' }}">Showroom</a>
             </div>
@@ -410,7 +409,6 @@
             <a href="{{ route('public.store', ['tab' => 'new']) }}" class="block hover:text-white">Flagship Phones</a>
             <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="block hover:text-white">Certified Pre-Owned</a>
             <a href="{{ route('public.track_repair') }}" class="block hover:text-white">Express Repair Lab</a>
-            <a href="{{ route('public.store', ['tab' => 'covers']) }}" class="block hover:text-white">Accessories</a>
             <a href="{{ route('public.about') }}" class="block hover:text-white">Environment & Trust</a>
             <a href="{{ route('public.contact') }}" class="block hover:text-white">Showroom & Contact</a>
             <div class="pt-4 border-t border-white/15">
@@ -469,8 +467,8 @@
                         <li><a href="{{ route('public.store') }}" class="hover:text-apple-primary">Store</a></li>
                         <li><a href="{{ route('public.store', ['tab' => 'new']) }}" class="hover:text-apple-primary">Flagship Devices</a></li>
                         <li><a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="hover:text-apple-primary">Certified Pre-Owned</a></li>
-                        <li><a href="{{ route('public.store', ['tab' => 'covers']) }}" class="hover:text-apple-primary">MagSafe & Covers</a></li>
-                        <li><a href="{{ route('public.store') }}" class="hover:text-apple-primary">Fast Chargers & Audio</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Device Trade-in</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">0% EMI Financing</a></li>
                     </ul>
                 </div>
 
