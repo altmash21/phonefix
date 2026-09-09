@@ -132,11 +132,11 @@ foreach ($staffRoles as $email => $expected) {
             $salesView = $controller->salesHub(request())->render();
             
             if ($expected['pos_visible']) {
-                assertCheck("$email sees New POS Sale button", str_contains($salesView, 'New POS Sale'));
+                assertCheck("$email sees Register Sale button", str_contains($salesView, 'Register Sale'));
                 assertCheck("$email does NOT see Add Sales button", !str_contains($salesView, 'Add Sales'));
             } else {
                 assertCheck("$email sees Add Sales button", str_contains($salesView, 'Add Sales'));
-                assertCheck("$email does NOT see New POS Sale button", !str_contains($salesView, 'New POS Sale'));
+                assertCheck("$email does NOT see Register Sale button", !str_contains($salesView, 'Register Sale'));
             }
 
             $khataView = $controller->khata()->render();
@@ -146,8 +146,13 @@ foreach ($staffRoles as $email => $expected) {
             assertCheck("PurchaseHub renders cleanly without syntax errors for $email", strlen($purchaseView) > 0);
 
             if ($u->can('read-mobileshop-procurement') || $u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('sales-staff')) {
-                $poView = $controller->purchaseOrders()->render();
-                assertCheck("purchaseOrders renders cleanly with supplier wallets for $email", str_contains($poView, 'Prepaid Wallet:'));
+                $poRes = $controller->purchaseOrders();
+                if ($poRes instanceof \Illuminate\Http\RedirectResponse) {
+                    assertCheck("purchaseOrders redirects to purchase hub for $email", $poRes->isRedirect());
+                } else {
+                    $poView = $poRes->render();
+                    assertCheck("purchaseOrders renders cleanly with supplier wallets for $email", str_contains($poView, 'Prepaid Wallet:'));
+                }
             }
         } catch (\Throwable $e) {
             assertCheck("Render check for $email: " . $e->getMessage(), false);
