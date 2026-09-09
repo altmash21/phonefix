@@ -15,19 +15,45 @@ class MastersController extends BaseMobileShopController
      */
     public function masters()
     {
-        // Masters is Admin-only
-        abort_unless(auth()->check() && (auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('admin')), 403, 'Admin access required for Masters.');
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $canAccess = $user->hasRole('store-admin')
+            || $user->hasRole('admin')
+            || $user->hasRole('owner')
+            || $user->isOwner()
+            || $user->can('read-mobileshop-masters')
+            || $user->can('read-admin-panel');
+
+        if (!$canAccess) {
+            return redirect()->route('mobileshop.dashboard')
+                ->with('error', 'Store Admin or Owner privileges required to access Store Masters & Settings.');
+        }
 
         $companyId = $this->getCompanyId();
 
         $categories = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
         $financiers = DB::table('ms_emi_providers')->where('company_id', $companyId)->get();
-        $suppliers  = DB::table('ms_supplier_credit_wallets')
-            ->leftJoin('ms_suppliers', 'ms_supplier_credit_wallets.supplier_id', '=', 'ms_suppliers.id')
-            ->select('ms_supplier_credit_wallets.*', 'ms_suppliers.name as supplier_name', 'ms_suppliers.phone as supplier_phone', 'ms_suppliers.gstin as supplier_gstin')
-            ->where('ms_supplier_credit_wallets.company_id', $companyId)
+        $prefix = DB::getTablePrefix();
+        $suppliers  = DB::table('ms_suppliers')
+            ->leftJoin('ms_supplier_credit_wallets', function($join) use ($companyId) {
+                $join->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
+                     ->where('ms_supplier_credit_wallets.company_id', '=', $companyId);
+            })
+            ->select(
+                'ms_suppliers.id as supplier_id',
+                'ms_suppliers.name as supplier_name',
+                'ms_suppliers.phone as supplier_phone',
+                'ms_suppliers.gstin as supplier_gstin',
+                DB::raw("COALESCE({$prefix}ms_supplier_credit_wallets.credit_balance, 0) as credit_balance")
+            )
+            ->where('ms_suppliers.company_id', $companyId)
+            ->orderBy('ms_suppliers.name', 'asc')
             ->get();
-        $staffUsers = User::whereHas('companies', function($q) use ($companyId) {
+
+        $staffUsers = User::with('roles')->whereHas('companies', function($q) use ($companyId) {
             $q->where('companies.id', $companyId);
         })->get();
         $roles = Role::whereNotIn('name', ['admin'])->get();
@@ -54,7 +80,13 @@ class MastersController extends BaseMobileShopController
      */
     public function updateUserCredentials(Request $request, $id)
     {
-        abort_unless(auth()->check() && (auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('admin')), 403, 'Admin access required to modify user credentials.');
+        $currentUser = auth()->user();
+        abort_unless($currentUser && (
+            $currentUser->hasRole('store-admin') ||
+            $currentUser->hasRole('admin') ||
+            $currentUser->hasRole('owner') ||
+            $currentUser->can('read-mobileshop-masters')
+        ), 403, 'Admin access required to modify user credentials.');
 
         $currentUser = auth()->user();
         $targetUser = User::findOrFail($id);

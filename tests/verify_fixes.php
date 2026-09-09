@@ -178,8 +178,13 @@ try {
     $repairsRes = $repairsCtrl->repairs(request());
     $repairsView = $repairsRes->render();
     assertCheck("Repairs view renders cleanly without route or syntax errors", strlen($repairsView) > 0);
+
+    $mastersCtrl = app(\App\Http\Controllers\MobileShop\MastersController::class);
+    $mastersRes = $mastersCtrl->masters();
+    $mastersView = $mastersRes->render();
+    assertCheck("Masters Hub renders cleanly without lazy loading or route errors", str_contains($mastersView, 'Parts & Accessories Categories') && str_contains($mastersView, 'Suppliers & Credit Wallets') && str_contains($mastersView, 'Staff Counter Users & Roles'));
 } catch (\Throwable $e) {
-    assertCheck("Bulk Purchase & Invoice Scanner check: " . $e->getMessage(), false);
+    assertCheck("Bulk Purchase, Invoice Scanner & Masters check: " . $e->getMessage(), false);
 }
 
 echo "\n==========================================\n";

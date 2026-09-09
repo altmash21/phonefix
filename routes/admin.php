@@ -73,18 +73,18 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->name('reports');
 
     Route::get('masters', 'MobileShop\MastersController@masters')
-        ->middleware('permission:read-mobileshop-masters')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel|read-mobileshop-dashboard')
         ->name('masters');
     Route::post('masters/user/{id}/update', 'MobileShop\MastersController@updateUserCredentials')
-        ->middleware('permission:read-mobileshop-masters')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel')
         ->name('masters.user.update');
 
     // ── LOGIN SESSION MANAGEMENT (Admin only) ──
     Route::get('sessions', 'MobileShop\MastersController@getLoginSessions')
-        ->middleware('permission:read-mobileshop-masters')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel')
         ->name('sessions.index');
     Route::post('sessions/{id}/terminate', 'MobileShop\MastersController@terminateLoginSession')
-        ->middleware('permission:read-mobileshop-masters')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel')
         ->name('sessions.terminate');
 
     // ── OTP VERIFICATION (Security) ──
@@ -116,7 +116,7 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
         ->name('emi.deposit');
     Route::post('emi-ledger/provider/update', 'MobileShop\EmiController@updateEmiProvider')
-        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
+        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase|read-mobileshop-masters|read-admin-panel')
         ->name('emi.provider.update');
 
     // ── PURCHASE ACTIONS (niche-gated) ──
@@ -259,7 +259,7 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:create-mobileshop-procurement')
         ->name('purchase_orders.payment');
     Route::post('supplier/update', 'MobileShop\PurchaseController@updateSupplier')
-        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement')
+        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel')
         ->name('supplier.update');
     Route::get('repairs', 'MobileShop\RepairsController@repairs')
         ->middleware('permission:read-mobileshop-repairs')

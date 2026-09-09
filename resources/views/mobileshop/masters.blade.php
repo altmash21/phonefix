@@ -429,8 +429,8 @@
 <script>
     function openEditUserCredentialsModal(id, name, email, role) {
         var form = document.getElementById('editUserForm');
-        var baseUrl = "{{ url(request()->route('company_id', 1) . '/mobileshop/masters/user') }}";
-        form.action = baseUrl + '/' + id + '/update';
+        var updateUrl = "{{ route('mobileshop.masters.user.update', ['id' => '__ID__']) }}".replace('__ID__', id);
+        form.action = updateUrl;
         document.getElementById('editUserName').value = name;
         document.getElementById('editUserEmail').value = email;
         document.getElementById('editUserPassword').value = '';
