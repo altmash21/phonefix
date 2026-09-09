@@ -183,8 +183,43 @@ try {
     $mastersRes = $mastersCtrl->masters();
     $mastersView = $mastersRes->render();
     assertCheck("Masters Hub renders cleanly without lazy loading or route errors", str_contains($mastersView, 'Parts & Accessories Categories') && str_contains($mastersView, 'Suppliers & Credit Wallets') && str_contains($mastersView, 'Staff Counter Users & Roles'));
+
+    // 8. Verify Apple Design System Public Pages
+    $pubCtrl = app(\App\Http\Controllers\MobileShop\PublicStoreController::class);
+
+    $homeView = $pubCtrl->publicLanding()->render();
+    assertCheck("Public Landing renders with Apple Design tokens (hero display & product shadow)", 
+        str_contains($homeView, 'Titanium. So strong. So light.') && 
+        str_contains($homeView, 'apple-product-shadow') && 
+        str_contains($homeView, '#0066cc'));
+
+    $shopView = $pubCtrl->publicStore(request())->render();
+    assertCheck("Public Store renders with Apple catalog cards and pill search", 
+        str_contains($shopView, 'The finest technology, verified.') && 
+        str_contains($shopView, 'apple-utility-card'));
+
+    $firstDevice = DB::table('ms_mobile_devices')->first();
+    if ($firstDevice) {
+        $prodView = $pubCtrl->publicProductDetail($firstDevice->id)->render();
+        assertCheck("Public Product Detail renders with Apple buy configurator and sticky bar", 
+            str_contains($prodView, 'Inclusive of all taxes') && 
+            str_contains($prodView, 'apple-product-shadow'));
+    }
+
+    $repairView = $pubCtrl->publicTrackRepair(request())->render();
+    assertCheck("Public Track Repair renders with Apple support layout", 
+        str_contains($repairView, 'Track your repair live.'));
+
+    $aboutView = $pubCtrl->publicAbout()->render();
+    assertCheck("Public About renders with Apple environment editorial story", 
+        str_contains($aboutView, 'The most sustainable phone is the one that lasts.'));
+
+    $contactView = $pubCtrl->publicContact()->render();
+    assertCheck("Public Contact renders with Apple showroom card layout", 
+        str_contains($contactView, 'Visit our showroom or connect with our desk.'));
+
 } catch (\Throwable $e) {
-    assertCheck("Bulk Purchase, Invoice Scanner & Masters check: " . $e->getMessage(), false);
+    assertCheck("View rendering check: " . $e->getMessage(), false);
 }
 
 echo "\n==========================================\n";

@@ -1,181 +1,180 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'About Us — Maurya Mobile Marketplace & Service Lab')
-@section('meta_description', 'Learn about Maurya Mobile, Mumbai’s trusted mobile retail showroom and certified smartphone repair center on Linking Road, Bandra West.')
+@section('title', 'Environment & Values — Maurya Mobile Mumbai')
+@section('meta_description', 'Learn about Maurya Mobile’s commitment to device longevity, electronic waste reduction, 50-point diagnostics, and consumer transparency in Mumbai.')
+
+@section('subnav_title', 'Values & Trust')
+@section('subnav_links')
+    <a href="#longevity" class="hover:text-apple-ink">Device Longevity</a>
+    <a href="#diagnostics" class="hover:text-apple-ink">50-Point Inspection</a>
+    <a href="#ewaste" class="hover:text-apple-ink">E-Waste Reduction</a>
+@endsection
+@section('subnav_cta')
+    <a href="{{ route('public.contact') }}" class="apple-btn-primary text-[13px] py-1.5 px-3.5">
+        Visit Showroom
+    </a>
+@endsection
 
 @section('content')
 
-    <!-- ════ 1. EDITORIAL HERO BANNER ════ -->
-    <div class="border-b border-hairline-soft bg-canvas py-16 px-4 sm:px-6 lg:px-8 text-center">
-        <div class="max-w-3xl mx-auto space-y-4">
-            <span class="inline-block px-3 py-1 bg-surface-soft border border-hairline rounded-full text-[11px] font-bold uppercase tracking-wider text-ink">
-                Our Commitment & Standard
+    <!-- ════ 1. EDITORIAL HERO TILE (Parchment Canvas, Lead-Airy Weight 300) ════ -->
+    <section class="bg-apple-parchment text-apple-ink py-20 sm:py-32 border-b border-apple-hairline text-center overflow-hidden">
+        <div class="max-w-[1024px] mx-auto px-4 space-y-4">
+            <span class="apple-caption-strong text-apple-primary uppercase tracking-widest text-[12px]">
+                Longevity & Environmental Responsibility
             </span>
-            <h1 class="text-[28px] sm:text-[36px] font-bold text-ink tracking-tight leading-tight">
-                Trust, Quality & Transparency in Every Smartphone.
+            <h1 class="apple-hero-display text-apple-ink max-w-3xl mx-auto">
+                The most sustainable phone is the one that lasts.
             </h1>
-            <p class="text-[16px] text-muted max-w-2xl mx-auto leading-relaxed">
-                Founded to eliminate ambiguity in consumer mobile purchasing and pre-owned trading through absolute diagnostic verification, genuine parts, and certified warranties.
+            <p class="apple-lead-airy text-apple-muted-80 max-w-2xl mx-auto pt-2">
+                We believe consumer electronics shouldn't be discarded prematurely. Through precision micro-soldering, authentic parts, and rigorous battery renewals, we extend the operational life of every device.
             </p>
         </div>
-    </div>
+    </section>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
+    <!-- ════ 2. TILE: 50-POINT DIAGNOSTIC SEAL (Pure White Canvas) ════ -->
+    <section id="diagnostics" class="bg-apple-canvas text-apple-ink py-20 sm:py-28 border-b border-apple-hairline">
+        <div class="max-w-[1024px] mx-auto px-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                <div class="lg:col-span-7 space-y-6">
+                    <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[12px]">Laboratory Verification</span>
+                    <h2 class="apple-display-lg text-apple-ink">
+                        Every pre-owned device passes our 50-point diagnostic seal.
+                    </h2>
+                    <p class="apple-body text-apple-muted-80">
+                        Before any smartphone enters our showroom display, certified laboratory technicians test every transistor, sensor, and circuit pathway under factory simulation software.
+                    </p>
+                    <p class="apple-body text-apple-muted-80">
+                        From display digitizer uniformity and Face ID infrared dot projectors to RF carrier transmission wattage and fast charging thermal dissipation, nothing is left to chance.
+                    </p>
 
-        <!-- ════ 2. WHO WE ARE & MISSION ════ -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div class="lg:col-span-7 space-y-6">
-                <div class="inline-flex items-center gap-2 text-ink font-semibold text-[13px] uppercase tracking-wider">
-                    <span class="w-2 h-2 rounded-full bg-rausch"></span>
-                    <span>Retail Excellence Since 2018</span>
-                </div>
-                <h2 class="text-[26px] sm:text-[32px] font-bold text-ink leading-tight">
-                    Transforming how Mumbai discovers, trades and repairs personal technology.
-                </h2>
-                <p class="text-[15px] text-body leading-relaxed">
-                    Maurya Mobile is an authorized retailer and multi-brand smartphone hub located on Linking Road, Bandra West. We bridge the gap between expensive brand-new devices and risky street markets by offering <strong>100% genuine sealed smartphones</strong> alongside <strong>laboratory-tested certified pre-owned devices</strong>.
-                </p>
-                <p class="text-[15px] text-body leading-relaxed">
-                    Our in-house micro-soldering laboratory is staffed by certified technicians capable of diagnosing and reviving complex board-level faults in under 45 minutes, saving thousands of customer devices from being discarded prematurely.
-                </p>
-
-                <!-- 3 Key Stat Columns -->
-                <div class="grid grid-cols-3 gap-6 pt-6 border-t border-hairline">
-                    <div>
-                        <div class="text-[28px] font-bold text-ink">15,000+</div>
-                        <div class="text-[13px] text-muted mt-0.5 font-medium">Happy Customers</div>
-                    </div>
-                    <div>
-                        <div class="text-[28px] font-bold text-ink">99.2%</div>
-                        <div class="text-[13px] text-muted mt-0.5 font-medium">Repair Success</div>
-                    </div>
-                    <div>
-                        <div class="text-[28px] font-bold text-ink">4.92 ★</div>
-                        <div class="text-[13px] text-muted mt-0.5 font-medium">Google Rating</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Clean Host-Card Style Feature Box -->
-            <div class="lg:col-span-5 bg-surface-soft rounded-[14px] p-8 border border-hairline shadow-airbnb-tier space-y-6">
-                <div>
-                    <span class="text-[11px] font-bold text-rausch uppercase tracking-wider">The Maurya Mobile Standard</span>
-                    <h3 class="text-[20px] font-bold text-ink mt-1">Why Customers Choose Us Every Single Day</h3>
-                </div>
-
-                <div class="space-y-4 text-[14px] text-body">
-                    <div class="flex items-start gap-3 p-4 bg-canvas rounded-[14px] border border-hairline-soft">
-                        <div class="w-8 h-8 rounded-full bg-surface-strong text-ink flex items-center justify-center shrink-0 mt-0.5">
-                            <svg class="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <!-- 3 Metric Columns -->
+                    <div class="grid grid-cols-3 gap-6 pt-6 border-t border-apple-hairline text-left">
+                        <div>
+                            <div class="apple-display-md text-apple-ink">50+</div>
+                            <div class="apple-caption text-apple-muted-48 mt-1">Verification Steps</div>
                         </div>
                         <div>
-                            <strong class="text-ink block font-semibold">Zero Grey-Market Stock</strong>
-                            <span class="text-[13px] text-muted">Every sealed phone comes with valid tax invoices and active manufacturer warranty.</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-3 p-4 bg-canvas rounded-[14px] border border-hairline-soft">
-                        <div class="w-8 h-8 rounded-full bg-surface-strong text-ink flex items-center justify-center shrink-0 mt-0.5">
-                            <svg class="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                            <div class="apple-display-md text-apple-ink">85%+</div>
+                            <div class="apple-caption text-apple-muted-48 mt-1">Battery Minimum</div>
                         </div>
                         <div>
-                            <strong class="text-ink block font-semibold">Level 4 Certified Lab</strong>
-                            <span class="text-[13px] text-muted">Chip-level micro-soldering, authentic replacement screens, and water damage recovery.</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-3 p-4 bg-canvas rounded-[14px] border border-hairline-soft">
-                        <div class="w-8 h-8 rounded-full bg-surface-strong text-ink flex items-center justify-center shrink-0 mt-0.5">
-                            <svg class="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <div>
-                            <strong class="text-ink block font-semibold">Fair Device Buyback</strong>
-                            <span class="text-[13px] text-muted">Algorithmic device valuation with instant cash payment or exchange store credits.</span>
+                            <div class="apple-display-md text-apple-ink">30-Day</div>
+                            <div class="apple-caption text-apple-muted-48 mt-1">Store Replacement</div>
                         </div>
                     </div>
                 </div>
+
+                <div class="lg:col-span-5 bg-apple-parchment rounded-[18px] border border-apple-hairline p-8 space-y-4">
+                    <h3 class="apple-tagline text-apple-ink">Key Diagnostic Checkpoints</h3>
+                    <ul class="space-y-3 apple-caption text-apple-ink">
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="check" class="w-4 h-4 text-apple-primary shrink-0 mt-0.5"></i>
+                            <span><strong>Motherboard Trace Integrity:</strong> Thermal imaging for short circuits and power leakages.</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="check" class="w-4 h-4 text-apple-primary shrink-0 mt-0.5"></i>
+                            <span><strong>True Tone & Display OLEDS:</strong> Zero burn-in, dead pixels, or aftermarket glass digitizers.</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="check" class="w-4 h-4 text-apple-primary shrink-0 mt-0.5"></i>
+                            <span><strong>Biometric Sensors:</strong> Face ID TrueDepth and Ultrasonic fingerprint response verification.</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i data-lucide="check" class="w-4 h-4 text-apple-primary shrink-0 mt-0.5"></i>
+                            <span><strong>Battery Cell Chemistry:</strong> Genuine cycle count inspection and peak wattage performance.</span>
+                        </li>
+                    </ul>
+                </div>
+
             </div>
         </div>
+    </section>
 
-        <!-- ════ 3. THE 50-POINT DIAGNOSTIC CHECKLIST ════ -->
-        <div class="bg-canvas rounded-[14px] p-8 sm:p-12 border border-hairline shadow-airbnb-tier space-y-10">
-            <div class="text-center max-w-2xl mx-auto space-y-2">
-                <span class="inline-block px-3 py-1 bg-surface-soft border border-hairline rounded-full text-[11px] font-bold uppercase tracking-wider text-ink">
-                    Quality Assurance
+    <!-- ════ 3. TILE: E-WASTE REDUCTION (Near-Black #272729 Canvas) ════ -->
+    <section id="ewaste" class="bg-apple-tile-1 text-apple-body-dark py-20 sm:py-28 border-b border-white/10 text-center overflow-hidden">
+        <div class="max-w-[1024px] mx-auto px-4">
+            
+            <div class="max-w-3xl mx-auto space-y-4">
+                <span class="apple-caption-strong text-apple-primary-dark uppercase tracking-widest text-[12px]">
+                    Zero Electronic Waste Goal
                 </span>
-                <h2 class="text-[26px] font-bold text-ink">Our 50-Point Diagnostic Checklist</h2>
-                <p class="text-[15px] text-muted">Every certified pre-owned smartphone sold at Maurya Mobile must pass all 50 benchmarks before hitting our display shelves.</p>
+                <h2 class="apple-display-lg text-white">
+                    Repairing the micro-components, not swapping the board.
+                </h2>
+                <p class="apple-lead text-white/70 max-w-2xl mx-auto">
+                    Traditional service centers condemn entire motherboards over a 50-paise resistor. Our micro-soldering bench isolates individual BGA chips and SMD components to preserve your original device.
+                </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-[13px] text-body">
-                <!-- Group 1 -->
-                <div class="p-6 rounded-[14px] bg-surface-soft border border-hairline-soft space-y-3">
-                    <div class="w-8 h-8 rounded-full bg-canvas text-ink font-bold flex items-center justify-center border border-hairline shadow-sm">1</div>
-                    <h4 class="font-semibold text-[15px] text-ink">Display & Touch</h4>
-                    <ul class="space-y-2 text-muted">
-                        <li>· 100% Touch responsiveness grid</li>
-                        <li>· TrueTone & color balance</li>
-                        <li>· Dead pixel & backlight bleed test</li>
-                        <li>· Original glass scratch grading</li>
-                    </ul>
+            <div class="mt-14 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                <div class="bg-apple-tile-2 border border-white/10 rounded-[18px] p-8 space-y-3">
+                    <h3 class="apple-body-strong text-white text-[18px]">15,000+ Saved Devices</h3>
+                    <p class="apple-body text-white/70 text-[15px]">
+                        Over 15,000 smartphones saved from landfills and restored to full active service since our showroom opened in 2018.
+                    </p>
                 </div>
-
-                <!-- Group 2 -->
-                <div class="p-6 rounded-[14px] bg-surface-soft border border-hairline-soft space-y-3">
-                    <div class="w-8 h-8 rounded-full bg-canvas text-ink font-bold flex items-center justify-center border border-hairline shadow-sm">2</div>
-                    <h4 class="font-semibold text-[15px] text-ink">Battery & Thermal</h4>
-                    <ul class="space-y-2 text-muted">
-                        <li>· Genuine OEM battery verification</li>
-                        <li>· Minimum 80%+ health certified</li>
-                        <li>· Thermal regulation during charging</li>
-                        <li>· Fast charge protocol testing</li>
-                    </ul>
+                <div class="bg-apple-tile-2 border border-white/10 rounded-[18px] p-8 space-y-3">
+                    <h3 class="apple-body-strong text-white text-[18px]">Safe Battery Recycling</h3>
+                    <p class="apple-body text-white/70 text-[15px]">
+                        Degraded lithium-ion battery packs are transferred to certified Indian green recycling refineries for mineral reclamation.
+                    </p>
                 </div>
-
-                <!-- Group 3 -->
-                <div class="p-6 rounded-[14px] bg-surface-soft border border-hairline-soft space-y-3">
-                    <div class="w-8 h-8 rounded-full bg-canvas text-ink font-bold flex items-center justify-center border border-hairline shadow-sm">3</div>
-                    <h4 class="font-semibold text-[15px] text-ink">Cameras & Sensors</h4>
-                    <ul class="space-y-2 text-muted">
-                        <li>· OIS & auto-focus alignment</li>
-                        <li>· 4K video recording stability</li>
-                        <li>· FaceID / TouchID biometric scan</li>
-                        <li>· Gyroscope, proximity & light sensors</li>
-                    </ul>
-                </div>
-
-                <!-- Group 4 -->
-                <div class="p-6 rounded-[14px] bg-surface-soft border border-hairline-soft space-y-3">
-                    <div class="w-8 h-8 rounded-full bg-canvas text-ink font-bold flex items-center justify-center border border-hairline shadow-sm">4</div>
-                    <h4 class="font-semibold text-[15px] text-ink">Legality & Network</h4>
-                    <ul class="space-y-2 text-muted">
-                        <li>· National IMEI police clearance check</li>
-                        <li>· Dual-SIM 5G/4G Volte signal testing</li>
-                        <li>· Wi-Fi 6 & Bluetooth pairing</li>
-                        <li>· Microphones & stereo speakers</li>
-                    </ul>
+                <div class="bg-apple-tile-2 border border-white/10 rounded-[18px] p-8 space-y-3">
+                    <h3 class="apple-body-strong text-white text-[18px]">Zero-Wipe Data Ethics</h3>
+                    <p class="apple-body text-white/70 text-[15px]">
+                        Customer photos, contacts, and personal conversations are treated as private property and never wiped during repairs.
+                    </p>
                 </div>
             </div>
+
         </div>
+    </section>
 
-        <!-- ════ 4. VISIT SHOWROOM CTA ════ -->
-        <div class="rounded-[20px] bg-surface-soft border border-hairline p-8 sm:p-12 text-center space-y-5">
-            <h3 class="text-[24px] font-bold text-ink">Experience the Difference in Person</h3>
-            <p class="text-[15px] text-muted max-w-xl mx-auto leading-relaxed">
-                Walk into our Bandra West showroom to test-drive any smartphone, get a free 10-minute diagnostic report on your current device, or pick up curated protective accessories.
-            </p>
-            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <a href="{{ route('public.store') }}" 
-                   class="px-6 py-3.5 bg-rausch hover:bg-rausch-active text-white font-medium text-[14px] rounded-sm transition-airbnb shadow-sm">
-                    Explore Store Stock
-                </a>
-                <a href="{{ route('public.contact') }}" 
-                   class="px-6 py-3.5 bg-canvas border border-ink hover:bg-surface-soft text-ink font-medium text-[14px] rounded-sm transition-airbnb">
-                    Showroom Directions & Hours
-                </a>
+    <!-- ════ 4. TILE: SHOWROOM ACCOUNTABILITY & RETAIL STANDARD (Parchment Canvas) ════ -->
+    <section id="longevity" class="bg-apple-parchment text-apple-ink py-20 sm:py-28 text-center">
+        <div class="max-w-[1024px] mx-auto px-4 space-y-12">
+            
+            <div class="max-w-2xl mx-auto space-y-3">
+                <h2 class="apple-display-lg text-apple-ink">
+                    Bandra West Showroom.
+                </h2>
+                <p class="apple-lead text-apple-muted-48">
+                    Experience physical products with full tactile testing and instant expert assistance.
+                </p>
+                <div class="pt-3">
+                    <a href="{{ route('public.contact') }}" class="apple-btn-primary">
+                        Get Store Directions
+                    </a>
+                </div>
             </div>
-        </div>
 
-    </div>
+            <!-- 4 Value Pedestals -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-left">
+                <div class="apple-utility-card">
+                    <div class="apple-caption text-apple-primary uppercase font-semibold">Genuine</div>
+                    <h3 class="apple-body-strong text-apple-ink mt-1">Official GST Invoice</h3>
+                    <p class="apple-fine-print text-apple-muted-48 mt-1">Valid for all manufacturer warranty claims across India.</p>
+                </div>
+                <div class="apple-utility-card">
+                    <div class="apple-caption text-apple-primary uppercase font-semibold">Pricing</div>
+                    <h3 class="apple-body-strong text-apple-ink mt-1">No Hidden Charges</h3>
+                    <p class="apple-fine-print text-apple-muted-48 mt-1">Transparent showroom price tags including all local taxes.</p>
+                </div>
+                <div class="apple-utility-card">
+                    <div class="apple-caption text-apple-primary uppercase font-semibold">Financing</div>
+                    <h3 class="apple-body-strong text-apple-ink mt-1">0% EMI Available</h3>
+                    <p class="apple-fine-print text-apple-muted-48 mt-1">Bajaj Finserv, HDFC, ICICI, and IDFC instant counter approval.</p>
+                </div>
+                <div class="apple-utility-card">
+                    <div class="apple-caption text-apple-primary uppercase font-semibold">Buyback</div>
+                    <h3 class="apple-body-strong text-apple-ink mt-1">Instant Trade-in</h3>
+                    <p class="apple-fine-print text-apple-muted-48 mt-1">Exchange your old device with immediate bank transfer or counter cash.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
 
 @endsection
