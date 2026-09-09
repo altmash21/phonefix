@@ -2,12 +2,24 @@
 
 namespace App\Http\Controllers\MobileShop;
 
+use App\Services\MobileShop\Purchase\BulkPurchaseInwardService;
+use App\Services\MobileShop\Purchase\SupplierPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PurchaseController extends BaseMobileShopController
 {
+    protected BulkPurchaseInwardService $bulkPurchaseService;
+    protected SupplierPaymentService $supplierPaymentService;
+
+    public function __construct(
+        ?BulkPurchaseInwardService $bulkPurchaseService = null,
+        ?SupplierPaymentService $supplierPaymentService = null
+    ) {
+        $this->bulkPurchaseService = $bulkPurchaseService ?? new BulkPurchaseInwardService();
+        $this->supplierPaymentService = $supplierPaymentService ?? new SupplierPaymentService();
+    }
     /**
      * Purchase Hub — Niche-scoped purchase/intake list.
      * Each role sees ONLY their own niche's purchases and gets only their Add form.
@@ -289,169 +301,14 @@ class PurchaseController extends BaseMobileShopController
     {
         abort_unless(auth()->check() && (auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
 
-        $request->validate([
-            'supplier_id'            => 'nullable|exists:ms_suppliers,id',
-            'new_supplier_name'      => 'required_without:supplier_id|nullable|string|max:150',
-            'new_supplier_phone'     => 'nullable|string|max:20',
-            'supplier_invoice_no'    => 'nullable|string|max:100',
-            'order_date'             => 'required|date',
-            'bill_type'              => 'required|in:gst,non_gst',
-            'bill_total'             => 'required|numeric|min:1',
-            'amount_paid'            => 'required|numeric|min:0',
-            'use_advance_credit'     => 'nullable|numeric|min:0',
-            'payment_mode'           => 'required|in:cash,bank_transfer,cheque,upi',
-            'items'                  => 'required|array|min:1',
-            'items.*.brand'          => 'required|string|max:100',
-            'items.*.model'          => 'required|string|max:100',
-            'items.*.qty'            => 'required|integer|min:1',
-            'items.*.unit_cost'      => 'required|numeric|min:0',
-            'items.*.selling_price'  => 'required|numeric|min:1',
-            'items.*.ram'            => 'nullable|string|max:50',
-            'items.*.storage'        => 'nullable|string|max:50',
-            'items.*.color'          => 'nullable|string|max:50',
-            'items.*.imeis'          => 'nullable|string',
-        ]);
-
         $companyId = $this->getCompanyId();
+        $result = $this->bulkPurchaseService->storeBulkPurchase($companyId, $request);
 
-        return DB::transaction(function () use ($request, $companyId) {
-            // ── Resolve supplier (existing or create new) ──
-            if ($request->filled('supplier_id')) {
-                $supplierId = (int) $request->supplier_id;
-            } else {
-                $supplierId = DB::table('ms_suppliers')->insertGetId([
-                    'company_id' => $companyId,
-                    'name'       => trim($request->new_supplier_name),
-                    'phone'      => $request->new_supplier_phone,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            $billTotal = round((float) $request->bill_total, 2);
-            $amountPaid = min(round((float) $request->amount_paid, 2), $billTotal);
-            $advanceUsed = 0.00;
-
-            // ── Apply advance credit wallet if requested ──
-            $wallet = DB::table('ms_supplier_credit_wallets')
-                ->where('company_id', $companyId)->where('supplier_id', $supplierId)
-                ->lockForUpdate()->first();
-
-            if ($request->filled('use_advance_credit') && (float) $request->use_advance_credit > 0 && $wallet) {
-                $advanceUsed = min((float) $request->use_advance_credit, (float) $wallet->credit_balance, $billTotal - $amountPaid);
-                if ($advanceUsed > 0) {
-                    $amountPaid += $advanceUsed;
-                    $newCredit = (float) $wallet->credit_balance - $advanceUsed;
-                    DB::table('ms_supplier_credit_wallets')->where('id', $wallet->id)->update([
-                        'credit_balance' => $newCredit, 'updated_at' => now(),
-                    ]);
-                    DB::table('ms_supplier_credit_transactions')->insert([
-                        'supplier_id' => $supplierId, 'txn_type' => 'credit_used',
-                        'amount' => $advanceUsed, 'related_po_id' => null,
-                        'balance_after' => $newCredit,
-                        'remarks' => 'Advance credit applied on bulk purchase invoice',
-                        'txn_date' => now(),
-                    ]);
-                }
-            }
-
-            $balanceDue = max(0.00, $billTotal - $amountPaid);
-            $newStatus = ($balanceDue <= 0) ? 'paid' : (($amountPaid > 0) ? 'partially_paid' : 'received');
-
-            // ── Create PO header ──
-            $poNum = 'PO-BULK-' . date('Ymd') . '-' . rand(100, 999);
-            $poId = DB::table('ms_purchase_orders')->insertGetId([
-                'company_id'   => $companyId,
-                'supplier_id'  => $supplierId,
-                'po_number'    => $poNum,
-                'order_date'   => $request->order_date,
-                'tax_type'     => $request->bill_type === 'gst' ? 'intra_state' : 'none',
-                'subtotal'     => $billTotal,
-                'total_amount' => $billTotal,
-                'amount_paid'  => $amountPaid,
-                'balance_due'  => $balanceDue,
-                'status'       => $newStatus,
-                'created_by'   => auth()->id(),
-                'created_at'   => now(),
-                'updated_at'   => now(),
-            ]);
-
-            // ── Insert line items + bulk devices ──
-            $deviceCount = 0;
-            foreach ($request->items as $item) {
-                $qty = (int) $item['qty'];
-                $unitCost = (float) $item['unit_cost'];
-                $lineTotal = round($unitCost * $qty, 2);
-                $variantParts = [];
-                if (!empty($item['ram']) && !empty($item['storage'])) $variantParts[] = $item['ram'] . '/' . $item['storage'];
-                if (!empty($item['color'])) $variantParts[] = $item['color'];
-
-                DB::table('ms_purchase_order_items')->insert([
-                    'purchase_order_id' => $poId,
-                    'brand'             => $item['brand'],
-                    'model'             => $item['model'],
-                    'variant'           => implode(' ', $variantParts) ?: 'Standard',
-                    'hsn_code'          => '85171300',
-                    'qty'               => $qty,
-                    'qty_received'      => $qty,
-                    'unit_cost'         => $unitCost,
-                    'tax_rate'          => $request->bill_type === 'gst' ? 18.00 : 0,
-                    'line_total'        => $lineTotal,
-                ]);
-
-                // Parse optional IMEI list (one per line / comma separated)
-                $imeis = [];
-                if (!empty($item['imeis'])) {
-                    $imeis = preg_split('/[\n,]+/', trim($item['imeis']));
-                    $imeis = array_values(array_filter(array_map('trim', $imeis)));
-                }
-
-                for ($i = 0; $i < $qty; $i++) {
-                    $imei = !empty($imeis[$i]) ? substr($imeis[$i], 0, 20) : ('86' . str_pad($poId % 1000, 3, '0', STR_PAD_LEFT) . rand(1000000000, 9999999999));
-                    DB::table('ms_mobile_devices')->insert([
-                        'company_id'        => $companyId,
-                        'purchase_order_id' => $poId,
-                        'type'              => 'new',
-                        'brand'             => $item['brand'],
-                        'model'             => $item['model'],
-                        'color'             => $item['color'] ?? 'Standard',
-                        'ram'               => $item['ram'] ?? null,
-                        'storage'           => $item['storage'] ?? null,
-                        'imei_1'            => $imei,
-                        'purchase_cost'     => $unitCost,
-                        'selling_price'     => (float) $item['selling_price'],
-                        'status'            => 'in_stock',
-                        'condition_grade'   => 'brand_new',
-                        'created_at'        => now(),
-                        'updated_at'        => now(),
-                    ]);
-                    $deviceCount++;
-                }
-            }
-
-            // ── Record cash payment row if paid now ──
-            if ($amountPaid > 0) {
-                DB::table('ms_supplier_payments')->insert([
-                    'company_id'        => $companyId,
-                    'supplier_id'       => $supplierId,
-                    'purchase_order_id' => $poId,
-                    'amount'            => $amountPaid,
-                    'payment_date'      => now()->toDateString(),
-                    'mode'              => $request->payment_mode,
-                    'reference_no'      => $request->supplier_invoice_no,
-                    'remarks'           => "Payment on bulk purchase {$poNum}" . ($advanceUsed > 0 ? " (advance credit used: ₹" . number_format($advanceUsed, 2) . ")" : ""),
-                    'recorded_by'       => auth()->id(),
-                    'created_at'        => now(),
-                    'updated_at'        => now(),
-                ]);
-            }
-
-            $msg = "Bulk purchase {$poNum} recorded — {$deviceCount} units added to stock.";
-            if ($balanceDue > 0) {
-                $msg .= " Balance due to supplier: ₹" . number_format($balanceDue, 2) . " (carried to supplier ledger).";
-            }
-            return redirect()->route('mobileshop.purchase', ['company_id' => $companyId])->with('success', $msg);
-        });
+        $msg = "Bulk purchase {$result['poNum']} recorded — {$result['deviceCount']} units added to stock.";
+        if ($result['balanceDue'] > 0) {
+            $msg .= " Balance due to supplier: ₹" . number_format($result['balanceDue'], 2) . " (carried to supplier ledger).";
+        }
+        return redirect()->route('mobileshop.purchase', ['company_id' => $companyId])->with('success', $msg);
     }
 
     /**
@@ -469,100 +326,12 @@ class PurchaseController extends BaseMobileShopController
     {
         abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
 
-        $request->validate([
-            'supplier_id' => 'required|exists:ms_suppliers,id',
-            'amount' => 'required|numeric|min:1',
-            'payment_mode' => 'required|in:cash,bank_transfer,cheque,upi',
-        ]);
+        $result = $this->supplierPaymentService->recordSupplierPayment($this->getCompanyId(), $request);
 
-        $companyId = $this->getCompanyId();
-
-        return DB::transaction(function () use ($request, $companyId) {
-            $supplierId = $request->supplier_id;
-            $paymentAmount = (float) $request->amount;
-            $poId = $request->purchase_order_id;
-
-            $wallet = DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->where('supplier_id', $supplierId)->lockForUpdate()->first();
-            if (!$wallet) {
-                $walletId = DB::table('ms_supplier_credit_wallets')->insertGetId([
-                    'company_id' => $companyId,
-                    'supplier_id' => $supplierId,
-                    'credit_balance' => 0.00,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                $wallet = DB::table('ms_supplier_credit_wallets')->where('id', $walletId)->first();
-            }
-
-            if ($poId) {
-                $po = DB::table('ms_purchase_orders')->where('company_id', $companyId)->where('id', $poId)->lockForUpdate()->first();
-                if (!$po) {
-                    return redirect()->back()->with('error', 'Purchase order not found.');
-                }
-                $applyToPO = min($paymentAmount, (float) $po->balance_due);
-                $newPaid = (float) $po->amount_paid + $applyToPO;
-                $newDue = (float) $po->balance_due - $applyToPO;
-                $newStatus = ($newDue <= 0) ? 'paid' : 'partially_paid';
-
-                DB::table('ms_purchase_orders')->where('id', $poId)->update([
-                    'amount_paid' => $newPaid,
-                    'balance_due' => $newDue,
-                    'status' => $newStatus,
-                    'updated_at' => now(),
-                ]);
-
-                DB::table('ms_supplier_payments')->insert([
-                    'company_id' => $companyId,
-                    'supplier_id' => $supplierId,
-                    'purchase_order_id' => $poId,
-                    'amount' => $applyToPO,
-                    'payment_date' => now()->toDateString(),
-                    'mode' => $request->payment_mode,
-                    'reference_no' => $request->reference_no,
-                    'remarks' => $request->remarks,
-                    'recorded_by' => auth()->id(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                $excess = $paymentAmount - $applyToPO;
-                if ($excess > 0) {
-                    $newCredit = (float) $wallet->credit_balance + $excess;
-                    DB::table('ms_supplier_credit_wallets')->where('supplier_id', $supplierId)->update([
-                        'credit_balance' => $newCredit,
-                        'updated_at' => now(),
-                    ]);
-
-                    DB::table('ms_supplier_credit_transactions')->insert([
-                        'supplier_id' => $supplierId,
-                        'txn_type' => 'credit_added',
-                        'amount' => $excess,
-                        'related_po_id' => $poId,
-                        'balance_after' => $newCredit,
-                        'remarks' => "Excess overpayment on PO #{$po->po_number} credited to wallet",
-                        'txn_date' => now(),
-                    ]);
-                }
-            } else {
-                $newCredit = (float) $wallet->credit_balance + $paymentAmount;
-                DB::table('ms_supplier_credit_wallets')->where('supplier_id', $supplierId)->update([
-                    'credit_balance' => $newCredit,
-                    'updated_at' => now(),
-                ]);
-
-                DB::table('ms_supplier_credit_transactions')->insert([
-                    'supplier_id' => $supplierId,
-                    'txn_type' => 'credit_added',
-                    'amount' => $paymentAmount,
-                    'related_po_id' => null,
-                    'balance_after' => $newCredit,
-                    'remarks' => "Direct advance payment to supplier wallet",
-                    'txn_date' => now(),
-                ]);
-            }
-
-            return redirect()->route('mobileshop.purchase')->with('success', 'Supplier payment successfully logged and ledger updated!');
-        });
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+        return redirect()->route('mobileshop.purchase')->with('success', $result['message']);
     }
 
     /**
@@ -572,73 +341,11 @@ class PurchaseController extends BaseMobileShopController
     {
         abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
 
-        $request->validate([
-            'supplier_id' => 'required|exists:ms_suppliers,id',
-            'name' => 'required|string|max:191',
-            'contact_person' => 'nullable|string|max:150',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:191',
-            'gstin' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'credit_balance' => 'nullable|numeric|min:0',
-            'adjustment_notes' => 'nullable|string|max:255',
-        ]);
+        $result = $this->supplierPaymentService->updateSupplier($this->getCompanyId(), $request);
 
-        $companyId = $this->getCompanyId();
-
-        return DB::transaction(function () use ($request, $companyId) {
-            $supplier = DB::table('ms_suppliers')->where('company_id', $companyId)->where('id', $request->supplier_id)->first();
-            if (!$supplier) {
-                return redirect()->back()->with('error', 'Supplier not found.');
-            }
-
-            DB::table('ms_suppliers')->where('id', $supplier->id)->update([
-                'name' => trim($request->name),
-                'contact_person' => $request->contact_person,
-                'phone' => $request->phone,
-                'email' => $request->email,
-                'gstin' => $request->gstin,
-                'address' => $request->address,
-                'updated_at' => now(),
-            ]);
-
-            $deltaMsg = "";
-            if ($request->has('credit_balance') && $request->credit_balance !== null) {
-                $wallet = DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->where('supplier_id', $supplier->id)->lockForUpdate()->first();
-                $newBal = round((float) $request->credit_balance, 2);
-                $oldBal = $wallet ? (float) $wallet->credit_balance : 0.00;
-                $delta = round($newBal - $oldBal, 2);
-
-                if (!$wallet) {
-                    DB::table('ms_supplier_credit_wallets')->insert([
-                        'company_id' => $companyId,
-                        'supplier_id' => $supplier->id,
-                        'credit_balance' => $newBal,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } else {
-                    DB::table('ms_supplier_credit_wallets')->where('id', $wallet->id)->update([
-                        'credit_balance' => $newBal,
-                        'updated_at' => now(),
-                    ]);
-                }
-
-                if (abs($delta) > 0.001) {
-                    $txnType = $delta > 0 ? 'credit_added' : 'credit_applied';
-                    DB::table('ms_supplier_credit_transactions')->insert([
-                        'supplier_id' => $supplier->id,
-                        'txn_type' => $txnType,
-                        'amount' => abs($delta),
-                        'balance_after' => $newBal,
-                        'txn_date' => now(),
-                        'remarks' => $request->adjustment_notes ?: ('Manual wallet adjustment by ' . auth()->user()->name),
-                    ]);
-                    $deltaMsg = " Prepaid wallet updated to ₹" . number_format($newBal, 2) . ".";
-                }
-            }
-
-            return redirect()->back()->with('success', "Supplier '{$request->name}' ledger details updated.{$deltaMsg}");
-        });
+        if (!$result['success']) {
+            return redirect()->back()->with('error', $result['message']);
+        }
+        return redirect()->back()->with('success', $result['message']);
     }
 }
