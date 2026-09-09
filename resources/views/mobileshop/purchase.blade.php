@@ -1042,26 +1042,16 @@
     }
 
     /* ── Purchase FAB Menu Toggle ── */
-    function togglePurchaseFabMenu() {
+    function togglePurchaseFabMenu(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
         var menu = document.getElementById('purchaseFabMenu');
         var icon = document.getElementById('purchaseFabIcon');
         if (!menu) return;
         var isOpen = menu.style.display === 'flex';
         menu.style.display = isOpen ? 'none' : 'flex';
         if (icon) {
-            icon.setAttribute('data-lucide', isOpen ? 'plus' : 'x');
-            if (window.refreshIcons) window.refreshIcons();
+            icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(45deg)';
         }
-        if (!isOpen) {
-            // Close when clicking outside
-            setTimeout(function () {
-                document.addEventListener('click', closePurchaseFabMenuOnOutsideClick, { once: true });
-            }, 10);
-        }
-    }
-
-    function closePurchaseFabMenuOnOutsideClick() {
-        closePurchaseFabMenu();
     }
 
     function closePurchaseFabMenu() {
@@ -1069,10 +1059,17 @@
         var icon = document.getElementById('purchaseFabIcon');
         if (menu) menu.style.display = 'none';
         if (icon) {
-            icon.setAttribute('data-lucide', 'plus');
-            if (window.refreshIcons) window.refreshIcons();
+            icon.style.transform = 'rotate(0deg)';
         }
     }
+
+    document.addEventListener('click', function (e) {
+        var fabCont = document.querySelector('.mobile-fab-container');
+        var menu = document.getElementById('purchaseFabMenu');
+        if (menu && menu.style.display !== 'none' && fabCont && !fabCont.contains(e.target)) {
+            closePurchaseFabMenu();
+        }
+    });
 
     /* ── Purchase Page Inline Stock Modals ── */
     function openPurchaseAddMobileModal() {
@@ -1133,6 +1130,17 @@
                     el.style.display = 'none';
                 }
             });
+        }
+    });
+
+    // Close purchase inline modals and FAB menu on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePurchaseAddMobileModal();
+            closePurchaseBuybackModal();
+            closePurchaseAddPartModal();
+            closeViewPurchaseModal();
+            closePurchaseFabMenu();
         }
     });
 
@@ -1395,33 +1403,6 @@
             filterPurchaseTables();
         }
     }
-
-    function togglePurchaseFabMenu() {
-        const menu = document.getElementById('purchaseFabMenu');
-        const icon = document.getElementById('purchaseFabIcon');
-        if (!menu) return;
-        const isOpen = menu.style.display !== 'none';
-        menu.style.display = isOpen ? 'none' : 'flex';
-        if (icon) {
-            icon.setAttribute('data-lucide', isOpen ? 'plus' : 'x');
-            if (window.refreshIcons) window.refreshIcons();
-            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-        }
-    }
-
-    document.addEventListener('click', function(e) {
-        const fabCont = document.querySelector('.mobile-fab-container');
-        const menu = document.getElementById('purchaseFabMenu');
-        if (menu && fabCont && !fabCont.contains(e.target)) {
-            menu.style.display = 'none';
-            const icon = document.getElementById('purchaseFabIcon');
-            if (icon) {
-                icon.setAttribute('data-lucide', 'plus');
-                if (window.refreshIcons) window.refreshIcons();
-                else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-            }
-        }
-    });
 
     function onPurchaseCustomDateChange() {
         document.querySelectorAll('.purchase-date-pill').forEach(el => el.classList.remove('active'));
