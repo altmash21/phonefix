@@ -1282,6 +1282,45 @@
 
     let currentStockDatePreset = 'all';
 
+    function calculateStockDateRange(preset) {
+        if (typeof window.getDateRangePreset === 'function') {
+            try {
+                const res = window.getDateRangePreset(preset);
+                if (res && (res.from !== undefined || res.to !== undefined)) return res;
+            } catch (e) { /* fallback below */ }
+        }
+        const now = new Date();
+        const pad = n => (n < 10 ? '0' : '') + n;
+        const toIso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        const todayStr = toIso(now);
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const d = now.getDate();
+
+        switch (String(preset || '').toLowerCase()) {
+            case 'today':
+                return { from: todayStr, to: todayStr };
+            case 'yesterday':
+                const yest = new Date(y, m, d - 1);
+                return { from: toIso(yest), to: toIso(yest) };
+            case 'week':
+            case '7days':
+            case '7_days':
+            case '7-days':
+                const weekAgo = new Date(y, m, d - 6);
+                return { from: toIso(weekAgo), to: todayStr };
+            case 'month':
+            case 'this_month':
+            case 'this-month':
+                const start = new Date(y, m, 1);
+                const end = new Date(y, m + 1, 0);
+                return { from: toIso(start), to: toIso(end) };
+            case 'all':
+            default:
+                return { from: '', to: '' };
+        }
+    }
+
     function setStockDatePreset(preset) {
         currentStockDatePreset = preset;
         const fromInput = document.getElementById('stockFromDate');
@@ -1292,9 +1331,7 @@
         const btn = document.getElementById(targetId) || document.getElementById('stockDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
-        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
-            ? window.getDateRangePreset(preset)
-            : { from: '', to: '' };
+        const range = calculateStockDateRange(preset);
 
         if (fromInput) fromInput.value = range.from || '';
         if (toInput) toInput.value = range.to || '';

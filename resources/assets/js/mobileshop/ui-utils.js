@@ -13,15 +13,16 @@
     });
 
     /* ─── Date helpers ─── */
-    window.formatDate = function (d) {
+    window.formatDate = window.formatDate || function (d) {
         if (!d) return '';
-        var y = d.getFullYear();
-        var m = String(d.getMonth() + 1).padStart(2, '0');
-        var day = String(d.getDate()).padStart(2, '0');
+        var dt = d instanceof Date ? d : new Date(d);
+        var y = dt.getFullYear();
+        var m = String(dt.getMonth() + 1).padStart(2, '0');
+        var day = String(dt.getDate()).padStart(2, '0');
         return y + '-' + m + '-' + day;
     };
 
-    window.getDateRangePreset = function (preset) {
+    window.getDateRangePreset = window.getDateRangePreset || function (preset) {
         var now = new Date();
         var y = now.getFullYear();
         var m = now.getMonth();
@@ -37,18 +38,20 @@
         var from = '';
         var to = '';
 
-        if (preset === 'today') {
+        var p = String(preset || '').toLowerCase();
+        if (p === 'today') {
             from = to = todayStr;
-        } else if (preset === 'yesterday') {
+        } else if (p === 'yesterday') {
             var yestDate = new Date(y, m, d - 1);
             from = to = formatDateStr(yestDate.getFullYear(), yestDate.getMonth(), yestDate.getDate());
-        } else if (preset === 'week' || preset === '7days' || preset === '7_days' || preset === '7-days') {
+        } else if (p === 'week' || p === '7days' || p === '7_days' || p === '7-days') {
             var weekAgo = new Date(y, m, d - 6);
             from = formatDateStr(weekAgo.getFullYear(), weekAgo.getMonth(), weekAgo.getDate());
             to = todayStr;
-        } else if (preset === 'month' || preset === 'this_month' || preset === 'this-month') {
+        } else if (p === 'month' || p === 'this_month' || p === 'this-month') {
             from = formatDateStr(y, m, 1);
-            to = todayStr;
+            var lastDay = new Date(y, m + 1, 0).getDate();
+            to = formatDateStr(y, m, lastDay);
         }
 
         return { from: from, to: to };

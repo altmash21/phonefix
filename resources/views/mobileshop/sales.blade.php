@@ -510,6 +510,20 @@
                     </tr>
                     @empty
                     @endforelse
+                    <tr id="salesEmptyFilterRow" style="display:none;">
+                        <td colspan="6" style="text-align:center; padding:36px 16px; color:#64748B;">
+                            <div style="display:inline-flex; flex-direction:column; align-items:center; gap:8px;">
+                                <div style="width:38px; height:38px; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#64748B;">
+                                    <i data-lucide="calendar-x" style="width:20px; height:20px;"></i>
+                                </div>
+                                <div style="font-weight:700; color:#1E293B; font-size:13px;">No sales found for this date range</div>
+                                <div style="font-size:11.5px; color:#64748B;">Try selecting a different date preset (e.g. Yesterday, This Month) or reset filters</div>
+                                <button type="button" onclick="setSalesDatePreset('all')" class="filter-pill" style="margin-top:6px; cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:4px 12px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                                    Show All Sales
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -687,6 +701,13 @@
                     </div>
                 @empty
                 @endforelse
+                <div id="salesMobileEmptyFilterRow" style="display:none; text-align:center; padding:28px 16px; color:#64748B;">
+                    <div style="font-weight:700; color:#1E293B; font-size:13px; margin-bottom:4px;">No sales found for this date range</div>
+                    <div style="font-size:11.5px; color:#64748B; margin-bottom:10px;">Try selecting Yesterday, This Month, or All Time</div>
+                    <button type="button" onclick="setSalesDatePreset('all')" class="filter-pill" style="cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:5px 14px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                        Show All Sales
+                    </button>
+                </div>
             </div>
             <div id="salesPagination"></div>
         </div>
@@ -1685,6 +1706,45 @@
 
     let currentSalesDatePreset = 'all';
 
+    function calculateSalesDateRange(preset) {
+        if (typeof window.getDateRangePreset === 'function') {
+            try {
+                const res = window.getDateRangePreset(preset);
+                if (res && (res.from !== undefined || res.to !== undefined)) return res;
+            } catch (e) { /* fallback below */ }
+        }
+        const now = new Date();
+        const pad = n => (n < 10 ? '0' : '') + n;
+        const toIso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        const todayStr = toIso(now);
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const d = now.getDate();
+
+        switch (String(preset || '').toLowerCase()) {
+            case 'today':
+                return { from: todayStr, to: todayStr };
+            case 'yesterday':
+                const yest = new Date(y, m, d - 1);
+                return { from: toIso(yest), to: toIso(yest) };
+            case 'week':
+            case '7days':
+            case '7_days':
+            case '7-days':
+                const weekAgo = new Date(y, m, d - 6);
+                return { from: toIso(weekAgo), to: todayStr };
+            case 'month':
+            case 'this_month':
+            case 'this-month':
+                const start = new Date(y, m, 1);
+                const end = new Date(y, m + 1, 0);
+                return { from: toIso(start), to: toIso(end) };
+            case 'all':
+            default:
+                return { from: '', to: '' };
+        }
+    }
+
     function setSalesDatePreset(preset) {
         currentSalesDatePreset = preset;
         const mainFrom = document.getElementById('salesFromDate');
@@ -1697,16 +1757,14 @@
         const btn = document.getElementById(targetId) || document.getElementById('salesDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
-        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
-            ? window.getDateRangePreset(preset)
-            : { from: '', to: '' };
+        const range = calculateSalesDateRange(preset);
 
         if (mainFrom) mainFrom.value = range.from || '';
         if (mainTo) mainTo.value = range.to || '';
         if (drawerFrom) drawerFrom.value = range.from || '';
         if (drawerTo) drawerTo.value = range.to || '';
 
-        const indicator = document.getElementById('salesDateFilterActiveIndicator');
+        const indicator = document.getElementById('salesDateFilterActiveIndicator') || document.getElementById('dateFilterActiveIndicator');
         if (indicator) {
             indicator.style.display = (range.from || range.to) ? 'inline-block' : 'none';
         }
@@ -1760,6 +1818,7 @@
         });
 
         // 2. Filter Mobile Cards View
+        let visibleMobileCount = 0;
         document.querySelectorAll('#salesMobileCards .sales-flat-row').forEach(card => {
             const cardText = card.textContent.toLowerCase();
             const rawDate = (card.dataset.date || '').trim();
@@ -1780,10 +1839,21 @@
             const isCardVisible = matchesCategory && matchesText && matchesDate;
             card.dataset.mobiHidden = isCardVisible ? '0' : '1';
             card.style.display = isCardVisible ? '' : 'none';
+            if (isCardVisible) visibleMobileCount++;
         });
 
+        // Empty state toggles
+        const emptyRow = document.getElementById('salesEmptyFilterRow');
+        if (emptyRow) {
+            emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+        }
+        const mobEmptyRow = document.getElementById('salesMobileEmptyFilterRow');
+        if (mobEmptyRow) {
+            mobEmptyRow.style.display = (visibleMobileCount === 0) ? 'block' : 'none';
+        }
+
         if (window.salesPager && typeof window.salesPager.refresh === 'function') {
-            window.salesPager.refresh();
+            window.salesPager.refresh(true);
         }
 
         const clearBtn = document.getElementById('btnClearSearch');
@@ -1853,9 +1923,7 @@
     function setDrawerPreset(preset) {
         const drawerFrom = document.getElementById('drawerFromDate');
         const drawerTo = document.getElementById('drawerToDate');
-        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
-            ? window.getDateRangePreset(preset)
-            : { from: '', to: '' };
+        const range = calculateSalesDateRange(preset);
         if (drawerFrom) drawerFrom.value = range.from || '';
         if (drawerTo) drawerTo.value = range.to || '';
     }

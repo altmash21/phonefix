@@ -18,6 +18,53 @@
         };
     </script>
 
+    <!-- Global Date Helpers & Presets (Guaranteed early initialization) -->
+    <script>
+        (function () {
+            function pad2(n) { return (n < 10 ? '0' : '') + n; }
+            function toIso(d) {
+                return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+            }
+
+            window.formatDate = function (d) {
+                if (!d) return '';
+                return toIso(d instanceof Date ? d : new Date(d));
+            };
+
+            window.getDateRangePreset = function (preset) {
+                var now = new Date();
+                var y = now.getFullYear();
+                var m = now.getMonth();
+                var d = now.getDate();
+                var todayStr = toIso(now);
+
+                switch (String(preset || '').toLowerCase()) {
+                    case 'today':
+                        return { from: todayStr, to: todayStr };
+                    case 'yesterday':
+                        var yest = new Date(y, m, d - 1);
+                        var yestStr = toIso(yest);
+                        return { from: yestStr, to: yestStr };
+                    case 'week':
+                    case '7days':
+                    case '7_days':
+                    case '7-days':
+                        var weekAgo = new Date(y, m, d - 6);
+                        return { from: toIso(weekAgo), to: todayStr };
+                    case 'month':
+                    case 'this_month':
+                    case 'this-month':
+                        var startOfMonth = new Date(y, m, 1);
+                        var endOfMonth = new Date(y, m + 1, 0);
+                        return { from: toIso(startOfMonth), to: toIso(endOfMonth) };
+                    case 'all':
+                    default:
+                        return { from: '', to: '' };
+                }
+            };
+        })();
+    </script>
+
     <!-- Google Fonts: Inter, Plus Jakarta Sans & JetBrains Mono (Linear Software Craft) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

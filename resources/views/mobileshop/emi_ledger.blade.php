@@ -319,6 +319,20 @@
                         </td>
                     </tr>
                     @endforelse
+                    <tr id="emiEmptyFilterRow" style="display:none;">
+                        <td colspan="7" style="text-align:center; padding:36px 16px; color:#64748B;">
+                            <div style="display:inline-flex; flex-direction:column; align-items:center; gap:8px;">
+                                <div style="width:38px; height:38px; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#64748B;">
+                                    <i data-lucide="calendar-x" style="width:20px; height:20px;"></i>
+                                </div>
+                                <div style="font-weight:700; color:#1E293B; font-size:13px;">No EMI records found for this date range</div>
+                                <div style="font-size:11.5px; color:#64748B;">Try selecting a different date preset (e.g. 7 Days, This Month) or reset filters</div>
+                                <button type="button" onclick="setEmiDatePreset('all')" class="filter-pill" style="margin-top:6px; cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:4px 12px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                                    Show All Records
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -559,6 +573,45 @@
         filterEmiLedger();
     }
 
+    function calculateEmiDateRange(preset) {
+        if (typeof window.getDateRangePreset === 'function') {
+            try {
+                const res = window.getDateRangePreset(preset);
+                if (res && (res.from !== undefined || res.to !== undefined)) return res;
+            } catch (e) { /* fallback below */ }
+        }
+        const now = new Date();
+        const pad = n => (n < 10 ? '0' : '') + n;
+        const toIso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        const todayStr = toIso(now);
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const d = now.getDate();
+
+        switch (String(preset || '').toLowerCase()) {
+            case 'today':
+                return { from: todayStr, to: todayStr };
+            case 'yesterday':
+                const yest = new Date(y, m, d - 1);
+                return { from: toIso(yest), to: toIso(yest) };
+            case 'week':
+            case '7days':
+            case '7_days':
+            case '7-days':
+                const weekAgo = new Date(y, m, d - 6);
+                return { from: toIso(weekAgo), to: todayStr };
+            case 'month':
+            case 'this_month':
+            case 'this-month':
+                const start = new Date(y, m, 1);
+                const end = new Date(y, m + 1, 0);
+                return { from: toIso(start), to: toIso(end) };
+            case 'all':
+            default:
+                return { from: '', to: '' };
+        }
+    }
+
     function setEmiDatePreset(preset) {
         document.querySelectorAll('.emi-date-pill').forEach(b => b.classList.remove('active'));
         const targetId = 'emiDateBtn_' + (preset === '7days' ? 'week' : preset);
@@ -567,9 +620,7 @@
 
         const fromInput = document.getElementById('emiFromDate');
         const toInput = document.getElementById('emiToDate');
-        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
-            ? window.getDateRangePreset(preset)
-            : { from: '', to: '' };
+        const range = calculateEmiDateRange(preset);
 
         if (fromInput) fromInput.value = range.from || '';
         if (toInput) toInput.value = range.to || '';
@@ -615,8 +666,14 @@
             if (isVisible) visibleCount++;
         });
 
+        // Empty state toggle
+        const emptyRow = document.getElementById('emiEmptyFilterRow');
+        if (emptyRow) {
+            emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+        }
+
         if (window.emiPager && typeof window.emiPager.refresh === 'function') {
-            window.emiPager.refresh();
+            window.emiPager.refresh(true);
         }
 
         const countEl = document.getElementById('emiVisibleCountBadge');

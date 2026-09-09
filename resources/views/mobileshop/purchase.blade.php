@@ -381,6 +381,20 @@
                         </td>
                     </tr>
                     @endforelse
+                    <tr id="purchaseEmptyFilterRow" style="display:none;">
+                        <td colspan="7" style="text-align:center; padding:36px 16px; color:#64748B;">
+                            <div style="display:inline-flex; flex-direction:column; align-items:center; gap:8px;">
+                                <div style="width:38px; height:38px; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#64748B;">
+                                    <i data-lucide="calendar-x" style="width:20px; height:20px;"></i>
+                                </div>
+                                <div style="font-weight:700; color:#1E293B; font-size:13px;">No purchase invoices found for this date range</div>
+                                <div style="font-size:11.5px; color:#64748B;">Try selecting a different date preset (e.g. 7 Days, This Month) or reset filters</div>
+                                <button type="button" onclick="setPurchaseDatePreset('all')" class="filter-pill" style="margin-top:6px; cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:4px 12px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                                    Show All Invoices
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -473,6 +487,13 @@
                         <div style="font-weight:700; font-size:13px; color:#475569;">No purchase invoices recorded yet</div>
                     </div>
                 @endforelse
+                <div id="purchaseMobileEmptyFilterRow" style="display:none; text-align:center; padding:28px 16px; color:#64748B;">
+                    <div style="font-weight:700; color:#1E293B; font-size:13px; margin-bottom:4px;">No purchase invoices found for this date range</div>
+                    <div style="font-size:11.5px; color:#64748B; margin-bottom:10px;">Try selecting 7 Days, This Month, or All Time</div>
+                    <button type="button" onclick="setPurchaseDatePreset('all')" class="filter-pill" style="cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:5px 14px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                        Show All Invoices
+                    </button>
+                </div>
             </div>
             <div id="purchaseInvoicesPagination"></div>
         </div>
@@ -798,6 +819,45 @@
 
     let currentPurchaseDatePreset = 'all';
 
+    function calculatePurchaseDateRange(preset) {
+        if (typeof window.getDateRangePreset === 'function') {
+            try {
+                const res = window.getDateRangePreset(preset);
+                if (res && (res.from !== undefined || res.to !== undefined)) return res;
+            } catch (e) { /* fallback below */ }
+        }
+        const now = new Date();
+        const pad = n => (n < 10 ? '0' : '') + n;
+        const toIso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        const todayStr = toIso(now);
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const d = now.getDate();
+
+        switch (String(preset || '').toLowerCase()) {
+            case 'today':
+                return { from: todayStr, to: todayStr };
+            case 'yesterday':
+                const yest = new Date(y, m, d - 1);
+                return { from: toIso(yest), to: toIso(yest) };
+            case 'week':
+            case '7days':
+            case '7_days':
+            case '7-days':
+                const weekAgo = new Date(y, m, d - 6);
+                return { from: toIso(weekAgo), to: todayStr };
+            case 'month':
+            case 'this_month':
+            case 'this-month':
+                const start = new Date(y, m, 1);
+                const end = new Date(y, m + 1, 0);
+                return { from: toIso(start), to: toIso(end) };
+            case 'all':
+            default:
+                return { from: '', to: '' };
+        }
+    }
+
     function setPurchaseDatePreset(preset) {
         currentPurchaseDatePreset = preset;
         const mainFrom = document.getElementById('purchaseFromDate');
@@ -810,9 +870,7 @@
         const btn = document.getElementById(targetId) || document.getElementById('purchaseDateBtn_' + preset);
         if (btn) btn.classList.add('active');
 
-        const range = (window.getDateRangePreset && typeof window.getDateRangePreset === 'function')
-            ? window.getDateRangePreset(preset)
-            : { from: '', to: '' };
+        const range = calculatePurchaseDateRange(preset);
 
         if (mainFrom) mainFrom.value = range.from || '';
         if (mainTo) mainTo.value = range.to || '';
@@ -1057,6 +1115,7 @@
         });
 
         // Mobile Flat Cards
+        let visibleMobileCount = 0;
         document.querySelectorAll('.purchase-flat-row').forEach(row => {
             const rowText = row.textContent.toLowerCase();
             const rawDate = (row.dataset.date || '').trim();
@@ -1077,10 +1136,21 @@
             const isCardVisible = matchesType && matchesText && matchesDate;
             row.dataset.mobiHidden = isCardVisible ? '0' : '1';
             row.style.display = isCardVisible ? '' : 'none';
+            if (isCardVisible) visibleMobileCount++;
         });
 
+        // Empty state toggles
+        const emptyRow = document.getElementById('purchaseEmptyFilterRow');
+        if (emptyRow) {
+            emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+        }
+        const mobEmptyRow = document.getElementById('purchaseMobileEmptyFilterRow');
+        if (mobEmptyRow) {
+            mobEmptyRow.style.display = (visibleMobileCount === 0) ? 'block' : 'none';
+        }
+
         if (window.purchaseInvoicesPager && typeof window.purchaseInvoicesPager.refresh === 'function') {
-            window.purchaseInvoicesPager.refresh();
+            window.purchaseInvoicesPager.refresh(true);
         }
 
         const badge = document.getElementById('purchaseVisibleCountBadge');
