@@ -191,7 +191,7 @@
     </script>
 
     <!-- Maurya Mobile Admin Panel Design System (Linear Light System) -->
-    <link rel="stylesheet" href="{{ url('/css/admin-panel.css') }}?v={{ time() }}">
+    <link rel="stylesheet" href="{{ url('/css/admin-panel.css') }}?v=2.5.0">
 
     <!-- Dedicated Print Media Engine: Eliminates UI chrome, sidebars, headers, and buttons on Print/PDF -->
     <style>
@@ -359,6 +359,7 @@
     @stack('styles')
 </head>
 <body>
+    <div id="instant-page-progress" style="position:fixed;top:0;left:0;height:2.5px;width:0%;background:linear-gradient(90deg, #5E6AD2, #818cf8);z-index:99999;transition:width 0.25s ease, opacity 0.2s ease;pointer-events:none;opacity:0;"></div>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>window.Laravel = { csrfToken: "{{ csrf_token() }}" };</script>
     <script>
@@ -736,7 +737,63 @@
         </div>
     </nav>
 
-    <script src="{{ url('/js/mobileshop/ui-utils.js') }}?v={{ time() }}"></script>
+    <script src="{{ url('/js/mobileshop/ui-utils.js') }}?v=2.5.0"></script>
     @stack('scripts')
+
+    <!-- Instant Page Switch Prefetcher & Interactive Feedback -->
+    <script>
+    (function () {
+        var prefetched = new Set();
+        var progressBar = document.getElementById('instant-page-progress');
+
+        function prefetch(url) {
+            if (!url || prefetched.has(url)) return;
+            try {
+                var parsed = new URL(url, window.location.origin);
+                if (parsed.origin !== window.location.origin) return;
+                var p = parsed.pathname.toLowerCase();
+                if (p.includes('logout') || p.includes('delete') || p.includes('export') || p.includes('void')) return;
+                
+                prefetched.add(url);
+                var link = document.createElement('link');
+                link.rel = 'prefetch';
+                link.href = url;
+                link.as = 'document';
+                document.head.appendChild(link);
+            } catch (e) {}
+        }
+
+        var hoverTimer = null;
+        document.addEventListener('mouseover', function (e) {
+            var a = e.target.closest('a');
+            if (!a || !a.href || a.target === '_blank') return;
+            clearTimeout(hoverTimer);
+            hoverTimer = setTimeout(function () {
+                prefetch(a.href);
+            }, 60);
+        }, { passive: true });
+
+        document.addEventListener('touchstart', function (e) {
+            var a = e.target.closest('a');
+            if (!a || !a.href || a.target === '_blank') return;
+            prefetch(a.href);
+        }, { passive: true });
+
+        // Show instant progress bar when clicking internal navigation links
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest('a');
+            if (!a || !a.href || a.target === '_blank' || a.href.includes('#') || a.getAttribute('download') !== null) return;
+            try {
+                var target = new URL(a.href, window.location.origin);
+                if (target.origin === window.location.origin && target.pathname !== window.location.pathname) {
+                    if (progressBar) {
+                        progressBar.style.opacity = '1';
+                        progressBar.style.width = '75%';
+                    }
+                }
+            } catch (err) {}
+        });
+    })();
+    </script>
 </body>
 </html>

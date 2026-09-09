@@ -16,11 +16,17 @@ abstract class BaseMobileShopController extends Controller
      */
     protected $coverCategories = ['back_cover', 'back_panel', 'tempered_glass'];
 
+    protected ?int $currentCompanyId = null;
+
     /**
      * Resolve current company context (Fail-Closed Multi-Tenancy)
      */
     protected function getCompanyId(): int
     {
+        if ($this->currentCompanyId !== null) {
+            return $this->currentCompanyId;
+        }
+
         $companyId = company_id() ?? session('company_id') ?? (auth()->check() ? (auth()->user()->companies()->first()?->id ?? auth()->user()->company_id) : null);
         if (!$companyId) {
             abort(403, 'Multi-tenant context error: No active company found in session.');
@@ -28,7 +34,7 @@ abstract class BaseMobileShopController extends Controller
         if (auth()->check() && !auth()->user()->companies()->where('companies.id', $companyId)->exists()) {
             abort(403, 'Unauthorized company access attempt.');
         }
-        return (int) $companyId;
+        return $this->currentCompanyId = (int) $companyId;
     }
 
     /**

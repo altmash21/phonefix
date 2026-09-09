@@ -65,7 +65,7 @@ class SalesController extends BaseMobileShopController
                     ->where('ms_mobile_sales.company_id', $companyId)
                     ->where('ms_mobile_devices.type', 'new')
                     ->where('ms_mobile_sales.status', '!=', 'voided')
-                    ->orderBy('ms_mobile_sales.id', 'desc')->get();
+                    ->orderBy('ms_mobile_sales.id', 'desc')->limit(150)->get();
                 break;
 
             case 'secondhand':
@@ -79,7 +79,7 @@ class SalesController extends BaseMobileShopController
                     ->where('ms_mobile_sales.company_id', $companyId)
                     ->where('ms_mobile_devices.type', 'second_hand')
                     ->where('ms_mobile_sales.status', '!=', 'voided')
-                    ->orderBy('ms_mobile_sales.id', 'desc')->get();
+                    ->orderBy('ms_mobile_sales.id', 'desc')->limit(150)->get();
                 break;
 
             case 'accessories':
@@ -89,7 +89,7 @@ class SalesController extends BaseMobileShopController
                              DB::raw("'accessory' as sale_niche"))
                     ->where('ms_accessory_sales.company_id', $companyId)
                     ->where('ms_accessory_sales.status', '!=', 'voided')
-                    ->orderBy('ms_accessory_sales.id', 'desc')->get();
+                    ->orderBy('ms_accessory_sales.id', 'desc')->limit(150)->get();
                 break;
 
             case 'covers':
@@ -106,7 +106,7 @@ class SalesController extends BaseMobileShopController
                           ->join('ms_parts_inventory', 'ms_accessory_sale_items.part_id', '=', 'ms_parts_inventory.id')
                           ->whereIn('ms_parts_inventory.category', $coverCats);
                     })
-                    ->orderBy('ms_accessory_sales.id', 'desc')->get();
+                    ->orderBy('ms_accessory_sales.id', 'desc')->limit(150)->get();
                 break;
 
             default: // admin — all sales
@@ -118,13 +118,13 @@ class SalesController extends BaseMobileShopController
                              'ms_mobile_devices.storage', 'ms_mobile_devices.color', 'ms_mobile_devices.ram')
                     ->where('ms_mobile_sales.company_id', $companyId)
                     ->where('ms_mobile_sales.status', '!=', 'voided')
-                    ->orderBy('ms_mobile_sales.id', 'desc')->get();
+                    ->orderBy('ms_mobile_sales.id', 'desc')->limit(150)->get();
                 $accSales = DB::table('ms_accessory_sales')
                     ->leftJoin('ms_customers', 'ms_accessory_sales.customer_id', '=', 'ms_customers.id')
                     ->select('ms_accessory_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
                     ->where('ms_accessory_sales.company_id', $companyId)
                     ->where('ms_accessory_sales.status', '!=', 'voided')
-                    ->orderBy('ms_accessory_sales.id', 'desc')->get();
+                    ->orderBy('ms_accessory_sales.id', 'desc')->limit(150)->get();
         }
 
         // Attach line items to accessory sales for interactive line-item partial return modal

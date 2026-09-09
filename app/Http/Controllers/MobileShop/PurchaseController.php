@@ -46,13 +46,13 @@ class PurchaseController extends BaseMobileShopController
             case 'phones':
                 $newPhonePurchases = DB::table('ms_mobile_devices')
                     ->where('company_id', $companyId)->where('type', 'new')
-                    ->orderBy('id', 'desc')->get();
+                    ->orderBy('id', 'desc')->limit(150)->get();
                 break;
 
             case 'secondhand':
                 $buybacks = DB::table('ms_mobile_devices')
                     ->where('company_id', $companyId)->where('type', 'second_hand')
-                    ->orderBy('id', 'desc')->get();
+                    ->orderBy('id', 'desc')->limit(150)->get();
                 break;
 
             case 'accessories':
@@ -61,7 +61,7 @@ class PurchaseController extends BaseMobileShopController
                     ->select('ms_parts_inventory_history.*', 'ms_parts_inventory.name as part_name', 'ms_parts_inventory.category')
                     ->where('ms_parts_inventory.company_id', $companyId)
                     ->where('ms_parts_inventory_history.type', 'addition')
-                    ->orderBy('ms_parts_inventory_history.id', 'desc')->get();
+                    ->orderBy('ms_parts_inventory_history.id', 'desc')->limit(150)->get();
                 break;
 
             case 'covers':
@@ -72,26 +72,27 @@ class PurchaseController extends BaseMobileShopController
                     ->where('ms_parts_inventory.company_id', $companyId)
                     ->whereIn('ms_parts_inventory.category', $coverCats)
                     ->where('ms_parts_inventory_history.type', 'addition')
-                    ->orderBy('ms_parts_inventory_history.id', 'desc')->get();
+                    ->orderBy('ms_parts_inventory_history.id', 'desc')->limit(150)->get();
                 break;
 
             default: // admin — all purchases
                 $purchaseOrders = DB::table('ms_purchase_orders')
                     ->where('company_id', $companyId)
                     ->orderBy('id', 'desc')
+                    ->limit(150)
                     ->get();
                 $newPhonePurchases = DB::table('ms_mobile_devices')
                     ->where('company_id', $companyId)->where('type', 'new')
-                    ->orderBy('id', 'desc')->get();
+                    ->orderBy('id', 'desc')->limit(150)->get();
                 $buybacks = DB::table('ms_mobile_devices')
                     ->where('company_id', $companyId)->where('type', 'second_hand')
-                    ->orderBy('id', 'desc')->get();
+                    ->orderBy('id', 'desc')->limit(150)->get();
                 $batchRestocks = DB::table('ms_parts_inventory_history')
                     ->join('ms_parts_inventory', 'ms_parts_inventory_history.part_id', '=', 'ms_parts_inventory.id')
                     ->select('ms_parts_inventory_history.*', 'ms_parts_inventory.name as part_name', 'ms_parts_inventory.category')
                     ->where('ms_parts_inventory.company_id', $companyId)
                     ->where('ms_parts_inventory_history.type', 'addition')
-                    ->orderBy('ms_parts_inventory_history.id', 'desc')->get();
+                    ->orderBy('ms_parts_inventory_history.id', 'desc')->limit(150)->get();
                 break;
         }
 
