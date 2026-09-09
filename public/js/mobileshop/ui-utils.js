@@ -387,6 +387,48 @@
         });
     }
 
+    /* ─── Mobile Sidebar Drawer (Hamburger) ─── */
+    window.openMobileSidebar = function () {
+        var overlay = document.getElementById('mobileSidebarOverlay');
+        var drawer = document.getElementById('mobileSidebarDrawer');
+        if (overlay) overlay.classList.add('open');
+        if (drawer) {
+            drawer.classList.add('open');
+            // Prevent body scroll while drawer is open
+            document.body.style.overflow = 'hidden';
+        }
+        if (window.refreshIcons) window.refreshIcons();
+    };
+
+    window.closeMobileSidebar = function () {
+        var overlay = document.getElementById('mobileSidebarOverlay');
+        var drawer = document.getElementById('mobileSidebarDrawer');
+        if (overlay) overlay.classList.remove('open');
+        if (drawer) drawer.classList.remove('open');
+        document.body.style.overflow = '';
+    };
+
+    // Close drawer on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            window.closeMobileSidebar && window.closeMobileSidebar();
+        }
+    });
+
+    /* ─── Universal Image File Upload Preview ─── */
+    window.previewSelectedPhoto = window.previewSelectedPhoto || function (input, imgId, boxId) {
+        if (input && input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var img = document.getElementById(imgId);
+                var box = document.getElementById(boxId);
+                if (img) img.src = e.target.result;
+                if (box) box.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
     /* ─── Flash message auto-dismiss ─── */
     setTimeout(function () {
         var el = document.getElementById('flash-msg');
@@ -422,7 +464,21 @@
             var fab = document.querySelector ? document.querySelector('.mobile-fab-container') : null;
 
             // Do not hide if any modal is currently visible
-            var hasOpenModal = document.querySelector('.mobi-modal-backdrop[style*="display: block"], .mobi-modal-backdrop[style*="display: flex"], [id$="Modal"][style*="display: block"], [id$="Modal"][style*="display: flex"]');
+            var hasOpenModal = document.querySelector(
+                '.mobi-modal-backdrop[style*="display: block"], ' +
+                '.mobi-modal-backdrop[style*="display: flex"], ' +
+                '[id$="Modal"][style*="display: block"], ' +
+                '[id$="Modal"][style*="display: flex"], ' +
+                '[id*="Modal"][style*="display: block"], ' +
+                '[id*="Modal"][style*="display: flex"], ' +
+                '[id*="Drawer"][style*="display: flex"], ' +
+                '[id*="Drawer"][style*="display: block"]'
+            );
+            // Also check if mobile sidebar is open
+            var sidebarDrawer = document.getElementById('mobileSidebarDrawer');
+            if (sidebarDrawer && sidebarDrawer.classList.contains('open')) {
+                hasOpenModal = true;
+            }
 
             if (!hasOpenModal) {
                 // If near top of screen (first 40px), always keep visible

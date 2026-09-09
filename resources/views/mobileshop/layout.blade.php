@@ -417,6 +417,9 @@
     @endif
 
     <header class="topbar no-print">
+        <button type="button" class="topbar-hamburger no-print" id="mobiHamburgerBtn" onclick="openMobileSidebar()" title="Navigation Menu" aria-label="Open navigation menu">
+            <i data-lucide="menu"></i>
+        </button>
         <a href="{{ route('mobileshop.dashboard') }}" class="topbar-logo">
             <div class="topbar-logo-icon">
                 <i data-lucide="smartphone" style="width:18px;height:18px;"></i>
@@ -483,6 +486,97 @@
             </div>
         </div>
     </header>
+
+    {{-- ════ MOBILE SIDEBAR OVERLAY + DRAWER ════ --}}
+    <div class="mobile-sidebar-overlay no-print" id="mobileSidebarOverlay" onclick="closeMobileSidebar()"></div>
+    <div class="mobile-sidebar-drawer no-print" id="mobileSidebarDrawer" role="navigation" aria-label="Mobile navigation">
+        <div class="mobile-sidebar-drawer-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div class="topbar-logo-icon" style="width:28px;height:28px;">
+                    <i data-lucide="smartphone" style="width:14px;height:14px;"></i>
+                </div>
+                <div class="topbar-logo-text" style="font-size:13px;">Maurya Mobile</div>
+            </div>
+            <button type="button" class="mobile-sidebar-drawer-close" onclick="closeMobileSidebar()" aria-label="Close menu">×</button>
+        </div>
+        <nav class="sidebar-nav">
+            @can('read-mobileshop-dashboard')
+            <a href="{{ route('mobileshop.dashboard') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.dashboard') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="layout-dashboard"></i> Dashboard
+            </a>
+            @endcan
+            @can('read-mobileshop-purchase')
+            <a href="{{ route('mobileshop.purchase') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.purchase*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="truck"></i> Purchase
+            </a>
+            @endcan
+            @can('read-mobileshop-sales')
+            <a href="{{ route('mobileshop.sales') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.sales*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="trending-up"></i> Sales
+            </a>
+            @endcan
+            @can('read-mobileshop-stock')
+            <a href="{{ route('mobileshop.stock') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.stock*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="package"></i> Stock
+            </a>
+            @endcan
+            <a href="{{ route('mobileshop.khata') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.khata*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="book-open"></i> Customer Khata
+            </a>
+            @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('sales-staff')))
+            <a href="{{ route('mobileshop.emi.ledger') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.emi*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="building-2"></i> EMI Ledger
+            </a>
+            @endif
+            @can('read-mobileshop-repairs')
+            <a href="{{ route('mobileshop.repairs') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.repairs*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="wrench"></i> Repairs Desk
+            </a>
+            @endcan
+            @canany(['read-mobileshop-reports', 'read-reports-financial', 'read-reports-khata'])
+            <a href="{{ route('mobileshop.reports') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.reports*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="bar-chart-3"></i> Reports
+            </a>
+            @endcanany
+            @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin')))
+            <a href="{{ route('mobileshop.masters') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.masters*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="sliders"></i> Masters
+            </a>
+            @endif
+        </nav>
+        <div class="sidebar-footer">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--color-surface-1);">
+                <div class="user-avatar" style="width:30px;height:30px;font-size:11px;">
+                    {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 2)) }}
+                </div>
+                <div style="overflow:hidden;flex:1;min-width:0;">
+                    <div style="font-size:12px;font-weight:600;color:var(--color-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ Auth::user()->name ?? 'Staff' }}</div>
+                    <div style="font-size:10px;color:var(--color-ink-muted);">{{ $roleLabel }}</div>
+                </div>
+                <a href="{{ route('logout') }}" title="Logout" style="color:var(--color-ink-muted);text-decoration:none;padding:4px;border-radius:6px;">
+                    <i data-lucide="log-out" style="width:15px;height:15px;"></i>
+                </a>
+            </div>
+        </div>
+    </div>
 
     <div class="app-wrapper">
         <aside class="sidebar no-print">

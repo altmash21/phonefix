@@ -1115,6 +1115,16 @@ input:focus, select:focus, textarea:focus {
 .mobile-fab-container {
     display: none !important;
 }
+/* Hamburger and drawer hidden on desktop by default */
+.topbar-hamburger {
+    display: none !important;
+}
+.mobile-sidebar-overlay {
+    display: none;
+}
+.mobile-sidebar-drawer {
+    display: none !important;
+}
 
 @media (max-width: 1023px) {
     .sidebar {
@@ -1200,6 +1210,117 @@ input:focus, select:focus, textarea:focus {
         z-index: 1000 !important;
         align-items: center !important;
         justify-content: center !important;
+        transition: opacity 0.2s ease, transform 0.2s ease !important;
+        will-change: opacity, transform !important;
+    }
+    .mobile-fab-container.fab-hidden,
+    .fab-hidden {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: translateY(10px) scale(0.9) !important;
+    }
+    .mobile-bottom-nav {
+        transition: opacity 0.2s ease, transform 0.2s ease !important;
+        will-change: opacity, transform !important;
+    }
+    .mobile-bottom-nav.nav-hidden,
+    .nav-hidden {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: translateY(100%) !important;
+    }
+
+    /* Hide page-header-right actions on mobile (moved to FAB) */
+    .page-header-right {
+        display: none !important;
+    }
+
+    /* ── Hamburger / Mobile Sidebar Drawer ── */
+    .topbar-hamburger {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: var(--radius-sm) !important;
+        border: 1px solid var(--color-hairline) !important;
+        background: var(--color-surface-1) !important;
+        color: var(--color-ink-muted) !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
+        order: -1 !important;
+    }
+    .topbar-hamburger svg, .topbar-hamburger i {
+        width: 18px !important;
+        height: 18px !important;
+    }
+    .mobile-sidebar-overlay {
+        display: none;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 1100 !important;
+        background: rgba(15, 23, 42, 0.45) !important;
+        backdrop-filter: blur(2px) !important;
+    }
+    .mobile-sidebar-overlay.open {
+        display: block !important;
+    }
+    .mobile-sidebar-drawer {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 260px !important;
+        max-width: 80vw !important;
+        z-index: 1101 !important;
+        background: var(--color-canvas, #ffffff) !important;
+        border-right: 1px solid var(--color-hairline) !important;
+        box-shadow: 4px 0 24px rgba(15,23,42,0.15) !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        overflow-y: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        will-change: transform !important;
+    }
+    .mobile-sidebar-drawer.open {
+        transform: translateX(0) !important;
+    }
+    .mobile-sidebar-drawer-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 14px 16px !important;
+        border-bottom: 1px solid var(--color-hairline) !important;
+    }
+    .mobile-sidebar-drawer-close {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: var(--radius-sm) !important;
+        border: none !important;
+        background: var(--color-surface-2) !important;
+        color: var(--color-ink-muted) !important;
+        cursor: pointer !important;
+        font-size: 15px !important;
+        -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
+    }
+    .mobile-sidebar-drawer .sidebar-nav {
+        flex: 1 !important;
+        padding: 12px 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        overflow-y: auto !important;
+    }
+    .mobile-sidebar-drawer .sidebar-footer {
+        padding: 12px !important;
+        border-top: 1px solid var(--color-hairline) !important;
     }
 
     .btn-sales-fab,
@@ -1220,6 +1341,9 @@ input:focus, select:focus, textarea:focus {
         padding: 0 !important;
         transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease !important;
         -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
     }
 
     .btn-app-fab {
@@ -1241,6 +1365,9 @@ input:focus, select:focus, textarea:focus {
         text-decoration: none !important;
         transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease !important;
         -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
     }
 
     .btn-sales-fab:active,
