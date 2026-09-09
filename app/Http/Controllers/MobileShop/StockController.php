@@ -83,9 +83,12 @@ class StockController extends BaseMobileShopController
                          + (float) $secondHandPhones->where('status','in_stock')->sum('selling_price')
                          + (float) $parts->sum(fn($p) => ($p->selling_price ?? 0) * ($p->stock_qty ?? 0));
 
+        $suppliers = DB::table('ms_suppliers')->where('company_id', $companyId)->orderBy('name')->get();
+        $customers = DB::table('ms_customers')->where('company_id', $companyId)->orderBy('name')->get();
+
         return view('mobileshop.stock', compact(
             'niche',
-            'newPhones', 'secondHandPhones', 'parts', 'repairTickets', 'categories',
+            'newPhones', 'secondHandPhones', 'parts', 'repairTickets', 'categories', 'suppliers', 'customers',
             'canManagePhones', 'canManageSecondhand', 'canManageAccessories', 'canManageCovers', 'canManageRepairs',
             'totalNewPhonesInStock', 'totalSecondHandInStock', 'totalPartsInStock',
             'lowStockCount', 'valuationCost', 'valuationRetail'
@@ -146,16 +149,7 @@ class StockController extends BaseMobileShopController
      */
     public function newMobiles()
     {
-        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-new') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized access to new mobiles inventory.');
-
-        $companyId = $this->getCompanyId();
-        $mobiles = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('type', 'new')
-            ->orderBy('id', 'desc')
-            ->get();
-
-        return view('mobileshop.new_mobiles', compact('mobiles'));
+        return redirect()->route('mobileshop.stock', ['tab' => 'new_phones']);
     }
 
     /**
@@ -246,27 +240,15 @@ class StockController extends BaseMobileShopController
             return redirect($request->input('redirect_to'))->with('success', "New mobile device {$request->brand} {$request->model} (IMEI: {$request->imei_1}) added to stock (PO #{$poNum})!");
         }
 
-        return redirect()->route('mobileshop.purchase')->with('success', "New mobile device {$request->brand} {$request->model} (IMEI: {$request->imei_1}) added to stock (PO #{$poNum})!");
+        return redirect()->route('mobileshop.stock', ['tab' => 'new_phones'])->with('success', "New mobile device {$request->brand} {$request->model} (IMEI: {$request->imei_1}) added to stock (PO #{$poNum})!");
     }
 
     /**
-     * Panel 2: Second Hand Hub (Pre-Owned Stock & Buyback & Sales)
+     * Panel 2: Second Hand Hub (Pre-Owned Stock & Buyback & Sales) - Redirects to Stock Hub
      */
     public function secondHand()
     {
-        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized access to second-hand hub.');
-
-        $companyId = $this->getCompanyId();
-        $mobiles = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('type', 'second_hand')
-            ->orderBy('id', 'desc')
-            ->get();
-
-        $availablePhones = $mobiles->where('status', 'in_stock');
-        $customers = DB::table('ms_customers')->where('company_id', $companyId)->get();
-
-        return view('mobileshop.second_hand', compact('mobiles', 'availablePhones', 'customers'));
+        return redirect()->route('mobileshop.stock', ['tab' => 'second_hand']);
     }
 
     /**
@@ -375,7 +357,7 @@ class StockController extends BaseMobileShopController
             return redirect($request->input('redirect_to'))->with('success', "Second-hand mobile buyback registered (Invoice #{$bbNum})!");
         }
 
-        return redirect()->route('mobileshop.purchase')->with('success', "Second-hand mobile buyback registered (Invoice #{$bbNum})!");
+        return redirect()->route('mobileshop.stock', ['tab' => 'second_hand'])->with('success', "Second-hand mobile buyback registered (Invoice #{$bbNum})!");
     }
 
     /**

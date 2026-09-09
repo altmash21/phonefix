@@ -108,7 +108,7 @@
                 <div>
                     <div class="card-title">Suppliers & Credit Wallets ({{ count($suppliers) }})</div>
                 </div>
-                <a href="{{ route('mobileshop.purchase_orders') }}" class="btn btn-outline btn-sm">POs & Ledger</a>
+                <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline btn-sm">POs & Ledger</a>
             </div>
             <div class="card-body" style="padding:14px;">
                 <div id="suppliersList" style="display:flex; flex-direction:column; gap:8px;">

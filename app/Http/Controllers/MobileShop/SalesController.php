@@ -134,45 +134,22 @@ class SalesController extends BaseMobileShopController
         $customers            = DB::table('ms_customers')->where('company_id', $companyId)->get();
         $partsList            = DB::table('ms_parts_inventory')->where('company_id', $companyId)->where('stock_qty', '>', 0)->get();
         $categories           = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
+        $secondHandPhones     = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->orderBy('brand')->orderBy('model')->get();
 
         return view('mobileshop.sales', compact(
             'niche', 'mobileSales', 'accSales',
             'canCreatePhones', 'canCreateSecondhand', 'canCreateAccessories', 'canCreateCovers',
             'todaySalesTotal', 'monthSalesTotal', 'salesCount',
-            'availableNewPhones', 'availableSecondHand', 'availableParts', 'customers', 'partsList', 'categories'
+            'availableNewPhones', 'availableSecondHand', 'availableParts', 'customers', 'partsList', 'categories', 'secondHandPhones'
         ));
     }
 
     /**
-     * Panel 1: New Phones POS Screen
+     * Panel 1: New Phones POS Screen — Redirects to Unified Sales Registration
      */
     public function pos()
     {
-        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-pos') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin')), 403, 'Unauthorized access to New Phones POS counter.');
-
-        $companyId = $this->getCompanyId();
-        $newPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', 'in_stock')->get();
-        
-        // Fetch promotional gifts directly from accessories & parts catalog
-        $gifts = DB::table('ms_parts_inventory')
-            ->where('company_id', $companyId)
-            ->where(function ($q) {
-                $q->where('is_gift_eligible', 1)
-                  ->orWhereIn('category', ['tempered_glass', 'back_panel', 'back_cover', 'general_accessory']);
-            })
-            ->where('stock_qty', '>', 0)
-            ->orderBy('name', 'asc')
-            ->get();
-
-        $emiProviders = DB::table('ms_emi_providers')->where('company_id', $companyId)->where('enabled', 1)->get();
-        $customers = DB::table('ms_customers')->where('company_id', $companyId)->get();
-
-        return view('mobileshop.pos', compact(
-            'newPhones',
-            'gifts',
-            'emiProviders',
-            'customers'
-        ));
+        return redirect()->route('mobileshop.sales.create');
     }
 
     /**

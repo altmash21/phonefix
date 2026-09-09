@@ -164,7 +164,7 @@
                             </div>
                             <div style="font-weight:800; font-size:15px; color:#92400E;">No Brand New Phones in Stock</div>
                             <div style="font-size:12px; color:#B45309; max-width:320px;">Please intake new phone inventory with IMEI numbers to generate POS invoices.</div>
-                            <a href="{{ route('mobileshop.new_mobiles') }}" class="btn btn-primary btn-sm" style="background:#D97706; border-color:#D97706; margin-top:4px;">
+                            <a href="{{ route('mobileshop.stock', ['tab' => 'new_phones']) }}" class="btn btn-primary btn-sm" style="background:#D97706; border-color:#D97706; margin-top:4px;">
                                 <i data-lucide="plus" style="width:13px;height:13px;"></i> Add New Phone Stock
                             </a>
                         </div>

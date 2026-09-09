@@ -124,9 +124,19 @@ class PurchaseController extends BaseMobileShopController
         $totalInvoicesCount  = $purchaseInvoices->count();
         $totalUnitsPurchased = (int) $purchaseInvoices->sum('total_units');
 
-        // Drop-downs for add forms
-        $suppliers  = DB::table('ms_supplier_credit_wallets')
-            ->leftJoin('ms_suppliers', 'ms_supplier_credit_wallets.supplier_id', '=', 'ms_suppliers.id')
+        // Drop-downs for add forms and supplier payment modals
+        $prefix = DB::getTablePrefix();
+        $suppliers = DB::table('ms_suppliers')
+            ->leftJoin('ms_supplier_credit_wallets', function ($j) use ($companyId) {
+                $j->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
+                  ->where('ms_supplier_credit_wallets.company_id', $companyId);
+            })
+            ->select('ms_suppliers.*', DB::raw("COALESCE({$prefix}ms_supplier_credit_wallets.credit_balance, 0) as credit_balance"))
+            ->where('ms_suppliers.company_id', $companyId)
+            ->get();
+
+        $wallets = DB::table('ms_supplier_credit_wallets')
+            ->join('ms_suppliers', 'ms_supplier_credit_wallets.supplier_id', '=', 'ms_suppliers.id')
             ->select('ms_supplier_credit_wallets.*', 'ms_suppliers.name as supplier_name')
             ->where('ms_supplier_credit_wallets.company_id', $companyId)
             ->get();
@@ -175,7 +185,7 @@ class PurchaseController extends BaseMobileShopController
             'niche', 'isAdmin', 'purchaseInvoices', 'purchaseOrders', 'newPhonePurchases', 'buybacks', 'batchRestocks',
             'canAddPhones', 'canAddSecondhand', 'canAddAccessories', 'canAddCovers',
             'totalPOValue', 'totalPODue', 'totalInvoicesCount', 'totalUnitsPurchased',
-            'suppliers', 'categories', 'parts', 'knownBrands', 'knownModels'
+            'suppliers', 'wallets', 'categories', 'parts', 'knownBrands', 'knownModels'
         ));
     }
 
@@ -449,33 +459,7 @@ class PurchaseController extends BaseMobileShopController
      */
     public function purchaseOrders()
     {
-        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized access to procurement ledger.');
-
-        $companyId = $this->getCompanyId();
-        $purchaseOrders = DB::table('ms_purchase_orders')
-            ->join('ms_suppliers', 'ms_purchase_orders.supplier_id', '=', 'ms_suppliers.id')
-            ->select('ms_purchase_orders.*', 'ms_suppliers.name as supplier_name', 'ms_suppliers.phone as supplier_phone', 'ms_suppliers.gstin as supplier_gstin')
-            ->where('ms_purchase_orders.company_id', $companyId)
-            ->orderBy('ms_purchase_orders.id', 'desc')
-            ->get();
-
-        $prefix = DB::getTablePrefix();
-        $suppliers = DB::table('ms_suppliers')
-            ->leftJoin('ms_supplier_credit_wallets', function ($j) use ($companyId) {
-                $j->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
-                  ->where('ms_supplier_credit_wallets.company_id', $companyId);
-            })
-            ->select('ms_suppliers.*', DB::raw("COALESCE({$prefix}ms_supplier_credit_wallets.credit_balance, 0) as credit_balance"))
-            ->where('ms_suppliers.company_id', $companyId)
-            ->get();
-
-        $wallets = DB::table('ms_supplier_credit_wallets')
-            ->join('ms_suppliers', 'ms_supplier_credit_wallets.supplier_id', '=', 'ms_suppliers.id')
-            ->select('ms_supplier_credit_wallets.*', 'ms_suppliers.name as supplier_name')
-            ->where('ms_supplier_credit_wallets.company_id', $companyId)
-            ->get();
-
-        return view('mobileshop.purchase_orders', compact('purchaseOrders', 'suppliers', 'wallets'));
+        return redirect()->route('mobileshop.purchase');
     }
 
     /**
@@ -577,7 +561,7 @@ class PurchaseController extends BaseMobileShopController
                 ]);
             }
 
-            return redirect()->route('mobileshop.purchase_orders', ['company_id' => $companyId])->with('success', 'Supplier payment successfully logged and ledger updated!');
+            return redirect()->route('mobileshop.purchase')->with('success', 'Supplier payment successfully logged and ledger updated!');
         });
     }
 

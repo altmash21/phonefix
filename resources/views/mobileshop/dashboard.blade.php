@@ -34,9 +34,6 @@
                 <a href="{{ route('mobileshop.sales.create') }}" class="dropdown-item-link" style="font-weight:600; color:var(--color-primary);">
                     <i data-lucide="plus-circle" style="width:15px;height:15px;color:var(--color-primary);"></i> Register Sale (Full Page)
                 </a>
-                <a href="{{ route('mobileshop.pos') }}" class="dropdown-item-link">
-                    <i data-lucide="smartphone" style="width:15px;height:15px;"></i> New Phone POS
-                </a>
                 @endif
                 @if(auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
                 <a href="{{ route('mobileshop.purchase.create') }}" class="dropdown-item-link" style="font-weight:600; color:#16A34A;">
@@ -49,7 +46,7 @@
                 </a>
                 @endif
                 @if(auth()->user()->can('create-sale-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.second_hand') }}" class="dropdown-item-link">
+                <a href="{{ route('mobileshop.sales') }}" class="dropdown-item-link">
                     <i data-lucide="repeat" style="width:15px;height:15px;"></i> Sell Pre-Owned
                 </a>
                 @endif
@@ -57,22 +54,22 @@
                 <a href="{{ route('mobileshop.emi.ledger') }}" class="dropdown-item-link">
                     <i data-lucide="building-2" style="width:15px;height:15px;color:#2563EB;"></i> EMI Finance Ledger
                 </a>
-                <a href="{{ route('mobileshop.purchase_orders') }}" class="dropdown-item-link">
-                    <i data-lucide="file-text" style="width:15px;height:15px;"></i> Supplier Purchase Order
+                <a href="{{ route('mobileshop.purchase') }}" class="dropdown-item-link">
+                    <i data-lucide="file-text" style="width:15px;height:15px;"></i> Supplier Purchase & Ledger
                 </a>
                 @endif
                 @if(auth()->user()->can('create-purchase-phones') || auth()->user()->can('manage-stock-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.new_mobiles') }}" class="dropdown-item-link">
+                <a href="{{ route('mobileshop.stock', ['tab' => 'new_phones']) }}" class="dropdown-item-link">
                     <i data-lucide="smartphone" style="width:15px;height:15px;"></i> Add Phone Stock
                 </a>
                 @endif
                 @if(auth()->user()->can('create-purchase-secondhand') || auth()->user()->can('manage-stock-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.second_hand') }}" class="dropdown-item-link">
+                <a href="{{ route('mobileshop.stock', ['tab' => 'second_hand']) }}" class="dropdown-item-link">
                     <i data-lucide="repeat" style="width:15px;height:15px;"></i> Intake Pre-Owned
                 </a>
                 @endif
                 @if(auth()->user()->can('create-purchase-accessories') || auth()->user()->can('create-purchase-covers') || auth()->user()->can('manage-stock-accessories') || auth()->user()->can('manage-stock-covers') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.purchase') }}" class="dropdown-item-link">
+                <a href="{{ route('mobileshop.stock', ['tab' => 'parts']) }}" class="dropdown-item-link">
                     <i data-lucide="headphones" style="width:15px;height:15px;"></i> Add Part / Accessory
                 </a>
                 @endif
@@ -354,7 +351,7 @@
                 ₹{{ number_format($analytics['totalSupplierDebt'] ?? 0, 2) }}
             </div>
             <div class="pulse-card-sub">
-                <a href="{{ route('mobileshop.purchase_orders') }}" style="color:var(--color-ink-muted); text-decoration:underline;">
+                <a href="{{ route('mobileshop.purchase') }}" style="color:var(--color-ink-muted); text-decoration:underline;">
                     {{ $analytics['unpaidPoCount'] ?? 0 }} pending invoices
                 </a>
             </div>
@@ -501,7 +498,7 @@
                     <i data-lucide="receipt" style="width:14px;height:14px;color:var(--color-primary);"></i>
                     <span>Recent Sales Invoices</span>
                 </div>
-                <a href="{{ route('mobileshop.pos') }}" class="btn btn-primary btn-xs">+ New Sale</a>
+                <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-xs">+ New Sale</a>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
                 <table class="data-table" style="margin:0; border:none;">

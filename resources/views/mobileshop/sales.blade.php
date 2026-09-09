@@ -20,9 +20,6 @@
         <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-sm">
             <i data-lucide="plus" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Register Sale</span><span class="mobile-btn-label">Sale</span>
         </a>
-        <a href="{{ route('mobileshop.pos') }}" class="btn btn-outline btn-sm">
-            <i data-lucide="shopping-cart" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">New POS Sale</span><span class="mobile-btn-label">POS</span>
-        </a>
         @endif
         @if($canCreateAccessories ?? false)
         <button type="button" onclick="openSellAccessoryModal()" class="btn btn-outline btn-sm hide-on-mobile">
@@ -35,9 +32,9 @@
         </button>
         @endif
         @if($canCreateSecondhand ?? false)
-        <a href="{{ route('mobileshop.second_hand') }}" class="btn btn-outline btn-sm">
+        <button type="button" onclick="openSellShModal()" class="btn btn-outline btn-sm">
             <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Pre-Owned</span><span class="mobile-btn-label">Pre-Owned</span>
-        </a>
+        </button>
         @endif
         <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm">
             <i data-lucide="building-2" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">EMI Ledger</span><span class="mobile-btn-label">EMI</span>
@@ -893,6 +890,87 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MODAL: Sell Pre-Owned Device at POS Counter                -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div id="sellShModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+        <div class="card" style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
+            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+                <div class="card-title" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="refresh-cw" style="width:18px;height:18px;color:#EA580C;"></i>
+                    Sell Pre-Owned Device
+                </div>
+                <button type="button" onclick="closeSellShModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
+            </div>
+            <div class="card-body" style="padding:16px 18px;">
+                <form action="{{ route('mobileshop.second_hand.sale') }}" method="POST" id="sellShForm">
+                    @csrf
+                    <input type="hidden" name="redirect_to" value="{{ route('mobileshop.sales') }}">
+
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Select In-Stock Pre-Owned Phone *</label>
+                        <select name="device_id" id="shDeviceSelect" required class="form-control" onchange="onSelectUsedPhone(this)" style="font-size:13px;">
+                            <option value="">-- Choose Pre-Owned Phone --</option>
+                            @foreach($secondHandPhones ?? [] as $phone)
+                                <option value="{{ $phone->id }}" data-price="{{ $phone->selling_price }}">
+                                    {{ $phone->brand }} {{ $phone->model }} (IMEI: {{ $phone->imei_1 }}) — ₹{{ number_format($phone->selling_price, 2) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Customer Mobile *</label>
+                            <input type="text" name="customer_phone" id="shCustomerPhone" placeholder="10-digit number" required class="form-control" list="shCustomerList" style="font-size:13px;">
+                            <datalist id="shCustomerList">
+                                @foreach($customers ?? [] as $c)
+                                    <option value="{{ $c->phone }}" data-name="{{ $c->name }}">{{ $c->name }}</option>
+                                @endforeach
+                            </datalist>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Customer Name *</label>
+                            <input type="text" name="customer_name" id="shCustomerName" placeholder="Full name" required class="form-control" style="font-size:13px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Agreed Sale Price (₹) *</label>
+                            <input type="number" step="0.01" name="sale_price" id="shSalePrice" required class="form-control" oninput="updateShSummary()" style="font-size:13px; font-weight:700;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Payment Mode *</label>
+                            <select name="payment_mode" class="form-control" onchange="onShPaymentModeChange(this)" style="font-size:13px;">
+                                <option value="cash">💵 Cash</option>
+                                <option value="upi">📱 UPI / QR</option>
+                                <option value="card">💳 Card</option>
+                                <option value="credit_udhari">📒 Full Udhari (Khata)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="margin-bottom: 14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Amount Paid Now (₹) *</label>
+                            <input type="number" step="0.01" name="amount_paid" id="shAmountPaid" required class="form-control" oninput="updateShSummary()" style="font-size:13px; font-weight:700; color:#16A34A;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Balance Due (₹)</label>
+                            <input type="text" id="shBalanceDueDisplay" readonly value="₹0.00" class="form-control" style="background:#F1F5F9; font-weight:700; color:#DC2626; font-size:13px;">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
+                        <button type="button" onclick="closeSellShModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Complete Sale & Generate Bill</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
     <!-- DATE FILTER BOTTOM SHEET / MODAL (Mobile Responsive)       -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <div id="dateFilterModal" style="display:none; position: fixed; inset: 0; z-index: 998; background: rgba(15,23,42,0.6); backdrop-filter: blur(3px); align-items: flex-end; justify-content: center;">
@@ -941,7 +1019,7 @@
         <!-- FAB Dropup Menu -->
         <div id="fabDropupMenu" class="fab-dropup-menu" style="display:none;">
             @if(($isAdmin ?? false) || ($canCreatePhones ?? false))
-                <a href="{{ route('mobileshop.pos') }}" class="fab-menu-item" style="color: #5E6AD2;">
+                <a href="{{ route('mobileshop.sales.create') }}" class="fab-menu-item" style="color: #5E6AD2;">
                     <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
                     <span>New Phone Sale</span>
                 </a>
@@ -959,10 +1037,10 @@
                 </button>
             @endif
             @if(($isAdmin ?? false) || ($canCreateSecondhand ?? false))
-                <a href="{{ route('mobileshop.second_hand') }}" class="fab-menu-item" style="color: #2563EB;">
+                <button type="button" onclick="closeFabMenu(); openSellShModal()" class="fab-menu-item" style="color: #EA580C;">
                     <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
                     <span>Sell Pre-Owned</span>
-                </a>
+                </button>
             @endif
         </div>
 
@@ -1007,6 +1085,50 @@
     function closeSellAccessoryModal() {
         document.getElementById('sellAccessoryModal').style.display = 'none';
         hideSearchDropdown();
+    }
+
+    function openSellShModal() {
+        const modal = document.getElementById('sellShModal');
+        if (modal) modal.style.display = 'flex';
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    function closeSellShModal() {
+        const modal = document.getElementById('sellShModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function onSelectUsedPhone(selectEl) {
+        const opt = selectEl.options[selectEl.selectedIndex];
+        const price = opt ? parseFloat(opt.getAttribute('data-price')) || 0 : 0;
+        const priceInput = document.getElementById('shSalePrice');
+        const paidInput = document.getElementById('shAmountPaid');
+        if (priceInput) priceInput.value = price > 0 ? price.toFixed(2) : '';
+        if (paidInput) paidInput.value = price > 0 ? price.toFixed(2) : '';
+        updateShSummary();
+    }
+
+    function updateShSummary() {
+        const salePrice = parseFloat(document.getElementById('shSalePrice')?.value) || 0;
+        const amountPaid = parseFloat(document.getElementById('shAmountPaid')?.value) || 0;
+        const due = Math.max(0, salePrice - amountPaid);
+        const dueDisplay = document.getElementById('shBalanceDueDisplay');
+        if (dueDisplay) {
+            dueDisplay.value = '₹' + due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    function onShPaymentModeChange(selectEl) {
+        const paidInput = document.getElementById('shAmountPaid');
+        if (!paidInput) return;
+        if (selectEl.value === 'credit_udhari') {
+            paidInput.value = '0';
+        } else {
+            const salePrice = parseFloat(document.getElementById('shSalePrice')?.value) || 0;
+            paidInput.value = salePrice > 0 ? salePrice.toFixed(2) : '0';
+        }
+        updateShSummary();
     }
 
     function isCategoryMatch(partCategory, filterCategory) {
