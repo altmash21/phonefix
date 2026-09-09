@@ -772,21 +772,21 @@ input:focus, select:focus, textarea:focus {
     color: var(--color-ink-subtle);
 }
 
-.filter-bar, .sales-filter-toolbar, .purchase-filter-toolbar, .stock-filter-toolbar {
+.filter-bar, .sales-filter-toolbar, .purchase-filter-toolbar, .stock-filter-toolbar, .khata-filter-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 6px 12px;
+    gap: 10px;
+    padding: 8px 16px;
     background: var(--color-surface-1);
     border-bottom: 1px solid var(--color-hairline);
-    min-height: 36px;
+    min-height: 40px;
 }
 
 .pills-scroll-rail, .date-pills-scroll-rail, .purchase-pills-rail {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     overflow-x: auto;
     white-space: nowrap;
     scrollbar-width: none;
@@ -796,34 +796,34 @@ input:focus, select:focus, textarea:focus {
     display: none;
 }
 
-.filter-pill, .filter-pill-btn, .sales-cat-pill, .sales-date-pill, .stock-date-pill, .purchase-pill, .purchase-date-pill, .emi-date-pill, .khata-date-pill, .sub-filter-pill, .report-tab-pill {
-    height: 24px;
-    padding: 0 8px;
-    font-size: 11px;
-    font-weight: 500;
+.filter-pill, .filter-pill-btn, .sales-cat-pill, .sales-date-pill, .stock-date-pill, .purchase-pill, .purchase-date-pill, .emi-date-pill, .khata-date-pill, .khata-type-pill, .sub-filter-pill, .report-tab-pill {
+    height: 28px;
+    padding: 0 11px;
+    font-size: 12.5px;
+    font-weight: 600;
     border-radius: var(--radius-pill);
     border: 1px solid var(--color-hairline);
     background: var(--color-canvas);
     color: var(--color-ink-muted);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     cursor: pointer;
     text-decoration: none;
     line-height: 1;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
-.filter-pill:hover, .filter-pill-btn:hover, .sales-cat-pill:hover, .sales-date-pill:hover, .stock-date-pill:hover, .purchase-pill:hover, .purchase-date-pill:hover, .emi-date-pill:hover, .khata-date-pill:hover, .sub-filter-pill:hover, .report-tab-pill:hover {
+.filter-pill:hover, .filter-pill-btn:hover, .sales-cat-pill:hover, .sales-date-pill:hover, .stock-date-pill:hover, .purchase-pill:hover, .purchase-date-pill:hover, .emi-date-pill:hover, .khata-date-pill:hover, .khata-type-pill:hover, .sub-filter-pill:hover, .report-tab-pill:hover {
     background: var(--color-surface-2);
     color: var(--color-ink);
     border-color: var(--color-hairline-strong);
 }
-.filter-pill.active, .filter-pill-btn.active, .sales-cat-pill.active, .sales-date-pill.active, .stock-date-pill.active, .purchase-pill.active, .purchase-date-pill.active, .emi-date-pill.active, .khata-date-pill.active, .sub-filter-pill.active, .report-tab-pill.active {
+.filter-pill.active, .filter-pill-btn.active, .sales-cat-pill.active, .sales-date-pill.active, .stock-date-pill.active, .purchase-pill.active, .purchase-date-pill.active, .emi-date-pill.active, .khata-date-pill.active, .khata-type-pill.active, .sub-filter-pill.active, .report-tab-pill.active {
     background: var(--color-primary) !important;
     color: #ffffff !important;
     border-color: var(--color-primary) !important;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 /* ════ 10. BADGES & STATUS PILLS ════ */
@@ -1377,41 +1377,41 @@ input:focus, select:focus, textarea:focus {
         font-size: 10px !important;
     }
     .form-control, input, select {
-        height: 26px !important;
+        height: 30px !important;
+        font-size: 12px !important;
+        padding: 3px 8px !important;
+    }
+    .filter-bar, .sales-filter-toolbar, .purchase-filter-toolbar, .stock-filter-toolbar, .khata-filter-toolbar {
+        padding: 6px 10px !important;
+        min-height: 34px !important;
+        gap: 6px !important;
+    }
+    .filter-pill, .filter-pill-btn, .sales-cat-pill, .sales-date-pill, .stock-date-pill, .purchase-pill, .purchase-date-pill, .khata-type-pill, .khata-date-pill, .sub-filter-pill {
+        height: 25px !important;
+        padding: 0 8px !important;
         font-size: 11.5px !important;
-        padding: 2px 6px !important;
-    }
-    .filter-bar, .sales-filter-toolbar, .purchase-filter-toolbar, .stock-filter-toolbar {
-        padding: 4px 8px !important;
-        min-height: 30px !important;
-        gap: 4px !important;
-    }
-    .filter-pill, .filter-pill-btn, .sales-cat-pill, .sales-date-pill, .stock-date-pill, .purchase-pill, .purchase-date-pill, .sub-filter-pill {
-        height: 22px !important;
-        padding: 0 6px !important;
-        font-size: 10px !important;
     }
     .search-bar, .sales-search-box, .purchase-search-box, .stock-search-box {
-        height: 26px !important;
-        min-width: 140px !important;
-        padding: 0 6px !important;
+        height: 30px !important;
+        min-width: 160px !important;
+        padding: 0 8px !important;
     }
     .search-bar input, .sales-search-input, .purchase-search-input, .stock-search-input {
-        font-size: 11px !important;
+        font-size: 12px !important;
     }
     .badge {
-        font-size: 9px !important;
-        padding: 1px 4px !important;
+        font-size: 10px !important;
+        padding: 2px 6px !important;
     }
     table th, .table th, .data-table th {
-        font-size: 9px !important;
-        padding: 3px 6px !important;
-        height: 22px !important;
+        font-size: 10.5px !important;
+        padding: 4px 8px !important;
+        height: 24px !important;
     }
     table td, .table td, .data-table td {
-        font-size: 10.5px !important;
-        padding: 3px 6px !important;
-        height: 26px !important;
+        font-size: 11.5px !important;
+        padding: 4px 8px !important;
+        height: 28px !important;
     }
     .mobile-bottom-nav {
         height: 44px !important;
