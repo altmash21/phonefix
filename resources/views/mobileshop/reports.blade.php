@@ -1263,3 +1263,23 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+
+@push('styles')
+<style>
+    @media print {
+        .reports-filter-card,
+        .filter-bar,
+        .filter-pill,
+        .pagination-bar,
+        .pagination-wrapper {
+            display: none !important;
+        }
+        .card {
+            border: 1px solid #CBD5E1 !important;
+            box-shadow: none !important;
+            break-inside: avoid !important;
+            margin-bottom: 16px !important;
+        }
+    }
+</style>
+@endpush

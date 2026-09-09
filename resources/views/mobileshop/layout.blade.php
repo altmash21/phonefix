@@ -145,6 +145,170 @@
 
     <!-- MobiTrack Admin Panel Design System (Linear Light System) -->
     <link rel="stylesheet" href="{{ url('/css/admin-panel.css') }}?v={{ time() }}">
+
+    <!-- Dedicated Print Media Engine: Eliminates UI chrome, sidebars, headers, and buttons on Print/PDF -->
+    <style>
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm 12mm 10mm 12mm;
+            }
+
+            *, *::before, *::after {
+                box-shadow: none !important;
+                text-shadow: none !important;
+            }
+
+            html, body {
+                background: #ffffff !important;
+                color: #111827 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Hide all app chrome, sidebars, topbars, buttons, debug bars, and mobile nav */
+            .topbar,
+            header.topbar,
+            .sidebar,
+            aside.sidebar,
+            .sidebar-nav,
+            .sidebar-footer,
+            .page-header,
+            .page-header-right,
+            .page-back,
+            .mobile-bottom-nav,
+            .mobile-fab-container,
+            .btn-sales-fab,
+            .btn-purchase-fab,
+            .flash-success,
+            .flash-error,
+            #flash-msg,
+            .phpdebugbar,
+            .phpdebugbar-openhandler,
+            .phpdebugbar-mini,
+            #phpdebugbar,
+            .reports-filter-card,
+            .filter-bar,
+            .filter-pill,
+            .pagination-bar,
+            .pagination-wrapper,
+            button,
+            .btn,
+            .btn-primary,
+            .btn-outline,
+            .btn-icon,
+            .no-print,
+            #new-action-menu,
+            #user-dropdown,
+            .user-dropdown,
+            .modal,
+            [id*="Modal"],
+            [id*="Drawer"],
+            .fab-dropup-menu {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Unconstrain body, app wrapper, and containers */
+            .app-wrapper {
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                background: transparent !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .content-area {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                background: transparent !important;
+                min-height: 0 !important;
+            }
+
+            .page-body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+
+            .invoice-page-wrapper,
+            .statement-page-wrapper {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                display: block !important;
+                background: transparent !important;
+            }
+
+            .printable-invoice-container {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+            }
+
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                page-break-inside: auto !important;
+            }
+
+            tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            thead {
+                display: table-header-group !important;
+            }
+
+            tfoot {
+                display: table-footer-group !important;
+            }
+
+            /* Thermal POS Receipt Mode (80mm) */
+            body.thermal-mode {
+                width: 76mm !important;
+                max-width: 76mm !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                font-family: 'Courier New', Courier, monospace !important;
+            }
+
+            body.thermal-mode #viewA4 {
+                display: none !important;
+            }
+
+            body.thermal-mode #viewThermal {
+                display: block !important;
+                width: 100% !important;
+                max-width: 76mm !important;
+                margin: 0 auto !important;
+                padding: 4mm 2mm !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
     @stack('styles')
 </head>
 <body>
@@ -205,7 +369,7 @@
         <script>setTimeout(() => { const el = document.getElementById('flash-msg'); if (el) { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); } }, 8000);</script>
     @endif
 
-    <header class="topbar">
+    <header class="topbar no-print">
         <a href="{{ route('mobileshop.dashboard') }}" class="topbar-logo">
             <div class="topbar-logo-icon">
                 <i data-lucide="smartphone" style="width:18px;height:18px;"></i>
@@ -274,7 +438,7 @@
     </header>
 
     <div class="app-wrapper">
-        <aside class="sidebar">
+        <aside class="sidebar no-print">
             <nav class="sidebar-nav">
                     {{-- ════ UNIFIED SIDEBAR — Same 5 items for all roles, @can gated ════ --}}
                 @can('read-mobileshop-dashboard')
@@ -368,7 +532,7 @@
         <!-- ════ CONTENT AREA ════ -->
         <div class="content-area">
             <!-- Page Header -->
-            <div class="page-header {{ empty(trim($__env->yieldContent('page-actions'))) ? 'no-actions' : '' }}">
+            <div class="page-header no-print {{ empty(trim($__env->yieldContent('page-actions'))) ? 'no-actions' : '' }}">
                 @hasSection('back-url')
                     <a href="@yield('back-url')" class="page-back">
                         <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
@@ -387,7 +551,7 @@
     </div>
 
     <!-- ════ MOBILE BOTTOM NAV ════ -->
-    <nav class="mobile-bottom-nav">
+    <nav class="mobile-bottom-nav no-print">
         <div class="mobile-nav-items">
             @can('read-mobileshop-dashboard')
             <a href="{{ route('mobileshop.dashboard') }}" class="mobile-nav-item {{ request()->routeIs('mobileshop.dashboard') ? 'active' : '' }}">

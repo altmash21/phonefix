@@ -180,7 +180,27 @@
             </div>
         </div>
 
-    </div>
-
 </div>
 @endsection
+
+@push('styles')
+<style>
+    @media print {
+        .printable-invoice-container {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+        .statement-page-wrapper {
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+        }
+        table {
+            border-color: #374151 !important;
+        }
+    }
+</style>
+@endpush

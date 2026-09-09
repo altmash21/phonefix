@@ -311,6 +311,29 @@
 </div>
 @endsection
 
+@push('styles')
+<style>
+    @media print {
+        #viewA4 {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+        #viewA4 table {
+            border-color: #374151 !important;
+        }
+        #viewThermal {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 2mm 0 !important;
+            margin: 0 auto !important;
+        }
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script>
     function switchFormat(mode) {
@@ -318,19 +341,31 @@
         const thermal = document.getElementById('viewThermal');
         const btnA4 = document.getElementById('btnA4');
         const btnThermal = document.getElementById('btnThermal');
+        let dynamicPageStyle = document.getElementById('dynamicThermalPageStyle');
 
         if (mode === 'thermal') {
             a4.style.display = 'none';
             thermal.style.display = 'block';
             document.body.classList.add('thermal-mode');
-            btnThermal.className = 'btn btn-primary btn-sm';
-            btnA4.className = 'btn btn-outline btn-sm';
+            if (btnThermal) btnThermal.className = 'btn btn-primary btn-sm';
+            if (btnA4) btnA4.className = 'btn btn-outline btn-sm';
+
+            if (!dynamicPageStyle) {
+                dynamicPageStyle = document.createElement('style');
+                dynamicPageStyle.id = 'dynamicThermalPageStyle';
+                dynamicPageStyle.innerHTML = '@media print { @page { size: 80mm auto !important; margin: 2mm 3mm !important; } }';
+                document.head.appendChild(dynamicPageStyle);
+            }
         } else {
             thermal.style.display = 'none';
             a4.style.display = 'block';
             document.body.classList.remove('thermal-mode');
-            btnA4.className = 'btn btn-primary btn-sm';
-            btnThermal.className = 'btn btn-outline btn-sm';
+            if (btnA4) btnA4.className = 'btn btn-primary btn-sm';
+            if (btnThermal) btnThermal.className = 'btn btn-outline btn-sm';
+
+            if (dynamicPageStyle) {
+                dynamicPageStyle.remove();
+            }
         }
     }
 </script>

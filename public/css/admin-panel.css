@@ -1460,3 +1460,172 @@ input:focus, select:focus, textarea:focus {
     }
 }
 
+/* ==========================================================================
+   PRINT MEDIA STYLESHEET — PROFESSIONAL INVOICE & STATEMENT RENDERING
+   Suppresses all website UI / chrome, sidebars, headers, and buttons.
+   Ensures clean, high-contrast, edge-to-edge documents without web screenshots.
+   ========================================================================== */
+@media print {
+    /* 1. Reset Page Canvas & Margins */
+    @page {
+        size: A4 portrait;
+        margin: 10mm 12mm 10mm 12mm;
+    }
+
+    *, *::before, *::after {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    html, body {
+        background: #ffffff !important;
+        color: #111827 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* 2. Hide ALL ERP Web Chrome & Navigation */
+    .topbar,
+    header.topbar,
+    .sidebar,
+    aside.sidebar,
+    .sidebar-nav,
+    .sidebar-footer,
+    .page-header,
+    .page-header-right,
+    .page-back,
+    .mobile-bottom-nav,
+    .mobile-fab-container,
+    .btn-sales-fab,
+    .btn-purchase-fab,
+    .flash-success,
+    .flash-error,
+    #flash-msg,
+    .phpdebugbar,
+    .phpdebugbar-openhandler,
+    .phpdebugbar-mini,
+    #phpdebugbar,
+    .reports-filter-card,
+    .filter-bar,
+    .filter-pill,
+    .pagination-bar,
+    .pagination-wrapper,
+    button,
+    .btn,
+    .btn-primary,
+    .btn-outline,
+    .btn-icon,
+    .no-print,
+    #new-action-menu,
+    #user-dropdown,
+    .user-dropdown,
+    .modal,
+    [id*="Modal"],
+    [id*="Drawer"],
+    .fab-dropup-menu {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 3. Expand App Wrapper & Content Area to 100% Canvas */
+    .app-wrapper {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .content-area {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        background: transparent !important;
+        min-height: 0 !important;
+    }
+
+    .page-body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .invoice-page-wrapper,
+    .statement-page-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+        background: transparent !important;
+    }
+
+    .printable-invoice-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+    }
+
+    /* 4. Table & Line Item Print Hygiene */
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto !important;
+    }
+
+    tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    thead {
+        display: table-header-group !important;
+    }
+
+    tfoot {
+        display: table-footer-group !important;
+    }
+
+    /* 5. Clean Thermal Receipt Mode (80mm) */
+    body.thermal-mode {
+        width: 76mm !important;
+        max-width: 76mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        font-family: 'Courier New', Courier, monospace !important;
+    }
+
+    body.thermal-mode #viewA4 {
+        display: none !important;
+    }
+
+    body.thermal-mode #viewThermal {
+        display: block !important;
+        width: 100% !important;
+        max-width: 76mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+
