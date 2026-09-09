@@ -736,7 +736,7 @@
         </div>
     </nav>
 
-    <script src="{{ asset('js/mobileshop/ui-utils.js') }}"></script>
+    <script src="{{ url('/js/mobileshop/ui-utils.js') }}?v={{ time() }}"></script>
     @stack('scripts')
 </body>
 </html>
