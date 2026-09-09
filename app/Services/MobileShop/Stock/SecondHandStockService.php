@@ -2,6 +2,8 @@
 
 namespace App\Services\MobileShop\Stock;
 
+use App\Repositories\MobileShop\Contracts\MsStockRepositoryInterface;
+use App\Repositories\MobileShop\MsStockRepository;
 use App\Services\MobileShop\Common\MobileShopInvoiceHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -9,16 +11,20 @@ use Illuminate\Support\Str;
 
 class SecondHandStockService
 {
+    protected MsStockRepositoryInterface $stockRepo;
+
+    public function __construct(?MsStockRepositoryInterface $stockRepo = null)
+    {
+        $this->stockRepo = $stockRepo ?? app(MsStockRepositoryInterface::class);
+    }
+
     /**
      * Store Second Hand Buyback (Intake)
      */
     public function intake(Request $request, int $companyId, ?string $photoPath): array
     {
-        // Check uniqueness within company
-        $exists = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('imei_1', $request->imei_1)
-            ->exists();
+        // Check uniqueness within company using repository
+        $exists = $this->stockRepo->existsByImei($request->imei_1, $companyId);
         if ($exists) {
             return [
                 'success' => false,
@@ -72,7 +78,7 @@ class SecondHandStockService
             'line_total'        => $buybackCost,
         ]);
 
-        DB::table('ms_mobile_devices')->insert([
+        $this->stockRepo->insertDevice([
             'company_id' => $companyId,
             'purchase_order_id' => $poId,
             'type' => 'second_hand',
@@ -94,8 +100,6 @@ class SecondHandStockService
             'customer_buyback_id_proof' => $request->customer_buyback_id_proof,
             'checklist_notes' => $request->checklist_notes,
             'status' => 'in_stock',
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return [
@@ -186,12 +190,8 @@ class SecondHandStockService
                 'updated_at' => now(),
             ]);
 
-            // Update Device Status
-            DB::table('ms_mobile_devices')->where('id', $device->id)->update([
-                'status' => 'sold',
-                'selling_price' => $salePrice,
-                'updated_at' => now(),
-            ]);
+            // Update Device Status via repository
+            $this->stockRepo->updateStatus($device->id, 'sold', ['selling_price' => $salePrice]);
 
             // Update Customer Khata if Udhari
             if ($udhariAmount > 0) {

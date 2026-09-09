@@ -2,21 +2,27 @@
 
 namespace App\Services\MobileShop\Stock;
 
+use App\Repositories\MobileShop\Contracts\MsStockRepositoryInterface;
+use App\Repositories\MobileShop\MsStockRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class NewMobileStockService
 {
+    protected MsStockRepositoryInterface $stockRepo;
+
+    public function __construct(?MsStockRepositoryInterface $stockRepo = null)
+    {
+        $this->stockRepo = $stockRepo ?? app(MsStockRepositoryInterface::class);
+    }
+
     /**
      * Store Brand New Mobile into Inventory (with IMEI Uniqueness Check)
      */
     public function store(Request $request, int $companyId, ?string $photoPath): array
     {
-        // IMEI Uniqueness check within company
-        $exists = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('imei_1', $request->imei_1)
-            ->exists();
+        // IMEI Uniqueness check within company using Repository
+        $exists = $this->stockRepo->existsByImei($request->imei_1, $companyId);
 
         if ($exists) {
             return [
@@ -59,7 +65,7 @@ class NewMobileStockService
             'line_total'        => $phoneCost,
         ]);
 
-        DB::table('ms_mobile_devices')->insert([
+        $this->stockRepo->insertDevice([
             'company_id' => $companyId,
             'purchase_order_id' => $poId,
             'type' => 'new',
@@ -76,8 +82,6 @@ class NewMobileStockService
             'box_photo_path' => $photoPath,
             'status' => 'in_stock',
             'condition_grade' => 'brand_new',
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return [

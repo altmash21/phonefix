@@ -2,10 +2,19 @@
 
 namespace App\Services\MobileShop\Stock;
 
+use App\Repositories\MobileShop\Contracts\MsStockRepositoryInterface;
+use App\Repositories\MobileShop\MsStockRepository;
 use Illuminate\Support\Facades\DB;
 
 class StockDeletionService
 {
+    protected MsStockRepositoryInterface $stockRepo;
+
+    public function __construct(?MsStockRepositoryInterface $stockRepo = null)
+    {
+        $this->stockRepo = $stockRepo ?? app(MsStockRepositoryInterface::class);
+    }
+
     /**
      * Delete / reduce stock item (part or mobile phone) and record audit trail
      */
@@ -75,10 +84,7 @@ class StockDeletionService
 
         } else {
             // Phone: new_phone or second_hand
-            $device = DB::table('ms_mobile_devices')
-                ->where('company_id', $companyId)
-                ->where('id', $id)
-                ->first();
+            $device = $this->stockRepo->findById($id, $companyId);
 
             if (!$device) {
                 return ['success' => false, 'message' => 'Mobile device not found in inventory.', 'status_code' => 404];
@@ -93,10 +99,7 @@ class StockDeletionService
             }
 
             DB::transaction(function () use ($id, $device, $type, $fullReason, $user, $companyId) {
-                DB::table('ms_mobile_devices')->where('id', $id)->update([
-                    'status'     => 'deleted',
-                    'updated_at' => now(),
-                ]);
+                $this->stockRepo->updateStatus($id, 'deleted');
 
                 DB::table('ms_stock_audit_log')->insert([
                     'company_id'    => $companyId,

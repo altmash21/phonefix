@@ -130,6 +130,31 @@ $formComponent = new class extends \App\Abstracts\View\Components\Documents\Form
 };
 check("Documents\Form instantiates and includes HasFormDatesAndNumbers", method_exists($formComponent, 'getIssuedAt'), $passed, $failed);
 
+// 5. Gate & Repository DI Tests
+check("Gate::allows('sale.create') for admin", \Illuminate\Support\Facades\Gate::forUser($adminUser)->allows('sale.create'), $passed, $failed);
+check("Gate::allows('sale.create') for sales staff", \Illuminate\Support\Facades\Gate::forUser($salesUser)->allows('sale.create'), $passed, $failed);
+
+$stockService = app(\App\Services\MobileShop\Stock\NewMobileStockService::class);
+check("NewMobileStockService resolves with injected MsStockRepository", method_exists($stockService, 'store'), $passed, $failed);
+
+// 6. Pending Jobs Queue & Processor Test
+$jobId = DB::table('ms_pending_jobs')->insertGetId([
+    'company_id' => $companyId,
+    'job_type'   => 'pdf:invoice',
+    'payload'    => json_encode(['sale_id' => 999]),
+    'status'     => 'pending',
+    'created_at' => now(),
+    'updated_at' => now(),
+]);
+check("ms_pending_jobs table accepts queued job", $jobId > 0, $passed, $failed);
+
+\Illuminate\Support\Facades\Artisan::call('mobileshop:process-jobs', ['--limit' => 5]);
+$processedJob = DB::table('ms_pending_jobs')->where('id', $jobId)->first();
+check("mobileshop:process-jobs processes and completes job", $processedJob && $processedJob->status === 'completed', $passed, $failed);
+
+// Clean up test job
+DB::table('ms_pending_jobs')->where('id', $jobId)->delete();
+
 echo "\n==========================================\n";
 echo "Total Checks: " . ($passed + $failed) . " | Passed: $passed | Failed: $failed\n";
 echo "==========================================\n";

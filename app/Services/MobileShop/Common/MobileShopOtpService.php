@@ -70,7 +70,7 @@ class MobileShopOtpService
             'action'         => $action,
             'item_reference' => $itemReference,
             'otp_code'       => Hash::make($otp),
-            'expires_at'     => Carbon::now()->addMinutes(10),
+            'expires_at'     => Carbon::now()->addMinutes(5),
             'created_at'     => Carbon::now(),
         ]);
 
@@ -78,7 +78,7 @@ class MobileShopOtpService
         $requesterName  = auth()->check() ? auth()->user()->name : "User #{$userId}";
 
         try {
-            Mail::raw("Security Notice: Restricted Action '{$readableAction}' requested on item reference '{$itemReference}' by {$requesterName}.\n\nYour 6-digit Authorization Code is: {$otp}\n\nThis OTP expires in 10 minutes. If you did not authorize this action, do not disclose this code.", function ($message) use ($ownerEmail, $readableAction) {
+            Mail::raw("Security Notice: Restricted Action '{$readableAction}' requested on item reference '{$itemReference}' by {$requesterName}.\n\nYour 6-digit Authorization Code is: {$otp}\n\nThis OTP expires in 5 minutes. If you did not authorize this action, do not disclose this code.", function ($message) use ($ownerEmail, $readableAction) {
                 $message->to($ownerEmail)->subject("Security Authorization OTP: {$readableAction}");
             });
         } catch (\Throwable $e) {
@@ -94,12 +94,13 @@ class MobileShopOtpService
         return [
             'sent'         => true,
             'target_email' => $maskedEmail,
-            'expires_in'   => 600,
+            'expires_in'   => 300,
         ];
     }
 
     /**
      * Verify OTP token for a specific action and item reference.
+     * Enforces rate limiting (max 5 verification attempts per 5 minutes).
      */
     public static function verifyOtp(int $companyId, string $action, string $itemReference, ?string $code, bool $isOwner): bool
     {
@@ -108,6 +109,13 @@ class MobileShopOtpService
         }
 
         if (empty($code)) {
+            return false;
+        }
+
+        $throttleKey = 'otp_verify:' . (auth()->id() ?? request()->ip()) . ':' . $action . ':' . $itemReference;
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            Log::warning("OTP verification locked out for key: {$throttleKey}");
             return false;
         }
 
@@ -128,10 +136,12 @@ class MobileShopOtpService
                 DB::table('ms_otp_tokens')->where('id', $token->id)->update([
                     'verified_at' => Carbon::now(),
                 ]);
+                RateLimiter::clear($throttleKey);
                 return true;
             }
         }
 
+        RateLimiter::hit($throttleKey, 300);
         return false;
     }
 }

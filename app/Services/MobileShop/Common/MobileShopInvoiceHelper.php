@@ -3,6 +3,7 @@
 namespace App\Services\MobileShop\Common;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class MobileShopInvoiceHelper
@@ -51,11 +52,18 @@ class MobileShopInvoiceHelper
     }
 
     /**
-     * Resolve current store default state code (e.g., UP 09 or MH 27)
+     * Resolve current store default state code (e.g., UP 09 or MH 27) with 15-minute cache
      */
     public static function getStoreStateCode(): string
     {
-        return (string) setting('company.state_code', '09');
+        return (string) Cache::remember('store:state_code', 900, function () {
+            return (string) setting('company.state_code', '09');
+        });
+    }
+
+    public static function clearInvoiceCache(): void
+    {
+        Cache::forget('store:state_code');
     }
 
     /**
