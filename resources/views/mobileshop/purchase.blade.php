@@ -55,12 +55,60 @@
         position: relative;
     }
 
-
     .purchase-search-wrapper {
         width: 280px;
     }
     .purchase-search-box {
         width: 100%;
+    }
+
+    /* Responsive Modal Form Grids */
+    .modal-form-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    .modal-form-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    @media (max-width: 639px) {
+        .modal-form-grid-2,
+        .modal-form-grid-3 {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+        }
+        /* Mobile Bottom-sheet styling for inline modals */
+        #purchaseAddMobileModal,
+        #purchaseBuybackModal,
+        #purchaseAddPartModal,
+        #paymentModal,
+        #editSupplierModal {
+            align-items: flex-end !important;
+            padding: 0 !important;
+        }
+        #purchaseAddMobileModal .card,
+        #purchaseBuybackModal .card,
+        #purchaseAddPartModal .card,
+        #paymentModal .card,
+        #editSupplierModal .card {
+            max-width: 100% !important;
+            width: 100% !important;
+            border-radius: 16px 16px 0 0 !important;
+            max-height: 92vh !important;
+            margin: 0 !important;
+        }
+        .modal-sticky-footer {
+            position: sticky;
+            bottom: 0;
+            background: #FFFFFF;
+            z-index: 10;
+            padding: 12px 16px;
+            border-top: 1px solid #E2E8F0;
+        }
     }
 
     /* ─── RESPONSIVE BREAKPOINTS (Mobile < 768px) ─── */
@@ -686,7 +734,7 @@
 
                     <div class="form-group" style="margin-bottom:12px;">
                         <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Amount Sent (₹) *</label>
-                        <input type="number" step="0.01" name="amount" id="payAmount" required placeholder="0.00" class="form-control" style="font-size:16px; font-weight:800; color:#16A34A;">
+                        <input type="number" step="0.01" inputmode="decimal" name="amount" id="payAmount" required placeholder="0.00" class="form-control" style="font-size:16px; font-weight:800; color:#16A34A;">
                     </div>
 
                     <div class="form-group" style="margin-bottom:12px;">
@@ -704,7 +752,7 @@
                         <input type="text" name="reference_no" placeholder="e.g. UTR-948102948" class="form-control" style="font-size:13px;">
                     </div>
 
-                    <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
+                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closePaymentModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
                         <button type="submit" class="btn btn-primary" style="font-size:12px;">Save Payment</button>
                     </div>
@@ -732,12 +780,12 @@
                         <input type="text" name="name" id="editSupplierName" required class="form-control" style="font-size:13px;">
                     </div>
 
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-                        <div class="form-group">
+                    <div class="modal-form-grid-2">
+                        <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-weight:700; font-size:12px; margin-bottom:4px; display:block;">Phone</label>
-                            <input type="text" name="phone" id="editSupplierPhone" class="form-control" style="font-size:13px;">
+                            <input type="text" name="phone" id="editSupplierPhone" inputmode="numeric" class="form-control" style="font-size:13px;">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-weight:700; font-size:12px; margin-bottom:4px; display:block;">GSTIN</label>
                             <input type="text" name="gstin" id="editSupplierGstin" class="form-control" style="font-size:13px;">
                         </div>
@@ -750,7 +798,7 @@
 
                     <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:12px; margin-bottom:12px;">
                         <label class="form-label" style="font-weight:700; font-size:12px; color:#166534; margin-bottom:4px; display:block;">Prepaid Advance Wallet (₹)</label>
-                        <input type="number" step="0.01" min="0" name="credit_balance" id="editSupplierCredit" class="form-control" style="font-weight:800; font-size:16px; color:#15803D;">
+                        <input type="number" step="0.01" min="0" inputmode="decimal" name="credit_balance" id="editSupplierCredit" class="form-control" style="font-weight:800; font-size:16px; color:#15803D;">
                         <div style="font-size:10.5px; color:#166534; margin-top:4px;">Direct balance modification records an audit transaction in the supplier credit ledger.</div>
                     </div>
 
@@ -759,7 +807,7 @@
                         <input type="text" name="adjustment_notes" class="form-control" placeholder="e.g. Ledger reconciliation" style="font-size:13px;">
                     </div>
 
-                    <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
+                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closeEditSupplierModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
                         <button type="submit" class="btn btn-primary" style="font-size:12px;">Update Supplier</button>
                     </div>
@@ -796,7 +844,7 @@
                         <div style="font-size:10px; color:#64748B; margin-top:4px;">JPG, PNG, WebP up to 5MB</div>
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Brand *</label>
                             <input type="text" name="brand" placeholder="e.g. Samsung / Apple" required class="form-control" style="font-size:13px;">
@@ -807,7 +855,7 @@
                         </div>
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Color</label>
                             <input type="text" name="color" placeholder="e.g. Titanium Black" class="form-control" style="font-size:13px;">
@@ -818,29 +866,29 @@
                         </div>
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Primary IMEI *</label>
-                            <input type="text" name="imei_1" required placeholder="15-digit IMEI" class="form-control" style="font-family:monospace; font-weight:700; font-size:13px;">
+                            <input type="text" name="imei_1" required placeholder="15-digit IMEI" inputmode="numeric" class="form-control" style="font-family:monospace; font-weight:700; font-size:13px;">
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">IMEI 2 (Optional)</label>
-                            <input type="text" name="imei_2" placeholder="Optional" class="form-control" style="font-family:monospace; font-size:13px;">
+                            <input type="text" name="imei_2" placeholder="Optional" inputmode="numeric" class="form-control" style="font-family:monospace; font-size:13px;">
                         </div>
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 14px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Purchase Cost (₹) *</label>
-                            <input type="number" step="0.01" name="purchase_cost" required placeholder="0.00" class="form-control" style="font-size:13px;">
+                            <input type="number" step="0.01" name="purchase_cost" required placeholder="0.00" inputmode="decimal" class="form-control" style="font-size:13px;">
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Selling Price (₹) *</label>
-                            <input type="number" step="0.01" name="selling_price" required placeholder="0.00" class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
+                            <input type="number" step="0.01" name="selling_price" required placeholder="0.00" inputmode="decimal" class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
                         </div>
                     </div>
 
-                    <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
+                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closePurchaseAddMobileModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
                         <button type="submit" class="btn btn-primary" style="font-size:12px;">Add Phone to Inventory</button>
                     </div>
@@ -876,7 +924,7 @@
                         </label>
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Brand *</label>
                             <input type="text" name="brand" placeholder="e.g. Apple" required class="form-control" style="font-size:13px;">
@@ -887,7 +935,7 @@
                         </div>
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                    <div class="form-row modal-form-grid-3" style="margin-bottom: 12px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Color</label>
                             <input type="text" name="color" placeholder="Blue" class="form-control" style="font-size:13px;">
@@ -898,23 +946,23 @@
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Battery %</label>
-                            <input type="number" name="battery_health" placeholder="88" class="form-control" style="font-size:13px;">
+                            <input type="number" name="battery_health" placeholder="88" inputmode="numeric" class="form-control" style="font-size:13px;">
                         </div>
                     </div>
 
                     <div class="form-group" style="margin-bottom:12px;">
                         <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">IMEI 1 *</label>
-                        <input type="text" name="imei_1" placeholder="15-digit IMEI" required class="form-control" style="font-family:monospace; font-weight:700; font-size:13px;">
+                        <input type="text" name="imei_1" placeholder="15-digit IMEI" required inputmode="numeric" class="form-control" style="font-family:monospace; font-weight:700; font-size:13px;">
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Buyback Cost (₹) *</label>
-                            <input type="number" step="0.01" name="purchase_cost" placeholder="42000" required class="form-control" style="font-size:13px;">
+                            <input type="number" step="0.01" name="purchase_cost" placeholder="42000" required inputmode="decimal" class="form-control" style="font-size:13px;">
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Resale Price (₹) *</label>
-                            <input type="number" step="0.01" name="selling_price" placeholder="54999" required class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
+                            <input type="number" step="0.01" name="selling_price" placeholder="54999" required inputmode="decimal" class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
                         </div>
                     </div>
 
@@ -929,9 +977,9 @@
 
                     <div style="padding: 12px; background: #FFF7ED; border: 1px solid #FED7AA; border-radius:10px; margin-bottom: 12px;">
                         <div style="font-size:11px; font-weight:800; color:#C2410C; margin-bottom: 8px; text-transform:uppercase;">Customer KYC / Seller Info</div>
-                        <div class="form-row" style="margin-bottom: 8px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="form-row modal-form-grid-2" style="margin-bottom: 8px;">
                             <input type="text" name="customer_buyback_name" placeholder="Customer Name *" required class="form-control" style="font-size:12px;">
-                            <input type="text" name="customer_buyback_phone" placeholder="Customer Phone *" required class="form-control" style="font-size:12px;">
+                            <input type="text" name="customer_buyback_phone" placeholder="Customer Phone *" required inputmode="tel" class="form-control" style="font-size:12px;">
                         </div>
                         <input type="text" name="customer_buyback_id_proof" placeholder="Aadhaar / ID Details (Optional)" class="form-control" style="font-size:12px;">
                     </div>
@@ -941,7 +989,7 @@
                         <textarea name="checklist_notes" rows="2" placeholder="e.g. Original display, FaceID verified" class="form-control" style="font-size:12px;"></textarea>
                     </div>
 
-                    <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
+                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closePurchaseBuybackModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
                         <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Save Pre-Owned to Stock</button>
                     </div>
@@ -967,7 +1015,7 @@
                     @csrf
                     <input type="hidden" name="redirect_to" value="{{ route('mobileshop.purchase') }}">
 
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Category *</label>
                             <select name="category" required class="form-control" style="font-size:13px;">
@@ -993,29 +1041,29 @@
                         <input type="text" name="compatible_model" placeholder="e.g. iPhone 15 / Universal" class="form-control" style="font-size:13px;">
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Unit Cost (₹) *</label>
-                            <input type="number" step="0.01" name="unit_cost" placeholder="250.00" required class="form-control" style="font-size:13px;">
+                            <input type="number" step="0.01" name="unit_cost" placeholder="250.00" required inputmode="decimal" class="form-control" style="font-size:13px;">
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Selling Price (₹) *</label>
-                            <input type="number" step="0.01" name="selling_price" placeholder="499.00" required class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
+                            <input type="number" step="0.01" name="selling_price" placeholder="499.00" required inputmode="decimal" class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
                         </div>
                     </div>
 
-                    <div class="form-row" style="margin-bottom: 14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-row modal-form-grid-2" style="margin-bottom: 14px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Initial Stock Qty *</label>
-                            <input type="number" name="stock_qty" value="10" required class="form-control" style="font-size:13px;">
+                            <input type="number" name="stock_qty" value="10" required inputmode="numeric" class="form-control" style="font-size:13px;">
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Low Stock Alert</label>
-                            <input type="number" name="min_stock_alert" value="3" class="form-control" style="font-size:13px;">
+                            <input type="number" name="min_stock_alert" value="3" inputmode="numeric" class="form-control" style="font-size:13px;">
                         </div>
                     </div>
 
-                    <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
+                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closePurchaseAddPartModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
                         <button type="submit" class="btn btn-primary" style="background:#16A34A; border-color:#16A34A; font-size:12px;">Add Part to Stock</button>
                     </div>

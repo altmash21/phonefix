@@ -20,9 +20,115 @@
     </div>
 @endsection
 
+@push('styles')
+<style>
+    /* Repair Status Rail: horizontal smooth swipe on mobile */
+    .repair-status-rail {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 8px 12px;
+        background: #F8FAFC;
+        border-bottom: 1px solid #E2E8F0;
+        scrollbar-width: none;
+    }
+    .repair-status-rail::-webkit-scrollbar {
+        display: none;
+    }
+    .repair-status-rail .filter-pill {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Responsive Form Grid for Add Repair Ticket */
+    .repair-form-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .repair-form-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    /* Mobile Repairs Cards Container */
+    .mobile-repairs-cards {
+        display: none;
+        flex-direction: column;
+        gap: 0;
+        background: #FFFFFF;
+        border-top: none;
+    }
+
+    .repair-flat-row {
+        padding: 12px 14px;
+        border-bottom: 1px solid #F1F5F9;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        background: #FFFFFF;
+        transition: background 0.15s;
+    }
+    .repair-flat-row:active {
+        background: #F8FAFC;
+    }
+    .repair-flat-row:last-child {
+        border-bottom: none;
+    }
+
+    /* Breakpoint Rules */
+    @media (max-width: 767px) {
+        .hide-on-mobile,
+        .desktop-repair-table-wrap {
+            display: none !important;
+        }
+        .mobile-repairs-cards {
+            display: flex !important;
+        }
+        .repair-form-grid-3,
+        .repair-form-grid-2 {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+        }
+        /* Mobile Bottom Sheet for updateRepairModal */
+        #updateRepairModal {
+            align-items: flex-end !important;
+            padding: 0 !important;
+        }
+        #updateRepairModal .card {
+            max-width: 100% !important;
+            width: 100% !important;
+            border-radius: 16px 16px 0 0 !important;
+            max-height: 92vh !important;
+            margin: 0 !important;
+        }
+        #updateRepairModal .modal-sticky-footer {
+            position: sticky;
+            bottom: 0;
+            background: #FFFFFF;
+            z-index: 10;
+            padding: 12px 16px;
+            border-top: 1px solid #E2E8F0;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .desktop-repair-table-wrap {
+            display: block !important;
+        }
+        .mobile-repairs-cards {
+            display: none !important;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
-
-
 
 <!-- Add Repair Form Card (collapsible) -->
 <div class="card" style="margin-bottom:12px; display:none;" id="add-repair-card">
@@ -38,14 +144,14 @@
     <div class="card-body">
         <form method="POST" action="{{ route('mobileshop.repairs.store') }}">
             @csrf
-            <div class="form-row" style="margin-bottom:14px;">
+            <div class="repair-form-grid-3">
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label required">Customer Name</label>
                     <input type="text" name="customer_name" class="form-control" placeholder="Customer Full Name" required>
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label required">Phone Number</label>
-                    <input type="text" name="customer_phone" class="form-control" placeholder="10-digit Mobile Number" required>
+                    <input type="text" name="customer_phone" inputmode="numeric" pattern="[0-9]*" class="form-control" placeholder="10-digit Mobile Number" required>
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label required">Device Brand</label>
@@ -53,14 +159,14 @@
                 </div>
             </div>
 
-            <div class="form-row" style="margin-bottom:14px;">
+            <div class="repair-form-grid-3">
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label required">Device Model</label>
                     <input type="text" name="model" class="form-control" placeholder="e.g. Galaxy S23 Ultra / iPhone 14" required>
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">IMEI / Serial No.</label>
-                    <input type="text" name="imei_serial" class="form-control" placeholder="15-digit IMEI or Serial Number">
+                    <input type="text" name="imei_serial" inputmode="numeric" class="form-control" placeholder="15-digit IMEI or Serial Number">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label required">Reported Fault / Problem</label>
@@ -68,14 +174,14 @@
                 </div>
             </div>
 
-            <div class="form-row" style="margin-bottom:14px;">
+            <div class="repair-form-grid-3">
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">Estimated Repair Cost (₹)</label>
-                    <input type="number" step="0.01" name="estimated_cost" class="form-control" placeholder="0.00">
+                    <input type="number" step="0.01" inputmode="decimal" name="estimated_cost" class="form-control" placeholder="0.00">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">Advance Deposit Received (₹)</label>
-                    <input type="number" step="0.01" name="advance_paid" class="form-control" placeholder="0.00">
+                    <input type="number" step="0.01" inputmode="decimal" name="advance_paid" class="form-control" placeholder="0.00">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">Physical Condition / Remarks</label>
@@ -83,7 +189,7 @@
                 </div>
             </div>
 
-            <div class="form-row" style="margin-bottom:14px;">
+            <div class="repair-form-grid-2">
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">Device Passcode / PIN / Pattern</label>
                     <input type="text" name="passcode" class="form-control" placeholder="e.g. 1234 or Pattern: L-Shape">
@@ -118,9 +224,9 @@
         </div>
     </div>
 
-    <!-- Interactive Status Filter Bar -->
-    <div class="filter-bar">
-        <span style="font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-right:4px;">Status:</span>
+    <!-- Interactive Status Filter Bar (Scrollable Rail on Mobile) -->
+    <div class="repair-status-rail">
+        <span style="font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-right:4px; flex-shrink:0;">Status:</span>
         <button type="button" class="filter-pill active" id="pill-rep-all" onclick="applyRepairFilter('all', this)">
             <i data-lucide="layers" style="width:13px;height:13px;"></i> All Jobs <span class="pill-count">{{ count($tickets ?? []) }}</span>
         </button>
@@ -128,7 +234,7 @@
             <i data-lucide="inbox" style="width:13px;height:13px;"></i> Received <span class="pill-count">{{ collect($tickets ?? [])->where('status', 'received')->count() }}</span>
         </button>
         <button type="button" class="filter-pill filter-pill-warning" id="pill-rep-in-repair" onclick="applyRepairFilter('in_repair', this)">
-            <i data-lucide="wrench" style="width:13px;height:13px;"></i> In Diagnosis / Repair <span class="pill-count">{{ collect($tickets ?? [])->whereIn('status', ['in_diagnosis', 'in_repair'])->count() }}</span>
+            <i data-lucide="wrench" style="width:13px;height:13px;"></i> In Repair <span class="pill-count">{{ collect($tickets ?? [])->whereIn('status', ['in_diagnosis', 'in_repair'])->count() }}</span>
         </button>
         <button type="button" class="filter-pill filter-pill-danger" id="pill-rep-waiting" onclick="applyRepairFilter('waiting_for_parts', this)">
             <i data-lucide="clock" style="width:13px;height:13px;"></i> Waiting Parts <span class="pill-count">{{ collect($tickets ?? [])->where('status', 'waiting_for_parts')->count() }}</span>
@@ -141,7 +247,7 @@
         </button>
     </div>
 
-    <div class="data-table-wrap">
+    <div class="data-table-wrap desktop-repair-table-wrap">
         <table class="data-table" id="repairTable">
             <thead>
                 <tr>
@@ -262,6 +368,86 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Mobile Repairs Cards List (Shown on Mobile < 768px) -->
+    <div id="repairsMobileCards" class="mobile-repairs-cards">
+        @forelse($tickets ?? [] as $repair)
+            @php
+                $st = $repair->status ?? 'received';
+                $badgeBg = '#F1F5F9';
+                $badgeColor = '#475569';
+                if ($st === 'received') { $badgeBg = '#EDE9FE'; $badgeColor = '#6D28D9'; }
+                elseif ($st === 'in_diagnosis') { $badgeBg = '#DBEAFE'; $badgeColor = '#1D4ED8'; }
+                elseif ($st === 'waiting_for_parts') { $badgeBg = '#FEE2E2'; $badgeColor = '#B91C1C'; }
+                elseif ($st === 'in_repair') { $badgeBg = '#FFEDD5'; $badgeColor = '#C2410C'; }
+                elseif ($st === 'ready') { $badgeBg = '#DCFCE7'; $badgeColor = '#15803D'; }
+                elseif ($st === 'delivered') { $badgeBg = '#DCFCE7'; $badgeColor = '#15803D'; }
+                elseif ($st === 'cancelled') { $badgeBg = '#FEE2E2'; $badgeColor = '#B91C1C'; }
+                
+                $balanceDue = (float)($repair->balance_due ?? 0);
+                $totalAmount = (float)($repair->total_amount ?? $repair->estimated_cost ?? 0);
+            @endphp
+            <div class="repair-flat-row" data-status="{{ $repair->status ?? 'received' }}" id="repairCard_{{ $repair->id }}">
+                <div class="row-line1" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="inv-num" style="font-weight:800; color:var(--brand-700);">
+                        {{ $repair->ticket_number ?? ('#REP-' . str_pad($repair->id, 4, '0', STR_PAD_LEFT)) }}
+                    </span>
+                    <span class="pay-badge" style="background:{{ $badgeBg }}; color:{{ $badgeColor }}; font-weight:700; padding:2px 6px; border-radius:4px; font-size:10px; text-transform:uppercase;">
+                        {{ str_replace('_', ' ', $st) }}
+                    </span>
+                    @if($balanceDue > 0)
+                        <span class="pay-badge" style="background:#FEF2F2; color:#DC2626; font-weight:700; padding:2px 6px; border-radius:4px; font-size:10px;">
+                            Due: ₹{{ number_format($balanceDue, 0) }}
+                        </span>
+                    @else
+                        <span class="pay-badge" style="background:#DCFCE7; color:#16A34A; font-weight:700; padding:2px 6px; border-radius:4px; font-size:10px;">
+                            ✓ Paid
+                        </span>
+                    @endif
+                    <div class="row-amount" style="font-weight:800; color:#0F172A;">₹{{ number_format($totalAmount, 0) }}</div>
+                </div>
+                <div class="row-line2" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="cust-name" style="font-weight:700; color:#0F172A; font-size:13px;">
+                        {{ $repair->customer_name }}
+                        <span style="font-weight:600; color:#1E293B; font-size:12px;">• {{ $repair->brand }} {{ $repair->model }}</span>
+                    </div>
+                    <a href="tel:{{ $repair->customer_phone }}" class="cust-phone" style="color:var(--brand-700); text-decoration:none; display:inline-flex; align-items:center; gap:4px; font-weight:700; font-size:12px;">
+                        <i data-lucide="phone" style="width:12px;height:12px;"></i> {{ $repair->customer_phone }}
+                    </a>
+                </div>
+                <div class="row-line3" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="items-summary" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <span style="color:#C2410C; font-weight:600; font-size:12px;">⚠ {{ $repair->reported_faults }}</span>
+                        @if($repair->decrypted_pin && $repair->decrypted_pin !== 'None')
+                            <span style="background:#F1F5F9; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; color:#475569;">
+                                🔑 {{ $repair->decrypted_pin }}
+                            </span>
+                        @endif
+                    </div>
+                    <div class="row-actions" style="display:flex; gap:6px; align-items:center;">
+                        <button type="button" class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:11px; height:28px;"
+                            onclick="openUpdateModal({{ json_encode($repair) }})">
+                            <i data-lucide="wrench" style="width:12px;height:12px;"></i> Service
+                        </button>
+                        <a href="{{ route('public.track_repair', ['ticket_number' => $repair->ticket_number]) }}" target="_blank" class="compact-action-btn" title="Public Tracking View" style="padding:4px 6px; border:1px solid #CBD5E1; border-radius:6px; color:#475569; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
+                            <i data-lucide="external-link" style="width:13px;height:13px;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div style="text-align:center; padding:32px 16px; color:#94A3B8;">
+                <i data-lucide="inbox" style="width:32px;height:32px; margin-bottom:8px;"></i>
+                <div style="font-weight:700; font-size:13px; color:#475569;">No repair tickets found</div>
+            </div>
+        @endforelse
+        <div id="repairMobileEmptyFilterRow" style="display:none; text-align:center; padding:28px 16px; color:#64748B;">
+            <div style="font-weight:700; color:#1E293B; font-size:13px; margin-bottom:4px;">No repairs match this filter</div>
+            <button type="button" onclick="applyRepairFilter('all')" class="filter-pill" style="cursor:pointer; background:var(--brand-700); color:#fff; border:none; padding:5px 14px; border-radius:6px; font-weight:700; font-size:11.5px; margin-top:8px;">
+                Show All Repairs
+            </button>
+        </div>
+    </div>
     <div id="repairsPagination"></div>
 </div>
 
@@ -276,9 +462,8 @@
             <button onclick="closeUpdateModal()" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; padding:4px 8px;">✕</button>
         </div>
         <div class="card-body">
-            <form id="updateRepairForm" method="POST" action="" onsubmit="if(typeof MT !== 'undefined'){ MT.enqueue('update', 'ms_repair_tickets', {source:'updateRepairForm', action:'updateRepairStatus'}); }">
+            <form id="updateRepairForm" method="POST" action="">
                 @csrf
-
                 <!-- Status Selection -->
                 <div class="form-group" style="margin-bottom:16px;">
                     <label class="form-label required" style="font-weight:700;">Repair Stage / Status</label>
@@ -299,19 +484,12 @@
                         <i data-lucide="package-minus" style="width:16px;height:16px;color:var(--brand-600);"></i>
                         Use Spare Part from Shop Inventory (Auto-Deducts Stock)
                     </div>
-                    <div style="font-size:12px; color:#64748B; margin-bottom:10px;">
-                        Select any replacement screen, folder, battery or accessory from inventory. It will deduct from stock and add its price to the customer's repair bill.
-                    </div>
-
                     <div class="repair-part-picker" style="position:relative; margin-bottom:12px;">
                         <input type="hidden" name="consumed_part_id" id="modalPartId" value="">
-                        
                         <div style="position:relative;">
-                            <input type="text" id="modalPartSearchInput" class="form-control" placeholder="🔍 Search spare part by name, brand, model, folder (OG/Normal)..." autocomplete="off" style="width:100%; padding-right:34px; font-size:13px;">
+                            <input type="text" id="modalPartSearchInput" class="form-control" placeholder="🔍 Search spare part..." autocomplete="off" style="width:100%; padding-right:34px; font-size:13px;">
                             <button type="button" id="modalPartClearBtn" onclick="clearSelectedRepairPart()" style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748B; cursor:pointer; font-size:16px; padding:2px 6px;">✕</button>
                         </div>
-
-                        <!-- Selected Part Preview Card -->
                         <div id="modalSelectedPartCard" style="display:none; margin-top:8px; padding:10px 12px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; align-items:center; justify-content:space-between;">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="badge badge-blue" id="selectedPartCatBadge" style="font-size:10px; font-weight:700;">PART</span>
@@ -325,18 +503,16 @@
                                 <div id="selectedPartStock" style="font-size:10px; color:#64748B;"></div>
                             </div>
                         </div>
-
-                        <!-- Live Search Results Dropdown -->
                         <div id="modalPartSearchResults" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1050; background:#fff; border:1px solid #CBD5E1; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.15); max-height:240px; overflow-y:auto; margin-top:4px;">
                         </div>
                     </div>
 
-                    <div style="display:flex; gap:12px; align-items:center;">
-                        <div style="flex:1;">
+                    <div class="repair-form-grid-2" style="margin-bottom:0;">
+                        <div>
                             <label class="form-label" style="font-size:11px;">Part Quantity</label>
-                            <input type="number" name="part_qty" id="modalPartQty" value="1" min="1" max="10" class="form-control" oninput="calculateModalTotals()">
+                            <input type="number" name="part_qty" id="modalPartQty" value="1" min="1" max="10" inputmode="numeric" class="form-control" oninput="calculateModalTotals()">
                         </div>
-                        <div style="flex:2;">
+                        <div>
                             <label class="form-label" style="font-size:11px;">Selected Part Cost (₹)</label>
                             <input type="text" id="modalPartCostDisplay" value="₹0.00" readonly class="form-control" style="background:#F1F5F9; font-weight:700; color:var(--brand-700);">
                         </div>
@@ -344,14 +520,14 @@
                 </div>
 
                 <!-- Financial & Labor Charges -->
-                <div class="form-row" style="margin-bottom:16px;">
+                <div class="repair-form-grid-2" style="margin-bottom:16px;">
                     <div class="form-group" style="margin-bottom:0;">
                         <label class="form-label">Labor / Service Fee (₹)</label>
-                        <input type="number" step="0.01" name="labor_charge" id="modalLaborInput" class="form-control" placeholder="0.00" oninput="calculateModalTotals()">
+                        <input type="number" step="0.01" inputmode="decimal" name="labor_charge" id="modalLaborInput" class="form-control" placeholder="0.00" oninput="calculateModalTotals()">
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
                         <label class="form-label">Collect Additional Payment (₹)</label>
-                        <input type="number" step="0.01" name="additional_payment" id="modalPaymentInput" class="form-control" placeholder="0.00" oninput="calculateModalTotals()">
+                        <input type="number" step="0.01" inputmode="decimal" name="additional_payment" id="modalPaymentInput" class="form-control" placeholder="0.00" oninput="calculateModalTotals()">
                     </div>
                 </div>
 
@@ -370,7 +546,7 @@
                     </div>
                 </div>
 
-                <div style="display:flex; justify-content:flex-end; gap:10px; padding-top:12px; border-top:1px solid var(--card-border);">
+                <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap:10px; padding-top:12px; border-top:1px solid var(--card-border);">
                     <button type="button" onclick="closeUpdateModal()" class="btn btn-outline">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i data-lucide="save" style="width:14px;height:14px;"></i> Save & Update Ticket
@@ -379,13 +555,15 @@
             </form>
         </div>
     </div>
-    <!-- Mobile Floating Action Button -->
-    <div class="mobile-fab-container">
-        <button type="button" class="btn-app-fab" onclick="toggleForm()" title="Log New Repair">
-            <i data-lucide="plus"></i>
-            <span>Log Repair</span>
-        </button>
-    </div>
+</div>
+
+<!-- Mobile Floating Action Button -->
+<div class="mobile-fab-container">
+    <button type="button" class="btn-app-fab" onclick="toggleForm()" title="Log New Repair">
+        <i data-lucide="plus"></i>
+        <span>Log Repair</span>
+    </button>
+</div>
 
 @endsection
 
@@ -399,12 +577,6 @@ function toggleForm() {
     if (card.style.display === 'block') card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (window.refreshIcons) window.refreshIcons();
     else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-}
-
-function filterTable(val) {
-    document.querySelectorAll('#repairTable tbody tr').forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
-    });
 }
 
 function openUpdateModal(repair) {
@@ -450,53 +622,50 @@ function clearSelectedRepairPart() {
     if (clearBtn) clearBtn.style.display = 'none';
     var card = document.getElementById('modalSelectedPartCard');
     if (card) card.style.display = 'none';
-    var results = document.getElementById('modalPartSearchResults');
-    if (results) results.style.display = 'none';
     calculateModalTotals();
 }
 
-function selectRepairPart(p) {
-    selectedRepairPart = p;
-    document.getElementById('modalPartId').value = p.id;
-    document.getElementById('modalPartSearchInput').value = p.name;
-    document.getElementById('modalPartClearBtn').style.display = 'block';
-
-    document.getElementById('selectedPartCatBadge').textContent = (p.category || 'PART').toUpperCase();
-    var quality = p.display_type ? ' [' + p.display_type + ']' : '';
-    document.getElementById('selectedPartTitle').textContent = p.name + quality;
-    var brandModel = [p.brand, p.compatible_model].filter(Boolean).join(' ');
-    document.getElementById('selectedPartSub').textContent = brandModel ? 'Fits: ' + brandModel : (p.description || '');
-    document.getElementById('selectedPartPrice').textContent = '₹' + parseFloat(p.selling_price || 0).toFixed(2);
-    document.getElementById('selectedPartStock').textContent = 'Stock: ' + p.stock_qty;
-
-    document.getElementById('modalSelectedPartCard').style.display = 'flex';
+function selectRepairPart(part) {
+    selectedRepairPart = part;
+    document.getElementById('modalPartId').value = part.id;
+    document.getElementById('modalPartSearchInput').value = part.name;
     document.getElementById('modalPartSearchResults').style.display = 'none';
+    
+    var clearBtn = document.getElementById('modalPartClearBtn');
+    if (clearBtn) clearBtn.style.display = 'block';
+
+    var card = document.getElementById('modalSelectedPartCard');
+    if (card) {
+        document.getElementById('selectedPartTitle').textContent = part.name;
+        document.getElementById('selectedPartSub').textContent = [part.brand, part.compatible_model].filter(Boolean).join(' • ') || 'Universal';
+        document.getElementById('selectedPartPrice').textContent = '₹' + parseFloat(part.selling_price).toFixed(2);
+        document.getElementById('selectedPartStock').textContent = 'In Stock: ' + part.stock_qty;
+        document.getElementById('selectedPartCatBadge').textContent = (part.category || 'PART').toUpperCase();
+        card.style.display = 'flex';
+    }
 
     calculateModalTotals();
 }
 
-function performRepairPartsSearch(q) {
+function performRepairPartsSearch(query) {
     var resultsContainer = document.getElementById('modalPartSearchResults');
-    if (!resultsContainer) return;
-    resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#94A3B8; font-size:12px;">Searching inventory...</div>';
+    if (!query || query.length < 1) {
+        resultsContainer.style.display = 'none';
+        return;
+    }
+
     resultsContainer.style.display = 'block';
+    resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#64748B; font-size:12px;"><i data-lucide="loader-2" style="width:14px;height:14px;display:inline-block;animation:spin 1s linear infinite;"></i> Searching parts inventory...</div>';
+    if (window.refreshIcons) window.refreshIcons();
 
-    var searchUrl = (window.mobiShopRoutes && window.mobiShopRoutes.partsSearch) 
-        ? window.mobiShopRoutes.partsSearch + '?q=' + encodeURIComponent(q)
-        : "{{ route('mobileshop.parts.search') }}?q=" + encodeURIComponent(q);
-
-    fetch(searchUrl, {
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(function(r) { return r.json(); })
+    fetch("{{ route('mobileshop.accessories.search_parts') }}?q=" + encodeURIComponent(query))
+    .then(function(res) { return res.json(); })
     .then(function(data) {
         if (!data.success || !data.parts || data.parts.length === 0) {
-            resultsContainer.innerHTML = '<div style="padding:14px; text-align:center; color:#94A3B8; font-size:12px;">No matching parts found in stock.</div>';
+            resultsContainer.innerHTML = '<div style="padding:12px; text-align:center; color:#94A3B8; font-size:12px;">No spare parts found matching "' + escapeHtml(query) + '".</div>';
             return;
         }
+
         var html = '';
         data.parts.forEach(function(p) {
             var outOfStock = p.stock_qty <= 0;
@@ -521,6 +690,7 @@ function performRepairPartsSearch(q) {
             '</div>';
         });
         resultsContainer.innerHTML = html;
+        if (window.refreshIcons) window.refreshIcons();
     })
     .catch(function(err) {
         console.error(err);
@@ -530,19 +700,14 @@ function performRepairPartsSearch(q) {
 
 function calculateModalTotals() {
     if (!currentTicket) return;
-
     const prevParts = parseFloat(currentTicket.parts_cost || 0);
     const prevAdvance = parseFloat(currentTicket.advance_paid || 0);
-    
     const unitPrice = parseFloat(selectedRepairPart?.selling_price || 0);
     const qty = parseInt(document.getElementById('modalPartQty').value || 1);
     const newPartCost = unitPrice * qty;
-
     document.getElementById('modalPartCostDisplay').value = `₹${newPartCost.toFixed(2)}`;
-
     const labor = parseFloat(document.getElementById('modalLaborInput').value || 0);
     const additionalPay = parseFloat(document.getElementById('modalPaymentInput').value || 0);
-
     const totalParts = prevParts + newPartCost;
     let grandTotal = labor + totalParts;
     if (grandTotal === 0 && parseFloat(currentTicket.estimated_cost || 0) > 0) {
@@ -550,7 +715,6 @@ function calculateModalTotals() {
     }
     const totalPaid = prevAdvance + additionalPay;
     const balanceDue = Math.max(0, grandTotal - totalPaid);
-
     document.getElementById('lblPrevParts').textContent = `₹${prevParts.toFixed(2)}`;
     document.getElementById('lblNewPart').textContent = `₹${newPartCost.toFixed(2)}`;
     document.getElementById('lblLabor').textContent = `₹${labor.toFixed(2)}`;
@@ -565,7 +729,7 @@ let currentRepairSearch = '';
 function applyRepairFilter(status, btnElement) {
     currentRepairStatus = status;
 
-    document.querySelectorAll('.filter-bar .filter-pill').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.repair-status-rail .filter-pill').forEach(p => p.classList.remove('active'));
     if (btnElement) {
         btnElement.classList.add('active');
     } else {
@@ -589,7 +753,9 @@ function onRepairSearch(term) {
 }
 
 function renderFilteredRepairs() {
+    // Desktop rows
     const rows = document.querySelectorAll('#repairTable tbody tr.repair-row');
+    let visibleDesktop = 0;
     rows.forEach(row => {
         const status = row.dataset.status || 'received';
         const rowText = row.textContent.toLowerCase();
@@ -609,7 +775,36 @@ function renderFilteredRepairs() {
         const isVisible = matchStatus && matchSearch;
         row.dataset.mobiHidden = isVisible ? '0' : '1';
         row.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleDesktop++;
     });
+
+    // Mobile cards
+    const cards = document.querySelectorAll('#repairsMobileCards .repair-flat-row');
+    let visibleMobile = 0;
+    cards.forEach(card => {
+        const status = card.dataset.status || 'received';
+        const cardText = card.textContent.toLowerCase();
+
+        let matchStatus = true;
+        if (currentRepairStatus === 'in_repair') {
+            matchStatus = (status === 'in_diagnosis' || status === 'in_repair');
+        } else if (currentRepairStatus !== 'all') {
+            matchStatus = (status === currentRepairStatus);
+        }
+
+        let matchSearch = true;
+        if (currentRepairSearch) {
+            matchSearch = cardText.includes(currentRepairSearch);
+        }
+
+        const isVisible = matchStatus && matchSearch;
+        card.dataset.mobiHidden = isVisible ? '0' : '1';
+        card.style.display = isVisible ? '' : 'none';
+        if (isVisible) visibleMobile++;
+    });
+
+    const mobEmpty = document.getElementById('repairMobileEmptyFilterRow');
+    if (mobEmpty) mobEmpty.style.display = (visibleMobile === 0) ? 'block' : 'none';
 
     if (window.repairsPager && typeof window.repairsPager.refresh === 'function') {
         window.repairsPager.refresh();
@@ -620,6 +815,8 @@ function initRepairsPage() {
     if (window.setupMobiTablePagination) {
         window.repairsPager = window.setupMobiTablePagination({
             tableId: 'repairTable',
+            cardsContainerId: 'repairsMobileCards',
+            cardSelector: '.repair-flat-row',
             paginationContainerId: 'repairsPagination',
             rowSelector: 'tbody tr.repair-row',
             pageSize: 25,
@@ -654,13 +851,17 @@ function initRepairsPage() {
     });
 }
 
+function escapeHtml(text) {
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initRepairsPage);
 } else {
     initRepairsPage();
 }
 
-// Close modal on escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeUpdateModal();
 });

@@ -54,7 +54,7 @@
                     </div>
                     <div class="form-group" id="newSupplierPhone" style="display:none;">
                         <label class="form-label">Supplier Phone</label>
-                        <input type="text" class="form-control" name="new_supplier_phone" placeholder="10-digit mobile">
+                        <input type="text" class="form-control" name="new_supplier_phone" inputmode="tel" placeholder="10-digit mobile">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Supplier Invoice No.</label>
@@ -133,15 +133,15 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Total Bill Amount (₹) <span style="color:#EF4444;">*</span></label>
-                        <input type="number" step="0.01" min="1" class="form-control" name="bill_total" id="billTotal" oninput="recalcPurchase()" required placeholder="e.g. 700000">
+                        <input type="number" step="0.01" min="1" class="form-control" name="bill_total" id="billTotal" inputmode="decimal" oninput="recalcPurchase()" required placeholder="e.g. 700000">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Paid Now (₹) <span style="color:#EF4444;">*</span></label>
-                        <input type="number" step="0.01" min="0" class="form-control" name="amount_paid" id="amountPaid" oninput="recalcPurchase()" required placeholder="e.g. 500000">
+                        <input type="number" step="0.01" min="0" class="form-control" name="amount_paid" id="amountPaid" inputmode="decimal" oninput="recalcPurchase()" required placeholder="e.g. 500000">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Apply Advance Credit (₹)</label>
-                        <input type="number" step="0.01" min="0" class="form-control" name="use_advance_credit" id="useAdvance" oninput="recalcPurchase()" placeholder="0.00">
+                        <input type="number" step="0.01" min="0" class="form-control" name="use_advance_credit" id="useAdvance" inputmode="decimal" oninput="recalcPurchase()" placeholder="0.00">
                         <div style="font-size:10.5px; color:#64748B; margin-top:4px;">Uses supplier's advance/credit wallet</div>
                     </div>
                     <div class="form-group">
@@ -173,7 +173,7 @@
             </div>
         </div>
 
-        <div style="display:flex; gap:12px; justify-content:flex-end; margin-bottom:40px;">
+        <div class="purchase-create-actions" style="display:flex; gap:12px; justify-content:flex-end; margin-bottom:40px;">
             <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline">Cancel</a>
             <button type="submit" class="btn btn-primary" id="submitPurchaseBtn" style="min-width:220px;">
                 <i data-lucide="save" style="width:15px;height:15px;"></i> Save Purchase & Add Stock
@@ -182,6 +182,21 @@
     </form>
 </div>
 @endsection
+
+@push('styles')
+<style>
+@media (max-width: 767px) {
+    .purchase-create-actions {
+        flex-direction: column-reverse;
+        width: 100%;
+    }
+    .purchase-create-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -194,9 +209,9 @@
         tr.innerHTML =
             '<td><input type="text" class="form-control" name="items[' + rowIdx + '][brand]" placeholder="e.g. Samsung" required style="padding:8px 10px;"></td>' +
             '<td><input type="text" class="form-control" name="items[' + rowIdx + '][model]" placeholder="e.g. Galaxy A15" required style="padding:8px 10px;"></td>' +
-            '<td><input type="number" class="form-control item-qty" name="items[' + rowIdx + '][qty]" min="1" value="1" required oninput="recalcPurchase()" style="padding:8px 10px;"></td>' +
-            '<td><input type="number" class="form-control item-cost" name="items[' + rowIdx + '][unit_cost]" step="0.01" min="0" required oninput="recalcPurchase()" placeholder="0.00" style="padding:8px 10px;"></td>' +
-            '<td><input type="number" class="form-control" name="items[' + rowIdx + '][selling_price]" step="0.01" min="1" required placeholder="0.00" style="padding:8px 10px;"></td>' +
+            '<td><input type="number" class="form-control item-qty" name="items[' + rowIdx + '][qty]" min="1" value="1" inputmode="numeric" required oninput="recalcPurchase()" style="padding:8px 10px;"></td>' +
+            '<td><input type="number" class="form-control item-cost" name="items[' + rowIdx + '][unit_cost]" step="0.01" min="0" inputmode="decimal" required oninput="recalcPurchase()" placeholder="0.00" style="padding:8px 10px;"></td>' +
+            '<td><input type="number" class="form-control" name="items[' + rowIdx + '][selling_price]" step="0.01" min="1" inputmode="decimal" required placeholder="0.00" style="padding:8px 10px;"></td>' +
             '<td><input type="text" class="form-control" name="items[' + rowIdx + '][ram]" placeholder="8GB" style="padding:8px 10px;"></td>' +
             '<td><input type="text" class="form-control" name="items[' + rowIdx + '][storage]" placeholder="128GB" style="padding:8px 10px;"></td>' +
             '<td style="font-weight:800; font-family:monospace; text-align:right; padding-right:14px;" class="line-total">₹0.00</td>' +
