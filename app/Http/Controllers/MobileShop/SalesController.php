@@ -199,7 +199,7 @@ class SalesController extends BaseMobileShopController
             return DB::table('ms_parts_inventory')
                 ->where('company_id', $companyId)
                 ->where('stock_qty', '>', 0)
-                ->select('id', 'name', 'category', 'sku', 'sale_price', 'stock_qty')
+                ->select('id', 'name', 'category', 'compatible_model', 'selling_price', 'stock_qty')
                 ->get();
         });
 
