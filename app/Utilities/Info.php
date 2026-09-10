@@ -30,8 +30,17 @@ class Info
         }
 
         $users_count = user_model_class()::query()->isNotCustomer()->count();
-        $invoices_count = Schema::hasTable('ms_mobile_sales') ? DB::table('ms_mobile_sales')->count() : 0;
-        $customers_count = Schema::hasTable('ms_customers') ? DB::table('ms_customers')->count() : 0;
+        try {
+            $invoices_count = DB::table('ms_mobile_sales')->count();
+        } catch (\Throwable $e) {
+            $invoices_count = 0;
+        }
+
+        try {
+            $customers_count = DB::table('ms_customers')->count();
+        } catch (\Throwable $e) {
+            $customers_count = 0;
+        }
 
         $info = array_merge(static::versions(), $basic, [
             'companies' => Company::count(),

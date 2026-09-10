@@ -27,7 +27,7 @@ class RedirectIfHitModuleSubscription
             return $next($request);
         }
 
-        if ($request->is(company_id() . '/apps/*')) {
+        if ($request->is(company_id() . '/apps/*') || $request->is(company_id() . '/mobileshop*')) {
             return $next($request);
         }
 
