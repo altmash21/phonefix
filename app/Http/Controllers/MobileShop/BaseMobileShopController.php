@@ -27,13 +27,26 @@ abstract class BaseMobileShopController extends Controller
             return $this->currentCompanyId;
         }
 
-        $companyId = company_id() ?? session('company_id') ?? (auth()->check() ? (auth()->user()->companies()->first()?->id ?? auth()->user()->company_id) : null);
+        // Fast path: Akaunting middleware already set the company in the container.
+        // Use it directly — no DB query needed.
+        $fromContainer = company_id();
+        if ($fromContainer) {
+            return $this->currentCompanyId = (int) $fromContainer;
+        }
+
+        // Slow path fallback: container not set, try session then user relationship.
+        $companyId = session('company_id')
+            ?? (auth()->check() ? (auth()->user()->company_id ?? auth()->user()->companies()->first()?->id) : null);
+
         if (!$companyId) {
             abort(403, 'Multi-tenant context error: No active company found in session.');
         }
+
+        // Only run the expensive authorization check in the slow path (first request for this company).
         if (auth()->check() && !auth()->user()->companies()->where('companies.id', $companyId)->exists()) {
             abort(403, 'Unauthorized company access attempt.');
         }
+
         return $this->currentCompanyId = (int) $companyId;
     }
 

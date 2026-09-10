@@ -1,0 +1,10 @@
+/**
+ * Maurya Mobile — MobileShop Admin Panel Tailwind CSS
+ *
+ * Pre-built Tailwind utility bundle for the mobileshop panel.
+ * Built with the same design tokens as the runtime CDN config.
+ * Replace cdn.tailwindcss.com with this compiled output.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
