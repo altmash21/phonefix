@@ -476,8 +476,8 @@ if (isset($_GET['api'])) {
     <!-- Live Server Health Summary Cards -->
     <div class="grid-cards">
         <div class="card">
-            <div class="metric-label">HTTP Protocol</div>
-            <div class="metric-val">
+            <div class="metric-label">HTTP Protocol (Browser / Server)</div>
+            <div class="metric-val" id="http-protocol-val">
                 <?= htmlspecialchars($httpVersion) ?>
                 <?php if ($httpVersion === 'HTTP/1.1'): ?>
                     <span class="badge-status badge-warn">Socket Limit: 6</span>
@@ -804,6 +804,18 @@ function renderNavigationTiming() {
         var ttfb = Math.max(0, nav.responseStart - nav.requestStart);
         var download = Math.max(0, nav.responseEnd - nav.responseStart);
         var total = Math.round(nav.duration || nav.responseEnd);
+
+        if (nav.nextHopProtocol) {
+            var p = nav.nextHopProtocol.toLowerCase();
+            var protoLabel = p === 'h2' ? 'HTTP/2' : (p === 'h3' ? 'HTTP/3' : (p.includes('1.1') ? 'HTTP/1.1' : p.toUpperCase()));
+            var isMultiplexed = p === 'h2' || p === 'h3';
+            var valEl = document.getElementById('http-protocol-val');
+            if (valEl) {
+                valEl.innerHTML = protoLabel + (isMultiplexed 
+                    ? ' <span class="badge-status badge-fast">Multiplexed</span>' 
+                    : ' <span class="badge-status badge-warn">Socket Limit: 6</span>');
+            }
+        }
     }
 
     var stages = [
