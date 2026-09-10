@@ -207,28 +207,38 @@ class ReportsQueryService
             ->limit(6)
             ->get();
 
-        // Timeline Trend Data (Past 7 Days)
+        // Timeline Trend Data (Past 7 Days - Aggregated in 2 fast queries)
+        $sevenDaysAgo = now()->subDays(6)->startOfDay();
+        $prefix = DB::getTablePrefix();
+        $mobGrouped7 = DB::table('ms_mobile_sales')
+            ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
+            ->where('ms_mobile_sales.company_id', $companyId)
+            ->where('ms_mobile_sales.status', '!=', 'voided')
+            ->where('ms_mobile_sales.created_at', '>=', $sevenDaysAgo)
+            ->selectRaw("DATE({$prefix}ms_mobile_sales.created_at) as d, SUM({$prefix}ms_mobile_sales.total_amount) as total_rev, SUM({$prefix}ms_mobile_devices.purchase_cost) as total_cost")
+            ->groupBy(DB::raw("DATE({$prefix}ms_mobile_sales.created_at)"))
+            ->get()
+            ->keyBy('d');
+
+        $accGrouped7 = DB::table('ms_accessory_sales')
+            ->where('company_id', $companyId)
+            ->where('status', '!=', 'voided')
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->selectRaw('DATE(created_at) as d, SUM(total_amount) as total_rev')
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->pluck('total_rev', 'd');
+
         $chartLabels = [];
         $chartRevenue = [];
         $chartProfit = [];
         for ($i = 6; $i >= 0; $i--) {
             $d = now()->subDays($i)->format('Y-m-d');
             $chartLabels[] = now()->subDays($i)->format('d M');
-            
-            $dayMobSales = DB::table('ms_mobile_sales')
-                ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
-                ->where('ms_mobile_sales.company_id', $companyId)
-                ->where('ms_mobile_sales.status', '!=', 'voided')
-                ->whereDate('ms_mobile_sales.created_at', $d);
-            
-            $dayMobRev = (float) $dayMobSales->sum('ms_mobile_sales.total_amount');
-            $dayMobCost = (float) $dayMobSales->sum('ms_mobile_devices.purchase_cost');
-            
-            $dayAccRev = (float) DB::table('ms_accessory_sales')
-                ->where('company_id', $companyId)
-                ->where('status', '!=', 'voided')
-                ->whereDate('created_at', $d)
-                ->sum('total_amount');
+
+            $mob = $mobGrouped7->get($d);
+            $dayMobRev = (float) ($mob->total_rev ?? 0);
+            $dayMobCost = (float) ($mob->total_cost ?? 0);
+            $dayAccRev = (float) ($accGrouped7[$d] ?? 0);
 
             $chartRevenue[] = round($dayMobRev + $dayAccRev, 2);
             $chartProfit[] = round(max(0, ($dayMobRev - $dayMobCost) + ($dayAccRev * 0.35)), 2);
