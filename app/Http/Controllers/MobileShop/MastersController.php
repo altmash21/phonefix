@@ -23,7 +23,7 @@ class MastersController extends BaseMobileShopController
         $canAccess = $user->hasRole('store-admin')
             || $user->hasRole('admin')
             || $user->hasRole('owner')
-            || $user->isOwner()
+            || $this->isOwner()
             || $user->can('read-mobileshop-masters')
             || $user->can('read-admin-panel');
 
@@ -58,19 +58,26 @@ class MastersController extends BaseMobileShopController
         })->get();
         $roles = Role::whereNotIn('name', ['admin'])->get();
 
-        $loginSessions = DB::table('ms_login_sessions')
-            ->join('users', 'ms_login_sessions.user_id', '=', 'users.id')
-            ->where('ms_login_sessions.company_id', $companyId)
-            ->select('ms_login_sessions.*', 'users.name as user_name', 'users.email as user_email')
-            ->orderByDesc('ms_login_sessions.last_active_at')
-            ->limit(50)
-            ->get()
-            ->map(function ($s) {
-                $lastActive = $s->last_active_at ? Carbon::parse($s->last_active_at) : null;
-                $s->is_online = $s->is_active && $lastActive && $lastActive->diffInMinutes(now()) <= 15;
-                $s->last_online_diff = $lastActive ? $lastActive->diffForHumans() : 'Never';
-                return $s;
-            });
+        $loginSessions = collect();
+        if (\Illuminate\Support\Facades\Schema::hasTable('ms_login_sessions')) {
+            try {
+                $loginSessions = DB::table('ms_login_sessions')
+                    ->join('users', 'ms_login_sessions.user_id', '=', 'users.id')
+                    ->where('ms_login_sessions.company_id', $companyId)
+                    ->select('ms_login_sessions.*', 'users.name as user_name', 'users.email as user_email')
+                    ->orderByDesc('ms_login_sessions.last_active_at')
+                    ->limit(50)
+                    ->get()
+                    ->map(function ($s) {
+                        $lastActive = $s->last_active_at ? Carbon::parse($s->last_active_at) : null;
+                        $s->is_online = $s->is_active && $lastActive && $lastActive->diffInMinutes(now()) <= 15;
+                        $s->last_online_diff = $lastActive ? $lastActive->diffForHumans() : 'Never';
+                        return $s;
+                    });
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Could not fetch login sessions in Masters: ' . $e->getMessage());
+            }
+        }
 
         return view('mobileshop.masters', compact('categories', 'financiers', 'suppliers', 'staffUsers', 'roles', 'loginSessions'));
     }
@@ -202,6 +209,10 @@ class MastersController extends BaseMobileShopController
 
         $companyId = $this->getCompanyId();
 
+        if (!\Illuminate\Support\Facades\Schema::hasTable('ms_login_sessions')) {
+            return response()->json(['success' => true, 'sessions' => []]);
+        }
+
         $sessions = DB::table('ms_login_sessions')
             ->join('users', 'ms_login_sessions.user_id', '=', 'users.id')
             ->where('ms_login_sessions.company_id', $companyId)
@@ -233,13 +244,15 @@ class MastersController extends BaseMobileShopController
 
         $companyId = $this->getCompanyId();
 
-        DB::table('ms_login_sessions')
-            ->where('company_id', $companyId)
-            ->where('id', $id)
-            ->update([
-                'is_active' => false,
-                'logged_out_at' => Carbon::now(),
-            ]);
+        if (\Illuminate\Support\Facades\Schema::hasTable('ms_login_sessions')) {
+            DB::table('ms_login_sessions')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->update([
+                    'is_active' => false,
+                    'logged_out_at' => Carbon::now(),
+                ]);
+        }
 
         return response()->json(['success' => true, 'message' => 'Device session terminated successfully.']);
     }

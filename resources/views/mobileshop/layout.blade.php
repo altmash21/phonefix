@@ -137,10 +137,10 @@
     </script>
 
     <!-- Tailwind CSS — Pre-built with Linear Light Design System Tokens (replaces runtime CDN) -->
-    <link rel="stylesheet" href="{{ url('/css/mobileshop-panel.css') }}?v=2.6.0">
+    <link rel="stylesheet" href="{{ asset('public/css/mobileshop-panel.css') }}?v=2.6.0">
 
     <!-- Maurya Mobile Admin Panel Design System (Linear Light System) -->
-    <link rel="stylesheet" href="{{ url('/css/admin-panel.css') }}?v=2.5.0">
+    <link rel="stylesheet" href="{{ asset('public/css/admin-panel.css') }}?v=2.5.0">
 
     <!-- Dedicated Print Media Engine: Eliminates UI chrome, sidebars, headers, and buttons on Print/PDF -->
     <style>
@@ -686,7 +686,7 @@
         </div>
     </nav>
 
-    <script src="{{ url('/js/mobileshop/ui-utils.js') }}?v=2.5.0" defer></script>
+    <script src="{{ asset('public/js/mobileshop/ui-utils.js') }}?v=2.5.0" defer></script>
     @stack('scripts')
 
     <!-- Instant Page Switch Prefetcher & Interactive Feedback -->

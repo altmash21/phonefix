@@ -735,8 +735,8 @@
                             <input type="text" name="customer_phone" id="accCustomerPhone" list="accCustomerList" placeholder="10-digit Mobile Number" required class="form-control" style="font-weight:700; color:#0F172A; border-color:#CBD5E1;">
                             <datalist id="accCustomerList">
                                 @foreach($customers ?? [] as $c)
-                                    <option value="{{ $c->phone }}" data-name="{{ $c->name }}" data-gstin="{{ $c->gstin }}" data-address="{{ $c->address }}" data-balance="{{ $c->udhari_balance }}">
-                                        {{ $c->name }} (Pending Khata: ₹{{ number_format($c->udhari_balance, 2) }})
+                                    <option value="{{ $c->phone }}" data-name="{{ $c->name }}" data-gstin="{{ $c->gstin ?? '' }}" data-address="{{ $c->address ?? '' }}" data-balance="{{ $c->udhari_balance ?? 0 }}">
+                                        {{ $c->name }} (Pending Khata: ₹{{ number_format($c->udhari_balance ?? 0, 2) }})
                                     </option>
                                 @endforeach
                             </datalist>
@@ -777,7 +777,7 @@
                                         <option value="{{ $cSlug }}">{{ ucwords(str_replace('_', ' ', $cSlug)) }}</option>
                                     @endforeach
                                     @foreach($categories ?? [] as $cat)
-                                        @if(!$allCatsInStore->contains($cat->slug))
+                                        @if(!empty($cat->slug) && !$allCatsInStore->contains($cat->slug))
                                             <option value="{{ $cat->slug }}">{{ $cat->name }}</option>
                                         @endif
                                     @endforeach

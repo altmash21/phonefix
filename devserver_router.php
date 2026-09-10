@@ -30,9 +30,29 @@ if (strpos($uri, '/vendor/') === 0) {
     }
 }
 
-// 3) Other static assets that exist directly under ./public/
+// 3) Other static assets that exist directly under ./public/ (e.g. /css/..., /js/...)
 if ($uri !== '/' && is_file($publicDir . $uri)) {
-    return false;
+    $target = $publicDir . $uri;
+    $ext = strtolower(pathinfo($target, PATHINFO_EXTENSION));
+    $mimes = [
+        'css'   => 'text/css; charset=UTF-8',
+        'js'    => 'application/javascript; charset=UTF-8',
+        'json'  => 'application/json',
+        'png'   => 'image/png',
+        'jpg'   => 'image/jpeg',
+        'jpeg'  => 'image/jpeg',
+        'gif'   => 'image/gif',
+        'svg'   => 'image/svg+xml',
+        'webp'  => 'image/webp',
+        'woff'  => 'font/woff',
+        'woff2' => 'font/woff2',
+        'ttf'   => 'font/ttf',
+        'ico'   => 'image/x-icon',
+    ];
+    header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
+    header('Content-Length: ' . filesize($target));
+    readfile($target);
+    exit;
 }
 
 // 4) Everything else -> Laravel front controller

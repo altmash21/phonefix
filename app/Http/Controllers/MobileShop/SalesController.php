@@ -186,16 +186,16 @@ class SalesController extends BaseMobileShopController
         $salesCount          = $mobileSales->count() + $accSales->count();
 
         // Optimized picker data: cached and selecting only required fields to avoid hydrating massive tables
-        $customers = \Illuminate\Support\Facades\Cache::remember("ms_customers_picker_{$companyId}", 120, function () use ($companyId) {
+        $customers = \Illuminate\Support\Facades\Cache::remember("ms_customers_picker_v2_{$companyId}", 120, function () use ($companyId) {
             return DB::table('ms_customers')
                 ->where('company_id', $companyId)
-                ->select('id', 'name', 'phone')
+                ->select('id', 'name', 'phone', 'gstin', 'address', 'udhari_balance')
                 ->orderBy('name')
                 ->limit(300)
                 ->get();
         });
 
-        $partsList = \Illuminate\Support\Facades\Cache::remember("ms_parts_picker_{$companyId}", 60, function () use ($companyId) {
+        $partsList = \Illuminate\Support\Facades\Cache::remember("ms_parts_picker_v2_{$companyId}", 60, function () use ($companyId) {
             return DB::table('ms_parts_inventory')
                 ->where('company_id', $companyId)
                 ->where('stock_qty', '>', 0)
@@ -203,10 +203,10 @@ class SalesController extends BaseMobileShopController
                 ->get();
         });
 
-        $categories = \Illuminate\Support\Facades\Cache::remember("ms_categories_picker_{$companyId}", 300, function () use ($companyId) {
+        $categories = \Illuminate\Support\Facades\Cache::remember("ms_categories_picker_v2_{$companyId}", 300, function () use ($companyId) {
             return DB::table('ms_part_categories')
                 ->where('company_id', $companyId)
-                ->select('id', 'name')
+                ->select('id', 'name', 'slug')
                 ->orderBy('name', 'asc')
                 ->get();
         });

@@ -210,21 +210,21 @@
                             <div>
                                 <div style="display:flex; align-items:center; gap:8px;">
                                     <span style="font-weight:700; color:#0F172A; font-size:13px;">{{ $sess->device_label ?: 'Web Browser Terminal' }}</span>
-                                    @if($sess->is_online)
+                                    @if(!empty($sess->is_online))
                                         <span class="badge session-status-badge" style="background:#DCFCE7; color:#15803D; font-size:10px; font-weight:700; display:flex; align-items:center; gap:4px;">
                                             <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#22C55E;"></span> Online Now
                                         </span>
-                                    @elseif($sess->is_active)
+                                    @elseif(!empty($sess->is_active))
                                         <span class="badge badge-blue session-status-badge" style="font-size:10px;">Active Session</span>
                                     @else
                                         <span class="badge badge-gray session-status-badge" style="font-size:10px;">Logged Out</span>
                                     @endif
                                 </div>
                                 <div style="font-size:11px; color:#64748B; margin-top:2px;">
-                                    User: <strong>{{ $sess->user_name }}</strong> ({{ $sess->user_email }}) &bull; IP: <code>{{ $sess->ip_address }}</code>
+                                    User: <strong>{{ $sess->user_name ?? 'User' }}</strong> ({{ $sess->user_email ?? '—' }}) &bull; IP: <code>{{ $sess->ip_address ?? '—' }}</code>
                                 </div>
                                 <div style="font-size:10.5px; color:#94A3B8; margin-top:2px;">
-                                    Last Online: <strong>{{ $sess->last_online_diff }}</strong> ({{ $sess->last_active_at ? \Carbon\Carbon::parse($sess->last_active_at)->format('d M Y, h:i A') : 'N/A' }})
+                                    Last Online: <strong>{{ $sess->last_online_diff ?? 'Never' }}</strong> ({{ !empty($sess->last_active_at) ? \Carbon\Carbon::parse($sess->last_active_at)->format('d M Y, h:i A') : 'N/A' }})
                                 </div>
                             </div>
                         </div>
