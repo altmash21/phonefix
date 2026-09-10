@@ -16,55 +16,66 @@ class TrackLoginSession
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!Auth::check() || !Schema::hasTable('ms_login_sessions')) {
+        if (!Auth::check()) {
             return $next($request);
         }
 
-        $user = Auth::user();
-        $sessionId = session()->getId();
-        $hashedToken = hash('sha256', $sessionId);
+        // Throttle DB updates: only touch session table once every 2 minutes per user session
+        $lastTracked = session('ms_login_session_tracked', 0);
+        if (time() - $lastTracked < 120) {
+            return $next($request);
+        }
 
-        $companyId = company_id() ?? session('company_id') ?? ($user->companies()->first()?->id ?? 1);
+        try {
+            $user = Auth::user();
+            $sessionId = session()->getId();
+            $hashedToken = hash('sha256', $sessionId);
 
-        $existing = DB::table('ms_login_sessions')
-            ->where('session_token', $hashedToken)
-            ->where('is_active', true)
-            ->first();
+            $companyId = company_id() ?? session('company_id') ?? 1;
 
-        if ($existing) {
-            // Update last active timestamp (throttled: max once per 60 seconds)
-            if (!$existing->last_active_at || now()->diffInSeconds($existing->last_active_at) >= 60) {
+            $existing = DB::table('ms_login_sessions')
+                ->where('session_token', $hashedToken)
+                ->where('is_active', true)
+                ->first();
+
+            if ($existing) {
+                // Update last active timestamp
                 DB::table('ms_login_sessions')
                     ->where('id', $existing->id)
                     ->update(['last_active_at' => now()]);
+            } else {
+                // First request in this session — record login
+                $userAgent = $request->userAgent() ?? 'Unknown';
+                $deviceLabel = $this->parseDeviceLabel($userAgent);
+
+                DB::table('ms_login_sessions')->insert([
+                    'company_id'     => $companyId,
+                    'user_id'        => $user->id,
+                    'ip_address'     => $request->ip(),
+                    'user_agent'     => $userAgent,
+                    'device_label'   => $deviceLabel,
+                    'session_token'  => $hashedToken,
+                    'logged_in_at'   => now(),
+                    'last_active_at' => now(),
+                    'is_active'      => true,
+                ]);
             }
-        } else {
-            // First request in this session — record login
-            $userAgent = $request->userAgent() ?? 'Unknown';
-            $deviceLabel = $this->parseDeviceLabel($userAgent);
 
-            DB::table('ms_login_sessions')->insert([
-                'company_id'     => $companyId,
-                'user_id'        => $user->id,
-                'ip_address'     => $request->ip(),
-                'user_agent'     => $userAgent,
-                'device_label'   => $deviceLabel,
-                'session_token'  => $hashedToken,
-                'logged_in_at'   => now(),
-                'last_active_at' => now(),
-                'is_active'      => true,
-            ]);
+            session(['ms_login_session_tracked' => time()]);
+
+            // Auto-expire stale sessions older than 24 hours (1-in-100 lottery to prevent every-request update overhead)
+            if (mt_rand(1, 100) === 1) {
+                DB::table('ms_login_sessions')
+                    ->where('is_active', true)
+                    ->where('last_active_at', '<', now()->subHours(24))
+                    ->update([
+                        'is_active'     => false,
+                        'logged_out_at' => now(),
+                    ]);
+            }
+        } catch (\Throwable $e) {
+            // Table doesn't exist yet or DB issue, fail silently without slowing or breaking request
         }
-
-        // Auto-expire stale sessions older than 24 hours
-        DB::table('ms_login_sessions')
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
-            ->where('last_active_at', '<', now()->subHours(24))
-            ->update([
-                'is_active'     => false,
-                'logged_out_at' => now(),
-            ]);
 
         return $next($request);
     }

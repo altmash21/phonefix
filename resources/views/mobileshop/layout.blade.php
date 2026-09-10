@@ -689,44 +689,10 @@
     <script src="{{ asset('public/js/mobileshop/ui-utils.js') }}?v=2.5.0" defer></script>
     @stack('scripts')
 
-    <!-- Instant Page Switch Prefetcher & Interactive Feedback -->
+    <!-- Interactive Navigation Feedback -->
     <script>
     (function () {
-        var prefetched = new Set();
         var progressBar = document.getElementById('instant-page-progress');
-
-        function prefetch(url) {
-            if (!url || prefetched.has(url)) return;
-            try {
-                var parsed = new URL(url, window.location.origin);
-                if (parsed.origin !== window.location.origin) return;
-                var p = parsed.pathname.toLowerCase();
-                if (p.includes('logout') || p.includes('delete') || p.includes('export') || p.includes('void')) return;
-                
-                prefetched.add(url);
-                var link = document.createElement('link');
-                link.rel = 'prefetch';
-                link.href = url;
-                link.as = 'document';
-                document.head.appendChild(link);
-            } catch (e) {}
-        }
-
-        var hoverTimer = null;
-        document.addEventListener('mouseover', function (e) {
-            var a = e.target.closest('a');
-            if (!a || !a.href || a.target === '_blank') return;
-            clearTimeout(hoverTimer);
-            hoverTimer = setTimeout(function () {
-                prefetch(a.href);
-            }, 60);
-        }, { passive: true });
-
-        document.addEventListener('touchstart', function (e) {
-            var a = e.target.closest('a');
-            if (!a || !a.href || a.target === '_blank') return;
-            prefetch(a.href);
-        }, { passive: true });
 
         // Show instant progress bar when clicking internal navigation links
         document.addEventListener('click', function (e) {
