@@ -15,8 +15,22 @@ for ($i = 0; $i < 100000; $i++) {
 }
 $serverBenchmarks['php_compute_ms'] = round((microtime(true) - $t0) * 1000, 2);
 
+// Locate application root directory (supports standard and split app/public_html deployment)
+$baseDir = null;
+foreach ([
+    dirname(__DIR__, 2) . '/app',
+    dirname(__DIR__, 2),
+    dirname(__DIR__, 1),
+] as $candidate) {
+    if (file_exists($candidate . '/.env') || is_dir($candidate . '/storage')) {
+        $baseDir = $candidate;
+        break;
+    }
+}
+$baseDir = $baseDir ?? dirname(__DIR__, 2);
+
 // Disk I/O Benchmark (Laravel Session Directory)
-$sessionDir = dirname(__DIR__, 2) . '/storage/framework/sessions';
+$sessionDir = $baseDir . '/storage/framework/sessions';
 $diskBench = ['write_ms' => null, 'read_ms' => null, 'writable' => false];
 if (is_dir($sessionDir) && is_writable($sessionDir)) {
     $diskBench['writable'] = true;
@@ -66,7 +80,7 @@ $serverBenchmarks['opcache'] = $opcache;
 
 // Database Connection & Latency Benchmark
 $dbBench = ['connected' => false, 'connect_ms' => null, 'query_ms' => null, 'error' => null];
-$envPath = dirname(__DIR__, 2) . '/.env';
+$envPath = $baseDir . '/.env';
 if (file_exists($envPath)) {
     $envContent = @file_get_contents($envPath);
     preg_match('/^DB_HOST=(.*)$/m', $envContent, $mHost);
