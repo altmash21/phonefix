@@ -18,35 +18,8 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        display: ['Outfit', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#F0FDFA',
-                            100: '#CCFBF1',
-                            200: '#99F6E4',
-                            300: '#5EEAD4',
-                            400: '#2DD4BF',
-                            500: '#14B8A6',
-                            600: '#0F766E',
-                            700: '#115E59',
-                            800: '#134E4A',
-                            900: '#042F2E',
-                            950: '#021E1D',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Pre-compiled Tailwind CSS (Zero Runtime Overhead) -->
+    <link rel="stylesheet" href="{{ url('/css/mobileshop-tailwind.min.css') }}?v=1.0.0">
     <style>
         .font-display { font-family: 'Outfit', sans-serif; }
         .gradient-panel {

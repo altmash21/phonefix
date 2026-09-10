@@ -134,66 +134,9 @@
             script.onerror = function () { window.__lucideLoaded = false; };
             document.head.appendChild(script);
         })();
-    </script>    <!-- Tailwind CSS with Linear Light Design System Tokens -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            corePlugins: {
-                preflight: false,
-            },
-            theme: {
-                extend: {
-                    colors: {
-                        canvas: "#ffffff",
-                        surface: {
-                            1: "#f7f8fa",
-                            2: "#f1f2f4",
-                            3: "#e9ebee",
-                            4: "#e2e5e9",
-                        },
-                        ink: {
-                            DEFAULT: "#111113",
-                            muted: "#4f535b",
-                            subtle: "#737780",
-                            tertiary: "#9a9ea6",
-                        },
-                        primary: {
-                            DEFAULT: "#5e6ad2",
-                            hover: "#4f5bc2",
-                            focus: "#5e69d1",
-                            tint: "#f0f2ff",
-                        },
-                        hairline: {
-                            DEFAULT: "#e2e4e8",
-                            strong: "#cfd3d9",
-                            tertiary: "#bcc1c8",
-                        },
-                        success: "#27a644",
-                    },
-                    fontFamily: {
-                        display: ["Inter", "SF Pro Display", "-apple-system", "system-ui", "Segoe UI", "Roboto", "sans-serif"],
-                        text: ["Inter", "SF Pro Display", "-apple-system", "system-ui", "Segoe UI", "Roboto", "sans-serif"],
-                        mono: ["JetBrains Mono", "ui-monospace", "SF Mono", "Menlo", "monospace"],
-                    },
-                    screens: {
-                        mobile: "480px",
-                        tablet: "768px",
-                        desktop: "1024px",
-                        wide: "1280px",
-                        "desktop-xl": "1440px",
-                    },
-                    borderRadius: {
-                        xs: "4px",
-                        sm: "6px",
-                        md: "8px",
-                        lg: "12px",
-                        xl: "16px",
-                        pill: "9999px",
-                    }
-                }
-            }
-        }
     </script>
+    <!-- Pre-compiled MobileShop Tailwind CSS (Zero Runtime JS, Instant Paint) -->
+    <link rel="stylesheet" href="{{ url('/css/mobileshop-tailwind.min.css') }}?v=1.0.0">
 
     <!-- Maurya Mobile Admin Panel Design System (Linear Light System) -->
     <link rel="stylesheet" href="{{ url('/css/admin-panel.css') }}?v=2.5.0">

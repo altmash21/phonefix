@@ -15,65 +15,8 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Tailwind CSS with Apple Design Tokens -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: [
-                            'SF Pro Text',
-                            'SF Pro Display',
-                            '-apple-system',
-                            'BlinkMacSystemFont',
-                            'Inter',
-                            'system-ui',
-                            'sans-serif'
-                        ],
-                        display: [
-                            'SF Pro Display',
-                            '-apple-system',
-                            'BlinkMacSystemFont',
-                            'Inter',
-                            'system-ui',
-                            'sans-serif'
-                        ]
-                    },
-                    colors: {
-                        apple: {
-                            primary: '#0066cc',
-                            'primary-focus': '#0071e3',
-                            'primary-dark': '#2997ff',
-                            ink: '#1d1d1f',
-                            body: '#1d1d1f',
-                            'body-dark': '#ffffff',
-                            'body-muted': '#cccccc',
-                            'muted-80': '#333333',
-                            'muted-48': '#7a7a7a',
-                            'divider-soft': '#f0f0f0',
-                            hairline: '#e0e0e0',
-                            canvas: '#ffffff',
-                            parchment: '#f5f5f7',
-                            pearl: '#fafafc',
-                            'tile-1': '#272729',
-                            'tile-2': '#2a2a2c',
-                            'tile-3': '#252527',
-                            black: '#000000',
-                            'chip-translucent': 'rgba(210, 210, 215, 0.64)'
-                        }
-                    },
-                    borderRadius: {
-                        'apple-xs': '5px',
-                        'apple-sm': '8px',
-                        'apple-md': '11px',
-                        'apple-lg': '18px',
-                        'apple-pill': '9999px'
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Pre-compiled MobileShop Tailwind CSS (Zero Runtime Overhead) -->
+    <link rel="stylesheet" href="{{ url('/css/mobileshop-tailwind.min.css') }}?v=1.0.0">
 
     <style>
         :root {
