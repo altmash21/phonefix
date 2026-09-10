@@ -65,10 +65,14 @@
         })();
     </script>
 
-    <!-- Google Fonts: Inter, Plus Jakarta Sans & JetBrains Mono (Linear Software Craft) -->
+    <!-- Google Fonts: Inter & Plus Jakarta Sans (Non-blocking with Font-Display Swap) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
 
     <!-- Lucide Icons (with offline fallback) -->
     <script>
@@ -124,7 +128,8 @@
         // Robust CDN loading with automatic fallback (works with or without internet)
         (function () {
             var script = document.createElement('script');
-            script.src = 'https://unpkg.com/lucide@latest';
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lucide/0.469.0/lucide.min.js';
+            script.async = true;
             script.onload = function () { window.__lucideLoaded = true; window.refreshIcons && window.refreshIcons(); };
             script.onerror = function () { window.__lucideLoaded = false; };
             document.head.appendChild(script);
@@ -737,7 +742,7 @@
         </div>
     </nav>
 
-    <script src="{{ url('/js/mobileshop/ui-utils.js') }}?v=2.5.0"></script>
+    <script src="{{ url('/js/mobileshop/ui-utils.js') }}?v=2.5.0" defer></script>
     @stack('scripts')
 
     <!-- Instant Page Switch Prefetcher & Interactive Feedback -->

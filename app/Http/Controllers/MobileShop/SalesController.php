@@ -142,27 +142,85 @@ class SalesController extends BaseMobileShopController
             }
         }
 
-        // Aggregated KPIs for page header
-        $todaySalesTotal = (float) ($niche === 'admin'
-            ? DB::table('ms_mobile_sales')->where('company_id',$companyId)->whereDate('created_at',today())->where('status','!=','voided')->sum('total_amount')
-              + DB::table('ms_accessory_sales')->where('company_id',$companyId)->whereDate('created_at',today())->where('status','!=','voided')->sum('total_amount')
-            : ($mobileSales->sum('total_amount') + $accSales->sum('total_amount')));
+        // Aggregated KPIs for page header (Cached for 60s to avoid full-table scans on every page load)
+        $kpiData = \Illuminate\Support\Facades\Cache::remember("ms_sales_kpis_{$companyId}_{$niche}", 60, function () use ($companyId, $niche, $mobileSales, $accSales) {
+            $todayStart = now()->startOfDay();
+            $monthStart = now()->startOfMonth();
 
-        $monthSalesTotal = (float) ($niche === 'admin'
-            ? DB::table('ms_mobile_sales')->where('company_id',$companyId)->whereMonth('created_at',now()->month)->whereYear('created_at',now()->year)->where('status','!=','voided')->sum('total_amount')
-              + DB::table('ms_accessory_sales')->where('company_id',$companyId)->whereMonth('created_at',now()->month)->whereYear('created_at',now()->year)->where('status','!=','voided')->sum('total_amount')
-            : ($mobileSales->sum('total_amount') + $accSales->sum('total_amount')));
+            if ($niche === 'admin') {
+                $todaySalesTotal = (float) (
+                    DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('created_at', '>=', $todayStart)->where('status', '!=', 'voided')->sum('total_amount')
+                    + DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('created_at', '>=', $todayStart)->where('status', '!=', 'voided')->sum('total_amount')
+                );
 
-        $salesCount = $mobileSales->count() + $accSales->count();
+                $monthSalesTotal = (float) (
+                    DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('created_at', '>=', $monthStart)->where('status', '!=', 'voided')->sum('total_amount')
+                    + DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('created_at', '>=', $monthStart)->where('status', '!=', 'voided')->sum('total_amount')
+                );
+            } else {
+                $todaySalesTotal = (float) ($mobileSales->sum('total_amount') + $accSales->sum('total_amount'));
+                $monthSalesTotal = $todaySalesTotal;
+            }
 
-        // Stock availability for add-sale forms
-        $availableNewPhones   = in_array($niche, ['admin','phones'])    ? DB::table('ms_mobile_devices')->where('company_id',$companyId)->where('type','new')->where('status','in_stock')->count() : 0;
-        $availableSecondHand  = in_array($niche, ['admin','secondhand']) ? DB::table('ms_mobile_devices')->where('company_id',$companyId)->where('type','second_hand')->where('status','in_stock')->count() : 0;
-        $availableParts       = in_array($niche, ['admin','accessories','covers']) ? DB::table('ms_parts_inventory')->where('company_id',$companyId)->where('stock_qty','>',0)->count() : 0;
-        $customers            = DB::table('ms_customers')->where('company_id', $companyId)->get();
-        $partsList            = DB::table('ms_parts_inventory')->where('company_id', $companyId)->where('stock_qty', '>', 0)->get();
-        $categories           = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
-        $secondHandPhones     = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->orderBy('brand')->orderBy('model')->get();
+            $stockDeviceCounts = DB::table('ms_mobile_devices')
+                ->where('company_id', $companyId)
+                ->where('status', 'in_stock')
+                ->select('type', DB::raw('count(*) as c'))
+                ->groupBy('type')
+                ->pluck('c', 'type');
+
+            $availableNewPhones  = in_array($niche, ['admin', 'phones']) ? ($stockDeviceCounts['new'] ?? 0) : 0;
+            $availableSecondHand = in_array($niche, ['admin', 'secondhand']) ? ($stockDeviceCounts['second_hand'] ?? 0) : 0;
+            $availableParts      = in_array($niche, ['admin', 'accessories', 'covers'])
+                ? DB::table('ms_parts_inventory')->where('company_id', $companyId)->where('stock_qty', '>', 0)->count()
+                : 0;
+
+            return compact('todaySalesTotal', 'monthSalesTotal', 'availableNewPhones', 'availableSecondHand', 'availableParts');
+        });
+
+        $todaySalesTotal     = $kpiData['todaySalesTotal'];
+        $monthSalesTotal     = $kpiData['monthSalesTotal'];
+        $availableNewPhones  = $kpiData['availableNewPhones'];
+        $availableSecondHand = $kpiData['availableSecondHand'];
+        $availableParts      = $kpiData['availableParts'];
+        $salesCount          = $mobileSales->count() + $accSales->count();
+
+        // Optimized picker data: cached and selecting only required fields to avoid hydrating massive tables
+        $customers = \Illuminate\Support\Facades\Cache::remember("ms_customers_picker_{$companyId}", 120, function () use ($companyId) {
+            return DB::table('ms_customers')
+                ->where('company_id', $companyId)
+                ->select('id', 'name', 'phone')
+                ->orderBy('name')
+                ->limit(300)
+                ->get();
+        });
+
+        $partsList = \Illuminate\Support\Facades\Cache::remember("ms_parts_picker_{$companyId}", 60, function () use ($companyId) {
+            return DB::table('ms_parts_inventory')
+                ->where('company_id', $companyId)
+                ->where('stock_qty', '>', 0)
+                ->select('id', 'name', 'category', 'sku', 'sale_price', 'stock_qty')
+                ->get();
+        });
+
+        $categories = \Illuminate\Support\Facades\Cache::remember("ms_categories_picker_{$companyId}", 300, function () use ($companyId) {
+            return DB::table('ms_part_categories')
+                ->where('company_id', $companyId)
+                ->select('id', 'name')
+                ->orderBy('name', 'asc')
+                ->get();
+        });
+
+        $secondHandPhones = \Illuminate\Support\Facades\Cache::remember("ms_sh_picker_{$companyId}", 60, function () use ($companyId) {
+            return DB::table('ms_mobile_devices')
+                ->where('company_id', $companyId)
+                ->where('type', 'second_hand')
+                ->where('status', 'in_stock')
+                ->select('id', 'brand', 'model', 'imei_1', 'selling_price')
+                ->orderBy('brand')
+                ->orderBy('model')
+                ->get();
+        });
 
         $isOwner = $this->isOwner();
 
