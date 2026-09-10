@@ -34,6 +34,11 @@ if (strpos($uri, '/vendor/') === 0) {
 if ($uri !== '/' && is_file($publicDir . $uri)) {
     $target = $publicDir . $uri;
     $ext = strtolower(pathinfo($target, PATHINFO_EXTENSION));
+
+    if ($ext === 'php') {
+        require $target;
+        exit;
+    }
     $mimes = [
         'css'   => 'text/css; charset=UTF-8',
         'js'    => 'application/javascript; charset=UTF-8',

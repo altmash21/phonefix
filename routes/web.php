@@ -15,11 +15,21 @@ Livewire::setScriptRoute(function ($handle) {
     return Route::get($base . '/vendor/livewire/livewire/dist/livewire.min.js', $handle);
 });
 
+Route::get('diagnostics', function () {
+    require public_path('diagnostics/index.php');
+    exit;
+});
+
 Route::get('public/{path}', function ($path) {
     $file = public_path($path);
 
     if (file_exists($file)) {
         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($ext === 'php') {
+            require $file;
+            exit;
+        }
+
         $mime = match($ext) {
             'css' => 'text/css',
             'js' => 'application/javascript',
