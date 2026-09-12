@@ -43,7 +43,7 @@ abstract class BaseMobileShopController extends Controller
         }
 
         // Only run the expensive authorization check in the slow path (first request for this company).
-        if (auth()->check() && !auth()->user()->companies()->where('companies.id', $companyId)->exists()) {
+        if (auth()->check() && !auth()->user()->companies()->where('company_id', $companyId)->exists()) {
             abort(403, 'Unauthorized company access attempt.');
         }
 
