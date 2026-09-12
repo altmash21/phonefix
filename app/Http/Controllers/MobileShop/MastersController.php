@@ -57,7 +57,14 @@ class MastersController extends BaseMobileShopController
         $staffUsers = User::with('roles')->whereHas('companies', function($q) use ($companyId) {
             $q->where('companies.id', $companyId);
         })->get();
-        $roles = Role::whereNotIn('name', ['admin'])->get();
+        $roles = Role::whereIn('name', [
+            'sales-staff',
+            'secondhand-staff',
+            'accessories-staff',
+            'cover-staff',
+            'repair-technician',
+            'store-admin',
+        ])->get();
 
         $loginSessions = collect();
         try {

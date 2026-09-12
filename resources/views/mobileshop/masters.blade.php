@@ -515,9 +515,12 @@
                     <div>
                         <label class="form-label" style="font-weight:700; font-size:12px;">Counter Role / Terminal</label>
                         <select name="role" id="editUserRole" class="form-control" style="width:100%; font-size:13px;">
-                            @foreach($roles as $r)
-                                <option value="{{ $r->name }}">{{ $r->display_name ?: $r->name }} ({{ $r->name }})</option>
-                            @endforeach
+                            <option value="sales-staff">📱 New Phones Sales Staff (sales-staff)</option>
+                            <option value="secondhand-staff">🔄 Second Hand &amp; Buyback Specialist (secondhand-staff)</option>
+                            <option value="accessories-staff">⚡ Accessories &amp; Parts Staff (accessories-staff)</option>
+                            <option value="cover-staff">🖼️ Back Cover &amp; Tempered Glass Staff (cover-staff)</option>
+                            <option value="repair-technician">🔧 Service Desk &amp; Repair Technician (repair-technician)</option>
+                            <option value="store-admin">👑 Store Owner / Administrator (store-admin)</option>
                         </select>
                     </div>
                     <div style="border-top:1px dashed #CBD5E1; padding-top:12px;">
