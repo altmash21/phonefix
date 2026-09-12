@@ -4,16 +4,6 @@
 @section('meta_description', 'Learn about Maurya Mobile’s commitment to device longevity, electronic waste reduction, 50-point diagnostics, and consumer transparency in Mumbai.')
 
 @section('subnav_title', 'Values & Trust')
-@section('subnav_links')
-    <a href="#longevity" class="hover:text-apple-ink">Device Longevity</a>
-    <a href="#diagnostics" class="hover:text-apple-ink">50-Point Inspection</a>
-    <a href="#ewaste" class="hover:text-apple-ink">E-Waste Reduction</a>
-@endsection
-@section('subnav_cta')
-    <a href="{{ route('public.contact') }}" class="apple-btn-primary text-[13px] py-1.5 px-3.5">
-        Visit Showroom
-    </a>
-@endsection
 
 @section('content')
 

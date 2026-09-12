@@ -4,16 +4,6 @@
 @section('meta_description', 'Track live hardware diagnostic and micro-soldering status of your smartphone at Maurya Mobile Service Laboratory Mumbai.')
 
 @section('subnav_title', 'Support')
-@section('subnav_links')
-    <a href="{{ route('public.track_repair') }}" class="text-apple-ink font-semibold">Repair Tracker</a>
-    <a href="{{ route('public.about') }}" class="hover:text-apple-ink">Lab Standards</a>
-    <a href="{{ route('public.contact') }}" class="hover:text-apple-ink">Counter Desk</a>
-@endsection
-@section('subnav_cta')
-    <a href="tel:9876543211" class="apple-btn-secondary-pill text-[13px] py-1.5 px-3.5">
-        Call Desk
-    </a>
-@endsection
 
 @section('content')
 

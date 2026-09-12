@@ -5,14 +5,10 @@
 
 @section('subnav_title', 'Store')
 @section('subnav_links')
-    <a href="{{ route('public.store', ['tab' => 'all', 'q' => $query]) }}" class="{{ $tab === 'all' ? 'text-apple-ink font-semibold' : 'hover:text-apple-ink' }}">All Smartphones</a>
-    <a href="{{ route('public.store', ['tab' => 'new', 'q' => $query]) }}" class="{{ $tab === 'new' ? 'text-apple-ink font-semibold' : 'hover:text-apple-ink' }}">Flagships ({{ $newPhones->count() }})</a>
-    <a href="{{ route('public.store', ['tab' => 'second_hand', 'q' => $query]) }}" class="{{ $tab === 'second_hand' ? 'text-apple-ink font-semibold' : 'hover:text-apple-ink' }}">Pre-Owned ({{ $secondHandPhones->count() }})</a>
-@endsection
-@section('subnav_cta')
-    <a href="{{ route('public.track_repair') }}" class="apple-btn-secondary-pill text-[13px] py-1.5 px-3.5">
-        Track Repair
-    </a>
+    <a href="{{ route('public.store', ['tab' => 'new', 'q' => $query]) }}" class="{{ $tab === 'new' ? 'text-apple-ink font-bold' : 'hover:text-apple-ink transition-colors' }}">New Phones</a>
+    <a href="{{ route('public.store', ['tab' => 'second_hand', 'q' => $query]) }}" class="{{ $tab === 'second_hand' ? 'text-apple-ink font-bold' : 'hover:text-apple-ink transition-colors' }}">Second Hand</a>
+    <a href="{{ route('public.store', ['tab' => 'all', 'q' => $query]) }}" class="{{ $tab === 'all' ? 'text-apple-ink font-bold' : 'hover:text-apple-ink transition-colors' }}">Shop</a>
+    <a href="{{ route('public.track_repair') }}" class="hover:text-apple-ink transition-colors">Repair</a>
 @endsection
 
 @section('content')

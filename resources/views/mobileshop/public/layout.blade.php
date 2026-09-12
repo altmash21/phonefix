@@ -364,18 +364,8 @@
                 <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current">
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.64 1.35-.57.65-1.07 1.71-0.93 2.73 1 .08 2.03-.48 2.65-1.23z"/>
                 </svg>
-                <span class="font-semibold tracking-normal text-[13px] hidden sm:inline">Maurya Mobile</span>
+                <span class="font-semibold tracking-normal text-[13px]">Maurya Mobile</span>
             </a>
-
-            <!-- Desktop Links (Seamless, Clear, Customer-Friendly) -->
-            <div class="hidden md:flex items-center gap-7 lg:gap-9 text-white/80">
-                <a href="{{ route('public.store') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.store') && !request('tab') ? 'text-white font-medium' : '' }}">Store</a>
-                <a href="{{ route('public.store', ['tab' => 'new']) }}" class="hover:text-white transition-colors {{ request('tab') === 'new' ? 'text-white font-medium' : '' }}">New Phones</a>
-                <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="hover:text-white transition-colors {{ request('tab') === 'second_hand' ? 'text-white font-medium' : '' }}">Second Hand Phones</a>
-                <a href="{{ route('public.track_repair') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.track_repair') ? 'text-white font-medium' : '' }}">Repair & Service</a>
-                <a href="{{ route('public.about') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.about') ? 'text-white font-medium' : '' }}">About Us</a>
-                <a href="{{ route('public.contact') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.contact') ? 'text-white font-medium' : '' }}">Contact & Store</a>
-            </div>
 
             <!-- Right Utility Icons -->
             <div class="flex items-center gap-4 text-white/80">
@@ -397,12 +387,12 @@
                 </a>
 
                 <!-- Staff Login Utility -->
-                <a href="{{ route('login') }}" class="apple-btn-dark-utility text-[11px] py-1 px-2.5 hidden sm:inline-flex">
+                <a href="{{ route('login') }}" class="apple-btn-dark-utility text-[11px] py-1 px-2.5">
                     Staff Portal
                 </a>
 
                 <!-- Mobile Hamburger Toggle -->
-                <button id="apple-mobile-btn" class="md:hidden text-white/80 hover:text-white p-1" aria-label="Toggle menu">
+                <button id="apple-mobile-btn" class="sm:hidden text-white/80 hover:text-white p-1" aria-label="Toggle menu">
                     <svg class="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24">
                         <line x1="4" y1="7" x2="20" y2="7"></line>
                         <line x1="4" y1="17" x2="20" y2="17"></line>
@@ -412,14 +402,12 @@
         </div>
 
         <!-- Mobile Drawer Tray -->
-        <div id="apple-mobile-menu" class="hidden md:hidden bg-apple-black/95 backdrop-blur-xl border-t border-white/10 px-6 py-6 space-y-4 text-[16px] font-normal text-white/90">
+        <div id="apple-mobile-menu" class="hidden sm:hidden bg-apple-black/95 backdrop-blur-xl border-t border-white/10 px-6 py-6 space-y-4 text-[16px] font-normal text-white/90">
             <a href="{{ route('public.landing') }}" class="block hover:text-white">Home</a>
-            <a href="{{ route('public.store') }}" class="block hover:text-white">Store</a>
             <a href="{{ route('public.store', ['tab' => 'new']) }}" class="block hover:text-white">New Phones</a>
-            <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="block hover:text-white">Second Hand Phones</a>
-            <a href="{{ route('public.track_repair') }}" class="block hover:text-white">Repair & Service</a>
-            <a href="{{ route('public.about') }}" class="block hover:text-white">About Us</a>
-            <a href="{{ route('public.contact') }}" class="block hover:text-white">Contact & Store Location</a>
+            <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="block hover:text-white">Second Hand</a>
+            <a href="{{ route('public.store') }}" class="block hover:text-white">Shop</a>
+            <a href="{{ route('public.track_repair') }}" class="block hover:text-white">Repair</a>
             <div class="pt-4 border-t border-white/15">
                 <a href="{{ route('login') }}" class="apple-btn-dark-utility w-full justify-center py-2">Staff Portal Login</a>
             </div>
@@ -429,23 +417,26 @@
     <!-- ════ 2. FROSTED GLASS SUB-NAVIGATION (52px, Sticky below 44px Global Nav) ════ -->
     <div class="apple-frosted border-b border-black/[0.08] sticky top-[44px] z-40">
         <div class="max-w-[1024px] mx-auto px-4 h-[52px] flex items-center justify-between">
-            <!-- Left: Product / Section Tagline -->
-            <div class="apple-tagline text-apple-ink truncate">
+            <!-- Left: Product / Section Title -->
+            <a href="{{ route('public.landing') }}" class="apple-tagline text-apple-ink font-semibold hover:opacity-80 transition-opacity truncate">
                 @yield('subnav_title', 'Maurya Mobile')
-            </div>
+            </a>
 
-            <!-- Right: Sub-Links & Persistent Action Blue Pill CTA -->
-            <div class="flex items-center gap-4 sm:gap-6">
-                <div class="hidden sm:flex items-center gap-5 text-[14px] text-apple-ink/70">
-                    @yield('subnav_links')
+            <!-- Right: The 4 Primary Nav Links (new phones, second hand, shop, repair) -->
+            <div class="flex items-center gap-6 sm:gap-8">
+                <div class="flex items-center gap-4 sm:gap-7 text-[13px] sm:text-[14px] text-apple-ink/75 font-medium">
+                    @hasSection('subnav_links')
+                        @yield('subnav_links')
+                    @else
+                        <a href="{{ route('public.store', ['tab' => 'new']) }}" class="hover:text-apple-ink transition-colors {{ request('tab') === 'new' ? 'text-apple-ink font-bold' : '' }}">New Phones</a>
+                        <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="hover:text-apple-ink transition-colors {{ request('tab') === 'second_hand' ? 'text-apple-ink font-bold' : '' }}">Second Hand</a>
+                        <a href="{{ route('public.store') }}" class="hover:text-apple-ink transition-colors {{ request()->routeIs('public.store') && !request('tab') ? 'text-apple-ink font-bold' : '' }}">Shop</a>
+                        <a href="{{ route('public.track_repair') }}" class="hover:text-apple-ink transition-colors {{ request()->routeIs('public.track_repair') ? 'text-apple-ink font-bold' : '' }}">Repair</a>
+                    @endif
                 </div>
 
                 @hasSection('subnav_cta')
                     @yield('subnav_cta')
-                @else
-                    <a href="{{ route('public.store') }}" class="apple-btn-primary text-[14px] py-1.5 px-4">
-                        Explore Store
-                    </a>
                 @endif
             </div>
         </div>

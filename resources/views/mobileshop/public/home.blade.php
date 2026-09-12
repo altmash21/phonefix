@@ -5,15 +5,10 @@
 
 @section('subnav_title', 'Maurya Mobile')
 @section('subnav_links')
-    <a href="#flagships" class="hover:text-apple-ink transition-colors">Flagships</a>
-    <a href="#pre-owned" class="hover:text-apple-ink transition-colors">Pre-Owned</a>
-    <a href="#repair-lab" class="hover:text-apple-ink transition-colors">Repair Lab</a>
-    <a href="#trade-in" class="hover:text-apple-ink transition-colors">Trade-in & EMI</a>
-@endsection
-@section('subnav_cta')
-    <a href="{{ route('public.store') }}" class="apple-btn-primary text-[14px] py-1.5 px-4">
-        Explore Catalog
-    </a>
+    <a href="#flagships" class="hover:text-apple-ink transition-colors">New Phones</a>
+    <a href="#pre-owned" class="hover:text-apple-ink transition-colors">Second Hand</a>
+    <a href="{{ route('public.store') }}" class="hover:text-apple-ink transition-colors">Shop</a>
+    <a href="#repair-lab" class="hover:text-apple-ink transition-colors">Repair</a>
 @endsection
 
 @section('content')

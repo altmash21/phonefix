@@ -3,16 +3,7 @@
 @section('title', 'Visit Bandra Showroom & Contact Desk — Maurya Mobile Mumbai')
 @section('meta_description', 'Visit Maurya Mobile showroom on Linking Road, Bandra West, Mumbai. Get store directions, contact numbers, WhatsApp chat, and submit smartphone inquiries.')
 
-@section('subnav_title', 'Showroom & Desk')
-@section('subnav_links')
-    <a href="#location" class="hover:text-apple-ink">Location & Hours</a>
-    <a href="#inquiry" class="hover:text-apple-ink">Customer Inquiry</a>
-@endsection
-@section('subnav_cta')
-    <a href="tel:9876543210" class="apple-btn-primary text-[13px] py-1.5 px-4">
-        Call Desk
-    </a>
-@endsection
+@section('subnav_title', 'Showroom & Contact')
 
 @section('content')
 

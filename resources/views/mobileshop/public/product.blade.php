@@ -4,11 +4,6 @@
 @section('meta_description', 'Buy authentic ' . $device->brand . ' ' . $device->model . ' (' . ($device->storage ?? '128GB') . ', ' . ($device->color ?? 'Original') . ') with GST invoice and showroom warranty in Mumbai.')
 
 @section('subnav_title', $device->brand . ' ' . $device->model)
-@section('subnav_links')
-    <a href="#overview" class="hover:text-apple-ink">Overview</a>
-    <a href="#specs" class="hover:text-apple-ink">Specs</a>
-    <a href="#emi" class="hover:text-apple-ink">EMI Financing</a>
-@endsection
 @section('subnav_cta')
     <a href="tel:9876543210" class="apple-btn-primary text-[13px] py-1.5 px-4">
         Buy · ₹{{ number_format($device->selling_price, 0) }}
