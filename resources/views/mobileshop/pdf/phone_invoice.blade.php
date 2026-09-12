@@ -1,8 +1,40 @@
+@php
+    $isGstBill = ($sale->bill_type === 'gst' || ($sale->device_type ?? 'new') === 'new' || ($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount) > 0);
+    $taxRate = (float) ($sale->tax_rate ?: 18.00);
+
+    if ($isGstBill) {
+        if (($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount) > 0) {
+            $cgstAmount = (float) $sale->cgst_amount;
+            $sgstAmount = (float) $sale->sgst_amount;
+            $igstAmount = (float) $sale->igst_amount;
+            $totalTaxAmount = $cgstAmount + $sgstAmount + $igstAmount;
+            $taxableAmount = round((float) $sale->total_amount - $totalTaxAmount, 2);
+        } else {
+            $taxableAmount = round((float) $sale->total_amount / (1 + ($taxRate / 100)), 2);
+            $totalTaxAmount = round((float) $sale->total_amount - $taxableAmount, 2);
+            if (($sale->tax_type ?? 'intra_state') === 'inter_state') {
+                $cgstAmount = 0.00;
+                $sgstAmount = 0.00;
+                $igstAmount = $totalTaxAmount;
+            } else {
+                $cgstAmount = round($totalTaxAmount / 2, 2);
+                $sgstAmount = round($totalTaxAmount - $cgstAmount, 2);
+                $igstAmount = 0.00;
+            }
+        }
+    } else {
+        $taxableAmount = (float) $sale->total_amount;
+        $totalTaxAmount = 0.00;
+        $cgstAmount = 0.00;
+        $sgstAmount = 0.00;
+        $igstAmount = 0.00;
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tax Invoice #{{ $sale->invoice_number }}</title>
+    <title>{{ $isGstBill ? 'Tax Invoice' : 'Estimate' }} #{{ $sale->invoice_number }}</title>
     <style>
         @page {
             size: a4 portrait;
@@ -106,18 +138,17 @@
             border: 1px solid #d1d5db;
         }
         .summary-table td {
-            padding: 6px 8px;
+            padding: 5px 8px;
             border-bottom: 1px solid #e5e7eb;
+        }
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
         }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .font-mono { font-family: 'Courier New', Courier, monospace; }
-        .footer-table {
-            width: 100%;
-            margin-top: 18px;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 12px;
-        }
     </style>
 </head>
 <body>
@@ -138,7 +169,7 @@
                 </div>
             </td>
             <td style="width: 42%; vertical-align: top; text-align: right;">
-                <div class="doc-title">{{ $sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE' }}</div>
+                <div class="doc-title">{{ $isGstBill ? 'TAX INVOICE' : 'ESTIMATE & RETAIL BILL' }}</div>
                 <div style="font-size: 9px; color: #6b7280; margin-top: 2px; text-transform: uppercase;">Original for Recipient</div>
                 <div style="font-size: 13px; font-weight: bold; color: #111827; margin-top: 6px;">
                     Invoice #: <span class="font-mono">{{ $sale->invoice_number }}</span>
@@ -156,11 +187,11 @@
             <td style="width: 50%; border-right: 1px solid #d1d5db;">
                 <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Details of Receiver (Billed To)</div>
                 <div style="font-size: 13px; font-weight: bold; color: #111827; margin-top: 2px;">{{ $sale->customer_name }}</div>
-                <div style="font-size: 10px; color: #374151; margin-top: 2px;">Phone: <strong>{{ $sale->customer_phone }}</strong></div>
+                <div style="font-size: 10px; color: #374151; margin-top: 2px;">Phone: <strong>{{ $sale->customer_phone ?: '—' }}</strong></div>
                 @if($sale->customer_gstin)
-                    <div style="font-size: 9.5px; color: #111827; margin-top: 2px;">GSTIN: <span class="font-mono">{{ $sale->customer_gstin }}</span></div>
+                    <div style="font-size: 9.5px; color: #111827; font-weight: bold; margin-top: 2px;">GSTIN: <span class="font-mono">{{ $sale->customer_gstin }}</span></div>
                 @endif
-                <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">{{ $sale->customer_address ?: setting('company.state', 'Uttar Pradesh') }}</div>
+                <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">{{ $sale->customer_address ?: 'Walk-in Retail Customer' }}</div>
                 <div style="font-size: 8.5px; color: #6b7280; margin-top: 2px;">Place of Supply: {{ setting('company.state', 'Uttar Pradesh') }} (09)</div>
             </td>
             <td style="width: 50%;">
@@ -169,8 +200,8 @@
                 @if($sale->payment_mode === 'emi' && $emiProvider)
                     <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Financier: <strong>{{ $emiProvider->name }}</strong> (Loan: {{ $sale->emi_loan_no ?: 'N/A' }})</div>
                 @endif
-                @if($sale->bill_type === 'gst')
-                    <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Tax Regime: <strong>{{ strtoupper(str_replace('_', ' ', $sale->tax_type)) }} (18% GST)</strong></div>
+                @if($isGstBill)
+                    <div style="font-size: 9.5px; color: #15803D; font-weight: bold; margin-top: 2px;">Tax Regime: <strong>{{ strtoupper(str_replace('_', ' ', $sale->tax_type ?: 'intra_state')) }} (18% GST)</strong></div>
                 @else
                     <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Bill Category: <strong>Retail / Non-GST Estimate</strong></div>
                 @endif
@@ -182,13 +213,16 @@
     <table class="table items-table">
         <thead>
             <tr>
-                <th style="width: 5%; text-align: center;">#</th>
-                <th style="width: 42%;">Description of Goods / Handset</th>
+                <th style="width: 4%; text-align: center;">#</th>
+                <th style="width: 38%;">Description of Goods / Handset</th>
                 <th style="width: 12%; text-align: center;">HSN Code</th>
-                <th style="width: 6%; text-align: center;">Qty</th>
-                <th style="width: 12%; text-align: right;">Rate (Rs.)</th>
-                <th style="width: 11%; text-align: right;">Taxable (Rs.)</th>
-                <th style="width: 12%; text-align: right;">Total (Rs.)</th>
+                <th style="width: 5%; text-align: center;">Qty</th>
+                <th style="width: 13%; text-align: right;">Rate (Rs.)</th>
+                <th style="width: 13%; text-align: right;">Taxable (Rs.)</th>
+                @if($isGstBill)
+                <th style="width: 13%; text-align: right;">GST 18% (Rs.)</th>
+                @endif
+                <th style="width: 15%; text-align: right;">Total (Rs.)</th>
             </tr>
         </thead>
         <tbody>
@@ -206,8 +240,11 @@
                 </td>
                 <td class="text-center font-mono" style="font-size: 9.5px;">{{ $sale->hsn_code ?: '85171300' }}</td>
                 <td class="text-center font-mono" style="font-weight: bold;">1</td>
-                <td class="text-right font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->sale_price, 2) }}</td>
-                <td class="text-right font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->sale_price, 2) }}</td>
+                <td class="text-right font-mono">{{ number_format($taxableAmount, 2) }}</td>
+                <td class="text-right font-mono">{{ number_format($taxableAmount, 2) }}</td>
+                @if($isGstBill)
+                <td class="text-right font-mono" style="color:#4F46E5;">{{ number_format($totalTaxAmount, 2) }}</td>
+                @endif
                 <td class="text-right font-mono" style="font-weight: bold;">{{ number_format($sale->total_amount, 2) }}</td>
             </tr>
 
@@ -223,7 +260,10 @@
                     <td class="text-center font-mono" style="font-weight: bold;">{{ $g->qty }}</td>
                     <td class="text-right font-mono" style="color: #6b7280;">0.00</td>
                     <td class="text-right font-mono" style="color: #6b7280;">0.00</td>
-                    <td class="text-right font-mono" style="font-weight: bold;">FREE</td>
+                    @if($isGstBill)
+                    <td class="text-right font-mono" style="color: #6b7280;">0.00</td>
+                    @endif
+                    <td class="text-right font-mono" style="font-weight: bold; color: #15803D;">FREE</td>
                 </tr>
                 @endforeach
             @endif
@@ -234,8 +274,8 @@
     <table class="table" style="margin-bottom: 16px;">
         <tr>
             <td style="width: 55%; vertical-align: top; padding-right: 14px;">
-                @if($sale->bill_type === 'gst')
-                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280; margin-bottom: 4px;">Tax Calculation (GST @ 18%)</div>
+                @if($isGstBill)
+                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #4F46E5; margin-bottom: 4px;">Tax Calculation (GST @ 18% HSN 8517)</div>
                 <table class="tax-table">
                     <thead>
                         <tr>
@@ -245,28 +285,28 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if($sale->tax_type === 'intra_state')
+                        @if(($sale->tax_type ?? 'intra_state') === 'intra_state')
                             <tr>
                                 <td>Central GST (CGST)</td>
                                 <td class="text-right">9.00%</td>
-                                <td class="text-right font-mono">{{ number_format($sale->cgst_amount, 2) }}</td>
+                                <td class="text-right font-mono">{{ number_format($cgstAmount, 2) }}</td>
                             </tr>
                             <tr>
                                 <td>State GST (SGST)</td>
                                 <td class="text-right">9.00%</td>
-                                <td class="text-right font-mono">{{ number_format($sale->sgst_amount, 2) }}</td>
+                                <td class="text-right font-mono">{{ number_format($sgstAmount, 2) }}</td>
                             </tr>
                         @else
                             <tr>
                                 <td>Integrated GST (IGST)</td>
                                 <td class="text-right">18.00%</td>
-                                <td class="text-right font-mono">{{ number_format($sale->igst_amount, 2) }}</td>
+                                <td class="text-right font-mono">{{ number_format($igstAmount, 2) }}</td>
                             </tr>
                         @endif
                         <tr style="background-color: #f9fafb; font-weight: bold;">
                             <td>Total GST Liability</td>
                             <td class="text-right">18.00%</td>
-                            <td class="text-right font-mono">{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}</td>
+                            <td class="text-right font-mono" style="color:#4F46E5;">Rs. {{ number_format($totalTaxAmount, 2) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -284,18 +324,36 @@
                 <table class="summary-table">
                     <tr>
                         <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Subtotal (Taxable Value)</td>
-                        <td style="text-align: right;" class="font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->sale_price / 1.18) : $sale->total_amount, 2) }}</td>
+                        <td style="text-align: right;" class="font-mono">{{ number_format($taxableAmount, 2) }}</td>
                     </tr>
-                    @if($sale->bill_type === 'gst')
+                    @if($isGstBill)
                     <tr>
-                        <td style="background-color: #f9fafb; color: #4b5563;">Total Tax (GST 18%)</td>
-                        <td style="text-align: right;" class="font-mono">{{ number_format($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount, 2) }}</td>
+                        <td style="background-color: #f9fafb; color: #4b5563;">CGST (9%)</td>
+                        <td style="text-align: right;" class="font-mono">{{ number_format($cgstAmount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #4b5563;">SGST (9%)</td>
+                        <td style="text-align: right;" class="font-mono">{{ number_format($sgstAmount, 2) }}</td>
+                    </tr>
+                    <tr style="background-color: #f0f4ff;">
+                        <td style="color: #3730A3; font-weight: bold;">Total Tax (GST 18%)</td>
+                        <td style="text-align: right; color:#4F46E5; font-weight: bold;" class="font-mono">{{ number_format($totalTaxAmount, 2) }}</td>
                     </tr>
                     @endif
                     <tr style="background-color: #f3f4f6; font-size: 12px; font-weight: bold; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
                         <td style="color: #111827;">Invoice Grand Total</td>
                         <td style="text-align: right; color: #111827;" class="font-mono">Rs. {{ number_format($sale->total_amount, 2) }}</td>
                     </tr>
+                    <tr>
+                        <td style="color: #059669; font-weight: bold;">Amount Paid</td>
+                        <td style="text-align: right; color: #059669; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->amount_paid, 2) }}</td>
+                    </tr>
+                    @if($sale->udhari_amount > 0)
+                    <tr style="background-color: #fef2f2;">
+                        <td style="color: #dc2626; font-weight: bold;">Balance Due (Khata)</td>
+                        <td style="text-align: right; color: #dc2626; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->udhari_amount, 2) }}</td>
+                    </tr>
+                    @endif
                 </table>
             </td>
         </tr>

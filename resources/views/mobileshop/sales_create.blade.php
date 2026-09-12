@@ -142,7 +142,7 @@
                         </div>
                     </div>
                     <div class="card-body" style="padding:8px 12px;">
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:10px;">
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px;">
                             <div class="form-group" style="margin:0;">
                                 <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Customer Phone <span style="color:#EF4444;">*</span></label>
                                 <div style="position:relative;">
@@ -160,10 +160,21 @@
                                 <input type="text" class="form-control" name="customer_name" id="customerName" required placeholder="Full customer name" style="height:32px; font-size:12px; font-weight:600; border-radius:6px;">
                             </div>
                             <div class="form-group" style="margin:0;">
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Customer GSTIN (Optional B2B)</label>
+                                <input type="text" class="form-control" name="customer_gstin" id="customerGstin" placeholder="e.g. 09AAACA1234F1Z5" style="height:32px; font-size:12px; font-weight:600; border-radius:6px;">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Address / City</label>
+                                <input type="text" class="form-control" name="customer_address" id="customerAddress" placeholder="Customer address" style="height:32px; font-size:12px; font-weight:600; border-radius:6px;">
+                            </div>
+                            <div class="form-group" style="margin:0;">
                                 <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Khata Balance</label>
                                 <input type="text" class="form-control" id="customerBalanceDisplay" readonly value="—" style="height:32px; font-size:12px; background:#F8FAFC; font-weight:800; color:#475569; border-radius:6px;">
                             </div>
                         </div>
+                        <input type="hidden" name="bill_type" id="billType" value="gst">
+                        <input type="hidden" name="is_gst" value="1">
+                        <input type="hidden" name="tax_rate" value="18.00">
                     </div>
                 </div>
 
@@ -441,6 +452,11 @@
                         </div>
                     </div>
                     <div class="card-body" style="padding:10px 12px;">
+
+                        <div style="font-size:11px; font-weight:700; color:#4F46E5; background:#EEF2FF; padding:4px 8px; border-radius:6px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;">
+                            <span>📋 Bill Type</span>
+                            <span>18% GST Tax Invoice</span>
+                        </div>
 
                         <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; color:#64748B;">
                             <span>Devices Total:</span>

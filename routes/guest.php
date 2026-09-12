@@ -24,6 +24,7 @@ Route::group(['prefix' => 'auth', 'middleware' => ['auth.redirect']], function (
     // MobiTrack Staff Onboarding via Admin Token
     Route::get('employee-register', 'MobileShop\StaffOnboardingController@showRegister')->name('mobileshop.register');
     Route::post('employee-register', 'MobileShop\StaffOnboardingController@processRegister')->name('mobileshop.register.store');
+    Route::post('employee-register/verify', 'MobileShop\StaffOnboardingController@verifyToken')->name('mobileshop.register.verify');
 
     // MobiTrack Password Reset via Email OTP
     Route::get('forgot-password', 'MobileShop\PasswordResetOtpController@showForgot')->name('mobileshop.password.forgot');

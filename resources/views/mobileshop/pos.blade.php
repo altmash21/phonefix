@@ -271,20 +271,20 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">Payment & Checkout</div>
-                    <span id="gstBadge" class="badge" style="background:#F1F5F9; color:#475569; font-weight:700;">NON-GST RETAIL</span>
+                    <span id="gstBadge" class="badge" style="background:#F3E8FF; color:#7E22CE; font-weight:700;">18% GST INCL</span>
                 </div>
                 <div class="card-body" style="display:flex; flex-direction:column; gap: 16px;">
 
                     <!-- Bill Type / GST Checkbox -->
-                    <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px 14px; margin-bottom:0;">
+                    <div style="background: #F5F3FF; border: 1.5px solid #DDD6FE; border-radius: 10px; padding: 12px 14px; margin-bottom:0;">
                         <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0; user-select:none;">
-                            <input type="checkbox" name="is_gst" id="isGstCheckbox" value="1" style="width:18px; height:18px; accent-color:#5E6AD2; cursor:pointer;">
+                            <input type="checkbox" name="is_gst" id="isGstCheckbox" value="1" checked style="width:18px; height:18px; accent-color:#5E6AD2; cursor:pointer;">
                             <div>
                                 <span style="font-size:13px; font-weight:700; color:#0F172A;">Make GST Bill (18% Tax Invoice)</span>
-                                <p style="font-size:11px; color:#64748B; margin:1px 0 0 0;">Unchecked by default (Standard Retail / Non-GST Estimate)</p>
+                                <p style="font-size:11px; color:#64748B; margin:1px 0 0 0;">Checked by default for New Phones (18% GST Breakdown)</p>
                             </div>
                         </label>
-                        <input type="hidden" name="bill_type" id="billType" value="non_gst">
+                        <input type="hidden" name="bill_type" id="billType" value="gst">
                     </div>
 
                     <!-- Final Agreed Selling Price -->

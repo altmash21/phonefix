@@ -136,6 +136,13 @@ class MobileShopInvoiceHelper
             ]);
             $customer = DB::table('ms_customers')->where('id', $customerId)->first();
             Cache::put("ms_cust_{$companyId}_{$phone}", $customer, 300);
+        } else if (!empty($request->customer_gstin) && empty($customer->gstin)) {
+            DB::table('ms_customers')->where('id', $customer->id)->update([
+                'gstin' => $request->customer_gstin,
+                'updated_at' => now(),
+            ]);
+            $customer->gstin = $request->customer_gstin;
+            Cache::put("ms_cust_{$companyId}_{$phone}", $customer, 300);
         }
         return $customer;
     }

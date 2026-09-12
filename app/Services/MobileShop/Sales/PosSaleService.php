@@ -53,7 +53,7 @@ class PosSaleService
             $salePrice = (float) $request->sale_price;
             $amountPaid = (float) $request->amount_paid;
             $reqTaxRate = (float) ($request->tax_rate ?? 18.00);
-            $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst');
+            $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst') || (!$request->has('bill_type') && !$request->has('is_gst'));
             $billType = $isGst ? 'gst' : 'non_gst';
 
             // Tax Calculation

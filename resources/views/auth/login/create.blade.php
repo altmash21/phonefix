@@ -139,139 +139,293 @@
             </div>
         </div>
 
-        <!-- ════ RIGHT PANEL: LOGIN FORM (7 Cols) ════ -->
-        <div class="lg:col-span-7 p-8 sm:p-12 flex flex-col justify-center bg-white">
-            <div class="max-w-md w-full mx-auto space-y-6">
+        <!-- ════ RIGHT PANEL: AUTH FORMS (7 Cols) ════ -->
+        <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center bg-white">
+            <div class="max-w-md w-full mx-auto space-y-5">
 
-                <!-- Header -->
-                <div>
-                    <h1 class="font-display font-black text-2xl text-slate-900">Sign In to Terminal</h1>
-                    <p class="text-xs text-slate-500 mt-1">Select your staff station or enter your registered store email.</p>
+                <!-- Tab Switcher: Sign In vs Register with Invite Code -->
+                <div class="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+                    <button type="button" id="tabSignInBtn" onclick="switchAuthTab('signin')"
+                            class="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-sm">
+                        <i data-lucide="log-in" class="w-3.5 h-3.5 text-brand-600"></i>
+                        <span>Staff Sign In</span>
+                    </button>
+                    <button type="button" id="tabRegisterBtn" onclick="switchAuthTab('register')"
+                            class="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-900">
+                        <i data-lucide="ticket" class="w-3.5 h-3.5 text-brand-600"></i>
+                        <span>Register with Code</span>
+                    </button>
                 </div>
 
-                <!-- Alert Messages -->
-                @if (session('success'))
-                    <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                <!-- ══════════════════════════════════════════════════
+                     PANEL 1: STAFF SIGN IN
+                     ══════════════════════════════════════════════════ -->
+                <div id="panelSignIn" class="space-y-5">
+                    <!-- Header -->
+                    <div>
+                        <h1 class="font-display font-black text-2xl text-slate-900">Sign In to Terminal</h1>
+                        <p class="text-xs text-slate-500 mt-1">Select your staff station or enter your registered store email.</p>
+                    </div>
+
+                    <!-- Alert Messages -->
+                    @if (session('success'))
+                        <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                            <span>{{ session('success') }}</span>
+                        </div>
+                    @endif
+
+                    <div id="login-error-alert" class="hidden p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                        <span id="login-error-text">Invalid login credentials.</span>
+                    </div>
+
+                    <div id="login-success-alert" class="hidden p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
                         <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-                        <span>{{ session('success') }}</span>
-                    </div>
-                @endif
-
-                <div id="login-error-alert" class="hidden p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
-                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
-                    <span id="login-error-text">Invalid login credentials.</span>
-                </div>
-
-                <div id="login-success-alert" class="hidden p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-                    <span id="login-success-text">Authorized! Redirecting to station...</span>
-                </div>
-
-                @php
-                    $showDemoStations = !app()->isProduction() && \Illuminate\Support\Facades\DB::table('users')->where('email', 'sales@mobitrack.local')->exists();
-                @endphp
-
-                @if ($showDemoStations)
-                <!-- 1-Click Quick Station Fillers -->
-                <div class="space-y-2">
-                    <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Quick Station Selection:</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        <button type="button" onclick="fillCreds('admin@mobitrack.local', 'password', 'Store Admin')"
-                                class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
-                            <span class="block font-semibold text-slate-900 text-[11px]">Store Admin</span>
-                            <span class="text-[10px] text-slate-400 font-mono">admin@</span>
-                        </button>
-
-                        <button type="button" onclick="fillCreds('sales@mobitrack.local', 'password', 'New Phones POS')"
-                                class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
-                            <span class="block font-semibold text-slate-900 text-[11px]">New Phones POS</span>
-                            <span class="text-[10px] text-slate-400 font-mono">sales@</span>
-                        </button>
-
-                        <button type="button" onclick="fillCreds('buyback@mobitrack.local', 'password', 'Buyback Specialist')"
-                                class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
-                            <span class="block font-semibold text-slate-900 text-[11px]">Buyback Desk</span>
-                            <span class="text-[10px] text-slate-400 font-mono">buyback@</span>
-                        </button>
-
-                        <button type="button" onclick="fillCreds('accessories@mobitrack.local', 'password', 'Accessories Staff')"
-                                class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
-                            <span class="block font-semibold text-slate-900 text-[11px]">Accessories</span>
-                            <span class="text-[10px] text-slate-400 font-mono">accessories@</span>
-                        </button>
-
-                        <button type="button" onclick="fillCreds('cover@mobitrack.local', 'password', 'Cover Staff')"
-                                class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
-                            <span class="block font-semibold text-slate-900 text-[11px]">Cover & Glass</span>
-                            <span class="text-[10px] text-slate-400 font-mono">cover@</span>
-                        </button>
-
-                        <button type="button" onclick="fillCreds('tech@mobitrack.local', 'password', 'Service Tech')"
-                                class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
-                            <span class="block font-semibold text-slate-900 text-[11px]">Service Tech</span>
-                            <span class="text-[10px] text-slate-400 font-mono">tech@</span>
-                        </button>
-                    </div>
-                </div>
-                @endif
-
-                <!-- Login Form -->
-                <form id="loginForm" method="POST" action="{{ route('login.store') }}" class="space-y-4 pt-1">
-                    @csrf
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Staff Email Address</label>
-                        <div class="relative">
-                            <input type="email" id="emailInput" name="email" value="{{ old('email', 'admin@mobitrack.local') }}" required
-                                   placeholder="name@mobitrack.local"
-                                   class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
-                            <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        </div>
+                        <span id="login-success-text">Authorized! Redirecting to station...</span>
                     </div>
 
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="text-xs font-semibold text-slate-700">Terminal Access Password</label>
-                            <a href="{{ route('mobileshop.password.forgot') }}" class="text-[11px] font-semibold text-brand-600 hover:text-brand-700">Forgot?</a>
-                        </div>
-                        <div class="relative">
-                            <input type="password" id="passwordInput" name="password" value="password" required
-                                   placeholder="••••••••"
-                                   class="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
-                            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                            <button type="button" onclick="togglePassword()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
+                    @php
+                        $showDemoStations = !app()->isProduction() && \Illuminate\Support\Facades\DB::table('users')->where('email', 'sales@mobitrack.local')->exists();
+                    @endphp
+
+                    @if ($showDemoStations)
+                    <!-- 1-Click Quick Station Fillers -->
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Quick Station Selection:</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <button type="button" onclick="fillCreds('admin@mobitrack.local', 'password', 'Store Admin')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Store Admin</span>
+                                <span class="text-[10px] text-slate-400 font-mono">admin@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('sales@mobitrack.local', 'password', 'New Phones POS')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">New Phones POS</span>
+                                <span class="text-[10px] text-slate-400 font-mono">sales@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('buyback@mobitrack.local', 'password', 'Buyback Specialist')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Buyback Desk</span>
+                                <span class="text-[10px] text-slate-400 font-mono">buyback@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('accessories@mobitrack.local', 'password', 'Accessories Staff')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Accessories</span>
+                                <span class="text-[10px] text-slate-400 font-mono">accessories@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('cover@mobitrack.local', 'password', 'Cover Staff')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Cover & Glass</span>
+                                <span class="text-[10px] text-slate-400 font-mono">cover@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('tech@mobitrack.local', 'password', 'Service Tech')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Service Tech</span>
+                                <span class="text-[10px] text-slate-400 font-mono">tech@</span>
                             </button>
                         </div>
                     </div>
+                    @endif
 
-                    <!-- Remember Terminal Station -->
-                    <div class="flex items-center justify-between text-xs">
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" name="remember" value="1" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-600 border-slate-300">
-                            <span class="font-medium text-slate-600">Remember this station</span>
-                        </label>
-                        <span id="selectedBadge" class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700">Store Admin</span>
+                    <!-- Login Form -->
+                    <form id="loginForm" method="POST" action="{{ route('login.store') }}" class="space-y-4 pt-1">
+                        @csrf
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Staff Email Address</label>
+                            <div class="relative">
+                                <input type="email" id="emailInput" name="email" value="{{ old('email', 'admin@mobitrack.local') }}" required
+                                       placeholder="name@mobitrack.local"
+                                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
+                                <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-xs font-semibold text-slate-700">Terminal Access Password</label>
+                                <a href="{{ route('mobileshop.password.forgot') }}" class="text-[11px] font-semibold text-brand-600 hover:text-brand-700">Forgot?</a>
+                            </div>
+                            <div class="relative">
+                                <input type="password" id="passwordInput" name="password" value="password" required
+                                       placeholder="••••••••"
+                                       class="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
+                                <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                <button type="button" onclick="togglePassword('passwordInput', 'eyeIcon')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Remember Terminal Station -->
+                        <div class="flex items-center justify-between text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" name="remember" value="1" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-600 border-slate-300">
+                                <span class="font-medium text-slate-600">Remember this station</span>
+                            </label>
+                            <span id="selectedBadge" class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700">Store Admin</span>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="submitBtn"
+                                class="w-full py-3 rounded-xl btn-teal text-white font-semibold text-xs shadow-md shadow-brand-700/20 flex items-center justify-center gap-2 transition-colors">
+                            <i data-lucide="log-in" class="w-4 h-4"></i>
+                            <span id="btnText">Unlock & Enter Terminal</span>
+                        </button>
+                    </form>
+
+                    <!-- Switch to Register tab prompt -->
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">New team member?</span>
+                        <button type="button" onclick="switchAuthTab('register')" class="font-bold text-brand-600 hover:text-brand-700 underline underline-offset-2">
+                            Have an Admin Invite Code? Sign Up &rarr;
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════════════════
+                     PANEL 2: REGISTER WITH INVITE CODE
+                     ══════════════════════════════════════════════════ -->
+                <div id="panelRegister" class="hidden space-y-5">
+                    <!-- Header -->
+                    <div>
+                        <h1 class="font-display font-black text-2xl text-slate-900">Create Staff Account</h1>
+                        <p class="text-xs text-slate-500 mt-1">Enter the code given by your Store Admin, then set your own email &amp; password.</p>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" id="submitBtn"
-                            class="w-full py-3 rounded-xl btn-teal text-white font-semibold text-xs shadow-md shadow-brand-700/20 flex items-center justify-center gap-2 transition-colors">
-                        <i data-lucide="log-in" class="w-4 h-4"></i>
-                        <span id="btnText">Unlock & Enter Terminal</span>
-                    </button>
-                </form>
+                    <!-- Alert Messages -->
+                    <div id="reg-error-alert" class="hidden p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                        <span id="reg-error-text">Registration error.</span>
+                    </div>
 
-                <!-- Employee Self-Registration Invite Link -->
-                <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span class="text-slate-500">New team member?</span>
-                    <a href="{{ route('mobileshop.register') }}" class="font-bold text-brand-600 hover:text-brand-700 underline underline-offset-2">
-                        Activate with Invite Token &rarr;
-                    </a>
+                    <div id="reg-success-alert" class="hidden p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                        <span id="reg-success-text">Account created &amp; authorized! Launching terminal...</span>
+                    </div>
+
+                    <!-- Verified Station Banner -->
+                    <div id="regStationBadge" class="hidden p-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-teal-600 shrink-0"></i>
+                            <div>
+                                <span class="font-bold text-teal-950 block" id="regStationLabel">Station Name</span>
+                                <span class="text-[10px] text-teal-700" id="regStationExpiry">Valid code</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-200 text-teal-900">Designated Role</span>
+                    </div>
+
+                    <!-- Registration Form -->
+                    <form id="registerForm" method="POST" action="{{ route('mobileshop.register.store') }}" class="space-y-3.5">
+                        @csrf
+
+                        <!-- Admin Invite Token -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-xs font-semibold text-slate-700">
+                                    Admin Invite Code <span class="text-rose-500">*</span>
+                                </label>
+                                <span id="tokenCheckStatus" class="text-[10px] font-semibold text-slate-400">Issued by Store Admin</span>
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="regTokenInput" name="token" required
+                                       placeholder="e.g. EMP-A1B2C3"
+                                       style="text-transform: uppercase;"
+                                       oninput="handleTokenInput(this.value)"
+                                       onblur="verifyTokenAjax(this.value)"
+                                       class="w-full pl-10 pr-24 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold tracking-wider text-brand-900 uppercase focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
+                                <i data-lucide="ticket" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                <button type="button" onclick="verifyTokenAjax(document.getElementById('regTokenInput').value)"
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 text-[10px] font-bold bg-slate-200 hover:bg-brand-600 hover:text-white text-slate-700 rounded-lg transition-colors">
+                                    Verify Code
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Employee Name -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                Your Full Name <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="text" id="regNameInput" name="name" required
+                                       placeholder="e.g. Rahul Sharma"
+                                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
+                                <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            </div>
+                        </div>
+
+                        <!-- Employee Own Email -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                Your Login Email Address <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="email" id="regEmailInput" name="email" required
+                                       placeholder="e.g. rahul@store.com"
+                                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
+                                <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            </div>
+                        </div>
+
+                        <!-- Employee Own Password -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                    Password <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="password" id="regPasswordInput" name="password" required minlength="6"
+                                           placeholder="Min 6 chars"
+                                           class="w-full pl-9 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
+                                    <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                    <button type="button" onclick="togglePassword('regPasswordInput', 'eyeReg1')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                        <i data-lucide="eye" id="eyeReg1" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                    Confirm Password <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="password" id="regPasswordConfirmInput" name="password_confirmation" required minlength="6"
+                                           placeholder="Re-enter"
+                                           class="w-full pl-9 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
+                                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                    <button type="button" onclick="togglePassword('regPasswordConfirmInput', 'eyeReg2')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                        <i data-lucide="eye" id="eyeReg2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Registration -->
+                        <button type="submit" id="regSubmitBtn"
+                                class="w-full py-3 rounded-xl btn-teal text-white font-semibold text-xs shadow-md shadow-brand-700/20 flex items-center justify-center gap-2 transition-colors mt-2">
+                            <i data-lucide="user-check" class="w-4 h-4"></i>
+                            <span id="regBtnText">Create Account &amp; Unlock Terminal</span>
+                        </button>
+                    </form>
+
+                    <!-- Back to Login -->
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500">Already have an account?</span>
+                        <button type="button" onclick="switchAuthTab('signin')" class="font-bold text-brand-600 hover:text-brand-700 underline underline-offset-2">
+                            &larr; Switch to Sign In
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Help note -->
                 <div class="pt-1 text-center text-xs text-slate-400">
-                    Need technical terminal assistance? Call Store Admin at <strong class="text-slate-600">+91 98765 43210</strong>
+                    Need store access assistance? Contact Store Administrator at <strong class="text-slate-600">+91 98765 43210</strong>
                 </div>
 
             </div>
@@ -283,6 +437,37 @@
     <script>
         lucide.createIcons();
 
+        // ══════════════════════════════════════════════════════════════
+        // TAB SWITCHING: SIGN IN vs REGISTER WITH INVITE CODE
+        // ══════════════════════════════════════════════════════════════
+        function switchAuthTab(tab) {
+            const panelSignIn = document.getElementById('panelSignIn');
+            const panelRegister = document.getElementById('panelRegister');
+            const tabSignInBtn = document.getElementById('tabSignInBtn');
+            const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+
+            if (tab === 'register') {
+                panelSignIn.classList.add('hidden');
+                panelRegister.classList.remove('hidden');
+
+                tabSignInBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-900';
+                tabRegisterBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-sm';
+
+                // Focus on token input
+                setTimeout(() => {
+                    const tokenInput = document.getElementById('regTokenInput');
+                    if (tokenInput && !tokenInput.value) tokenInput.focus();
+                }, 100);
+            } else {
+                panelRegister.classList.add('hidden');
+                panelSignIn.classList.remove('hidden');
+
+                tabRegisterBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-900';
+                tabSignInBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-sm';
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
         // 1-Click Station Credential Setter
         function fillCreds(email, password, label) {
             document.getElementById('emailInput').value = email;
@@ -292,9 +477,10 @@
         }
 
         // Show / Hide Password Toggle
-        function togglePassword() {
-            const pwd = document.getElementById('passwordInput');
-            const icon = document.getElementById('eyeIcon');
+        function togglePassword(inputId, iconId) {
+            const pwd = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!pwd || !icon) return;
             if (pwd.type === 'password') {
                 pwd.type = 'text';
                 icon.setAttribute('data-lucide', 'eye-off');
@@ -302,10 +488,76 @@
                 pwd.type = 'password';
                 icon.setAttribute('data-lucide', 'eye');
             }
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         }
 
-        // AJAX Form Submit with Smooth Redirect
+        // ══════════════════════════════════════════════════════════════
+        // LIVE TOKEN VERIFIER VIA AJAX
+        // ══════════════════════════════════════════════════════════════
+        let tokenCheckTimeout = null;
+        function handleTokenInput(val) {
+            clearTimeout(tokenCheckTimeout);
+            const clean = val.trim().toUpperCase();
+            if (clean.length >= 6) {
+                tokenCheckTimeout = setTimeout(() => verifyTokenAjax(clean), 500);
+            }
+        }
+
+        async function verifyTokenAjax(tokenStr) {
+            tokenStr = (tokenStr || '').trim().toUpperCase();
+            const statusSpan = document.getElementById('tokenCheckStatus');
+            const badge = document.getElementById('regStationBadge');
+            const label = document.getElementById('regStationLabel');
+            const expiry = document.getElementById('regStationExpiry');
+            const nameInput = document.getElementById('regNameInput');
+
+            if (!tokenStr) {
+                statusSpan.innerHTML = 'Issued by Store Admin';
+                statusSpan.className = 'text-[10px] font-semibold text-slate-400';
+                badge.classList.add('hidden');
+                return;
+            }
+
+            statusSpan.innerHTML = '<span class="inline-flex items-center gap-1 text-slate-500">Checking...</span>';
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    || '{{ csrf_token() }}';
+
+                const res = await fetch("{{ route('mobileshop.register.verify') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ token: tokenStr })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.valid) {
+                    statusSpan.innerHTML = '<span class="text-emerald-600 font-bold">✓ Code Valid</span>';
+                    label.innerText = data.station_label;
+                    expiry.innerText = `Role pre-assigned by Admin • Expires ${data.expires_at}`;
+                    badge.classList.remove('hidden');
+
+                    if (data.recipient_name && (!nameInput.value || nameInput.value.trim() === '')) {
+                        nameInput.value = data.recipient_name;
+                    }
+                } else {
+                    statusSpan.innerHTML = `<span class="text-rose-500 font-bold">${data.message || 'Invalid code'}</span>`;
+                    badge.classList.add('hidden');
+                }
+            } catch (err) {
+                statusSpan.innerHTML = '<span class="text-slate-400">Offline check</span>';
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        // LOGIN FORM SUBMISSION (AJAX)
+        // ══════════════════════════════════════════════════════════════
         const form = document.getElementById('loginForm');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
@@ -341,10 +593,8 @@
 
                 if (response.status === 419) {
                     errAlert.classList.remove('hidden');
-                    errText.innerText = 'Security session expired or token refreshed. Reloading terminal...';
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 600);
+                    errText.innerText = 'Security session expired. Reloading terminal...';
+                    setTimeout(() => { window.location.reload(); }, 600);
                     return;
                 }
 
@@ -358,14 +608,98 @@
                     }, 500);
                 } else {
                     errAlert.classList.remove('hidden');
-                    errText.innerText = data.message || 'Invalid email or password. Please verify your credentials.';
+                    errText.innerText = data.message || 'Invalid email or password. Please verify credentials.';
                     submitBtn.disabled = false;
                     btnText.innerText = 'Unlock & Enter Terminal';
                 }
             } catch (err) {
-                // Fallback to standard form submission if fetch is interrupted
                 form.submit();
             }
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // REGISTRATION FORM SUBMISSION (AJAX)
+        // ══════════════════════════════════════════════════════════════
+        const regForm = document.getElementById('registerForm');
+        const regSubmitBtn = document.getElementById('regSubmitBtn');
+        const regBtnText = document.getElementById('regBtnText');
+        const regErrAlert = document.getElementById('reg-error-alert');
+        const regErrText = document.getElementById('reg-error-text');
+        const regSuccAlert = document.getElementById('reg-success-alert');
+        const regSuccText = document.getElementById('reg-success-text');
+
+        regForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            regErrAlert.classList.add('hidden');
+            regSuccAlert.classList.add('hidden');
+
+            const pwd = document.getElementById('regPasswordInput').value;
+            const pwdConf = document.getElementById('regPasswordConfirmInput').value;
+
+            if (pwd !== pwdConf) {
+                regErrAlert.classList.remove('hidden');
+                regErrText.innerText = 'Passwords do not match. Please re-enter identical passwords.';
+                return;
+            }
+
+            regSubmitBtn.disabled = true;
+            regBtnText.innerText = 'Activating Account...';
+
+            const formData = new FormData(regForm);
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    || document.querySelector('input[name="_token"]')?.value
+                    || '{{ csrf_token() }}';
+
+                const response = await fetch("{{ route('mobileshop.register.store') }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    regSuccAlert.classList.remove('hidden');
+                    regSuccText.innerText = data.message || 'Account activated successfully! Launching station...';
+                    setTimeout(() => {
+                        window.location.href = data.redirect || "{{ route('mobileshop.dashboard') }}";
+                    }, 700);
+                } else {
+                    regErrAlert.classList.remove('hidden');
+                    regErrText.innerText = data.message || 'Registration failed. Please verify your invite code and inputs.';
+                    regSubmitBtn.disabled = false;
+                    regBtnText.innerText = 'Create Account & Unlock Terminal';
+                }
+            } catch (err) {
+                regForm.submit();
+            }
+        });
+
+        // ══════════════════════════════════════════════════════════════
+        // AUTO-OPEN REGISTER TAB IF URL CONTAINS TOKEN OR TAB=REGISTER
+        // ══════════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const tokenParam = params.get('token');
+            const tabParam = params.get('tab');
+
+            if (tokenParam || tabParam === 'register') {
+                switchAuthTab('register');
+                if (tokenParam) {
+                    const tokenInput = document.getElementById('regTokenInput');
+                    if (tokenInput) {
+                        tokenInput.value = tokenParam.toUpperCase();
+                        verifyTokenAjax(tokenParam);
+                    }
+                }
+            }
+            if (window.lucide) lucide.createIcons();
         });
     </script>
 </body>

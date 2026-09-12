@@ -83,6 +83,46 @@ class StaffOnboardingController extends Controller
     }
 
     /**
+     * AJAX Verify invite token status & return station details
+     */
+    public function verifyToken(Request $request)
+    {
+        $tokenStr = strtoupper(trim((string) $request->input('token', '')));
+
+        if (empty($tokenStr)) {
+            return response()->json([
+                'valid'   => false,
+                'message' => 'Please enter an invite code.'
+            ], 422);
+        }
+
+        $invite = DB::table('ms_employee_invites')
+            ->where('token', $tokenStr)
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$invite) {
+            return response()->json([
+                'valid'   => false,
+                'message' => 'Invite code is invalid, expired, or has already been used.'
+            ], 404);
+        }
+
+        $station = self::getStationLabel($invite->role_name);
+
+        return response()->json([
+            'valid'          => true,
+            'token'          => $invite->token,
+            'role_name'      => $invite->role_name,
+            'station_label'  => $station,
+            'recipient_name' => $invite->recipient_name,
+            'expires_at'     => Carbon::parse($invite->expires_at)->diffForHumans(),
+            'message'        => "Valid code for: {$station}",
+        ]);
+    }
+
+    /**
      * Process employee registration using an active invite token
      */
     public function processRegister(Request $request)

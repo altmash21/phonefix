@@ -231,15 +231,22 @@
     }
     @media (max-width: 767px) {
         .invoice-scroll-wrapper {
-            padding: 4px;
-            margin: 0 -6px;
-            width: calc(100% + 12px);
-            background: #F8FAFC;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            background: transparent !important;
+            overflow-x: hidden !important;
+            box-shadow: none !important;
         }
         .printable-invoice-container {
-            min-width: 580px !important;
-            padding: 14px 12px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            padding: 14px 10px !important;
+            margin: 0 auto !important;
             box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
         }
     }
     @media (min-width: 768px) {
