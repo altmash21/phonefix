@@ -44,8 +44,19 @@ Route::get('contact', 'MobileShop\PublicStoreController@publicContact')->name('p
 Route::post('contact', 'MobileShop\PublicStoreController@submitContact')->name('public.contact.submit');
 Route::get('track-repair', 'MobileShop\PublicStoreController@publicTrackRepair')->name('public.track_repair');
 
-// Compatibility Aliases
+Route::get('privacy-policy', 'MobileShop\PublicStoreController@publicPrivacy')->name('public.privacy');
+Route::get('terms-and-conditions', 'MobileShop\PublicStoreController@publicTerms')->name('public.terms');
+Route::get('refund-policy', 'MobileShop\PublicStoreController@publicRefunds')->name('public.refunds');
+Route::get('warranty-policy', 'MobileShop\PublicStoreController@publicWarranty')->name('public.warranty');
+Route::get('shipping-policy', 'MobileShop\PublicStoreController@publicShipping')->name('public.shipping');
+
+// Compatibility & Clean Short Aliases
 Route::get('home', function() { return redirect()->route('public.landing'); });
+Route::get('privacy', function() { return redirect()->route('public.privacy'); });
+Route::get('terms', function() { return redirect()->route('public.terms'); });
+Route::get('refunds', function() { return redirect()->route('public.refunds'); });
+Route::get('warranty', function() { return redirect()->route('public.warranty'); });
+Route::get('shipping', function() { return redirect()->route('public.shipping'); });
 Route::get('auth/shop', function() { return redirect()->route('public.store'); });
 Route::get('auth/track-repair', function() { return redirect()->route('public.track_repair'); });
 

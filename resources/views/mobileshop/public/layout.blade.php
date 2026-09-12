@@ -498,9 +498,9 @@
                     <h3 class="apple-caption-strong text-apple-ink mb-2">Values</h3>
                     <ul class="apple-dense-link text-apple-muted-80">
                         <li><a href="{{ route('public.about') }}" class="hover:text-apple-primary">Environment & E-Waste</a></li>
-                        <li><a href="{{ route('public.about') }}" class="hover:text-apple-primary">Genuine Invoices</a></li>
-                        <li><a href="{{ route('public.about') }}" class="hover:text-apple-primary">Privacy & Data Zero-Wipe</a></li>
-                        <li><a href="{{ route('public.about') }}" class="hover:text-apple-primary">50-Point Inspection</a></li>
+                        <li><a href="{{ route('public.privacy') }}" class="hover:text-apple-primary">Privacy & Data Zero-Wipe</a></li>
+                        <li><a href="{{ route('public.warranty') }}" class="hover:text-apple-primary">Warranty & Guarantees</a></li>
+                        <li><a href="{{ route('public.shipping') }}" class="hover:text-apple-primary">Showroom Pickup & Delivery</a></li>
                     </ul>
                 </div>
 
@@ -532,13 +532,15 @@
                     Copyright © {{ date('Y') }} Maurya Mobile Inc. All rights reserved. Linking Road, Bandra West, Mumbai.
                 </div>
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    <a href="{{ route('public.about') }}" class="hover:text-apple-ink">Privacy Policy</a>
+                    <a href="{{ route('public.privacy') }}" class="hover:text-apple-ink">Privacy Policy</a>
                     <span>|</span>
-                    <a href="{{ route('public.about') }}" class="hover:text-apple-ink">Terms of Sale</a>
+                    <a href="{{ route('public.terms') }}" class="hover:text-apple-ink">Terms of Sale</a>
                     <span>|</span>
-                    <a href="{{ route('public.store') }}" class="hover:text-apple-ink">Sales & Refunds</a>
+                    <a href="{{ route('public.refunds') }}" class="hover:text-apple-ink">Returns & Refunds</a>
                     <span>|</span>
-                    <a href="{{ route('public.contact') }}" class="hover:text-apple-ink">Legal & GST</a>
+                    <a href="{{ route('public.warranty') }}" class="hover:text-apple-ink">Warranty Policy</a>
+                    <span>|</span>
+                    <a href="{{ route('public.shipping') }}" class="hover:text-apple-ink">Shipping & Delivery</a>
                 </div>
             </div>
         </div>

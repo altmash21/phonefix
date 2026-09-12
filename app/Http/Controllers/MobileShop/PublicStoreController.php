@@ -200,4 +200,44 @@ class PublicStoreController extends BaseMobileShopController
 
         return view('mobileshop.public.track_repair', compact('ticket'));
     }
+
+    /**
+     * Public Website — Privacy & Data Zero-Wipe Policy
+     */
+    public function publicPrivacy()
+    {
+        return view('mobileshop.public.privacy');
+    }
+
+    /**
+     * Public Website — Terms & Conditions of Sale
+     */
+    public function publicTerms()
+    {
+        return view('mobileshop.public.terms');
+    }
+
+    /**
+     * Public Website — Refund, Return & Replacement Policy
+     */
+    public function publicRefunds()
+    {
+        return view('mobileshop.public.refunds');
+    }
+
+    /**
+     * Public Website — Warranty & Guarantee Policy
+     */
+    public function publicWarranty()
+    {
+        return view('mobileshop.public.warranty');
+    }
+
+    /**
+     * Public Website — Shipping & Store Pickup Policy
+     */
+    public function publicShipping()
+    {
+        return view('mobileshop.public.shipping');
+    }
 }
