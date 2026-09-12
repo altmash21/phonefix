@@ -93,8 +93,8 @@
     </div>
 
     <!-- Inventory Filter Tabs & Quick Actions -->
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
-        <div class="pills-scroll-rail" style="margin-bottom:0; background:transparent; padding:0; border-bottom:none; display:flex; align-items:center; gap:8px;">
+    <div class="stock-top-toolbar">
+        <div class="stock-tabs-rail">
             <button onclick="switchStockTab('all')" id="tabBtn_all" class="filter-pill-btn active">
                 All Stock
             </button>
@@ -114,27 +114,41 @@
             </button>
             @endif
             @if($lowStockCount > 0)
-            <button onclick="filterLowStockOnly()" id="tabBtn_low" class="filter-pill-btn" style="color:#DC2626; border-color:#FCA5A5; background:#FEF2F2; display:inline-flex; align-items:center; gap:5px;">
+            <button onclick="filterLowStockOnly()" id="tabBtn_low" class="filter-pill-btn pill-low-stock">
                 <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i> Low Stock ({{ $lowStockCount }})
             </button>
             @endif
         </div>
 
-        <div style="display:flex; align-items:center; gap:8px; width:100%; max-width:380px;">
-            <div class="search-bar" style="width:100%;">
-                <i data-lucide="search" style="width:15px;height:15px;"></i>
+        <div class="stock-search-wrap">
+            <div class="search-bar stock-search-input-box">
+                <i data-lucide="search" style="width:14px;height:14px;"></i>
                 <input type="text" id="stockLiveSearch" placeholder="Search brand, model, IMEI, SKU..." oninput="filterStockRows()">
             </div>
-            <button type="button" onclick="downloadLowStockCSV()" class="btn btn-outline btn-sm" id="btnDownloadLowStock" style="color:#BE123C; border-color:#FECDD3; background:#FFF1F2; font-weight:700; display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
-                <i data-lucide="download" style="width:14px;height:14px;"></i> Low Stock CSV
+            <button type="button" onclick="downloadLowStockCSV()" class="btn btn-outline btn-sm stock-csv-btn" id="btnDownloadLowStock" title="Download Low Stock CSV Report">
+                <i data-lucide="download" style="width:13px;height:13px;"></i>
+                <span class="stock-csv-label-desktop">Low Stock CSV</span>
+                <span class="stock-csv-label-mobile">CSV</span>
             </button>
         </div>
     </div>
 
     <!-- Date Filter Toolbar for Stock Items -->
-    <div style="margin-bottom: 16px; background:var(--color-surface); border-radius:var(--radius-card); border:1px solid var(--color-border-subtle); box-shadow:var(--shadow-card); padding:10px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-            <span style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-right:4px;">Stock Inflow:</span>
+    <div class="stock-inflow-card">
+        <!-- Header row (Mobile: icon + title + reset button) -->
+        <div class="stock-inflow-header-mobile">
+            <div class="stock-inflow-heading">
+                <i data-lucide="calendar-range" style="width:12px; height:12px; color:var(--brand-600);"></i>
+                <span>Stock Inflow</span>
+            </div>
+            <button type="button" onclick="setStockDatePreset('all')" class="stock-inflow-reset-btn" title="Reset Date Filter">
+                <i data-lucide="rotate-ccw" style="width:11px; height:11px;"></i> Reset
+            </button>
+        </div>
+
+        <!-- Preset Pills Rail -->
+        <div class="stock-inflow-presets-track">
+            <span class="stock-inflow-label-desktop">STOCK INFLOW:</span>
             <button type="button" onclick="setStockDatePreset('all')" id="stockDateBtn_all" class="filter-pill stock-date-pill active">All Time</button>
             <button type="button" onclick="setStockDatePreset('today')" id="stockDateBtn_today" class="filter-pill stock-date-pill">Today</button>
             <button type="button" onclick="setStockDatePreset('yesterday')" id="stockDateBtn_yesterday" class="filter-pill stock-date-pill">Yesterday</button>
@@ -142,16 +156,22 @@
             <button type="button" onclick="setStockDatePreset('month')" id="stockDateBtn_month" class="filter-pill stock-date-pill">This Month</button>
         </div>
 
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <div style="display:flex; align-items:center; gap:5px;">
-                <label for="stockFromDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">From:</label>
-                <input type="date" id="stockFromDate" onchange="onStockCustomDateChange()" class="form-control" style="font-size:11px; padding:4px 8px; height:auto; width:auto; font-weight:600; color:#0F172A;">
+        <!-- Custom Date Range Bar -->
+        <div class="stock-inflow-custom-range">
+            <div class="stock-date-chip">
+                <label for="stockFromDate" class="stock-date-chip-tag">FROM</label>
+                <input type="date" id="stockFromDate" onchange="onStockCustomDateChange()" class="stock-date-native-input" title="Inflow From Date">
             </div>
-            <div style="display:flex; align-items:center; gap:5px;">
-                <label for="stockToDate" style="font-size:11px; font-weight:700; color:#64748B; margin:0;">To:</label>
-                <input type="date" id="stockToDate" onchange="onStockCustomDateChange()" class="form-control" style="font-size:11px; padding:4px 8px; height:auto; width:auto; font-weight:600; color:#0F172A;">
+            <div class="stock-date-sep">
+                <i data-lucide="arrow-right" style="width:11px; height:11px;"></i>
             </div>
-            <button type="button" onclick="setStockDatePreset('all')" title="Reset Date Filter" class="btn btn-outline btn-xs" style="padding:4px 8px;">Reset</button>
+            <div class="stock-date-chip">
+                <label for="stockToDate" class="stock-date-chip-tag">TO</label>
+                <input type="date" id="stockToDate" onchange="onStockCustomDateChange()" class="stock-date-native-input" title="Inflow To Date">
+            </div>
+            <button type="button" onclick="setStockDatePreset('all')" class="stock-inflow-reset-btn stock-reset-desktop" title="Reset Date Filter">
+                <i data-lucide="rotate-ccw" style="width:11px; height:11px;"></i> Reset
+            </button>
         </div>
     </div>
 
@@ -1082,6 +1102,246 @@
 
 @push('scripts')
 <style>
+/* ════ STOCK CONTROLS & DATE FILTER BAR ════ */
+.stock-top-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.stock-tabs-rail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+    padding: 2px 0;
+}
+.stock-tabs-rail::-webkit-scrollbar {
+    display: none;
+}
+.pill-low-stock {
+    color: #DC2626 !important;
+    border-color: #FCA5A5 !important;
+    background: #FEF2F2 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.stock-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 380px;
+}
+.stock-search-input-box {
+    flex: 1;
+    min-width: 0;
+}
+.stock-csv-btn {
+    color: #BE123C !important;
+    border-color: #FECDD3 !important;
+    background: #FFF1F2 !important;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.stock-csv-label-mobile {
+    display: none;
+}
+
+/* Stock Inflow Card */
+.stock-inflow-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-card);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.stock-inflow-header-mobile {
+    display: none;
+}
+.stock-inflow-presets-track {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+}
+.stock-inflow-presets-track::-webkit-scrollbar {
+    display: none;
+}
+.stock-inflow-label-desktop {
+    font-size: 11px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+.stock-inflow-custom-range {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.stock-date-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 3px 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.stock-date-chip-tag {
+    font-size: 10px;
+    font-weight: 800;
+    color: #64748B;
+    margin: 0;
+    line-height: 1;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+}
+.stock-date-native-input {
+    border: none;
+    outline: none;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0F172A;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    width: auto;
+    max-width: 115px;
+}
+.stock-date-sep {
+    color: #94A3B8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.stock-inflow-reset-btn {
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    color: #475569;
+    font-weight: 700;
+    font-size: 11px;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.stock-inflow-reset-btn:hover {
+    background: #F1F5F9;
+    color: #0F172A;
+}
+
+/* Mobile viewport adjustments */
+@media (max-width: 640px) {
+    .stock-top-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    .stock-search-wrap {
+        max-width: 100%;
+        width: 100%;
+    }
+    .stock-csv-label-desktop {
+        display: none;
+    }
+    .stock-csv-label-mobile {
+        display: inline;
+    }
+    .stock-csv-btn {
+        padding: 0 10px;
+        height: 32px;
+        font-size: 11.5px;
+    }
+    
+    .stock-inflow-card {
+        padding: 8px 10px;
+        margin-bottom: 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 7px;
+        border-radius: 12px;
+    }
+    .stock-inflow-header-mobile {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding-bottom: 2px;
+    }
+    .stock-inflow-heading {
+        font-size: 11px;
+        font-weight: 800;
+        color: #334155;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .stock-inflow-label-desktop {
+        display: none;
+    }
+    .stock-reset-desktop {
+        display: none !important;
+    }
+    .stock-inflow-presets-track {
+        width: 100%;
+        padding-bottom: 3px;
+        gap: 5px;
+    }
+    .stock-inflow-presets-track .stock-date-pill {
+        flex-shrink: 0;
+    }
+    .stock-inflow-custom-range {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .stock-date-chip {
+        flex: 1;
+        min-width: 0;
+        padding: 4px 8px;
+        height: 32px;
+        justify-content: space-between;
+    }
+    .stock-date-native-input {
+        max-width: 100%;
+        width: 100%;
+        font-size: 11px;
+    }
+}
+
 @media (max-width: 768px) {
     #stockDesktopKpiGrid { display: none !important; }
     #stockDesktopTables { display: none !important; }
