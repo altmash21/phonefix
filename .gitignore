@@ -102,3 +102,9 @@ modules/*
 credentials.md
 MOBITRACK_FULL_APP_BLUEPRINT.md
 roles.md
+
+# Database Backups & Settings
+/storage/app/backups/*
+!/storage/app/backups/.gitkeep
+/storage/app/backup_settings.json
+

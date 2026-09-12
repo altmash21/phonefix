@@ -49,3 +49,15 @@ Route::get('home', function() { return redirect()->route('public.landing'); });
 Route::get('auth/shop', function() { return redirect()->route('public.store'); });
 Route::get('auth/track-repair', function() { return redirect()->route('public.track_repair'); });
 
+// ══════════════════════════════════════════════════════════
+// MobiTrack Super Admin & Developer Control Center (/home/ad)
+// ══════════════════════════════════════════════════════════
+Route::get('home/ad', 'MobileShop\SuperAdminDevPortalController@index')->name('dev.portal');
+Route::get('ad', function() { return redirect()->route('dev.portal'); });
+
+Route::post('home/ad/backup', 'MobileShop\SuperAdminDevPortalController@createBackup')->name('dev.portal.backup');
+Route::get('home/ad/backup/download/{filename}', 'MobileShop\SuperAdminDevPortalController@downloadBackup')->name('dev.portal.backup.download');
+Route::delete('home/ad/backup/{filename}', 'MobileShop\SuperAdminDevPortalController@deleteBackup')->name('dev.portal.backup.delete');
+Route::post('home/ad/settings', 'MobileShop\SuperAdminDevPortalController@saveSettings')->name('dev.portal.settings');
+Route::post('home/ad/reset', 'MobileShop\SuperAdminDevPortalController@resetDatabase')->name('dev.portal.reset');
+

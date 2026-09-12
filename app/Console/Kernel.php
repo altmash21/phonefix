@@ -32,6 +32,16 @@ class Kernel extends ConsoleKernel
         $schedule->command('storage-temp:clear')->dailyAt('17:00');
         $schedule->command('model:prune')->dailyAt('17:00');
 
+        // MobiTrack Automated Daily Database Backup
+        try {
+            $backupSettings = \App\Services\MobileShop\DatabaseBackupService::getBackupSettings();
+            if (!empty($backupSettings['enabled'])) {
+                $time = $backupSettings['daily_time'] ?? '02:00';
+                $schedule->command('mobileshop:backup-db --tag=automated')->dailyAt($time);
+            }
+        } catch (\Throwable $e) {
+            // Ignore if tables or files are not yet ready
+        }
     }
 
     /**
