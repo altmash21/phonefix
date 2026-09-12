@@ -7,11 +7,11 @@
     <div style="display:flex; gap:10px; align-items:center;">
         @if(auth()->user()->can('create-mobileshop-pos') || auth()->user()->can('read-mobileshop-new') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff'))
         <button onclick="openAddMobileModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> Add New Phone
+            <i data-lucide="smartphone" style="width:14px;height:14px;"></i> Purchase New Phone
         </button>
         @endif
         <a href="{{ route('mobileshop.pos') }}" class="btn btn-primary btn-sm">
-            <i data-lucide="shopping-cart" style="width:14px;height:14px;"></i> POS Terminal
+            <i data-lucide="shopping-cart" style="width:14px;height:14px;"></i> Sell New Phone
         </a>
     </div>
 @endsection

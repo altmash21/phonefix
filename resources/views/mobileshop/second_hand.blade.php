@@ -6,10 +6,10 @@
 @section('page-actions')
     <div style="display:flex; gap:10px; align-items:center;">
         <button onclick="openSellModal()" class="btn btn-primary btn-sm" style="background:var(--lama-purple-dark); box-shadow:0 2px 6px rgba(109,40,217,0.25);">
-            <i data-lucide="shopping-bag" style="width:14px;height:14px;"></i> Sell Pre-Owned Phone
+            <i data-lucide="shopping-bag" style="width:14px;height:14px;"></i> Sell Second Hand Phone
         </button>
         <button onclick="openBuybackModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> Register Buyback
+            <i data-lucide="repeat" style="width:14px;height:14px;"></i> Purchase Second Hand Phone
         </button>
     </div>
 @endsection

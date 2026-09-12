@@ -1,7 +1,7 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Restock Accessories & Spare Parts — Maurya Mobile')
-@section('page-title', 'Restock Accessories & Spare Parts')
+@section('title', 'Purchase Accessories & Parts — Maurya Mobile')
+@section('page-title', 'Purchase Accessories & Spare Parts')
 
 @section('page-actions')
     <div style="display:flex; gap:8px; align-items:center;">

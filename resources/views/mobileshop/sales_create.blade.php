@@ -1,7 +1,7 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Register New Phone Sale — Maurya Mobile')
-@section('page-title', 'Register Sale')
+@section('title', 'Sell New Phone — Maurya Mobile')
+@section('page-title', 'Sell New Phone')
 
 @section('page-actions')
     <button type="button" class="btn btn-primary btn-sm" onclick="triggerEmiScan()" style="display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); border:none; box-shadow:0 2px 6px rgba(79,70,229,0.35); font-weight:600;">

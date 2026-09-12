@@ -17,18 +17,27 @@
 @section('page-actions')
     <div class="flex items-center gap-2 flex-wrap">
         @if($canManagePhones ?? false)
-        <button type="button" onclick="openAddMobileModal()" class="btn btn-primary btn-sm">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> Add New Phone
+        <button type="button" onclick="openAddMobileModal()" class="btn btn-primary btn-sm" title="Purchase New Phone">
+            <i data-lucide="smartphone" style="width:13px;height:13px;"></i>
+            <span class="desktop-btn-label">Purchase New Phone</span><span class="mobile-btn-label">New Phone</span>
         </button>
         @endif
         @if($canManageSecondhand ?? false)
-        <button type="button" onclick="openBuybackModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> Intake Pre-Owned
+        <button type="button" onclick="openBuybackModal()" class="btn btn-outline btn-sm" style="color:#D97706; border-color:#FDE68A; background:#FFFBEB;" title="Purchase Second Hand Phone">
+            <i data-lucide="repeat" style="width:13px;height:13px;"></i>
+            <span class="desktop-btn-label">Purchase Second Hand Phone</span><span class="mobile-btn-label">2nd Hand</span>
         </button>
         @endif
-        @if(($canManageAccessories ?? false) || ($canManageCovers ?? false))
-        <button type="button" onclick="openAddPartModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Part / Accessory
+        @if($canManageAccessories ?? false)
+        <button type="button" onclick="openAddPartModal()" class="btn btn-outline btn-sm" style="color:#2563EB; border-color:#BFDBFE; background:#EFF6FF;" title="Purchase Accessories">
+            <i data-lucide="headphones" style="width:13px;height:13px;"></i>
+            <span class="desktop-btn-label">Purchase Accessories</span><span class="mobile-btn-label">Accessories</span>
+        </button>
+        @endif
+        @if(($canManageCovers ?? false) || ($canManageAccessories ?? false) || ($isAdmin ?? false))
+        <button type="button" onclick="openAddPartModal('back_cover')" class="btn btn-outline btn-sm" style="color:#7C3AED; border-color:#DDD6FE; background:#F5F3FF;" title="Purchase Back Cover & Tempered">
+            <i data-lucide="shield" style="width:13px;height:13px;"></i>
+            <span class="desktop-btn-label">Purchase Back Cover & Tempered</span><span class="mobile-btn-label">Cover & Glass</span>
         </button>
         @endif
         @if($canManageRepairs ?? false)
@@ -2293,9 +2302,25 @@
         if (modal) modal.style.display = 'none';
     }
 
-    function openAddPartModal() {
+    function openAddPartModal(presetCat) {
         const modal = document.getElementById('addPartModal');
-        if (modal) { modal.style.display = 'flex'; if (window.lucide) window.lucide.createIcons(); }
+        if (modal) {
+            modal.style.display = 'flex';
+            if (presetCat) {
+                const catSelect = modal.querySelector('select[name="category"]');
+                if (catSelect) {
+                    for (let i = 0; i < catSelect.options.length; i++) {
+                        const val = (catSelect.options[i].value || '').toLowerCase();
+                        const txt = (catSelect.options[i].text || '').toLowerCase();
+                        if (val.includes('cover') || val.includes('tempered') || txt.includes('cover') || txt.includes('tempered')) {
+                            catSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (window.lucide) window.lucide.createIcons();
+        }
     }
     function closeAddPartModal() {
         const modal = document.getElementById('addPartModal');

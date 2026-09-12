@@ -1,7 +1,7 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Register Purchase — Bulk Stock Inward — Maurya Mobile')
-@section('page-title', 'Register Purchase / Stock Inward')
+@section('title', 'Purchase New Phone — Bulk Stock Inward — Maurya Mobile')
+@section('page-title', 'Purchase New Phone (Bulk Inward)')
 
 @section('page-actions')
     <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline btn-sm" style="font-weight:700; font-size:12px; padding:5px 12px;">
