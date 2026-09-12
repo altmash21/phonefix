@@ -15,43 +15,34 @@
 @section('page-title', $purchasePageTitle)
 
 @section('page-actions')
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
         @if($canAddPhones ?? false)
-        <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-primary btn-sm" title="Purchase New Phone (Bulk Inward / Invoice)">
-            <i data-lucide="smartphone" style="width:14px;height:14px;"></i>
-            <span class="desktop-btn-label">Purchase New Phone</span><span class="mobile-btn-label">Buy New</span>
+        <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-primary btn-sm">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase New Phone (Bulk)
         </a>
+        <button type="button" onclick="openPurchaseAddMobileModal()" class="btn btn-outline btn-sm">
+            <i data-lucide="smartphone" style="width:14px;height:14px;"></i> Purchase New Phone
+        </button>
         @endif
-
         @if($canAddSecondhand ?? false)
-        <button type="button" onclick="openPurchaseBuybackModal()" class="btn btn-outline btn-sm" style="color:#D97706; border-color:#FDE68A; background:#FFFBEB; font-weight:600;" title="Purchase Second Hand Phone (Customer Buyback)">
-            <i data-lucide="repeat" style="width:14px;height:14px;"></i>
-            <span class="desktop-btn-label">Purchase Second Hand Phone</span><span class="mobile-btn-label">Buy 2nd Hand</span>
+        <button type="button" onclick="openPurchaseBuybackModal()" class="btn btn-outline btn-sm">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Purchase Second Hand Phone
         </button>
         @endif
-
-        @if(($canAddAccessories ?? false) || ($isAdmin ?? false))
-        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-outline btn-sm" style="color:#2563EB; border-color:#BFDBFE; background:#EFF6FF; font-weight:600;" title="Purchase Accessories (Stock Inward / Bulk)">
-            <i data-lucide="headphones" style="width:14px;height:14px;"></i>
-            <span class="desktop-btn-label">Purchase Accessories</span><span class="mobile-btn-label">Buy Acc</span>
+        @if(($canAddAccessories ?? false) || ($canAddCovers ?? false))
+        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-outline btn-sm" style="color: #7C3AED; border-color: #DDD6FE;">
+            <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Purchase Back Cover, Tempered & Accessories (Bulk)
         </a>
-        @endif
-
-        @if(($canAddCovers ?? false) || ($canAddAccessories ?? false) || ($isAdmin ?? false))
-        <button type="button" onclick="openPurchaseAddCoverModal()" class="btn btn-outline btn-sm" style="color:#7C3AED; border-color:#DDD6FE; background:#F5F3FF; font-weight:600;" title="Purchase Back Cover & Tempered Glass">
-            <i data-lucide="shield" style="width:14px;height:14px;"></i>
-            <span class="desktop-btn-label">Purchase Back Cover & Tempered</span><span class="mobile-btn-label">Buy Cover</span>
+        <button type="button" onclick="openPurchaseAddPartModal()" class="btn btn-outline btn-sm">
+            <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Purchase Accessories
         </button>
         @endif
-
         @if(($isAdmin ?? false) || ($canAddPhones ?? false) || auth()->user()->hasRole('sales-staff') || auth()->user()->can('read-mobileshop-procurement'))
-        <button type="button" onclick="openPaymentModal({{ $suppliers->first()->id ?? 0 }}, '{{ addslashes($suppliers->first()->name ?? 'Primary Supplier') }}')" class="btn btn-outline btn-sm" title="Supplier Payment / Advance">
-            <i data-lucide="wallet" style="width:14px;height:14px;"></i>
-            <span class="desktop-btn-label">Supplier Payment</span><span class="mobile-btn-label">Payment</span>
+        <button type="button" onclick="openPaymentModal({{ $suppliers->first()->id ?? 0 }}, '{{ addslashes($suppliers->first()->name ?? 'Primary Supplier') }}')" class="btn btn-outline btn-sm">
+            <i data-lucide="wallet" style="width:14px;height:14px;"></i> Supplier Payment / Advance
         </button>
         <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm" style="color:#2563EB; border-color:#BFDBFE;">
-            <i data-lucide="building-2" style="width:14px;height:14px;"></i>
-            <span class="desktop-btn-label">EMI Ledger</span><span class="mobile-btn-label">EMI</span>
+            <i data-lucide="building-2" style="width:14px;height:14px;"></i> EMI Ledger
         </a>
         @endif
     </div>
@@ -237,37 +228,6 @@
         <div class="stat-strip-item">
             <span class="stat-label">Units</span>
             <span class="stat-val" style="color:#15803D;">{{ number_format($totalUnitsPurchased) }}</span>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- QUICK PURCHASE ACTIONS STRIP (Simple Words & High Contrast)-->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
-        <div style="font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:#475569; display:flex; align-items:center; gap:6px;">
-            <i data-lucide="truck" style="width:14px;height:14px;color:#16A34A;"></i> Quick Purchase Actions:
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            @if($canAddPhones ?? false)
-            <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-sm" style="background:#F0FDF4; border:1px solid #BBF7D0; color:#15803D; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="smartphone" style="width:14px;height:14px;"></i> Purchase New Phone
-            </a>
-            @endif
-            @if($canAddSecondhand ?? false)
-            <button type="button" onclick="openPurchaseBuybackModal()" class="btn btn-sm" style="background:#FFFBEB; border:1px solid #FDE68A; color:#B45309; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="repeat" style="width:14px;height:14px;"></i> Purchase Second Hand Phone
-            </button>
-            @endif
-            @if(($canAddAccessories ?? false) || ($isAdmin ?? false))
-            <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-sm" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="headphones" style="width:14px;height:14px;"></i> Purchase Accessories
-            </a>
-            @endif
-            @if(($canAddCovers ?? false) || ($canAddAccessories ?? false) || ($isAdmin ?? false))
-            <button type="button" onclick="openPurchaseAddCoverModal()" class="btn btn-sm" style="background:#F5F3FF; border:1px solid #DDD6FE; color:#6D28D9; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="shield" style="width:14px;height:14px;"></i> Purchase Back Cover & Tempered
-            </button>
-            @endif
         </div>
     </div>
 
@@ -596,27 +556,27 @@
             @if(($isAdmin ?? false) || ($canAddPhones ?? false))
             <button type="button" class="fab-menu-item" style="color: #5E6AD2;" onclick="closePurchaseFabMenu(); openPurchaseAddMobileModal();">
                 <i data-lucide="smartphone" style="width:16px;height:16px;"></i>
-                <span>Add Phone Stock (Quick)</span>
+                <span>Purchase New Phone</span>
             </button>
             <a href="{{ route('mobileshop.purchase.create') }}" class="fab-menu-item" style="color: #4338CA; text-decoration:none;">
                 <i data-lucide="truck" style="width:16px;height:16px;"></i>
-                <span>Bulk Phones Inward</span>
+                <span>Purchase New Phone (Bulk)</span>
             </a>
             @endif
             @if(($isAdmin ?? false) || ($canAddAccessories ?? false) || ($canAddCovers ?? false))
             <button type="button" class="fab-menu-item" style="color: #059669;" onclick="closePurchaseFabMenu(); openPurchaseAddPartModal();">
                 <i data-lucide="package" style="width:16px;height:16px;"></i>
-                <span>Add Part (Quick)</span>
+                <span>Purchase Accessories</span>
             </button>
             <a href="{{ route('mobileshop.accessories.purchase') }}" class="fab-menu-item" style="color: #7C3AED; text-decoration:none;">
                 <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
-                <span>Bulk Parts & Invoice Scan</span>
+                <span>Purchase Back Cover, Tempered & Accessories</span>
             </a>
             @endif
             @if(($isAdmin ?? false) || ($canAddSecondhand ?? false))
             <button type="button" class="fab-menu-item" style="color: #EA580C;" onclick="closePurchaseFabMenu(); openPurchaseBuybackModal();">
                 <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
-                <span>Register Buyback</span>
+                <span>Purchase Second Hand Phone</span>
             </button>
             @endif
         </div>
@@ -930,7 +890,7 @@
 
                     <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closePurchaseAddMobileModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="font-size:12px;">Add Phone to Inventory</button>
+                        <button type="submit" class="btn btn-primary" style="font-size:12px;">Purchase New Phone</button>
                     </div>
                 </form>
             </div>
@@ -1031,7 +991,7 @@
 
                     <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closePurchaseBuybackModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Save Pre-Owned to Stock</button>
+                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Purchase Second Hand Phone</button>
                     </div>
                 </form>
             </div>
@@ -1044,9 +1004,9 @@
     <div id="purchaseAddPartModal" style="display:none; position: fixed; inset: 0; z-index: 1300; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
         <div class="card" style="max-width: 520px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
             <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
-                <div class="card-title" id="purchaseAddPartModalTitle" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
+                <div class="card-title" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
                     <i data-lucide="package" style="width:18px;height:18px;color:#16A34A;"></i>
-                    Purchase Accessory / Part Stock
+                    Add Part or Accessory to Stock
                 </div>
                 <button type="button" onclick="closePurchaseAddPartModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
             </div>
@@ -1105,7 +1065,7 @@
 
                     <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closePurchaseAddPartModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#16A34A; border-color:#16A34A; font-size:12px;">Add Part to Stock</button>
+                        <button type="submit" class="btn btn-primary" style="background:#16A34A; border-color:#16A34A; font-size:12px;">Purchase Accessories</button>
                     </div>
                 </form>
             </div>
@@ -1191,42 +1151,16 @@
         if (modal) modal.style.display = 'none';
     }
 
-    function openPurchaseAddPartModal(presetCat) {
+    function openPurchaseAddPartModal() {
         var modal = document.getElementById('purchaseAddPartModal');
         if (modal) {
             modal.style.display = 'flex';
-            var titleEl = document.getElementById('purchaseAddPartModalTitle');
-            var catSelect = modal.querySelector('select[name="category"]');
-            if (presetCat === 'back_cover' || presetCat === 'cover') {
-                if (titleEl) {
-                    titleEl.innerHTML = '<i data-lucide="shield" style="width:18px;height:18px;color:#7C3AED;"></i> Purchase Back Cover & Tempered';
-                }
-                if (catSelect) {
-                    for (var i = 0; i < catSelect.options.length; i++) {
-                        var val = (catSelect.options[i].value || '').toLowerCase();
-                        var text = (catSelect.options[i].text || '').toLowerCase();
-                        if (val.includes('cover') || val.includes('tempered') || text.includes('cover') || text.includes('tempered')) {
-                            catSelect.selectedIndex = i;
-                            break;
-                        }
-                    }
-                }
-            } else {
-                if (titleEl) {
-                    titleEl.innerHTML = '<i data-lucide="package" style="width:18px;height:18px;color:#16A34A;"></i> Purchase Accessory / Part Stock';
-                }
-            }
             if (window.refreshIcons) window.refreshIcons();
-            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         }
     }
     function closePurchaseAddPartModal() {
         var modal = document.getElementById('purchaseAddPartModal');
         if (modal) modal.style.display = 'none';
-    }
-
-    function openPurchaseAddCoverModal() {
-        openPurchaseAddPartModal('back_cover');
     }
 
     function previewSelectedPhoto(input, imgId, boxId) {
@@ -1634,17 +1568,8 @@
         else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 
         var urlParams = new URLSearchParams(window.location.search);
-        var actionParam = urlParams.get('action');
-        if (actionParam === 'restock' || urlParams.get('restock') === '1') {
+        if (urlParams.get('action') === 'restock' || urlParams.get('restock') === '1') {
             openBulkRestockModal();
-        } else if (actionParam === 'buyback' || actionParam === 'second_hand') {
-            openPurchaseBuybackModal();
-        } else if (actionParam === 'add_cover' || actionParam === 'cover') {
-            openPurchaseAddCoverModal();
-        } else if (actionParam === 'add_part' || actionParam === 'accessories') {
-            openPurchaseAddPartModal();
-        } else if (actionParam === 'add_mobile') {
-            openPurchaseAddMobileModal();
         }
     }
 

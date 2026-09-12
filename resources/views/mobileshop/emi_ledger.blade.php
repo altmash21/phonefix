@@ -12,7 +12,7 @@
             <i data-lucide="building-2" style="width:14px;height:14px;"></i> Add EMI Partner
         </button>
         <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-outline btn-sm">
-            <i data-lucide="shopping-cart" style="width:14px;height:14px;"></i> Register Sale
+            <i data-lucide="shopping-cart" style="width:14px;height:14px;"></i> Sell New Phone
         </a>
     </div>
 @endsection

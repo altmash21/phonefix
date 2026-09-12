@@ -1,7 +1,7 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Sell New Phone — Maurya Mobile')
-@section('page-title', 'Sell New Phone')
+@section('title', 'Register New Phone Sale — Maurya Mobile')
+@section('page-title', 'Register Sale')
 
 @section('page-actions')
     <button type="button" class="btn btn-primary btn-sm" onclick="triggerEmiScan()" style="display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); border:none; box-shadow:0 2px 6px rgba(79,70,229,0.35); font-weight:600;">
@@ -470,7 +470,7 @@
                         <!-- CTA BUTTON -->
                         <div style="margin-top:12px;">
                             <button type="submit" class="btn btn-primary" id="btnSubmitSale" style="width:100%; height:38px; font-size:13px; font-weight:800; border-radius:7px; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(94,106,210,0.3);">
-                                <i data-lucide="receipt" style="width:15px;height:15px;"></i> Complete Sale & Bill
+                                <i data-lucide="receipt" style="width:15px;height:15px;"></i> Sell New Phone
                             </button>
                         </div>
 
@@ -488,7 +488,7 @@
                 <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickySaleTotal">₹0.00</div>
             </div>
             <button type="submit" class="btn btn-primary" id="btnMobileSubmitSale" style="height:44px; padding:0 18px; font-size:13.5px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35);">
-                <i data-lucide="receipt" style="width:16px;height:16px;"></i> Complete Sale
+                <i data-lucide="receipt" style="width:16px;height:16px;"></i> Sell New Phone
             </button>
         </div>
 

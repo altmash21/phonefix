@@ -17,27 +17,18 @@
 @section('page-actions')
     <div class="flex items-center gap-2 flex-wrap">
         @if($canManagePhones ?? false)
-        <button type="button" onclick="openAddMobileModal()" class="btn btn-primary btn-sm" title="Purchase New Phone">
-            <i data-lucide="smartphone" style="width:13px;height:13px;"></i>
-            <span class="desktop-btn-label">Purchase New Phone</span><span class="mobile-btn-label">New Phone</span>
+        <button type="button" onclick="openAddMobileModal()" class="btn btn-primary btn-sm">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> Purchase New Phone
         </button>
         @endif
         @if($canManageSecondhand ?? false)
-        <button type="button" onclick="openBuybackModal()" class="btn btn-outline btn-sm" style="color:#D97706; border-color:#FDE68A; background:#FFFBEB;" title="Purchase Second Hand Phone">
-            <i data-lucide="repeat" style="width:13px;height:13px;"></i>
-            <span class="desktop-btn-label">Purchase Second Hand Phone</span><span class="mobile-btn-label">2nd Hand</span>
+        <button type="button" onclick="openBuybackModal()" class="btn btn-outline btn-sm">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> Purchase Second Hand Phone
         </button>
         @endif
-        @if($canManageAccessories ?? false)
-        <button type="button" onclick="openAddPartModal()" class="btn btn-outline btn-sm" style="color:#2563EB; border-color:#BFDBFE; background:#EFF6FF;" title="Purchase Accessories">
-            <i data-lucide="headphones" style="width:13px;height:13px;"></i>
-            <span class="desktop-btn-label">Purchase Accessories</span><span class="mobile-btn-label">Accessories</span>
-        </button>
-        @endif
-        @if(($canManageCovers ?? false) || ($canManageAccessories ?? false) || ($isAdmin ?? false))
-        <button type="button" onclick="openAddPartModal('back_cover')" class="btn btn-outline btn-sm" style="color:#7C3AED; border-color:#DDD6FE; background:#F5F3FF;" title="Purchase Back Cover & Tempered">
-            <i data-lucide="shield" style="width:13px;height:13px;"></i>
-            <span class="desktop-btn-label">Purchase Back Cover & Tempered</span><span class="mobile-btn-label">Cover & Glass</span>
+        @if(($canManageAccessories ?? false) || ($canManageCovers ?? false))
+        <button type="button" onclick="openAddPartModal()" class="btn btn-outline btn-sm">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> Purchase Accessories
         </button>
         @endif
         @if($canManageRepairs ?? false)
@@ -997,7 +988,7 @@
 
                     <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closeAddMobileModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="font-size:12px;">Add Phone to Inventory</button>
+                        <button type="submit" class="btn btn-primary" style="font-size:12px;">Purchase New Phone</button>
                     </div>
                 </form>
             </div>
@@ -1129,7 +1120,7 @@
 
                     <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closeBuybackModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Save Pre-Owned to Stock</button>
+                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Purchase Second Hand Phone</button>
                     </div>
                 </form>
             </div>
@@ -1201,7 +1192,7 @@
 
                     <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closeAddPartModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#16A34A; border-color:#16A34A; font-size:12px;">Add Part to Stock</button>
+                        <button type="submit" class="btn btn-primary" style="background:#16A34A; border-color:#16A34A; font-size:12px;">Purchase Accessories</button>
                     </div>
                 </form>
             </div>
@@ -1222,7 +1213,7 @@
                         <i data-lucide="smartphone" style="width:16px;height:16px;"></i>
                     </div>
                     <div>
-                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Add Brand New Phone</div>
+                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Purchase New Phone</div>
                         <div style="font-size:11px; color:#64748B;">IMEI barcode register and inventory intake</div>
                     </div>
                 </button>
@@ -1233,7 +1224,7 @@
                         <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
                     </div>
                     <div>
-                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Intake Pre-Owned Device</div>
+                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Purchase Second Hand Phone</div>
                         <div style="font-size:11px; color:#64748B;">Customer buyback intake & diagnostic grading</div>
                     </div>
                 </button>
@@ -1244,7 +1235,7 @@
                         <i data-lucide="package" style="width:16px;height:16px;"></i>
                     </div>
                     <div>
-                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Add Part / Accessory</div>
+                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Purchase Accessories</div>
                         <div style="font-size:11px; color:#64748B;">Covers, tempered glass, cables, chargers, spares</div>
                     </div>
                 </button>
@@ -2302,25 +2293,9 @@
         if (modal) modal.style.display = 'none';
     }
 
-    function openAddPartModal(presetCat) {
+    function openAddPartModal() {
         const modal = document.getElementById('addPartModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            if (presetCat) {
-                const catSelect = modal.querySelector('select[name="category"]');
-                if (catSelect) {
-                    for (let i = 0; i < catSelect.options.length; i++) {
-                        const val = (catSelect.options[i].value || '').toLowerCase();
-                        const txt = (catSelect.options[i].text || '').toLowerCase();
-                        if (val.includes('cover') || val.includes('tempered') || txt.includes('cover') || txt.includes('tempered')) {
-                            catSelect.selectedIndex = i;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (window.lucide) window.lucide.createIcons();
-        }
+        if (modal) { modal.style.display = 'flex'; if (window.lucide) window.lucide.createIcons(); }
     }
     function closeAddPartModal() {
         const modal = document.getElementById('addPartModal');

@@ -1,7 +1,7 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Purchase New Phone — Bulk Stock Inward — Maurya Mobile')
-@section('page-title', 'Purchase New Phone (Bulk Inward)')
+@section('title', 'Register Purchase — Bulk Stock Inward — Maurya Mobile')
+@section('page-title', 'Register Purchase / Stock Inward')
 
 @section('page-actions')
     <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline btn-sm" style="font-weight:700; font-size:12px; padding:5px 12px;">
@@ -179,7 +179,7 @@
         <div class="purchase-create-actions" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:30px;">
             <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline btn-sm" style="font-weight:700; padding:6px 14px; border-radius:6px; font-size:12px;">Cancel</a>
             <button type="submit" class="btn btn-primary btn-sm" id="submitPurchaseBtn" style="font-weight:800; padding:7px 18px; font-size:12px; border-radius:6px; box-shadow:0 2px 6px rgba(94,106,210,0.3);">
-                <i data-lucide="save" style="width:14px;height:14px;"></i> Save Purchase & Add Stock
+                <i data-lucide="save" style="width:14px;height:14px;"></i> Purchase New Phone
             </button>
         </div>
 
@@ -190,7 +190,7 @@
                 <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickyPurchaseTotal">₹0.00</div>
             </div>
             <button type="submit" class="btn btn-primary" id="btnMobileSubmitPurchase" style="height:44px; padding:0 18px; font-size:13.5px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35);">
-                <i data-lucide="save" style="width:16px;height:16px;"></i> Save Purchase
+                <i data-lucide="save" style="width:16px;height:16px;"></i> Purchase New Phone
             </button>
         </div>
     </form>

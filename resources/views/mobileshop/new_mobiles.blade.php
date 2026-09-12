@@ -7,7 +7,7 @@
     <div style="display:flex; gap:10px; align-items:center;">
         @if(auth()->user()->can('create-mobileshop-pos') || auth()->user()->can('read-mobileshop-new') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff'))
         <button onclick="openAddMobileModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="smartphone" style="width:14px;height:14px;"></i> Purchase New Phone
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase New Phone
         </button>
         @endif
         <a href="{{ route('mobileshop.pos') }}" class="btn btn-primary btn-sm">
@@ -206,9 +206,9 @@
 
 <!-- Mobile Floating Action Button -->
 <div class="mobile-fab-container">
-    <button type="button" class="btn-app-fab" onclick="openAddMobileModal()" title="Add New Phone">
+    <button type="button" class="btn-app-fab" onclick="openAddMobileModal()" title="Purchase New Phone">
         <i data-lucide="plus" style="width:20px;height:20px;"></i>
-        <span>Add Phone</span>
+        <span>Purchase New Phone</span>
     </button>
 </div>
 
@@ -302,7 +302,7 @@
 
                 <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--card-border);">
                     <button type="button" onclick="closeAddMobileModal()" class="btn btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Phone to Inventory</button>
+                    <button type="submit" class="btn btn-primary">Purchase New Phone</button>
                 </div>
             </form>
         </div>

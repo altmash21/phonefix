@@ -17,24 +17,24 @@
 @section('page-actions')
     <div class="flex items-center gap-2 flex-wrap">
         @if($canCreatePhones ?? false)
-        <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-sm" title="Sell New Phone">
-            <i data-lucide="smartphone" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell New Phone</span><span class="mobile-btn-label">Sell New</span>
+        <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-sm">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell New Phone</span><span class="mobile-btn-label">Sell New Phone</span>
+        </a>
+        @endif
+        @if($canCreateAccessories ?? false)
+        <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-outline btn-sm">
+            <i data-lucide="zap" style="width:13px;height:13px; color:#2563EB;"></i> <span class="desktop-btn-label">Sell Accessories</span><span class="mobile-btn-label">Sell Accessories</span>
+        </a>
+        @endif
+        @if(($canCreateCovers ?? false) && !($canCreateAccessories ?? false))
+        <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="btn btn-outline btn-sm">
+            <i data-lucide="package" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Back Cover & Tempered</span><span class="mobile-btn-label">Sell Back Cover & Tempered</span>
         </a>
         @endif
         @if($canCreateSecondhand ?? false)
-        <button type="button" onclick="openSellShModal()" class="btn btn-outline btn-sm" style="color:#D97706; border-color:#FDE68A; background:#FFFBEB;" title="Sell Second Hand Phone">
-            <i data-lucide="repeat" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Second Hand Phone</span><span class="mobile-btn-label">Sell 2nd Hand</span>
+        <button type="button" onclick="openSellShModal()" class="btn btn-outline btn-sm">
+            <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Second Hand Phone</span><span class="mobile-btn-label">Sell Second Hand Phone</span>
         </button>
-        @endif
-        @if($canCreateAccessories ?? false)
-        <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-outline btn-sm" style="color:#2563EB; border-color:#BFDBFE; background:#EFF6FF;" title="Sell Accessories">
-            <i data-lucide="headphones" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Accessories</span><span class="mobile-btn-label">Sell Acc</span>
-        </a>
-        @endif
-        @if(($canCreateCovers ?? false) || ($canCreateAccessories ?? false) || ($isAdmin ?? false))
-        <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="btn btn-outline btn-sm" style="color:#7C3AED; border-color:#DDD6FE; background:#F5F3FF;" title="Sell Back Cover & Tempered">
-            <i data-lucide="shield" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Back Cover & Tempered</span><span class="mobile-btn-label">Sell Cover</span>
-        </a>
         @endif
         <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm">
             <i data-lucide="building-2" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">EMI Ledger</span><span class="mobile-btn-label">EMI</span>
@@ -237,37 +237,6 @@
         <div class="stat-strip-item">
             <span class="stat-label">Stock</span>
             <span class="stat-val">{{ $availableNewPhones + $availableSecondHand + $availableParts }}</span>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- QUICK SELL ACTIONS STRIP (Simple Words & High Contrast)    -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
-        <div style="font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:#475569; display:flex; align-items:center; gap:6px;">
-            <i data-lucide="zap" style="width:14px;height:14px;color:#2563EB;"></i> Quick Sell Actions:
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            @if($canCreatePhones ?? false)
-            <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-sm" style="background:#EEF2FF; border:1px solid #C7D2FE; color:#3730A3; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="smartphone" style="width:14px;height:14px;"></i> Sell New Phone
-            </a>
-            @endif
-            @if($canCreateSecondhand ?? false)
-            <button type="button" onclick="openSellShModal()" class="btn btn-sm" style="background:#FFFBEB; border:1px solid #FDE68A; color:#B45309; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="repeat" style="width:14px;height:14px;"></i> Sell Second Hand Phone
-            </button>
-            @endif
-            @if($canCreateAccessories ?? false)
-            <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-sm" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="headphones" style="width:14px;height:14px;"></i> Sell Accessories
-            </a>
-            @endif
-            @if(($canCreateCovers ?? false) || ($canCreateAccessories ?? false) || ($isAdmin ?? false))
-            <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="btn btn-sm" style="background:#F5F3FF; border:1px solid #DDD6FE; color:#6D28D9; font-weight:700; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
-                <i data-lucide="shield" style="width:14px;height:14px;"></i> Sell Back Cover & Tempered
-            </a>
-            @endif
         </div>
     </div>
 
@@ -915,7 +884,7 @@
         <div class="card" style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
             <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
                 <div class="card-title" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
-                    <i data-lucide="repeat" style="width:18px;height:18px;color:#EA580C;"></i>
+                    <i data-lucide="refresh-cw" style="width:18px;height:18px;color:#EA580C;"></i>
                     Sell Second Hand Phone
                 </div>
                 <button type="button" onclick="closeSellShModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
@@ -982,7 +951,7 @@
 
                     <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closeSellShModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Complete Sale & Generate Bill</button>
+                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Sell Second Hand Phone</button>
                     </div>
                 </form>
             </div>
@@ -1040,25 +1009,25 @@
             @if(($isAdmin ?? false) || ($canCreatePhones ?? false))
                 <a href="{{ route('mobileshop.sales.create') }}" class="fab-menu-item" style="color: #5E6AD2;">
                     <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
-                    <span>New Phone Sale</span>
+                    <span>Sell New Phone</span>
                 </a>
             @endif
             @if(($isAdmin ?? false) || ($canCreateAccessories ?? false))
                 <a href="{{ route('mobileshop.accessories.pos') }}" class="fab-menu-item" style="color: #16A34A;">
                     <i data-lucide="zap" style="width:16px;height:16px;"></i>
-                    <span>Counter POS (Accessories)</span>
+                    <span>Sell Accessories</span>
                 </a>
             @endif
             @if(($isAdmin ?? false) || ($canCreateCovers ?? false))
                 <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="fab-menu-item" style="color: #7C3AED;">
                     <i data-lucide="package" style="width:16px;height:16px;"></i>
-                    <span>Add Cover / Glass</span>
+                    <span>Sell Back Cover & Tempered</span>
                 </a>
             @endif
             @if(($isAdmin ?? false) || ($canCreateSecondhand ?? false))
                 <button type="button" onclick="closeFabMenu(); openSellShModal()" class="fab-menu-item" style="color: #EA580C;">
                     <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
-                    <span>Sell Pre-Owned</span>
+                    <span>Sell Second Hand Phone</span>
                 </button>
             @endif
         </div>
@@ -1907,14 +1876,6 @@
         filterSalesTable();
         if (window.refreshIcons) window.refreshIcons();
         else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-
-        // Auto-open modal if triggered via action query param
-        try {
-            var urlAction = new URLSearchParams(window.location.search).get('action');
-            if (urlAction === 'sell_sh' || urlAction === 'second_hand') {
-                openSellShModal();
-            }
-        } catch(e) {}
     }
 
     if (document.readyState === 'loading') {

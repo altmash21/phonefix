@@ -1,7 +1,7 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Purchase Accessories & Parts — Maurya Mobile')
-@section('page-title', 'Purchase Accessories & Spare Parts')
+@section('title', 'Restock Accessories & Spare Parts — Maurya Mobile')
+@section('page-title', 'Restock Accessories & Spare Parts')
 
 @section('page-actions')
     <div style="display:flex; gap:8px; align-items:center;">
@@ -535,7 +535,7 @@
                         Cancel
                     </a>
                     <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitBulkRestock" style="background:#5E6AD2; border-color:#5E6AD2; font-weight:800; padding:7px 18px; font-size:12px; border-radius:6px; box-shadow:0 2px 6px rgba(94, 106, 210, 0.3);">
-                        <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Save Batch Restock
+                        <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Purchase Accessories
                     </button>
                 </div>
             </div>
@@ -548,7 +548,7 @@
                 <div style="font-size:17px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickyTotal">₹0.00</div>
             </div>
             <button type="submit" class="btn btn-primary" id="btnMobileSubmitRestock" style="height:44px; padding:0 20px; font-size:13.5px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35);">
-                <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Save Restock
+                <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Purchase Accessories
             </button>
         </div>
 

@@ -1,12 +1,7 @@
 @extends('mobileshop.layout')
 
-@php
-    $isCoverGlass = in_array(strtolower($presetCategory ?? ''), ['back_cover', 'cover', 'tempered', 'tempered_glass']);
-    $pageHeading = $isCoverGlass ? 'Sell Back Cover & Tempered' : 'Sell Accessories';
-@endphp
-
-@section('title', $pageHeading . ' — Maurya Mobile')
-@section('page-title', $pageHeading)
+@section('title', 'Counter POS Sale — Maurya Mobile')
+@section('page-title', 'Counter POS Billing')
 
 @section('page-actions')
     <a href="{{ route('mobileshop.sales') }}" class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
@@ -557,7 +552,7 @@
                 </div>
                 <button type="submit" id="btnSubmitPosSale" class="app-btn-checkout" disabled>
                     <i data-lucide="check-circle-2" style="width:18px;height:18px;"></i>
-                    <span>Complete Sale & Bill</span>
+                    <span>Sell Accessories</span>
                 </button>
             </div>
         </div>

@@ -30,51 +30,26 @@
                 <i data-lucide="chevron-down" style="width:12px;height:12px; opacity:0.8;"></i>
             </button>
             <div id="new-action-menu">
-                <div style="padding:4px 10px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#64748B;">Selling (POS & Billing)</div>
                 @if(auth()->user()->can('create-sale-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
                 <a href="{{ route('mobileshop.sales.create') }}" class="dropdown-item-link" style="font-weight:600; color:var(--color-primary);">
-                    <i data-lucide="smartphone" style="width:15px;height:15px;color:var(--color-primary);"></i> Sell New Phone
+                    <i data-lucide="plus-circle" style="width:15px;height:15px;color:var(--color-primary);"></i> Sell New Phone
+                </a>
+                @endif
+                @if(auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                <a href="{{ route('mobileshop.purchase.create') }}" class="dropdown-item-link" style="font-weight:600; color:#16A34A;">
+                    <i data-lucide="truck" style="width:15px;height:15px;color:#16A34A;"></i> Purchase New Phone
+                </a>
+                @endif
+                @if(auth()->user()->can('create-sale-accessories') || auth()->user()->can('create-sale-covers') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                <a href="{{ route('mobileshop.sales') }}" class="dropdown-item-link">
+                    <i data-lucide="zap" style="width:15px;height:15px;"></i> Sell Accessories
                 </a>
                 @endif
                 @if(auth()->user()->can('create-sale-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.sales') }}?action=sell_sh" class="dropdown-item-link" style="color:#D97706; font-weight:600;">
-                    <i data-lucide="repeat" style="width:15px;height:15px;color:#D97706;"></i> Sell Second Hand Phone
+                <a href="{{ route('mobileshop.sales') }}" class="dropdown-item-link">
+                    <i data-lucide="repeat" style="width:15px;height:15px;"></i> Sell Second Hand Phone
                 </a>
                 @endif
-                @if(auth()->user()->can('create-sale-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.accessories.pos') }}" class="dropdown-item-link" style="color:#2563EB; font-weight:600;">
-                    <i data-lucide="headphones" style="width:15px;height:15px;color:#2563EB;"></i> Sell Accessories
-                </a>
-                @endif
-                @if(auth()->user()->can('create-sale-covers') || auth()->user()->can('create-sale-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="dropdown-item-link" style="color:#7C3AED; font-weight:600;">
-                    <i data-lucide="shield" style="width:15px;height:15px;color:#7C3AED;"></i> Sell Back Cover & Tempered
-                </a>
-                @endif
-
-                <div style="border-top:1px solid #E2E8F0; margin:4px 0; padding:4px 10px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#64748B;">Purchasing (Stock Inward)</div>
-                @if(auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.purchase.create') }}" class="dropdown-item-link" style="font-weight:600; color:#16A34A;">
-                    <i data-lucide="smartphone" style="width:15px;height:15px;color:#16A34A;"></i> Purchase New Phone
-                </a>
-                @endif
-                @if(auth()->user()->can('create-purchase-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.purchase') }}?action=buyback" class="dropdown-item-link" style="color:#D97706; font-weight:600;">
-                    <i data-lucide="repeat" style="width:15px;height:15px;color:#D97706;"></i> Purchase Second Hand Phone
-                </a>
-                @endif
-                @if(auth()->user()->can('create-purchase-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.accessories.purchase') }}" class="dropdown-item-link" style="color:#2563EB; font-weight:600;">
-                    <i data-lucide="headphones" style="width:15px;height:15px;color:#2563EB;"></i> Purchase Accessories
-                </a>
-                @endif
-                @if(auth()->user()->can('create-purchase-covers') || auth()->user()->can('create-purchase-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.purchase') }}?action=add_cover" class="dropdown-item-link" style="color:#7C3AED; font-weight:600;">
-                    <i data-lucide="shield" style="width:15px;height:15px;color:#7C3AED;"></i> Purchase Back Cover & Tempered
-                </a>
-                @endif
-
-                <div style="border-top:1px solid #E2E8F0; margin:4px 0;"></div>
                 @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
                 <a href="{{ route('mobileshop.emi.ledger') }}" class="dropdown-item-link">
                     <i data-lucide="building-2" style="width:15px;height:15px;color:#2563EB;"></i> EMI Finance Ledger
@@ -83,8 +58,23 @@
                     <i data-lucide="file-text" style="width:15px;height:15px;"></i> Supplier Purchase & Ledger
                 </a>
                 @endif
+                @if(auth()->user()->can('create-purchase-phones') || auth()->user()->can('manage-stock-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                <a href="{{ route('mobileshop.stock', ['tab' => 'new_phones']) }}" class="dropdown-item-link">
+                    <i data-lucide="smartphone" style="width:15px;height:15px;"></i> Purchase New Phone
+                </a>
+                @endif
+                @if(auth()->user()->can('create-purchase-secondhand') || auth()->user()->can('manage-stock-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                <a href="{{ route('mobileshop.stock', ['tab' => 'second_hand']) }}" class="dropdown-item-link">
+                    <i data-lucide="repeat" style="width:15px;height:15px;"></i> Purchase Second Hand Phone
+                </a>
+                @endif
+                @if(auth()->user()->can('create-purchase-accessories') || auth()->user()->can('create-purchase-covers') || auth()->user()->can('manage-stock-accessories') || auth()->user()->can('manage-stock-covers') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                <a href="{{ route('mobileshop.stock', ['tab' => 'parts']) }}" class="dropdown-item-link">
+                    <i data-lucide="headphones" style="width:15px;height:15px;"></i> Purchase Accessories
+                </a>
+                @endif
                 @if(auth()->user()->can('manage-stock-repairs') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.repairs') }}" class="dropdown-item-link" style="border-top:1px solid var(--color-card-border); margin-top:2px;">
+                <a href="{{ route('mobileshop.repairs') }}" class="dropdown-item-link" style="border-top:1px solid var(--color-card-border); margin-top:4px; padding-top:8px;">
                     <i data-lucide="wrench" style="width:15px;height:15px;"></i> New Repair Job
                 </a>
                 @endif
@@ -268,57 +258,6 @@
 @endpush
 
 @section('content')
-
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- QUICK ACTIONS HUB: SIMPLE WORD BUTTONS (SELL & PURCHASE)   -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="card" style="margin-bottom:14px; border-radius:12px; border:1px solid #E2E8F0; background:#FFFFFF; padding:12px 16px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px;">
-            
-            <!-- Selling Section -->
-            <div>
-                <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#475569; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                    <i data-lucide="shopping-cart" style="width:14px;height:14px; color:#2563EB;"></i> Selling Actions
-                </div>
-                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px;">
-                    <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-sm" style="background:#EEF2FF; border:1px solid #C7D2FE; color:#3730A3; font-weight:700; font-size:12px; justify-content:flex-start; padding:8px 10px; border-radius:8px; gap:6px;">
-                        <i data-lucide="smartphone" style="width:15px;height:15px; color:#4F46E5;"></i> Sell New Phone
-                    </a>
-                    <a href="{{ route('mobileshop.sales') }}?action=sell_sh" class="btn btn-sm" style="background:#FFFBEB; border:1px solid #FDE68A; color:#B45309; font-weight:700; font-size:12px; justify-content:flex-start; padding:8px 10px; border-radius:8px; gap:6px;">
-                        <i data-lucide="repeat" style="width:15px;height:15px; color:#D97706;"></i> Sell Second Hand Phone
-                    </a>
-                    <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-sm" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; font-weight:700; font-size:12px; justify-content:flex-start; padding:8px 10px; border-radius:8px; gap:6px;">
-                        <i data-lucide="headphones" style="width:15px;height:15px; color:#2563EB;"></i> Sell Accessories
-                    </a>
-                    <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="btn btn-sm" style="background:#F5F3FF; border:1px solid #DDD6FE; color:#6D28D9; font-weight:700; font-size:12px; justify-content:flex-start; padding:8px 10px; border-radius:8px; gap:6px;">
-                        <i data-lucide="shield" style="width:15px;height:15px; color:#7C3AED;"></i> Sell Back Cover & Tempered
-                    </a>
-                </div>
-            </div>
-
-            <!-- Purchasing Section -->
-            <div>
-                <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#475569; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                    <i data-lucide="truck" style="width:14px;height:14px; color:#16A34A;"></i> Purchasing Actions
-                </div>
-                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px;">
-                    <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-sm" style="background:#F0FDF4; border:1px solid #BBF7D0; color:#15803D; font-weight:700; font-size:12px; justify-content:flex-start; padding:8px 10px; border-radius:8px; gap:6px;">
-                        <i data-lucide="smartphone" style="width:15px;height:15px; color:#16A34A;"></i> Purchase New Phone
-                    </a>
-                    <a href="{{ route('mobileshop.purchase') }}?action=buyback" class="btn btn-sm" style="background:#FFFBEB; border:1px solid #FDE68A; color:#B45309; font-weight:700; font-size:12px; justify-content:flex-start; padding:8px 10px; border-radius:8px; gap:6px;">
-                        <i data-lucide="repeat" style="width:15px;height:15px; color:#D97706;"></i> Purchase Second Hand Phone
-                    </a>
-                    <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-sm" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; font-weight:700; font-size:12px; justify-content:flex-start; padding:8px 10px; border-radius:8px; gap:6px;">
-                        <i data-lucide="headphones" style="width:15px;height:15px; color:#2563EB;"></i> Purchase Accessories
-                    </a>
-                    <a href="{{ route('mobileshop.purchase') }}?action=add_cover" class="btn btn-sm" style="background:#F5F3FF; border:1px solid #DDD6FE; color:#6D28D9; font-weight:700; font-size:12px; justify-content:flex-start; padding:8px 10px; border-radius:8px; gap:6px;">
-                        <i data-lucide="shield" style="width:15px;height:15px; color:#7C3AED;"></i> Purchase Back Cover & Tempered
-                    </a>
-                </div>
-            </div>
-
-        </div>
-    </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- 1. TIER 1: THE DAILY CASH & PULSE STRIP (6 HERO KPIS)    -->
@@ -559,7 +498,7 @@
                     <i data-lucide="receipt" style="width:14px;height:14px;color:var(--color-primary);"></i>
                     <span>Recent Sales Invoices</span>
                 </div>
-                <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-xs">+ New Sale</a>
+                <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-xs">+ Sell New Phone</a>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
                 <table class="data-table" style="margin:0; border:none;">

@@ -9,7 +9,7 @@
             <i data-lucide="shopping-bag" style="width:14px;height:14px;"></i> Sell Second Hand Phone
         </button>
         <button onclick="openBuybackModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="repeat" style="width:14px;height:14px;"></i> Purchase Second Hand Phone
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase Second Hand Phone
         </button>
     </div>
 @endsection
@@ -189,7 +189,7 @@
                                 <div style="font-weight:800; color:#0F172A;">No Pre-Owned Phones Found</div>
                                 <div style="font-size:13px; color:var(--text-secondary);">Intake customer trade-ins or buybacks to build inventory.</div>
                                 <button onclick="openBuybackModal()" class="btn btn-primary btn-sm" style="margin-top:6px; background:var(--lama-purple-dark);">
-                                    <i data-lucide="plus" style="width:14px;height:14px;"></i> Register Buyback
+                                    <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase Second Hand Phone
                                 </button>
                             </div>
                         </td>
@@ -234,7 +234,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding-top:6px; border-top:1px solid #F1F5F9; width:100%;">
                 <span class="badge badge-purple" style="font-size:10px;">{{ str_replace('_', ' ', $m->condition_grade) }}</span>
                 <button onclick="quickSellPhone({{ json_encode($m) }})" class="btn btn-primary btn-sm" style="font-size:11px; padding:4px 10px; height:auto; background:var(--lama-purple-dark);">
-                    <i data-lucide="shopping-bag" style="width:12px;height:12px;"></i> Sell Device
+                    <i data-lucide="shopping-bag" style="width:12px;height:12px;"></i> Sell Second Hand Phone
                 </button>
             </div>
             @endif
@@ -248,9 +248,9 @@
 
 <!-- Mobile Floating Action Button -->
 <div class="mobile-fab-container">
-    <button type="button" class="btn-app-fab" onclick="openBuybackModal()" title="Register Buyback" style="background:var(--lama-purple-dark);">
+    <button type="button" class="btn-app-fab" onclick="openBuybackModal()" title="Purchase Second Hand Phone" style="background:var(--lama-purple-dark);">
         <i data-lucide="plus" style="width:20px;height:20px;"></i>
-        <span>Buyback</span>
+        <span>Purchase Second Hand Phone</span>
     </button>
 </div>
 
@@ -258,7 +258,7 @@
 <div id="sellModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
     <div class="card" style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px;">
         <div class="card-header" style="border-bottom:1px solid var(--card-border); padding:14px 18px;">
-            <div class="card-title">Sell Pre-Owned Device</div>
+            <div class="card-title">Sell Second Hand Phone</div>
             <button onclick="closeSellModal()" class="btn-icon">✕</button>
         </div>
         <div class="card-body" style="padding:16px 18px;">
@@ -333,7 +333,7 @@
 
                 <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--card-border);">
                     <button type="button" onclick="closeSellModal()" class="btn btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="background:var(--lama-purple-dark);">Complete Sale</button>
+                    <button type="submit" class="btn btn-primary" style="background:var(--lama-purple-dark);">Sell Second Hand Phone</button>
                 </div>
             </form>
         </div>
@@ -462,7 +462,7 @@
 
                 <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--card-border);">
                     <button type="button" onclick="closeBuybackModal()" class="btn btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="background:var(--lama-purple-dark);">Save to Stock</button>
+                    <button type="submit" class="btn btn-primary" style="background:var(--lama-purple-dark);">Purchase Second Hand Phone</button>
                 </div>
             </form>
         </div>

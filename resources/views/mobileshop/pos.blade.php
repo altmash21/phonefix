@@ -184,7 +184,7 @@
                             <div style="font-weight:800; font-size:15px; color:#92400E;">No Brand New Phones in Stock</div>
                             <div style="font-size:12px; color:#B45309; max-width:320px;">Please intake new phone inventory with IMEI numbers to generate POS invoices.</div>
                             <a href="{{ route('mobileshop.stock', ['tab' => 'new_phones']) }}" class="btn btn-primary btn-sm" style="background:#D97706; border-color:#D97706; margin-top:4px;">
-                                <i data-lucide="plus" style="width:13px;height:13px;"></i> Add New Phone Stock
+                                <i data-lucide="plus" style="width:13px;height:13px;"></i> Purchase New Phone
                             </a>
                         </div>
                     @else
@@ -384,7 +384,7 @@
                     <!-- Submit Button -->
                     <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-size: 14px; font-weight: 800;">
                         <i data-lucide="printer" style="width:18px;height:18px;"></i>
-                        Confirm Sale & Print Invoice
+                        Sell New Phone & Print Invoice
                     </button>
                 </div>
             </div>
@@ -397,7 +397,7 @@
             <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickyPosTotal">₹0.00</div>
         </div>
         <button type="submit" class="btn btn-primary" id="btnMobileSubmitPos" style="height:44px; padding:0 18px; font-size:13.5px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35);">
-            <i data-lucide="printer" style="width:16px;height:16px;"></i> Complete Sale
+            <i data-lucide="printer" style="width:16px;height:16px;"></i> Sell New Phone
         </button>
     </div>
 </form>
