@@ -15,77 +15,35 @@
     .app-pos-container {
         max-width: 680px;
         margin: 0 auto;
+        padding: 4px 6px 90px;
     }
 
-    /* ── Top App Bar Navigation ── */
-    .app-top-header {
-        background: #0F172A;
-        color: #FFFFFF;
-        border-radius: 16px;
-        padding: 16px 20px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
-    }
-    .app-top-title {
-        font-size: 16px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #FFFFFF;
-    }
-    .app-top-sub {
-        font-size: 12px;
-        color: #94A3B8;
-        margin-top: 2px;
-    }
-    .app-cart-pill-badge {
-        background: #2563EB;
-        color: #FFFFFF;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 6px 12px;
-        border-radius: 9999px;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        cursor: pointer;
-        transition: transform 0.15s ease;
-    }
-    .app-cart-pill-badge:hover {
-        transform: scale(1.04);
-    }
-
-    /* ── Mobile Form Cards ── */
+    /* ── Mobile Form Sections (Seamless Direct Screen Placement) ── */
     .app-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 16px;
-        padding: 18px 20px;
-        margin-bottom: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        margin-bottom: 24px;
+        box-shadow: none;
     }
     .app-card-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 14px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #F1F5F9;
+        margin-bottom: 10px;
+        padding-bottom: 0;
+        border-bottom: none;
     }
     .app-card-title {
-        font-size: 13px;
+        font-size: 11.5px;
         font-weight: 800;
-        color: #0F172A;
+        color: #475569;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.05em;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
 
     /* ── Large Mobile Touch Inputs ── */
@@ -98,14 +56,14 @@
     }
     .app-input-text {
         width: 100%;
-        height: 46px;
-        font-size: 15px;
+        height: 44px;
+        font-size: 14px;
         font-weight: 600;
         color: #0F172A;
-        background: #F8FAFC;
-        border: 1.5px solid #CBD5E1;
-        border-radius: 10px;
-        padding: 0 14px;
+        background: #FFFFFF;
+        border: 1px solid #CBD5E1;
+        border-radius: 8px;
+        padding: 0 12px;
         transition: all 0.2s ease;
         outline: none;
     }
@@ -340,15 +298,14 @@
         transform: translateY(-1px);
     }
 
-    /* iOS Style Toggle */
+    /* Clean Toggle Row */
     .toggle-switch-card {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 14px;
-        background: #F8FAFC;
-        border: 1.5px solid #E2E8F0;
-        border-radius: 10px;
+        padding: 8px 0;
+        background: transparent;
+        border: none;
         cursor: pointer;
     }
 </style>
@@ -519,7 +476,7 @@
             </div>
 
             <!-- Calculation Summary -->
-            <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:14px 16px;">
+            <div style="border-top:1px dashed #CBD5E1; border-bottom:1px dashed #CBD5E1; padding:12px 2px; margin-top:14px;">
                 <div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:6px;">
                     <span>Items Total:</span>
                     <strong id="lblItemsTotal" style="color:#0F172A;">₹0.00</strong>
