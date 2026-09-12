@@ -1224,11 +1224,17 @@ input:focus, select:focus, textarea:focus {
         transform: translateY(10px) scale(0.9) !important;
     }
     .mobile-bottom-nav {
-        transition: opacity 0.2s ease, transform 0.2s ease !important;
-        will-change: opacity, transform !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
     }
-    .mobile-bottom-nav.nav-hidden,
-    .nav-hidden {
+    .mobile-bottom-nav.nav-hidden {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+    }
+    .nav-hidden:not(.mobile-bottom-nav) {
         opacity: 0 !important;
         pointer-events: none !important;
         transform: translateY(100%) !important;

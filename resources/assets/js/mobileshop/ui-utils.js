@@ -481,25 +481,23 @@
             }
 
             if (!hasOpenModal) {
-                // If near top of screen (first 40px), always keep visible
+                // Keep bottom navigation bar permanently fixed (never hide)
+                if (nav) nav.classList.remove('nav-hidden');
+
                 if (currentScrollY <= 40) {
-                    if (nav) nav.classList.remove('nav-hidden');
                     if (fab) fab.classList.remove('fab-hidden');
                 } else if (diff > threshold) {
-                    // Scrolling DOWN: Hide bottom nav & FAB like iPhone Safari lower URL bar
-                    if (nav) nav.classList.add('nav-hidden');
+                    // Scrolling DOWN: Hide FAB only
                     if (fab) fab.classList.add('fab-hidden');
                 } else if (diff < -threshold) {
-                    // Scrolling UP: Reveal bottom nav & FAB immediately
-                    if (nav) nav.classList.remove('nav-hidden');
+                    // Scrolling UP: Reveal FAB immediately
                     if (fab) fab.classList.remove('fab-hidden');
                 }
 
-                // If scrolled to the very bottom of the document, reveal so user can navigate
+                // If scrolled to the very bottom of the document, reveal FAB
                 var windowHeight = window.innerHeight || document.documentElement.clientHeight;
                 var totalDocHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
                 if (windowHeight + currentScrollY >= totalDocHeight - 20) {
-                    if (nav) nav.classList.remove('nav-hidden');
                     if (fab) fab.classList.remove('fab-hidden');
                 }
             }

@@ -15,7 +15,6 @@
     .app-pos-container {
         max-width: 680px;
         margin: 0 auto;
-        padding-bottom: 120px; /* Space for sticky bottom checkout dock */
     }
 
     /* ── Top App Bar Navigation ── */
@@ -265,17 +264,46 @@
         box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
     }
 
-    /* ── Sticky Bottom Checkout Dock (Mobile-First) ── */
+    /* ── Bottom Nav & Sticky Checkout Dock ── */
+    /* Ensure the mobile bottom navigation bar is permanently fixed and never hides */
+    .mobile-bottom-nav {
+        transform: none !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        z-index: 1000 !important;
+    }
+
+    /* Sticky Bottom Checkout Dock: Sits directly above the fixed bottom nav on mobile */
     .app-sticky-dock {
         position: fixed;
-        bottom: 0;
         left: 0;
         right: 0;
         background: #FFFFFF;
-        border-top: 1px solid #E2E8F0;
+        border-top: 1.5px solid #E2E8F0;
         box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
         padding: 12px 16px;
         z-index: 990;
+    }
+
+    @media (max-width: 1023px) {
+        .app-sticky-dock {
+            bottom: calc(var(--bottom-nav-height, 58px) + env(safe-area-inset-bottom, 0px)) !important;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .app-pos-container {
+            padding-bottom: calc(var(--bottom-nav-height, 58px) + env(safe-area-inset-bottom, 0px) + 120px) !important;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .app-sticky-dock {
+            bottom: 0 !important;
+        }
+        .app-pos-container {
+            padding-bottom: 100px !important;
+        }
     }
     .app-sticky-dock-inner {
         max-width: 680px;
