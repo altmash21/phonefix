@@ -40,8 +40,25 @@ class Login extends Controller
 
     public function store(Request $request)
     {
+        $loginInput = trim((string) $request->input('email'));
+
+        // Support login by ID / username (e.g. 'altmash') or email
+        $matchedUser = \App\Models\Auth\User::where('email', $loginInput)
+            ->orWhere('name', $loginInput)
+            ->orWhere(function ($q) use ($loginInput) {
+                if (!str_contains($loginInput, '@')) {
+                    $q->where('email', $loginInput . '@mobitrack.local');
+                }
+            })
+            ->first();
+
+        $credentials = [
+            'email'    => $matchedUser ? $matchedUser->email : $loginInput,
+            'password' => $request->input('password'),
+        ];
+
         // Attempt to login
-        if (! auth()->attempt($request->only('email', 'password'), $request->get('remember', false))) {
+        if (! auth()->attempt($credentials, $request->get('remember', false))) {
             return $this->respondLoginFailed();
         }
 

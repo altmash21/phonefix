@@ -194,10 +194,10 @@
                     <div class="space-y-2">
                         <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Quick Station Selection:</label>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            <button type="button" onclick="fillCreds('admin@mobitrack.local', 'password', 'Store Admin')"
+                            <button type="button" onclick="fillCreds('altmash', 'Password@12', 'Super Admin (Altmash)')"
                                     class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
-                                <span class="block font-semibold text-slate-900 text-[11px]">Store Admin</span>
-                                <span class="text-[10px] text-slate-400 font-mono">admin@</span>
+                                <span class="block font-semibold text-slate-900 text-[11px]">Super Admin</span>
+                                <span class="text-[10px] text-slate-400 font-mono">altmash</span>
                             </button>
 
                             <button type="button" onclick="fillCreds('sales@mobitrack.local', 'password', 'New Phones POS')"
@@ -237,12 +237,12 @@
                     <form id="loginForm" method="POST" action="{{ route('login.store') }}" class="space-y-4 pt-1">
                         @csrf
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">Staff Email Address</label>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Staff ID / Email Address</label>
                             <div class="relative">
-                                <input type="email" id="emailInput" name="email" value="{{ old('email', 'admin@mobitrack.local') }}" required
-                                       placeholder="name@mobitrack.local"
+                                <input type="text" id="emailInput" name="email" value="{{ old('email', 'altmash') }}" required
+                                       placeholder="altmash or name@mobitrack.local"
                                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
-                                <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                                <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                             </div>
                         </div>
 
@@ -252,12 +252,12 @@
                                 <a href="{{ route('mobileshop.password.forgot') }}" class="text-[11px] font-semibold text-brand-600 hover:text-brand-700">Forgot?</a>
                             </div>
                             <div class="relative">
-                                <input type="password" id="passwordInput" name="password" value="password" required
+                                <input type="password" id="passwordInput" name="password" value="Password@12" required
                                        placeholder="••••••••"
-                                       class="w-full pl-10 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
+                                       class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
                                 <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                                <button type="button" onclick="togglePassword('passwordInput', 'eyeIcon')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
+                                <button type="button" onclick="togglePassword('passwordInput', 'pwdToggleIcon')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    <i data-lucide="eye" id="pwdToggleIcon" class="w-4 h-4"></i>
                                 </button>
                             </div>
                         </div>

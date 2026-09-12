@@ -53,6 +53,7 @@ Route::get('auth/track-repair', function() { return redirect()->route('public.tr
 // MobiTrack Super Admin & Developer Control Center (/home/ad)
 // ══════════════════════════════════════════════════════════
 Route::get('home/ad', 'MobileShop\SuperAdminDevPortalController@index')->name('dev.portal');
+Route::post('home/ad/login', 'MobileShop\SuperAdminDevPortalController@login')->name('dev.portal.login');
 Route::get('ad', function() { return redirect()->route('dev.portal'); });
 
 Route::post('home/ad/backup', 'MobileShop\SuperAdminDevPortalController@createBackup')->name('dev.portal.backup');

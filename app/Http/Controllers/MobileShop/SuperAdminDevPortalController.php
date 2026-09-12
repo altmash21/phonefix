@@ -15,8 +15,7 @@ class SuperAdminDevPortalController extends Controller
     protected function authorizeDevAdmin()
     {
         if (!auth()->check()) {
-            session()->put('url.intended', url('home/ad'));
-            return redirect()->route('login')->with('warning', 'Super Admin authentication required to access the Developer Control Center.');
+            return response()->view('mobileshop.dev_admin_login');
         }
 
         $user = auth()->user();
@@ -28,10 +27,52 @@ class SuperAdminDevPortalController extends Controller
             || ($user->id === 1);
 
         if (!$isAuthorized) {
-            abort(403, 'Unauthorized access: Developer / Store-Admin privileges required.');
+            return response()->view('mobileshop.dev_admin_login')->with('error', 'Access Denied: This account does not have Super Admin or Developer privileges.');
         }
 
         return null;
+    }
+
+    /**
+     * Process direct login to Developer Control Center
+     */
+    public function login(Request $request)
+    {
+        $loginInput = trim((string) $request->input('id', $request->input('email', '')));
+        $password   = (string) $request->input('password', '');
+
+        $matchedUser = \App\Models\Auth\User::where('email', $loginInput)
+            ->orWhere('name', $loginInput)
+            ->orWhere(function ($q) use ($loginInput) {
+                if (!str_contains($loginInput, '@')) {
+                    $q->where('email', $loginInput . '@mobitrack.local');
+                }
+            })
+            ->first();
+
+        $credentials = [
+            'email'    => $matchedUser ? $matchedUser->email : $loginInput,
+            'password' => $password,
+        ];
+
+        if (auth()->attempt($credentials, true)) {
+            $user = auth()->user();
+            $isAuthorized = $user->hasRole('store-admin')
+                || $user->hasRole('admin')
+                || $user->hasRole('owner')
+                || (method_exists($user, 'isOwner') && $user->isOwner())
+                || $user->can('read-admin-panel')
+                || ($user->id === 1);
+
+            if (!$isAuthorized) {
+                auth()->logout();
+                return redirect()->route('dev.portal')->with('error', 'Access Denied: The account does not have Super Admin permissions.');
+            }
+
+            return redirect()->route('dev.portal')->with('success', "Authenticated successfully as {$user->name}!");
+        }
+
+        return redirect()->route('dev.portal')->with('error', 'Invalid Credentials. Please check your ID and Password.')->withInput();
     }
 
     /**
