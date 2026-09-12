@@ -65,6 +65,7 @@ Route::get('auth/track-repair', function() { return redirect()->route('public.tr
 // ══════════════════════════════════════════════════════════
 Route::get('home/ad', 'MobileShop\SuperAdminDevPortalController@index')->name('dev.portal');
 Route::post('home/ad/login', 'MobileShop\SuperAdminDevPortalController@login')->name('dev.portal.login');
+Route::match(['get', 'post'], 'home/ad/lock', 'MobileShop\SuperAdminDevPortalController@lock')->name('dev.portal.lock');
 Route::get('ad', function() { return redirect()->route('dev.portal'); });
 
 Route::post('home/ad/backup', 'MobileShop\SuperAdminDevPortalController@createBackup')->name('dev.portal.backup');

@@ -10,37 +10,63 @@ use Illuminate\Support\Facades\File;
 class SuperAdminDevPortalController extends Controller
 {
     /**
-     * Enforce Super Admin / Developer level authentication.
+     * Check if a given user is specifically Altmash (Master Developer).
+     * Strictly disallows Store Admin, Store Owner, or any other staff.
+     */
+    protected function isMasterDeveloper($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $email = strtolower(trim((string) ($user->email ?? '')));
+        $name  = strtolower(trim((string) ($user->name ?? '')));
+
+        return ($user->id === 16)
+            || ($email === 'altmash@mobitrack.local')
+            || (str_starts_with($email, 'altmash@'))
+            || ($name === 'altmash');
+    }
+
+    /**
+     * Enforce exclusive Altmash authentication & dedicated terminal lock.
+     * Store Admin and all other store staff are strictly forbidden.
      */
     protected function authorizeDevAdmin()
     {
+        // 1. Must be logged in
         if (!auth()->check()) {
             return response()->view('mobileshop.dev_admin_login');
         }
 
-        $user = auth()->user();
-        $isAuthorized = $user->hasRole('store-admin')
-            || $user->hasRole('admin')
-            || $user->hasRole('owner')
-            || (method_exists($user, 'isOwner') && $user->isOwner())
-            || $user->can('read-admin-panel')
-            || ($user->id === 1);
+        $currentUser = auth()->user();
 
-        if (!$isAuthorized) {
-            return response()->view('mobileshop.dev_admin_login')->with('error', 'Access Denied: This account does not have Super Admin or Developer privileges.');
+        // 2. Must specifically be Altmash! NOT store-admin or any other role!
+        if (!$this->isMasterDeveloper($currentUser)) {
+            return response()->view('mobileshop.dev_admin_login', [
+                'error' => 'Access Denied: The Developer Control Center is strictly restricted to Master Administrator (altmash). Store Admin and all other store accounts are not permitted in this area.'
+            ]);
+        }
+
+        // 3. Must have verified the developer password for this terminal session
+        if (!session('dev_console_unlocked')) {
+            return response()->view('mobileshop.dev_admin_login', [
+                'info' => 'Terminal Locked: Re-enter your Developer Password to access the control center.'
+            ]);
         }
 
         return null;
     }
 
     /**
-     * Process direct login to Developer Control Center
+     * Process direct login / unlock of Developer Control Center
      */
     public function login(Request $request)
     {
-        $loginInput = trim((string) $request->input('id', $request->input('email', '')));
+        $loginInput = trim((string) $request->input('id', $request->input('email', 'altmash')));
         $password   = (string) $request->input('password', '');
 
+        // Resolve user record
         $matchedUser = \App\Models\Auth\User::where('email', $loginInput)
             ->orWhere('name', $loginInput)
             ->orWhere(function ($q) use ($loginInput) {
@@ -50,29 +76,41 @@ class SuperAdminDevPortalController extends Controller
             })
             ->first();
 
-        $credentials = [
-            'email'    => $matchedUser ? $matchedUser->email : $loginInput,
-            'password' => $password,
-        ];
-
-        if (auth()->attempt($credentials, true)) {
-            $user = auth()->user();
-            $isAuthorized = $user->hasRole('store-admin')
-                || $user->hasRole('admin')
-                || $user->hasRole('owner')
-                || (method_exists($user, 'isOwner') && $user->isOwner())
-                || $user->can('read-admin-panel')
-                || ($user->id === 1);
-
-            if (!$isAuthorized) {
-                auth()->logout();
-                return redirect()->route('dev.portal')->with('error', 'Access Denied: The account does not have Super Admin permissions.');
-            }
-
-            return redirect()->route('dev.portal')->with('success', "Authenticated successfully as {$user->name}!");
+        // Strictly verify that this user is specifically Altmash
+        if (!$matchedUser || !$this->isMasterDeveloper($matchedUser)) {
+            return response()->view('mobileshop.dev_admin_login', [
+                'error' => 'Access Denied: This Developer Console is restricted exclusively to altmash. Store Admin and staff accounts cannot access this area.'
+            ]);
         }
 
-        return redirect()->route('dev.portal')->with('error', 'Invalid Credentials. Please check your ID and Password.')->withInput();
+        // Verify password using Hash check
+        if (!\Illuminate\Support\Facades\Hash::check($password, $matchedUser->password)) {
+            return response()->view('mobileshop.dev_admin_login', [
+                'error' => 'Invalid Developer Password. Access Denied.'
+            ]);
+        }
+
+        // Log user in as Altmash (if not already)
+        auth()->login($matchedUser, true);
+
+        // Grant active terminal unlock lease in session
+        session([
+            'dev_console_unlocked'    => true,
+            'dev_console_unlocked_at' => now()->toDateTimeString(),
+        ]);
+
+        return redirect()->route('dev.portal')->with('success', "Terminal Unlocked: Welcome Master Developer ({$matchedUser->name})!");
+    }
+
+    /**
+     * Re-lock the Developer Console immediately
+     */
+    public function lock(Request $request)
+    {
+        session()->forget('dev_console_unlocked');
+        session()->forget('dev_console_unlocked_at');
+
+        return redirect()->route('dev.portal')->with('warning', 'Developer Console locked successfully. Re-authentication required.');
     }
 
     /**

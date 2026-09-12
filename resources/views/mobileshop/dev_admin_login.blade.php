@@ -60,27 +60,45 @@
             <p class="text-xs text-slate-400 font-mono">Terminal Route: <span class="text-indigo-400">/home/ad</span></p>
         </div>
 
-        @if(session('error'))
+        @php
+            $displayError = $error ?? session('error');
+            $displayWarning = $warning ?? session('warning');
+            $displayInfo = $info ?? session('info');
+        @endphp
+
+        @if($displayError)
             <div class="p-4 rounded-xl bg-rose-950/70 border border-rose-700/60 text-rose-200 text-xs flex items-center gap-3">
                 <i class="fa-solid fa-circle-exclamation text-rose-400 text-base shrink-0"></i>
-                <span>{{ session('error') }}</span>
+                <span>{{ $displayError }}</span>
             </div>
         @endif
 
-        @if(session('warning'))
+        @if($displayWarning)
             <div class="p-4 rounded-xl bg-amber-950/70 border border-amber-700/60 text-amber-200 text-xs flex items-center gap-3">
                 <i class="fa-solid fa-shield-halved text-amber-400 text-base shrink-0"></i>
-                <span>{{ session('warning') }}</span>
+                <span>{{ $displayWarning }}</span>
+            </div>
+        @endif
+
+        @if($displayInfo)
+            <div class="p-4 rounded-xl bg-indigo-950/70 border border-indigo-700/60 text-indigo-200 text-xs flex items-center gap-3">
+                <i class="fa-solid fa-lock text-indigo-400 text-base shrink-0"></i>
+                <span>{{ $displayInfo }}</span>
             </div>
         @endif
 
         <!-- Card Container -->
         <div class="glow-card rounded-2xl p-6 sm:p-8 space-y-6">
             <div class="border-b border-slate-800 pb-4">
-                <h2 class="text-base font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-lock text-indigo-400"></i> Administrator Verification
-                </h2>
-                <p class="text-xs text-slate-400 mt-1">Please authenticate with your developer credentials to manage database backups and site telemetry.</p>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-lock text-indigo-400"></i> Terminal Access Gate
+                    </h2>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950/80 border border-rose-800/60 text-rose-300 font-bold uppercase">
+                        Restricted: Altmash Only
+                    </span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1.5">This Developer Console is strictly restricted to the master administrator. Store Admin accounts cannot access this area.</p>
             </div>
 
             <form action="{{ route('dev.portal.login') }}" method="POST" class="space-y-4">
@@ -88,7 +106,7 @@
 
                 <!-- ID / Username -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Developer ID / Username</label>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Master Developer ID</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                             <i class="fa-solid fa-user-shield"></i>
@@ -108,8 +126,8 @@
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                             <i class="fa-solid fa-key"></i>
                         </span>
-                        <input type="password" id="devPassword" name="password" value="Password@12" required
-                               placeholder="••••••••"
+                        <input type="password" id="devPassword" name="password" value="" required autocomplete="current-password"
+                               placeholder="Enter Password@12"
                                class="w-full pl-10 pr-10 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                         <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300">
                             <i id="eyeIcon" class="fa-solid fa-eye"></i>

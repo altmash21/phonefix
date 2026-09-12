@@ -115,14 +115,11 @@
 
                 <div class="flex items-center space-x-2 text-xs text-slate-400">
                     <span class="px-2.5 py-1 rounded-lg bg-slate-800/70 border border-slate-700/50 font-mono text-slate-300">
-                        <i class="fa-solid fa-user-shield text-indigo-400 mr-1.5"></i>{{ auth()->user()->name ?? 'Super Admin' }}
+                        <i class="fa-solid fa-user-shield text-indigo-400 mr-1.5"></i>{{ auth()->user()->name ?? 'Altmash' }}
                     </span>
-                    <form action="{{ route('logout', ['company_id' => $companyId]) }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" title="Logout" class="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition">
-                            <i class="fa-solid fa-power-off"></i>
-                        </button>
-                    </form>
+                    <a href="{{ route('dev.portal.lock') }}" title="Lock Developer Terminal Immediately" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-300 bg-rose-950/70 hover:bg-rose-900/80 border border-rose-800/60 transition shadow-sm">
+                        <i class="fa-solid fa-lock text-rose-400"></i> Lock Console
+                    </a>
                 </div>
             </div>
         </div>
