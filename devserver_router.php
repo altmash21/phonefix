@@ -7,38 +7,51 @@
 // framework front controller is ./public/index.php.
 //
 // This router serves any request whose path maps to a real file under
-// ./public (including the /public/* alias) or ./vendor as a static file,
+// ./public (including the /public/* alias and company-prefixed assets)
+// or ./vendor as a static file with explicit MIME headers,
 // and routes everything else through public/index.php.
 
 $uri = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 $publicDir = __DIR__ . '/public';
 $vendorDir = __DIR__ . '/vendor';
 
+// Normalize company-scoped paths: e.g. /1/public/* or /1/css/* -> /public/* or /css/*
+$normalizedUri = preg_replace('#^/[0-9]+/#', '/', $uri);
+
+$targetFile = null;
+
 // 1) /public/* alias -> ./public/* (Akaunting's asset() helper links these)
-if (strpos($uri, '/public/') === 0) {
-    $file = $publicDir . substr($uri, strlen('/public'));
-    if (is_file($file)) {
-        return false; // built-in server serves the static file
+if (str_starts_with($normalizedUri, '/public/')) {
+    $sub = substr($normalizedUri, strlen('/public'));
+    if (is_file($publicDir . $sub)) {
+        $targetFile = $publicDir . $sub;
     }
 }
 
 // 2) /vendor/* -> ./vendor/* (Livewire, Alpine, etc.)
-if (strpos($uri, '/vendor/') === 0) {
-    $file = $vendorDir . substr($uri, strlen('/vendor'));
-    if (is_file($file)) {
-        return false;
+if (!$targetFile && str_starts_with($normalizedUri, '/vendor/')) {
+    $sub = substr($normalizedUri, strlen('/vendor'));
+    if (is_file($vendorDir . $sub)) {
+        $targetFile = $vendorDir . $sub;
+    } elseif (is_file($publicDir . $normalizedUri)) {
+        $targetFile = $publicDir . $normalizedUri;
     }
 }
 
-// 3) Other static assets that exist directly under ./public/ (e.g. /css/..., /js/...)
-if ($uri !== '/' && is_file($publicDir . $uri)) {
-    $target = $publicDir . $uri;
-    $ext = strtolower(pathinfo($target, PATHINFO_EXTENSION));
+// 3) Other static assets directly under ./public/ (e.g. /css/..., /js/..., /img/..., /fonts/...)
+if (!$targetFile && $normalizedUri !== '/' && is_file($publicDir . $normalizedUri)) {
+    $targetFile = $publicDir . $normalizedUri;
+}
+
+// If a static file was resolved, stream it with explicit MIME types
+if ($targetFile && is_file($targetFile)) {
+    $ext = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
 
     if ($ext === 'php') {
-        require $target;
+        require $targetFile;
         exit;
     }
+
     $mimes = [
         'css'   => 'text/css; charset=UTF-8',
         'js'    => 'application/javascript; charset=UTF-8',
@@ -52,11 +65,14 @@ if ($uri !== '/' && is_file($publicDir . $uri)) {
         'woff'  => 'font/woff',
         'woff2' => 'font/woff2',
         'ttf'   => 'font/ttf',
+        'eot'   => 'application/vnd.ms-fontobject',
         'ico'   => 'image/x-icon',
     ];
+
     header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
-    header('Content-Length: ' . filesize($target));
-    readfile($target);
+    header('Cache-Control: public, max-age=86400');
+    header('Content-Length: ' . filesize($targetFile));
+    readfile($targetFile);
     exit;
 }
 

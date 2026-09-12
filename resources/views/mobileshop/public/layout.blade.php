@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>@yield('title', 'Maurya Mobile — Official Smartphones, Certified Pre-Owned & Express Repairs')</title>
     <meta name="description" content="@yield('meta_description', 'Discover official sealed flagship smartphones, 50-point certified pre-owned devices, and professional 45-minute express repair laboratory in Mumbai.')">
+    <base href="{{ config('app.url') . '/' }}">
 
     <!-- Preconnect Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,18 +13,14 @@
     <!-- Inter as the pristine SF Pro open substitute for non-Apple devices -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Local Compiled CSS -->
+    <!-- Local Compiled Stylesheet -->
     <link rel="stylesheet" href="{{ asset('public/css/mobileshop-panel.css') }}">
 
     <!-- Lucide Icons (Local bundle with unpkg fallback) -->
     <script src="{{ asset('public/vendor/lucide/lucide.min.js') }}"></script>
     <script>
         if (typeof lucide === 'undefined') {
-            (function() {
-                var s = document.createElement('script');
-                s.src = 'https://unpkg.com/lucide@latest';
-                document.head.appendChild(s);
-            })();
+            document.write('<script src="https://unpkg.com/lucide@latest"><\/script>');
         }
     </script>
 

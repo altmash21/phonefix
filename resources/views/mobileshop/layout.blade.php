@@ -8,6 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#5E6AD2">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <base href="{{ config('app.url') . '/' }}">
     <title>@yield('title', 'Maurya Mobile — Mobile Shop ERP')</title>
 
     <script>

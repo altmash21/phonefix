@@ -6,6 +6,7 @@
     <title>Staff Login — Maurya Mobile ERP</title>
     <meta name="description" content="Secure terminal access for Maurya Mobile Mobile Shop ERP staff and store administration.">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <base href="{{ config('app.url') . '/' }}">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -15,20 +16,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- Local Compiled CSS -->
-    <link rel="stylesheet" href="{{ asset('public/css/mobileshop-panel.css') }}">
-
-    <!-- Lucide Icons (Local bundle with unpkg fallback) -->
-    <script src="{{ asset('public/vendor/lucide/lucide.min.js') }}"></script>
-    <script>
-        if (typeof lucide === 'undefined') {
-            (function() {
-                var s = document.createElement('script');
-                s.src = 'https://unpkg.com/lucide@latest';
-                document.head.appendChild(s);
-            })();
-        }
-    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
