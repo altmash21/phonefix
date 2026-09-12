@@ -357,21 +357,6 @@
 @section('content')
 <div class="app-pos-container">
 
-    <!-- ── 1. Top App Bar ── -->
-    <div class="app-top-header">
-        <div>
-            <div class="app-top-title">
-                <i data-lucide="zap" style="width:18px;height:18px; color:#FACC15;"></i>
-                Counter POS Sale
-            </div>
-            <div class="app-top-sub">Fast retail billing for accessories, tempered glass & covers</div>
-        </div>
-        <div class="app-cart-pill-badge" onclick="scrollToCartSection()">
-            <i data-lucide="shopping-cart" style="width:15px;height:15px;"></i>
-            <span id="topCartBadge">0 Items</span>
-        </div>
-    </div>
-
     <!-- Main Sale Form -->
     <form action="{{ route('mobileshop.accessories.sale') }}" method="POST" id="accSaleForm" onsubmit="return validateAndSubmitPosSale(this);">
         @csrf
@@ -763,7 +748,7 @@
 
         const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
         countBadge.innerText = totalItemsCount;
-        topBadge.innerText = `${totalItemsCount} Items`;
+        if (topBadge) topBadge.innerText = `${totalItemsCount} Items`;
 
         if (cart.length === 0) {
             container.innerHTML = `

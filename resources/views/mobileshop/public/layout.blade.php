@@ -12,8 +12,13 @@
     <!-- Inter as the pristine SF Pro open substitute for non-Apple devices -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Lucide Icons (Local bundle with unpkg fallback) -->
+    <script src="{{ asset('public/vendor/lucide/lucide.min.js') }}"></script>
+    <script>
+        if (typeof lucide === 'undefined') {
+            document.write('<script src="https://unpkg.com/lucide@latest"><\/script>');
+        }
+    </script>
 
     <!-- Tailwind CSS with Apple Design Tokens -->
     <script src="https://cdn.tailwindcss.com"></script>
