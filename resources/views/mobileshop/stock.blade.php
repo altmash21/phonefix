@@ -188,6 +188,7 @@
                 <table class="data-table" id="stockNewPhonesTable">
                     <thead>
                         <tr>
+                            <th style="width:55px; text-align:center;">Photo</th>
                             <th>Brand & Model</th>
                             <th>Variant (RAM/Storage/Color)</th>
                             <th>IMEI 1</th>
@@ -195,12 +196,34 @@
                             <th style="text-align:right;">Purchase Cost (₹)</th>
                             <th style="text-align:right;">Selling Price (₹)</th>
                             <th style="text-align:center;">Status</th>
-                            <th style="width:90px; text-align:center;">Actions</th>
+                            <th style="width:115px; text-align:center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($newPhones as $phone)
+                        @php
+                            $photo = $phone->photo_path ?? $phone->box_photo_path ?? null;
+                            $boxPhoto = $phone->box_photo_path ?? null;
+                        @endphp
                         <tr class="stock-row" id="stockRow_new_phone_{{ $phone->id }}" data-type="new_phone" data-low="0" data-date="{{ \Carbon\Carbon::parse($phone->created_at)->format('Y-m-d') }}">
+                            <td style="text-align:center; padding:6px;">
+                                @if($photo)
+                                <img src="{{ asset($photo) }}" 
+                                     alt="{{ $phone->model }}" 
+                                     style="width:38px; height:38px; object-fit:cover; border-radius:8px; border:1.5px solid #CBD5E1; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.08); transition:transform 0.15s; display:inline-block;" 
+                                     onmouseover="this.style.transform='scale(1.08)'" 
+                                     onmouseout="this.style.transform='scale(1)'"
+                                     onclick="openPhotoLightbox('{{ asset($photo) }}', '{{ addslashes($phone->brand . ' ' . $phone->model) }}', 'IMEI: {{ $phone->imei_1 }} • ₹{{ number_format($phone->selling_price, 2) }}', '{{ $boxPhoto ? asset($boxPhoto) : '' }}', '')" 
+                                     title="Click to view full photo">
+                                @else
+                                <button type="button" 
+                                        onclick="openUploadPhotoModal({{ $phone->id }}, '{{ addslashes($phone->brand . ' ' . $phone->model) }}', '{{ $phone->imei_1 }}', '')"
+                                        style="width:38px; height:38px; border-radius:8px; background:#EFF6FF; border:1px dashed #93C5FD; color:#2563EB; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" 
+                                        title="Click to upload photo">
+                                    <i data-lucide="camera" style="width:16px;height:16px;"></i>
+                                </button>
+                                @endif
+                            </td>
                             <td style="font-weight:700; color:#0F172A;">{{ $phone->brand }} {{ $phone->model }}</td>
                             <td>
                                 <span class="badge badge-gray" style="font-size:11px;">
@@ -221,6 +244,13 @@
                                 @endif
                             </td>
                             <td style="text-align:center; white-space:nowrap;">
+                                <button type="button" 
+                                        class="btn btn-outline btn-xs" 
+                                        title="View / Upload Photo" 
+                                        style="padding:3px 7px; margin-right:4px; color:#2563EB; border-color:#BFDBFE;"
+                                        onclick="openUploadPhotoModal({{ $phone->id }}, '{{ addslashes($phone->brand . ' ' . $phone->model) }}', '{{ $phone->imei_1 }}', '{{ $photo ? asset($photo) : '' }}', '{{ $boxPhoto ? asset($boxPhoto) : '' }}')">
+                                    <i data-lucide="camera" style="width:13px;height:13px;"></i>
+                                </button>
                                 <button type="button" 
                                         class="btn btn-outline btn-xs" 
                                         title="View Inventory History" 
@@ -253,7 +283,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" style="text-align:center; padding:24px; color:#94A3B8;">No new mobile phones registered.</td>
+                            <td colspan="9" style="text-align:center; padding:24px; color:#94A3B8;">No new mobile phones registered.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -275,6 +305,7 @@
                 <table class="data-table" id="stockSecondHandTable">
                     <thead>
                         <tr>
+                            <th style="width:55px; text-align:center;">Photo</th>
                             <th>Brand & Model</th>
                             <th>Grade</th>
                             <th>Battery Health</th>
@@ -282,12 +313,36 @@
                             <th style="text-align:right;">Buyback Cost (₹)</th>
                             <th style="text-align:right;">Selling Price (₹)</th>
                             <th style="text-align:center;">Status</th>
-                            <th style="width:90px; text-align:center;">Actions</th>
+                            <th style="width:115px; text-align:center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($secondHandPhones as $sh)
+                        @php
+                            $photo = $sh->photo_path ?? $sh->box_photo_path ?? null;
+                            $boxPhoto = $sh->box_photo_path ?? null;
+                            $idProof = $sh->customer_buyback_id_proof ?? null;
+                            $idProofIsImage = $idProof && (str_contains($idProof, '.jpg') || str_contains($idProof, '.png') || str_contains($idProof, '.webp') || str_contains($idProof, 'uploads/'));
+                        @endphp
                         <tr class="stock-row" id="stockRow_second_hand_{{ $sh->id }}" data-type="second_hand" data-low="0" data-date="{{ \Carbon\Carbon::parse($sh->created_at)->format('Y-m-d') }}">
+                            <td style="text-align:center; padding:6px;">
+                                @if($photo)
+                                <img src="{{ asset($photo) }}" 
+                                     alt="{{ $sh->model }}" 
+                                     style="width:38px; height:38px; object-fit:cover; border-radius:8px; border:1.5px solid #FED7AA; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.08); transition:transform 0.15s; display:inline-block;" 
+                                     onmouseover="this.style.transform='scale(1.08)'" 
+                                     onmouseout="this.style.transform='scale(1)'"
+                                     onclick="openPhotoLightbox('{{ asset($photo) }}', '{{ addslashes($sh->brand . ' ' . $sh->model) }} (Pre-Owned)', 'IMEI: {{ $sh->imei_1 }} • Grade: {{ str_replace('_', ' ', $sh->condition_grade) }} • ₹{{ number_format($sh->selling_price, 2) }}', '{{ $boxPhoto ? asset($boxPhoto) : '' }}', '{{ $idProofIsImage ? asset($idProof) : '' }}')" 
+                                     title="Click to view full photo">
+                                @else
+                                <button type="button" 
+                                        onclick="openUploadPhotoModal({{ $sh->id }}, '{{ addslashes($sh->brand . ' ' . $sh->model) }}', '{{ $sh->imei_1 }}', '')"
+                                        style="width:38px; height:38px; border-radius:8px; background:#FFF7ED; border:1px dashed #FDBA74; color:#EA580C; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" 
+                                        title="Click to upload photo">
+                                    <i data-lucide="camera" style="width:16px;height:16px;"></i>
+                                </button>
+                                @endif
+                            </td>
                             <td style="font-weight:700; color:#0F172A;">{{ $sh->brand }} {{ $sh->model }}</td>
                             <td>
                                 <span class="badge badge-orange" style="text-transform:capitalize; font-size:10px;">
@@ -308,6 +363,13 @@
                                 @endif
                             </td>
                             <td style="text-align:center; white-space:nowrap;">
+                                <button type="button" 
+                                        class="btn btn-outline btn-xs" 
+                                        title="View / Upload Photo" 
+                                        style="padding:3px 7px; margin-right:4px; color:#EA580C; border-color:#FED7AA;"
+                                        onclick="openUploadPhotoModal({{ $sh->id }}, '{{ addslashes($sh->brand . ' ' . $sh->model) }}', '{{ $sh->imei_1 }}', '{{ $photo ? asset($photo) : '' }}', '{{ $boxPhoto ? asset($boxPhoto) : '' }}')">
+                                    <i data-lucide="camera" style="width:13px;height:13px;"></i>
+                                </button>
                                 <button type="button" 
                                         class="btn btn-outline btn-xs" 
                                         title="View Inventory History" 
@@ -340,7 +402,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" style="text-align:center; padding:24px; color:#94A3B8;">No pre-owned phones in stock.</td>
+                            <td colspan="9" style="text-align:center; padding:24px; color:#94A3B8;">No pre-owned phones in stock.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -460,12 +522,23 @@
     <div id="stockMobileCards" style="display:none; flex-direction:column; gap:8px;">
         @if(($canManagePhones ?? false) || in_array($niche ?? '', ['admin', 'phones']))
             @foreach($newPhones as $phone)
+            @php
+                $mPhoto = $phone->photo_path ?? $phone->box_photo_path ?? null;
+                $mBoxPhoto = $phone->box_photo_path ?? null;
+            @endphp
             <div class="app-flat-row stock-card" id="stockCard_new_phone_{{ $phone->id }}" data-type="new_phone" data-low="0" data-date="{{ \Carbon\Carbon::parse($phone->created_at)->format('Y-m-d') }}" data-search="{{ strtolower(($phone->brand ?? '') . ' ' . ($phone->model ?? '') . ' ' . ($phone->imei_1 ?? '') . ' ' . ($phone->color ?? '')) }}">
                 <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                     <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                        @if($mPhoto)
+                        <img src="{{ asset($mPhoto) }}" 
+                             alt="{{ $phone->model }}" 
+                             style="width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid #CBD5E1; flex-shrink:0; cursor:pointer;" 
+                             onclick="openPhotoLightbox('{{ asset($mPhoto) }}', '{{ addslashes($phone->brand . ' ' . $phone->model) }}', 'IMEI: {{ $phone->imei_1 }} • ₹{{ number_format($phone->selling_price, 2) }}', '{{ $mBoxPhoto ? asset($mBoxPhoto) : '' }}', '')">
+                        @else
                         <div style="width:36px; height:36px; border-radius:8px; background:#EFF6FF; color:#2563EB; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                             <i data-lucide="smartphone" style="width:18px;height:18px;"></i>
                         </div>
+                        @endif
                         <div style="min-width:0;">
                             <div style="font-weight:800; font-size:13px; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $phone->brand }} {{ $phone->model }}</div>
                             <div style="font-size:10px; color:#64748B;">IMEI: <span style="font-family:monospace; font-weight:700;">{{ $phone->imei_1 }}</span> • {{ $phone->ram ?: '' }}/{{ $phone->storage ?: '' }}</div>
@@ -488,7 +561,9 @@
                                     subtext: 'IMEI: {{ $phone->imei_1 }}',
                                     stock: {{ $phone->status === 'in_stock' ? 1 : 0 }},
                                     is_sold: {{ $phone->status === 'sold' ? 1 : 0 }},
-                                    is_phone: 1
+                                    is_phone: 1,
+                                    photo: '{{ $mPhoto ? asset($mPhoto) : '' }}',
+                                    box_photo: '{{ $mBoxPhoto ? asset($mBoxPhoto) : '' }}'
                                 })">
                             <i data-lucide="more-vertical" style="width:16px;height:16px;"></i>
                         </button>
@@ -500,12 +575,25 @@
 
         @if(($canManageSecondhand ?? false) || in_array($niche ?? '', ['admin', 'secondhand']))
             @foreach($secondHandPhones as $sh)
+            @php
+                $mShPhoto = $sh->photo_path ?? $sh->box_photo_path ?? null;
+                $mShBoxPhoto = $sh->box_photo_path ?? null;
+                $mShIdProof = $sh->customer_buyback_id_proof ?? null;
+                $mShIdIsImage = $mShIdProof && (str_contains($mShIdProof, '.jpg') || str_contains($mShIdProof, '.png') || str_contains($mShIdProof, '.webp') || str_contains($mShIdProof, 'uploads/'));
+            @endphp
             <div class="app-flat-row stock-card" id="stockCard_second_hand_{{ $sh->id }}" data-type="second_hand" data-low="0" data-date="{{ \Carbon\Carbon::parse($sh->created_at)->format('Y-m-d') }}" data-search="{{ strtolower(($sh->brand ?? '') . ' ' . ($sh->model ?? '') . ' ' . ($sh->imei_1 ?? '')) }}">
                 <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                     <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                        @if($mShPhoto)
+                        <img src="{{ asset($mShPhoto) }}" 
+                             alt="{{ $sh->model }}" 
+                             style="width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid #FED7AA; flex-shrink:0; cursor:pointer;" 
+                             onclick="openPhotoLightbox('{{ asset($mShPhoto) }}', '{{ addslashes($sh->brand . ' ' . $sh->model) }} (Pre-Owned)', 'IMEI: {{ $sh->imei_1 }} • Grade: {{ str_replace('_', ' ', $sh->condition_grade) }} • ₹{{ number_format($sh->selling_price, 2) }}', '{{ $mShBoxPhoto ? asset($mShBoxPhoto) : '' }}', '{{ $mShIdIsImage ? asset($mShIdProof) : '' }}')">
+                        @else
                         <div style="width:36px; height:36px; border-radius:8px; background:#FFF7ED; color:#EA580C; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                             <i data-lucide="refresh-cw" style="width:18px;height:18px;"></i>
                         </div>
+                        @endif
                         <div style="min-width:0;">
                             <div style="font-weight:800; font-size:13px; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $sh->brand }} {{ $sh->model }}</div>
                             <div style="font-size:10px; color:#64748B;">IMEI: <span style="font-family:monospace; font-weight:700;">{{ $sh->imei_1 }}</span> @if($sh->battery_health) • 🔋{{ $sh->battery_health }}% @endif</div>
@@ -528,7 +616,9 @@
                                     subtext: 'IMEI: {{ $sh->imei_1 }}',
                                     stock: {{ $sh->status === 'in_stock' ? 1 : 0 }},
                                     is_sold: {{ $sh->status === 'sold' ? 1 : 0 }},
-                                    is_phone: 1
+                                    is_phone: 1,
+                                    photo: '{{ $mShPhoto ? asset($mShPhoto) : '' }}',
+                                    box_photo: '{{ $mShBoxPhoto ? asset($mShBoxPhoto) : '' }}'
                                 })">
                             <i data-lucide="more-vertical" style="width:16px;height:16px;"></i>
                         </button>
@@ -591,6 +681,10 @@
         <div style="padding: 6px 12px 4px 12px; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; border-bottom:1px solid #F1F5F9; margin-bottom:4px;" id="menuItemTitle">
             Stock Actions
         </div>
+        <button type="button" class="stock-dropdown-item" id="menuPhotoBtn" onclick="triggerStockPhotoAction()">
+            <i data-lucide="camera" style="width:15px;height:15px;color:#10B981;"></i>
+            <span>View / Upload Photo</span>
+        </button>
         <button type="button" class="stock-dropdown-item" onclick="triggerStockHistory()">
             <i data-lucide="history" style="width:15px;height:15px;color:#2563EB;"></i>
             <span>Stock History</span>
@@ -816,16 +910,36 @@
                     @csrf
                     <input type="hidden" name="redirect_to" value="{{ route('mobileshop.stock', ['tab' => 'new_phones']) }}">
 
-                    <!-- Photo Upload Field with Live Preview -->
-                    <div style="margin-bottom: 14px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:10px; padding:12px; text-align:center;">
-                        <div id="photoPreviewBox" style="display:none; margin-bottom:8px;">
-                            <img id="newPhonePreviewImg" src="" alt="Preview" style="max-height:120px; border-radius:8px; object-fit:contain; border:1px solid #E2E8F0;">
+                    <!-- Dual Photo Upload Field with Live Previews -->
+                    <div style="margin-bottom: 14px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px;">
+                        <div style="font-size:11px; font-weight:800; color:#1E3A8A; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                            <i data-lucide="camera" style="width:13px;height:13px;color:#2563EB;"></i> Device & Packaging Photos
                         </div>
-                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:6px 14px; border-radius:8px; border:1px solid #BFDBFE;">
-                            <i data-lucide="camera" style="width:14px;height:14px;"></i> Upload Phone / Box Photo
-                            <input type="file" name="photo" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'newPhonePreviewImg', 'photoPreviewBox')">
-                        </label>
-                        <div style="font-size:10px; color:#64748B; margin-top:4px;">JPG, PNG, WebP up to 5MB</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <!-- 1. Phone Photo -->
+                            <div style="background:#fff; border:1px dashed #BFDBFE; border-radius:10px; padding:10px; text-align:center;">
+                                <div id="photoPreviewBox" style="display:none; margin-bottom:6px;">
+                                    <img id="newPhonePreviewImg" src="" alt="Phone Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
+                                </div>
+                                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:5px 10px; border-radius:6px; border:1px solid #BFDBFE; width:100%; justify-content:center;">
+                                    <i data-lucide="smartphone" style="width:13px;height:13px;"></i> Device Photo
+                                    <input type="file" name="photo" id="newPhonePhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'newPhonePreviewImg', 'photoPreviewBox')">
+                                </label>
+                                <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Main Phone Photo</div>
+                            </div>
+
+                            <!-- 2. Box / Bill Photo -->
+                            <div style="background:#fff; border:1px dashed #CBD5E1; border-radius:10px; padding:10px; text-align:center;">
+                                <div id="newPhoneBoxPreviewBox" style="display:none; margin-bottom:6px;">
+                                    <img id="newPhoneBoxPreviewImg" src="" alt="Box Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
+                                </div>
+                                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#475569; background:#F1F5F9; padding:5px 10px; border-radius:6px; border:1px solid #CBD5E1; width:100%; justify-content:center;">
+                                    <i data-lucide="package" style="width:13px;height:13px;"></i> Box / Bill (Opt)
+                                    <input type="file" name="box_photo" id="newPhoneBoxPhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'newPhoneBoxPreviewImg', 'newPhoneBoxPreviewBox')">
+                                </label>
+                                <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Packaging / Invoice</div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -896,16 +1010,36 @@
                     @csrf
                     <input type="hidden" name="redirect_to" value="{{ route('mobileshop.stock', ['tab' => 'second_hand']) }}">
 
-                    <!-- Photo Upload Field with Live Preview -->
-                    <div style="margin-bottom: 14px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:10px; padding:12px; text-align:center;">
-                        <div id="shPhotoPreviewBox" style="display:none; margin-bottom:8px;">
-                            <img id="shPreviewImg" src="" alt="Preview" style="max-height:120px; border-radius:8px; object-fit:contain; border:1px solid #E2E8F0;">
+                    <!-- Dual Photo Upload Field with Live Previews -->
+                    <div style="margin-bottom: 14px; background:#FFF7ED; border:1px solid #FED7AA; border-radius:12px; padding:12px;">
+                        <div style="font-size:11px; font-weight:800; color:#C2410C; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                            <i data-lucide="camera" style="width:13px;height:13px;color:#EA580C;"></i> Device & Packaging Condition Photos
                         </div>
-                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:700; color:#EA580C; background:#FFF7ED; padding:6px 14px; border-radius:8px; border:1px solid #FED7AA;">
-                            <i data-lucide="camera" style="width:14px;height:14px;"></i> Upload Device Condition Photo
-                            <input type="file" name="photo" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shPreviewImg', 'shPhotoPreviewBox')">
-                        </label>
-                        <div style="font-size:10px; color:#64748B; margin-top:4px;">Capture screen/body condition (JPG, PNG, WebP up to 5MB)</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <!-- 1. Pre-Owned Phone Condition Photo -->
+                            <div style="background:#fff; border:1px dashed #FDBA74; border-radius:10px; padding:10px; text-align:center;">
+                                <div id="shPhotoPreviewBox" style="display:none; margin-bottom:6px;">
+                                    <img id="shPreviewImg" src="" alt="Condition Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #FED7AA;">
+                                </div>
+                                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#EA580C; background:#FFF7ED; padding:5px 10px; border-radius:6px; border:1px solid #FED7AA; width:100%; justify-content:center;">
+                                    <i data-lucide="smartphone" style="width:13px;height:13px;"></i> Device Condition
+                                    <input type="file" name="photo" id="shPhonePhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shPreviewImg', 'shPhotoPreviewBox')">
+                                </label>
+                                <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Body / Screen Condition</div>
+                            </div>
+
+                            <!-- 2. Box / Invoice Photo -->
+                            <div style="background:#fff; border:1px dashed #CBD5E1; border-radius:10px; padding:10px; text-align:center;">
+                                <div id="shBoxPreviewBox" style="display:none; margin-bottom:6px;">
+                                    <img id="shBoxPreviewImg" src="" alt="Box Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
+                                </div>
+                                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#475569; background:#F1F5F9; padding:5px 10px; border-radius:6px; border:1px solid #CBD5E1; width:100%; justify-content:center;">
+                                    <i data-lucide="package" style="width:13px;height:13px;"></i> Box / Bill (Opt)
+                                    <input type="file" name="box_photo" id="shBoxPhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shBoxPreviewImg', 'shBoxPreviewBox')">
+                                </label>
+                                <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Original Box / Bill</div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -965,7 +1099,18 @@
                             <input type="text" name="customer_buyback_name" placeholder="Customer Name *" required class="form-control" style="font-size:12px;">
                             <input type="text" name="customer_buyback_phone" placeholder="Customer Phone *" required class="form-control" style="font-size:12px;">
                         </div>
-                        <input type="text" name="customer_buyback_id_proof" placeholder="Aadhaar / ID Details (Optional)" class="form-control" style="font-size:12px;">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:start;">
+                            <input type="text" name="customer_buyback_id_proof" placeholder="Aadhaar / ID Number (Optional)" class="form-control" style="font-size:12px;">
+                            <div>
+                                <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px; font-weight:700; color:#C2410C; background:#fff; padding:7px 10px; border-radius:6px; border:1px dashed #FED7AA; justify-content:center;">
+                                    <i data-lucide="file-text" style="width:13px;height:13px;"></i> Upload ID Card Photo
+                                    <input type="file" name="id_proof_photo" id="shIdProofInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shIdProofPreviewImg', 'shIdProofPreviewBox')">
+                                </label>
+                            </div>
+                        </div>
+                        <div id="shIdProofPreviewBox" style="display:none; margin-top:8px; text-align:center;">
+                            <img id="shIdProofPreviewImg" src="" alt="ID Preview" style="max-height:80px; border-radius:6px; object-fit:contain; border:1px solid #FED7AA;">
+                        </div>
                     </div>
 
                     <div class="form-group" style="margin-bottom:14px;">
@@ -1096,6 +1241,104 @@
                 </button>
                 @endif
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Photo Lightbox (High-Resolution Zoom & Box/ID Switcher) -->
+    <div id="photoLightboxModal" style="display:none; position:fixed; inset:0; z-index:1300; background:rgba(15,23,42,0.88); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;" onclick="closePhotoLightbox()">
+        <div class="card" style="max-width:640px; width:100%; max-height:92vh; background:#0F172A; border:1px solid #334155; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+            <!-- Lightbox Header -->
+            <div style="padding:14px 18px; border-bottom:1px solid #1E293B; display:flex; justify-content:space-between; align-items:center; background:#1E293B;">
+                <div>
+                    <div id="lightboxTitle" style="font-weight:800; font-size:15px; color:#F8FAFC;">Device Photo</div>
+                    <div id="lightboxSubtitle" style="font-size:11px; color:#94A3B8; margin-top:2px;">IMEI & Stock Details</div>
+                </div>
+                <button type="button" onclick="closePhotoLightbox()" style="background:none; border:none; color:#94A3B8; font-size:20px; cursor:pointer; padding:4px 8px; border-radius:6px;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94A3B8'">✕</button>
+            </div>
+
+            <!-- View Switcher Tabs (if Box or ID photo exists) -->
+            <div id="lightboxTabRail" style="display:flex; gap:8px; padding:10px 18px; background:#0F172A; border-bottom:1px solid #1E293B;">
+                <button type="button" id="lbTabDevice" class="filter-pill-btn active" style="font-size:11px; padding:4px 12px;" onclick="switchLightboxView('device')">
+                    📱 Phone Photo
+                </button>
+                <button type="button" id="lbTabBox" class="filter-pill-btn" style="font-size:11px; padding:4px 12px; display:none;" onclick="switchLightboxView('box')">
+                    📦 Box / Bill
+                </button>
+                <button type="button" id="lbTabId" class="filter-pill-btn" style="font-size:11px; padding:4px 12px; display:none;" onclick="switchLightboxView('id')">
+                    🪪 ID Proof
+                </button>
+            </div>
+
+            <!-- Image Canvas -->
+            <div style="padding:20px; display:flex; align-items:center; justify-content:center; background:#020617; flex:1; min-height:300px; max-height:60vh; overflow:hidden;">
+                <img id="lightboxMainImg" src="" alt="Device Photo" style="max-width:100%; max-height:55vh; object-fit:contain; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:transform 0.2s ease;">
+            </div>
+
+            <!-- Lightbox Footer -->
+            <div style="padding:10px 18px; background:#1E293B; border-top:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                <span id="lightboxTag" style="font-size:11px; color:#60A5FA; font-weight:600;">Full resolution verified photo</span>
+                <button type="button" onclick="closePhotoLightbox()" class="btn btn-outline btn-sm" style="font-size:11px; color:#E2E8F0; border-color:#475569;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Quick Upload / Replace Mobile Device Photo -->
+    <div id="uploadPhotoModal" style="display:none; position:fixed; inset:0; z-index:1250; background:rgba(15,23,42,0.55); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
+        <div class="card" style="max-width:480px; width:100%; border-radius:14px; background:#fff; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); overflow:hidden;">
+            <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div class="card-title" style="font-size:15px; color:#0F172A; display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="camera" style="width:16px;height:16px;color:#2563EB;"></i> Update Device Photos
+                    </div>
+                    <div id="uploadPhotoModalSubtitle" style="font-size:11px; color:#64748B; margin-top:2px;">Attach photos for phone in inventory</div>
+                </div>
+                <button type="button" onclick="closeUploadPhotoModal()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
+            </div>
+            <form id="uploadPhotoForm" method="POST" enctype="multipart/form-data" action="">
+                @csrf
+                <div class="card-body" style="padding:16px 18px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                        <!-- 1. Main Device Photo -->
+                        <div style="background:#F8FAFC; border:1px dashed #BFDBFE; border-radius:10px; padding:12px; text-align:center;">
+                            <div id="upDevicePhotoBox" style="margin-bottom:8px;">
+                                <img id="upDevicePhotoPreview" src="" alt="Phone" style="max-height:100px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0; display:none;">
+                                <div id="upDevicePhotoPlaceholder" style="height:70px; display:flex; align-items:center; justify-content:center; color:#94A3B8;">
+                                    <i data-lucide="smartphone" style="width:32px;height:32px;"></i>
+                                </div>
+                            </div>
+                            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:6px 10px; border-radius:6px; border:1px solid #BFDBFE; width:100%; justify-content:center;">
+                                <i data-lucide="camera" style="width:12px;height:12px;"></i> Select Phone Photo
+                                <input type="file" name="photo" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'upDevicePhotoPreview', 'upDevicePhotoBox', 'upDevicePhotoPlaceholder')">
+                            </label>
+                            <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Main Phone Photo</div>
+                        </div>
+
+                        <!-- 2. Box / Bill Photo -->
+                        <div style="background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:10px; padding:12px; text-align:center;">
+                            <div id="upBoxPhotoBox" style="margin-bottom:8px;">
+                                <img id="upBoxPhotoPreview" src="" alt="Box" style="max-height:100px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0; display:none;">
+                                <div id="upBoxPhotoPlaceholder" style="height:70px; display:flex; align-items:center; justify-content:center; color:#94A3B8;">
+                                    <i data-lucide="package" style="width:32px;height:32px;"></i>
+                                </div>
+                            </div>
+                            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11px; font-weight:700; color:#475569; background:#F1F5F9; padding:6px 10px; border-radius:6px; border:1px solid #CBD5E1; width:100%; justify-content:center;">
+                                <i data-lucide="package" style="width:12px;height:12px;"></i> Select Box Photo
+                                <input type="file" name="box_photo" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'upBoxPhotoPreview', 'upBoxPhotoBox', 'upBoxPhotoPlaceholder')">
+                            </label>
+                            <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Box / Bill (Optional)</div>
+                        </div>
+                    </div>
+                    <div style="font-size:11px; color:#64748B; line-height:1.4;">
+                        Upload high-clarity photos. Supported formats: JPG, PNG, WebP (up to 5MB each). These photos will also be presented on your digital showroom catalog.
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; padding:12px 18px; background:#F8FAFC; border-top:1px solid #E2E8F0;">
+                    <button type="button" onclick="closeUploadPhotoModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="save" style="width:13px;height:13px;"></i> Save Photos
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 @endsection
@@ -1762,6 +2005,11 @@
             titleEl.textContent = item.name.length > 22 ? item.name.substring(0, 20) + '...' : item.name;
         }
 
+        const photoBtn = document.getElementById('menuPhotoBtn');
+        if (photoBtn) {
+            photoBtn.style.display = item.is_phone ? 'flex' : 'none';
+        }
+
         const delBtn = document.getElementById('menuDeleteBtn');
         const delText = document.getElementById('menuDeleteBtnText');
         if (delBtn && delText) {
@@ -1821,6 +2069,29 @@
 
     window.addEventListener('scroll', closeStockActionMenu, true);
     window.addEventListener('resize', closeStockActionMenu);
+
+    function triggerStockPhotoAction() {
+        closeStockActionMenu();
+        if (currentStockActionItem && currentStockActionItem.is_phone) {
+            if (currentStockActionItem.photo) {
+                openPhotoLightbox(
+                    currentStockActionItem.photo, 
+                    currentStockActionItem.name, 
+                    currentStockActionItem.subtext, 
+                    currentStockActionItem.box_photo, 
+                    ''
+                );
+            } else {
+                openUploadPhotoModal(
+                    currentStockActionItem.id, 
+                    currentStockActionItem.name, 
+                    (currentStockActionItem.subtext || '').replace('IMEI: ', ''), 
+                    '', 
+                    ''
+                );
+            }
+        }
+    }
 
     function triggerStockHistory() {
         closeStockActionMenu();
@@ -2040,17 +2311,129 @@
         if (drawer) drawer.style.display = 'none';
     }
 
-    function previewSelectedPhoto(input, imgId, boxId) {
+    function previewSelectedPhoto(input, imgId, boxId, placeholderId) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = document.getElementById(imgId);
                 const box = document.getElementById(boxId);
-                if (img) img.src = e.target.result;
+                const placeholder = placeholderId ? document.getElementById(placeholderId) : null;
+                if (img) {
+                    img.src = e.target.result;
+                    img.style.display = 'inline-block';
+                }
                 if (box) box.style.display = 'block';
+                if (placeholder) placeholder.style.display = 'none';
             };
             reader.readAsDataURL(input.files[0]);
         }
+    }
+
+    // ── LIGHTBOX PHOTO VIEWER ──
+    let currentLightboxPhotos = { device: '', box: '', id: '' };
+
+    function openPhotoLightbox(photoUrl, title, subtitle, boxPhotoUrl, idProofUrl) {
+        const modal = document.getElementById('photoLightboxModal');
+        if (!modal) return;
+
+        currentLightboxPhotos = {
+            device: photoUrl || '',
+            box: boxPhotoUrl || '',
+            id: idProofUrl || ''
+        };
+
+        document.getElementById('lightboxTitle').textContent = title || 'Device Photo';
+        document.getElementById('lightboxSubtitle').textContent = subtitle || 'Phone Inventory Record';
+
+        const tabBox = document.getElementById('lbTabBox');
+        const tabId = document.getElementById('lbTabId');
+        if (tabBox) tabBox.style.display = boxPhotoUrl ? 'inline-flex' : 'none';
+        if (tabId) tabId.style.display = idProofUrl ? 'inline-flex' : 'none';
+
+        switchLightboxView('device');
+        modal.style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function switchLightboxView(type) {
+        const img = document.getElementById('lightboxMainImg');
+        const tag = document.getElementById('lightboxTag');
+        const tabs = {
+            device: document.getElementById('lbTabDevice'),
+            box: document.getElementById('lbTabBox'),
+            id: document.getElementById('lbTabId')
+        };
+
+        Object.keys(tabs).forEach(k => {
+            if (tabs[k]) {
+                if (k === type) tabs[k].classList.add('active');
+                else tabs[k].classList.remove('active');
+            }
+        });
+
+        if (type === 'box' && currentLightboxPhotos.box) {
+            img.src = currentLightboxPhotos.box;
+            if (tag) tag.textContent = 'Original Packaging / Purchase Invoice Photo';
+        } else if (type === 'id' && currentLightboxPhotos.id) {
+            img.src = currentLightboxPhotos.id;
+            if (tag) tag.textContent = 'Customer Identity Verification (KYC Proof)';
+        } else {
+            img.src = currentLightboxPhotos.device;
+            if (tag) tag.textContent = 'Primary Smartphone Device Condition Photo';
+        }
+    }
+
+    function closePhotoLightbox() {
+        const modal = document.getElementById('photoLightboxModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    // ── QUICK UPLOAD / REPLACE PHOTO MODAL ──
+    function openUploadPhotoModal(deviceId, deviceName, imei, currentPhoto, currentBoxPhoto) {
+        const modal = document.getElementById('uploadPhotoModal');
+        if (!modal) return;
+
+        const form = document.getElementById('uploadPhotoForm');
+        form.action = "{{ url('mobileshop/stock') }}/" + deviceId + "/update";
+
+        document.getElementById('uploadPhotoModalSubtitle').textContent = `${deviceName} (IMEI: ${imei})`;
+
+        // Reset and set current previews
+        const devImg = document.getElementById('upDevicePhotoPreview');
+        const devPh = document.getElementById('upDevicePhotoPlaceholder');
+        if (devImg && devPh) {
+            if (currentPhoto) {
+                devImg.src = currentPhoto;
+                devImg.style.display = 'inline-block';
+                devPh.style.display = 'none';
+            } else {
+                devImg.src = '';
+                devImg.style.display = 'none';
+                devPh.style.display = 'flex';
+            }
+        }
+
+        const boxImg = document.getElementById('upBoxPhotoPreview');
+        const boxPh = document.getElementById('upBoxPhotoPlaceholder');
+        if (boxImg && boxPh) {
+            if (currentBoxPhoto) {
+                boxImg.src = currentBoxPhoto;
+                boxImg.style.display = 'inline-block';
+                boxPh.style.display = 'none';
+            } else {
+                boxImg.src = '';
+                boxImg.style.display = 'none';
+                boxPh.style.display = 'flex';
+            }
+        }
+
+        modal.style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeUploadPhotoModal() {
+        const modal = document.getElementById('uploadPhotoModal');
+        if (modal) modal.style.display = 'none';
     }
 
     function adjustDeleteQty(delta) {

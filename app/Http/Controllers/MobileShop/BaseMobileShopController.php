@@ -198,10 +198,10 @@ abstract class BaseMobileShopController extends Controller
     /**
      * Upload mobile device photo and return public relative path.
      */
-    protected function uploadMobilePhoto(Request $request, string $prefix): ?string
+    protected function uploadMobilePhoto(Request $request, string $prefix, string $fieldName = 'photo'): ?string
     {
-        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
-            $file = $request->file('photo');
+        if ($request->hasFile($fieldName) && $request->file($fieldName)->isValid()) {
+            $file = $request->file($fieldName);
 
             $allowedMimes = [
                 'image/jpeg' => 'jpg',

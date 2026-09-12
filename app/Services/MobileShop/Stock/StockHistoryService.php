@@ -151,6 +151,9 @@ class StockHistoryService
                 'unit_cost' => '₹' . number_format($device->purchase_cost, 2),
                 'selling_price' => '₹' . number_format($device->selling_price, 2),
                 'is_in_stock' => $device->status === 'in_stock',
+                'photo_path' => $device->photo_path,
+                'box_photo_path' => $device->box_photo_path,
+                'id_proof' => $device->customer_buyback_id_proof ?? null,
             ];
 
             // 1. ADDITION EVENT: When was it added and by who?

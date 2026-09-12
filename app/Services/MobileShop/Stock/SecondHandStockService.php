@@ -21,7 +21,7 @@ class SecondHandStockService
     /**
      * Store Second Hand Buyback (Intake)
      */
-    public function intake(Request $request, int $companyId, ?string $photoPath): array
+    public function intake(Request $request, int $companyId, ?string $photoPath = null, ?string $boxPhotoPath = null, ?string $idProofPhotoPath = null): array
     {
         // Check uniqueness within company using repository
         $exists = $this->stockRepo->existsByImei($request->imei_1, $companyId);
@@ -78,6 +78,11 @@ class SecondHandStockService
             'line_total'        => $buybackCost,
         ]);
 
+        $idProofValue = $request->customer_buyback_id_proof;
+        if ($idProofPhotoPath) {
+            $idProofValue = $idProofValue ? ($idProofValue . ' | ' . $idProofPhotoPath) : $idProofPhotoPath;
+        }
+
         $this->stockRepo->insertDevice([
             'company_id' => $companyId,
             'purchase_order_id' => $poId,
@@ -91,13 +96,13 @@ class SecondHandStockService
             'imei_2' => $request->imei_2,
             'purchase_cost' => $buybackCost,
             'selling_price' => (float) $request->selling_price,
-            'photo_path' => $photoPath,
-            'box_photo_path' => $photoPath,
+            'photo_path' => $photoPath ?: $boxPhotoPath,
+            'box_photo_path' => $boxPhotoPath ?: $photoPath,
             'condition_grade' => $request->condition_grade ?? 'like_new_A_plus',
             'battery_health' => $request->battery_health,
             'customer_buyback_name' => $request->customer_buyback_name,
             'customer_buyback_phone' => $request->customer_buyback_phone,
-            'customer_buyback_id_proof' => $request->customer_buyback_id_proof,
+            'customer_buyback_id_proof' => $idProofValue,
             'checklist_notes' => $request->checklist_notes,
             'status' => 'in_stock',
         ]);

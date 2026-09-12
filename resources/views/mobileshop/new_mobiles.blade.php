@@ -224,16 +224,36 @@
                 @csrf
                 <input type="hidden" name="redirect_to" value="{{ route('mobileshop.new_mobiles') }}">
 
-                <!-- Photo Upload Field with Live Preview -->
-                <div style="margin-bottom: 14px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:10px; padding:12px; text-align:center;">
-                    <div id="photoPreviewBox" style="display:none; margin-bottom:8px;">
-                        <img id="newPhonePreviewImg" src="" alt="Preview" style="max-height:120px; border-radius:8px; object-fit:contain; border:1px solid #E2E8F0;">
+                <!-- Dual Photo Upload Field with Live Previews -->
+                <div style="margin-bottom: 14px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px;">
+                    <div style="font-size:11px; font-weight:800; color:#1E3A8A; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="camera" style="width:13px;height:13px;color:#2563EB;"></i> Device & Packaging Photos
                     </div>
-                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:6px 14px; border-radius:8px; border:1px solid #BFDBFE;">
-                        <i data-lucide="camera" style="width:14px;height:14px;"></i> Upload Phone / Box Photo
-                        <input type="file" name="photo" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'newPhonePreviewImg', 'photoPreviewBox')">
-                    </label>
-                    <div style="font-size:10px; color:#64748B; margin-top:4px;">JPG, PNG, WebP up to 5MB</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <!-- 1. Phone Photo -->
+                        <div style="background:#fff; border:1px dashed #BFDBFE; border-radius:10px; padding:10px; text-align:center;">
+                            <div id="photoPreviewBox" style="display:none; margin-bottom:6px;">
+                                <img id="newPhonePreviewImg" src="" alt="Phone Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
+                            </div>
+                            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:5px 10px; border-radius:6px; border:1px solid #BFDBFE; width:100%; justify-content:center;">
+                                <i data-lucide="smartphone" style="width:13px;height:13px;"></i> Device Photo
+                                <input type="file" name="photo" id="newPhonePhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'newPhonePreviewImg', 'photoPreviewBox')">
+                            </label>
+                            <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Main Phone Photo</div>
+                        </div>
+
+                        <!-- 2. Box / Bill Photo -->
+                        <div style="background:#fff; border:1px dashed #CBD5E1; border-radius:10px; padding:10px; text-align:center;">
+                            <div id="newPhoneBoxPreviewBox" style="display:none; margin-bottom:6px;">
+                                <img id="newPhoneBoxPreviewImg" src="" alt="Box Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
+                            </div>
+                            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#475569; background:#F1F5F9; padding:5px 10px; border-radius:6px; border:1px solid #CBD5E1; width:100%; justify-content:center;">
+                                <i data-lucide="package" style="width:13px;height:13px;"></i> Box / Bill (Opt)
+                                <input type="file" name="box_photo" id="newPhoneBoxPhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'newPhoneBoxPreviewImg', 'newPhoneBoxPreviewBox')">
+                            </label>
+                            <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Packaging / Invoice</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">

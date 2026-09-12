@@ -352,16 +352,36 @@
                 @csrf
                 <input type="hidden" name="redirect_to" value="{{ route('mobileshop.second_hand') }}">
 
-                <!-- Photo Upload Field with Live Preview -->
-                <div style="margin-bottom: 14px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:10px; padding:12px; text-align:center;">
-                    <div id="shPhotoPreviewBox" style="display:none; margin-bottom:8px;">
-                        <img id="shPreviewImg" src="" alt="Preview" style="max-height:120px; border-radius:8px; object-fit:contain; border:1px solid #E2E8F0;">
+                <!-- Dual Photo Upload Field with Live Previews -->
+                <div style="margin-bottom: 14px; background:#FAF5FF; border:1px solid #E9D5FF; border-radius:12px; padding:12px;">
+                    <div style="font-size:11px; font-weight:800; color:var(--lama-purple-dark); text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="camera" style="width:13px;height:13px;color:var(--lama-purple-dark);"></i> Device & Packaging Condition Photos
                     </div>
-                    <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:700; color:var(--lama-purple-dark); background:#FAF5FF; padding:6px 14px; border-radius:8px; border:1px solid #E9D5FF;">
-                        <i data-lucide="camera" style="width:14px;height:14px;"></i> Upload Device Condition Photo
-                        <input type="file" name="photo" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shPreviewImg', 'shPhotoPreviewBox')">
-                    </label>
-                    <div style="font-size:10px; color:#64748B; margin-top:4px;">Capture screen/body condition (JPG, PNG, WebP up to 5MB)</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <!-- 1. Pre-Owned Phone Condition Photo -->
+                        <div style="background:#fff; border:1px dashed #D8B4FE; border-radius:10px; padding:10px; text-align:center;">
+                            <div id="shPhotoPreviewBox" style="display:none; margin-bottom:6px;">
+                                <img id="shPreviewImg" src="" alt="Condition Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E9D5FF;">
+                            </div>
+                            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:var(--lama-purple-dark); background:#FAF5FF; padding:5px 10px; border-radius:6px; border:1px solid #E9D5FF; width:100%; justify-content:center;">
+                                <i data-lucide="smartphone" style="width:13px;height:13px;"></i> Device Condition
+                                <input type="file" name="photo" id="shPhonePhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shPreviewImg', 'shPhotoPreviewBox')">
+                            </label>
+                            <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Body / Screen Condition</div>
+                        </div>
+
+                        <!-- 2. Box / Invoice Photo -->
+                        <div style="background:#fff; border:1px dashed #CBD5E1; border-radius:10px; padding:10px; text-align:center;">
+                            <div id="shBoxPreviewBox" style="display:none; margin-bottom:6px;">
+                                <img id="shBoxPreviewImg" src="" alt="Box Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
+                            </div>
+                            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#475569; background:#F1F5F9; padding:5px 10px; border-radius:6px; border:1px solid #CBD5E1; width:100%; justify-content:center;">
+                                <i data-lucide="package" style="width:13px;height:13px;"></i> Box / Bill (Opt)
+                                <input type="file" name="box_photo" id="shBoxPhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shBoxPreviewImg', 'shBoxPreviewBox')">
+                            </label>
+                            <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Original Box / Bill</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -421,7 +441,18 @@
                         <input type="text" name="customer_buyback_name" placeholder="Customer Name *" required class="form-control" style="font-size:12px;">
                         <input type="text" name="customer_buyback_phone" placeholder="Customer Phone *" required class="form-control" style="font-size:12px;">
                     </div>
-                    <input type="text" name="customer_buyback_id_proof" placeholder="Aadhaar / ID Details" class="form-control" style="font-size:12px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:start;">
+                        <input type="text" name="customer_buyback_id_proof" placeholder="Aadhaar / ID Number (Optional)" class="form-control" style="font-size:12px;">
+                        <div>
+                            <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px; font-weight:700; color:var(--brand-700); background:#fff; padding:7px 10px; border-radius:6px; border:1px dashed var(--lama-purple); justify-content:center;">
+                                <i data-lucide="file-text" style="width:13px;height:13px;"></i> Upload ID Photo
+                                <input type="file" name="id_proof_photo" id="shIdProofInputPanel" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shIdProofPreviewImgPanel', 'shIdProofPreviewBoxPanel')">
+                            </label>
+                        </div>
+                    </div>
+                    <div id="shIdProofPreviewBoxPanel" style="display:none; margin-top:8px; text-align:center;">
+                        <img id="shIdProofPreviewImgPanel" src="" alt="ID Preview" style="max-height:80px; border-radius:6px; object-fit:contain; border:1px solid var(--lama-purple);">
+                    </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom:14px;">

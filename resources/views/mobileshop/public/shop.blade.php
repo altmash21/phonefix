@@ -96,7 +96,10 @@
                                     ● Sealed
                                 </span>
                             </div>
-                            <img src="{{ asset('img/hero-smartphones.jpg') }}" 
+                            @php
+                                $itemPhoto = $item->photo_path ?? $item->box_photo_path ?? null;
+                            @endphp
+                            <img src="{{ $itemPhoto ? asset($itemPhoto) : asset('img/hero-smartphones.jpg') }}" 
                                  alt="{{ $item->brand }} {{ $item->model }}" 
                                  class="max-h-[160px] object-contain apple-product-shadow transition-transform duration-300 group-hover:scale-105">
                         </div>
@@ -153,13 +156,14 @@
                                     'fair_B'          => 'B Fair',
                                     default           => 'Certified A+'
                                 };
+                                $cpoPhoto = $cpo->photo_path ?? $cpo->box_photo_path ?? null;
                             @endphp
                             <div class="absolute top-3 left-3">
                                 <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
                                     Grade {{ $gradeText }}
                                 </span>
                             </div>
-                            <img src="{{ asset('img/hero-smartphones.jpg') }}" 
+                            <img src="{{ $cpoPhoto ? asset($cpoPhoto) : asset('img/hero-smartphones.jpg') }}" 
                                  alt="{{ $cpo->brand }} {{ $cpo->model }}" 
                                  class="max-h-[160px] object-contain apple-product-shadow transition-transform duration-300 group-hover:scale-105">
                         </div>

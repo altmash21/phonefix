@@ -19,7 +19,7 @@ class NewMobileStockService
     /**
      * Store Brand New Mobile into Inventory (with IMEI Uniqueness Check)
      */
-    public function store(Request $request, int $companyId, ?string $photoPath): array
+    public function store(Request $request, int $companyId, ?string $photoPath = null, ?string $boxPhotoPath = null): array
     {
         // IMEI Uniqueness check within company using Repository
         $exists = $this->stockRepo->existsByImei($request->imei_1, $companyId);
@@ -78,8 +78,8 @@ class NewMobileStockService
             'imei_2' => $request->imei_2,
             'purchase_cost' => $phoneCost,
             'selling_price' => (float) $request->selling_price,
-            'photo_path' => $photoPath,
-            'box_photo_path' => $photoPath,
+            'photo_path' => $photoPath ?: $boxPhotoPath,
+            'box_photo_path' => $boxPhotoPath ?: $photoPath,
             'status' => 'in_stock',
             'condition_grade' => 'brand_new',
         ]);

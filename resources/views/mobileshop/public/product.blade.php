@@ -60,11 +60,27 @@
                         @endif
                     </div>
 
+                    @php
+                        $devPhoto = $device->photo_path ?? $device->box_photo_path ?? null;
+                        $devBoxPhoto = $device->box_photo_path ?? null;
+                    @endphp
                     <!-- Single Signature Product Shadow Resting on Surface -->
-                    <img src="{{ asset('img/hero-smartphones.jpg') }}" 
+                    <img id="mainProductPhoto" 
+                         src="{{ $devPhoto ? asset($devPhoto) : asset('img/hero-smartphones.jpg') }}" 
                          alt="{{ $device->brand }} {{ $device->model }}" 
                          class="max-h-[380px] w-auto object-contain apple-product-shadow rounded-xl transition-transform duration-500 hover:scale-[1.02]">
                 </div>
+
+                @if($devPhoto && $devBoxPhoto && $devPhoto !== $devBoxPhoto)
+                <div class="flex items-center justify-center gap-3">
+                    <button type="button" onclick="document.getElementById('mainProductPhoto').src='{{ asset($devPhoto) }}'" class="p-1 rounded-lg border-2 border-apple-ink transition-all">
+                        <img src="{{ asset($devPhoto) }}" alt="Device" class="w-12 h-12 object-cover rounded-md">
+                    </button>
+                    <button type="button" onclick="document.getElementById('mainProductPhoto').src='{{ asset($devBoxPhoto) }}'" class="p-1 rounded-lg border border-apple-hairline hover:border-apple-ink transition-all">
+                        <img src="{{ asset($devBoxPhoto) }}" alt="Box / Bill" class="w-12 h-12 object-cover rounded-md">
+                    </button>
+                </div>
+                @endif
 
                 <div class="apple-caption text-apple-muted-48">
                     Model: {{ $device->brand }} {{ $device->model }} · Color: {{ $device->color ?? 'Titanium' }} · Storage: {{ $device->storage ?? '128GB' }}

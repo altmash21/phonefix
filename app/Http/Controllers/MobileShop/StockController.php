@@ -157,11 +157,31 @@ class StockController extends BaseMobileShopController
         if (!$device) {
             return redirect()->back()->with('error', 'Mobile device not found.');
         }
-        DB::table('ms_mobile_devices')->where('id', $id)->update([
+
+        $updateData = [
             'selling_price' => $request->filled('selling_price') ? (float) $request->selling_price : $device->selling_price,
             'status'        => $request->filled('status') ? $request->status : $device->status,
             'updated_at'    => now(),
-        ]);
+        ];
+
+        $prefix = $device->type === 'second_hand' ? 'sh' : 'new';
+        if ($request->hasFile('photo')) {
+            $newPhoto = $this->uploadMobilePhoto($request, $prefix, 'photo');
+            if ($newPhoto) {
+                $updateData['photo_path'] = $newPhoto;
+                if (empty($device->box_photo_path)) {
+                    $updateData['box_photo_path'] = $newPhoto;
+                }
+            }
+        }
+        if ($request->hasFile('box_photo')) {
+            $newBoxPhoto = $this->uploadMobilePhoto($request, $prefix . '_box', 'box_photo');
+            if ($newBoxPhoto) {
+                $updateData['box_photo_path'] = $newBoxPhoto;
+            }
+        }
+
+        DB::table('ms_mobile_devices')->where('id', $id)->update($updateData);
         return redirect()->back()->with('success', "Device {$device->brand} {$device->model} updated.");
     }
 
@@ -189,9 +209,10 @@ class StockController extends BaseMobileShopController
         ]);
 
         $companyId = $this->getCompanyId();
-        $photoPath = $this->uploadMobilePhoto($request, 'new');
+        $photoPath = $this->uploadMobilePhoto($request, 'new', 'photo');
+        $boxPhotoPath = $this->uploadMobilePhoto($request, 'new_box', 'box_photo');
 
-        $result = $this->newMobileStockService->store($request, $companyId, $photoPath);
+        $result = $this->newMobileStockService->store($request, $companyId, $photoPath, $boxPhotoPath);
 
         if (!$result['success']) {
             return redirect()->back()->with('error', $result['error']);
@@ -226,9 +247,11 @@ class StockController extends BaseMobileShopController
         ]);
 
         $companyId = $this->getCompanyId();
-        $photoPath = $this->uploadMobilePhoto($request, 'sh');
+        $photoPath = $this->uploadMobilePhoto($request, 'sh', 'photo');
+        $boxPhotoPath = $this->uploadMobilePhoto($request, 'sh_box', 'box_photo');
+        $idProofPhotoPath = $this->uploadMobilePhoto($request, 'sh_kyc', 'id_proof_photo');
 
-        $result = $this->secondHandStockService->intake($request, $companyId, $photoPath);
+        $result = $this->secondHandStockService->intake($request, $companyId, $photoPath, $boxPhotoPath, $idProofPhotoPath);
 
         if (!$result['success']) {
             return redirect()->back()->with('error', $result['error']);
