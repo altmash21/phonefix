@@ -207,6 +207,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:sell-mobileshop-secondhand')
         ->name('second_hand.sale');
 
+    Route::get('accessories/pos', 'MobileShop\AccessoriesController@counterPos')
+        ->middleware('permission:sell-mobileshop-accessories|create-sale-accessories|create-mobileshop-accessories|read-mobileshop-sales|read-mobileshop-accessories|read-admin-panel')
+        ->name('accessories.pos');
     Route::get('accessories/purchase', 'MobileShop\AccessoriesController@accessoriesPurchase')
         ->middleware('permission:create-mobileshop-accessories|read-mobileshop-accessories|create-purchase-accessories|create-purchase-covers')
         ->name('accessories.purchase');

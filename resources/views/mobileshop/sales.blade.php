@@ -22,14 +22,14 @@
         </a>
         @endif
         @if($canCreateAccessories ?? false)
-        <button type="button" onclick="openSellAccessoryModal()" class="btn btn-outline btn-sm hide-on-mobile">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Add Sales</span>
-        </button>
+        <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-outline btn-sm">
+            <i data-lucide="zap" style="width:13px;height:13px; color:#2563EB;"></i> <span class="desktop-btn-label">Counter POS Sale</span><span class="mobile-btn-label">POS</span>
+        </a>
         @endif
         @if(($canCreateCovers ?? false) && !($canCreateAccessories ?? false))
-        <button type="button" onclick="openSellAccessoryModal('covers')" class="btn btn-outline btn-sm">
+        <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="btn btn-outline btn-sm">
             <i data-lucide="package" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Add Cover / Glass</span><span class="mobile-btn-label">Cover</span>
-        </button>
+        </a>
         @endif
         @if($canCreateSecondhand ?? false)
         <button type="button" onclick="openSellShModal()" class="btn btn-outline btn-sm">
@@ -1013,16 +1013,16 @@
                 </a>
             @endif
             @if(($isAdmin ?? false) || ($canCreateAccessories ?? false))
-                <button type="button" onclick="closeFabMenu(); openSellAccessoryModal()" class="fab-menu-item" style="color: #16A34A;">
-                    <i data-lucide="plus" style="width:16px;height:16px;"></i>
-                    <span>Add Accessories / Parts</span>
-                </button>
+                <a href="{{ route('mobileshop.accessories.pos') }}" class="fab-menu-item" style="color: #16A34A;">
+                    <i data-lucide="zap" style="width:16px;height:16px;"></i>
+                    <span>Counter POS (Accessories)</span>
+                </a>
             @endif
             @if(($isAdmin ?? false) || ($canCreateCovers ?? false))
-                <button type="button" onclick="closeFabMenu(); openSellAccessoryModal('covers')" class="fab-menu-item" style="color: #7C3AED;">
+                <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="fab-menu-item" style="color: #7C3AED;">
                     <i data-lucide="package" style="width:16px;height:16px;"></i>
                     <span>Add Cover / Glass</span>
-                </button>
+                </a>
             @endif
             @if(($isAdmin ?? false) || ($canCreateSecondhand ?? false))
                 <button type="button" onclick="closeFabMenu(); openSellShModal()" class="fab-menu-item" style="color: #EA580C;">
@@ -1050,24 +1050,7 @@
     const allCatalogParts = {!! json_encode($partsList ?? []) !!};
 
     function openSellAccessoryModal(presetCategory = null) {
-        document.getElementById('sellAccessoryModal').style.display = 'flex';
-        if (window.refreshIcons) window.refreshIcons();
-        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-        userEditedPaidAmount = false;
-        const catSelect = document.getElementById('accCategoryFilter');
-        if (presetCategory && catSelect) {
-            catSelect.value = presetCategory === 'covers' ? 'back_cover' : presetCategory;
-        } else if (catSelect) {
-            catSelect.value = ''; // Default to All Categories so Glass, Covers & all accessories appear immediately
-        }
-        setTimeout(() => {
-            const input = document.getElementById('accItemSearchInput');
-            if (input) {
-                input.value = '';
-                input.focus();
-                onLiveSearchInput('');
-            }
-        }, 100);
+        window.location.href = "{{ route('mobileshop.accessories.pos') }}" + (presetCategory ? '?category=' + encodeURIComponent(presetCategory) : '');
     }
 
     function closeSellAccessoryModal() {

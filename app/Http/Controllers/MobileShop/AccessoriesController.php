@@ -34,6 +34,58 @@ class AccessoriesController extends BaseMobileShopController
     }
 
     /**
+     * Dedicated Full Page: Mobile-App Styled Retail Counter POS (Accessories, Glass & Covers)
+     */
+    public function counterPos(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('sell-mobileshop-accessories') || 
+            auth()->user()->can('create-sale-accessories') || 
+            auth()->user()->can('create-mobileshop-accessories') || 
+            auth()->user()->can('read-mobileshop-sales') || 
+            auth()->user()->can('read-mobileshop-accessories') || 
+            auth()->user()->hasRole('admin') || 
+            auth()->user()->hasRole('store-admin') || 
+            auth()->user()->hasRole('accessories-staff') || 
+            auth()->user()->hasRole('accessories-manager') || 
+            auth()->user()->hasRole('cover-staff')
+        ), 403, 'Unauthorized access to Counter POS.');
+
+        $companyId = $this->getCompanyId();
+        $niche     = $this->getUserNiche();
+        $presetCategory = $request->query('category') ?? $request->query('niche') ?? '';
+
+        $customers = DB::table('ms_customers')
+            ->where('company_id', $companyId)
+            ->select('id', 'name', 'phone', 'gstin', 'address', 'udhari_balance')
+            ->orderBy('name')
+            ->limit(500)
+            ->get();
+
+        $categories = DB::table('ms_part_categories')
+            ->where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $partsQuery = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->where('stock_qty', '>', 0);
+
+        if ($niche === 'covers' || auth()->user()->hasRole('cover-staff')) {
+            $partsQuery->whereIn('category', $this->coverCategories);
+        }
+
+        $partsList = $partsQuery
+            ->select('id', 'name', 'category', 'brand', 'compatible_model', 'selling_price', 'stock_qty')
+            ->orderBy('name')
+            ->get();
+
+        return view('mobileshop.accessories_pos', compact(
+            'customers', 'categories', 'partsList', 'niche', 'presetCategory'
+        ));
+    }
+
+    /**
      * Dedicated Full Page: Accessories & Spare Parts Purchase / Bulk Restock Intake
      */
     public function accessoriesPurchase(Request $request)
