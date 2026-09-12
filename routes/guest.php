@@ -20,6 +20,16 @@ Route::group(['prefix' => 'auth', 'middleware' => ['auth.redirect']], function (
 
     Route::get('register/{token}', 'Auth\Register@create')->name('register');
     Route::post('register', 'Auth\Register@store')->name('register.store');
+
+    // MobiTrack Staff Onboarding via Admin Token
+    Route::get('employee-register', 'MobileShop\StaffOnboardingController@showRegister')->name('mobileshop.register');
+    Route::post('employee-register', 'MobileShop\StaffOnboardingController@processRegister')->name('mobileshop.register.store');
+
+    // MobiTrack Password Reset via Email OTP
+    Route::get('forgot-password', 'MobileShop\PasswordResetOtpController@showForgot')->name('mobileshop.password.forgot');
+    Route::post('forgot-password/send-otp', 'MobileShop\PasswordResetOtpController@sendOtp')->name('mobileshop.password.send_otp');
+    Route::get('reset-password', 'MobileShop\PasswordResetOtpController@showReset')->name('mobileshop.password.reset');
+    Route::post('reset-password', 'MobileShop\PasswordResetOtpController@processReset')->name('mobileshop.password.process_reset');
 });
 
 // ══════════════════════════════════════════════════════════

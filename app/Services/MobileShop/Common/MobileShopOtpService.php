@@ -33,9 +33,22 @@ class MobileShopOtpService
             Log::warning("Could not query owner email via roles: " . $e->getMessage());
         }
 
-        if (auth()->check() && auth()->user()->email) {
+        if (auth()->check() && (auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('admin'))) {
             return auth()->user()->email;
         }
+
+        try {
+            $anyAdmin = DB::table('users')
+                ->join('user_roles', 'users.id', '=', 'user_roles.user_id')
+                ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+                ->whereIn('roles.name', ['store-admin', 'admin'])
+                ->select('users.email')
+                ->first();
+
+            if ($anyAdmin && !empty($anyAdmin->email)) {
+                return $anyAdmin->email;
+            }
+        } catch (\Throwable $e) {}
 
         $company = DB::table('companies')->where('id', $companyId)->first();
         return $company?->email ?? config('mail.from.address', 'admin@mobileshop.local');

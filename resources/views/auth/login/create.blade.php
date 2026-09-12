@@ -150,6 +150,13 @@
                 </div>
 
                 <!-- Alert Messages -->
+                @if (session('success'))
+                    <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                @endif
+
                 <div id="login-error-alert" class="hidden p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
                     <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
                     <span id="login-error-text">Invalid login credentials.</span>
@@ -160,6 +167,11 @@
                     <span id="login-success-text">Authorized! Redirecting to station...</span>
                 </div>
 
+                @php
+                    $showDemoStations = !app()->isProduction() && \Illuminate\Support\Facades\DB::table('users')->where('email', 'sales@mobitrack.local')->exists();
+                @endphp
+
+                @if ($showDemoStations)
                 <!-- 1-Click Quick Station Fillers -->
                 <div class="space-y-2">
                     <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Quick Station Selection:</label>
@@ -201,6 +213,7 @@
                         </button>
                     </div>
                 </div>
+                @endif
 
                 <!-- Login Form -->
                 <form id="loginForm" method="POST" action="{{ route('login.store') }}" class="space-y-4 pt-1">
@@ -218,7 +231,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <label class="text-xs font-semibold text-slate-700">Terminal Access Password</label>
-                            <a href="{{ route('forgot') }}" class="text-[11px] font-semibold text-brand-600 hover:text-brand-700">Forgot?</a>
+                            <a href="{{ route('mobileshop.password.forgot') }}" class="text-[11px] font-semibold text-brand-600 hover:text-brand-700">Forgot?</a>
                         </div>
                         <div class="relative">
                             <input type="password" id="passwordInput" name="password" value="password" required
@@ -248,8 +261,16 @@
                     </button>
                 </form>
 
+                <!-- Employee Self-Registration Invite Link -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-500">New team member?</span>
+                    <a href="{{ route('mobileshop.register') }}" class="font-bold text-brand-600 hover:text-brand-700 underline underline-offset-2">
+                        Activate with Invite Token &rarr;
+                    </a>
+                </div>
+
                 <!-- Help note -->
-                <div class="pt-2 text-center text-xs text-slate-400">
+                <div class="pt-1 text-center text-xs text-slate-400">
                     Need technical terminal assistance? Call Store Admin at <strong class="text-slate-600">+91 98765 43210</strong>
                 </div>
 

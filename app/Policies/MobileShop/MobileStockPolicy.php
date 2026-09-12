@@ -59,6 +59,16 @@ class MobileStockPolicy
             return true;
         }
 
-        return $user->can('delete-mobileshop-stock');
+        return $user->can('delete-mobileshop-stock')
+            || $user->can('manage-stock-phones')
+            || $user->can('manage-stock-secondhand')
+            || $user->can('manage-stock-accessories')
+            || $user->can('manage-stock-covers')
+            || $user->can('manage-stock-repairs')
+            || $user->hasRole('sales-staff')
+            || $user->hasRole('secondhand-staff')
+            || $user->hasRole('accessories-staff')
+            || $user->hasRole('cover-staff')
+            || $user->hasRole('repair-technician');
     }
 }

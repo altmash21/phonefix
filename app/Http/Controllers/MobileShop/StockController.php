@@ -6,6 +6,7 @@ use App\Services\MobileShop\Stock\NewMobileStockService;
 use App\Services\MobileShop\Stock\SecondHandStockService;
 use App\Services\MobileShop\Stock\StockHistoryService;
 use App\Services\MobileShop\Stock\StockDeletionService;
+use App\Services\MobileShop\Common\MobileShopOtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -310,9 +311,10 @@ class StockController extends BaseMobileShopController
 
         // OTP Security Gate: Only owner (store-admin/admin) can delete without OTP
         $itemRef = "{$type}:{$id}";
-        if (!$this->isOwner()) {
+        $isOwner = $this->isOwner();
+        if (!$isOwner) {
             $otpCode = $request->input('otp_code');
-            if (!$this->verifyOtp($companyId, 'delete_stock', $itemRef, $otpCode)) {
+            if (!MobileShopOtpService::verifyOtp($companyId, 'delete_stock', $itemRef, $otpCode, false)) {
                 return response()->json([
                     'success' => false,
                     'otp_required' => true,
@@ -328,5 +330,35 @@ class StockController extends BaseMobileShopController
         unset($result['status_code']);
 
         return response()->json($result, $status);
+    }
+
+    /**
+     * Request Store Owner OTP for Stock Deletion authorization
+     */
+    public function requestStockDeleteOtp(Request $request)
+    {
+        $request->validate([
+            'item_type' => 'required|in:part,new_phone,second_hand',
+            'item_id'   => 'required|integer',
+        ]);
+
+        $companyId = $this->getCompanyId();
+        $itemRef   = "{$request->item_type}:{$request->item_id}";
+        
+        $result = MobileShopOtpService::generateOtp($companyId, 'delete_stock', $itemRef, auth()->id());
+
+        if (!$result['sent']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['error'] ?? 'Could not generate OTP.',
+            ], 429);
+        }
+
+        return response()->json([
+            'success'      => true,
+            'message'      => "Authorization OTP dispatched to Store Owner ({$result['target_email']}). Valid for 5 minutes.",
+            'target_email' => $result['target_email'],
+            'expires_in'   => $result['expires_in'],
+        ]);
     }
 }

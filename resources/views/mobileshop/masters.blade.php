@@ -138,48 +138,134 @@
             </div>
         </div>
 
-        <!-- 4. Staff Accounts & RBAC Roles -->
-        <div class="card" style="margin:0;">
-            <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
+        <!-- 4. Staff Accounts & Employee Invite Token Management -->
+        <div class="card" style="margin:0; grid-column: 1 / -1;">
+            <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                 <div>
-                    <div class="card-title">Staff Counter Users & Roles ({{ count($staffUsers) }})</div>
+                    <div class="card-title" style="display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="users" style="width:18px;height:18px; color:var(--brand-600);"></i>
+                        Staff Accounts & Employee Access Control ({{ count($staffUsers) }})
+                    </div>
+                    <div style="font-size:11px; color:#64748B; margin-top:2px;">
+                        Issue role-assigned invite tokens for employee self-registration or manage existing counter terminals.
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openGenerateInviteModal()" style="display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="user-plus" style="width:14px;height:14px;"></i> Generate Invite Token
+                    </button>
                 </div>
             </div>
-            <div class="card-body" style="padding:14px;">
-                <div id="staffUsersList" style="display:flex; flex-direction:column; gap:8px;">
-                    @forelse($staffUsers as $usr)
-                    @php
-                        $isSuperAdmin = $usr->hasRole('admin');
-                        $userRoleName = $usr->roles->first()?->name ?? 'Staff';
-                        $userRoleDisplay = $usr->roles->first()?->display_name ?? $userRoleName;
-                    @endphp
-                    <div class="usr-item" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:30px; height:30px; border-radius:50%; background:var(--brand-100); color:var(--brand-700); font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center;">
-                                {{ strtoupper(substr($usr->name, 0, 1)) }}
-                            </div>
-                            <div>
-                                <div style="font-weight:700; color:#0F172A; font-size:12.5px;">{{ $usr->name }}</div>
-                                <div style="font-size:10.5px; color:#64748B;">{{ $usr->email }}</div>
-                            </div>
+            <div class="card-body" style="padding:16px;">
+                <!-- Two Column Layout: Left = Staff Users, Right = Active Invite Tokens -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap:24px;">
+                    
+                    <!-- Left: Staff Users List -->
+                    <div>
+                        <div style="font-size:12px; font-weight:700; color:#334155; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
+                            <span>Active Counter Terminals &amp; Roles</span>
+                            <span class="badge badge-gray" style="font-size:10px;">{{ count($staffUsers) }} accounts</span>
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="badge {{ $isSuperAdmin ? 'badge-gray' : 'badge-purple' }}" style="font-size:10px;">
-                                {{ $isSuperAdmin ? 'Super Admin (Protected)' : $userRoleDisplay }}
-                            </span>
-                            @if(!$isSuperAdmin || auth()->user()->hasRole('admin'))
-                            <button type="button" class="btn btn-outline btn-xs" style="padding:3px 8px; font-size:11px;"
-                                onclick="openEditUserCredentialsModal({{ $usr->id }}, '{{ addslashes($usr->name) }}', '{{ addslashes($usr->email) }}', '{{ $userRoleName }}')">
-                                <i data-lucide="key" style="width:12px;height:12px;"></i> Credentials
-                            </button>
-                            @endif
+                        <div id="staffUsersList" style="display:flex; flex-direction:column; gap:8px;">
+                            @forelse($staffUsers as $usr)
+                            @php
+                                $isSuperAdmin = $usr->hasRole('admin');
+                                $userRoleName = $usr->roles->first()?->name ?? 'Staff';
+                                $userRoleDisplay = $usr->roles->first()?->display_name ?? $userRoleName;
+                                $isActive = (bool) ($usr->enabled ?? true);
+                            @endphp
+                            <div class="usr-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; opacity: {{ $isActive ? '1' : '0.65' }};">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div style="width:34px; height:34px; border-radius:50%; background:var(--brand-100); color:var(--brand-700); font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center;">
+                                        {{ strtoupper(substr($usr->name, 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <div style="display:flex; align-items:center; gap:6px;">
+                                            <span style="font-weight:700; color:#0F172A; font-size:13px;">{{ $usr->name }}</span>
+                                            @if(!$isActive)
+                                                <span class="badge badge-red" style="font-size:9px; padding:1px 5px;">Deactivated</span>
+                                            @endif
+                                        </div>
+                                        <div style="font-size:11px; color:#64748B;">{{ $usr->email }}</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span class="badge {{ $isSuperAdmin ? 'badge-gray' : 'badge-purple' }}" style="font-size:10px;">
+                                        {{ $isSuperAdmin ? 'Super Admin' : $userRoleDisplay }}
+                                    </span>
+                                    @if(!$isSuperAdmin || auth()->user()->hasRole('admin'))
+                                    <button type="button" class="btn btn-outline btn-xs" style="padding:4px 8px; font-size:11px;"
+                                        title="Edit Credentials"
+                                        onclick="openEditUserCredentialsModal({{ $usr->id }}, '{{ addslashes($usr->name) }}', '{{ addslashes($usr->email) }}', '{{ $userRoleName }}')">
+                                        <i data-lucide="key" style="width:12px;height:12px;"></i>
+                                    </button>
+                                    @if(!$isSuperAdmin && $usr->id !== auth()->id())
+                                    <button type="button" class="btn btn-xs {{ $isActive ? 'btn-outline-danger' : 'btn-outline-success' }}" style="padding:4px 8px; font-size:11px;"
+                                        title="{{ $isActive ? 'Deactivate Staff Account' : 'Activate Staff Account' }}"
+                                        onclick="toggleStaffStatus({{ $usr->id }}, this)">
+                                        <i data-lucide="{{ $isActive ? 'user-x' : 'user-check' }}" style="width:12px;height:12px;"></i>
+                                    </button>
+                                    @endif
+                                    @endif
+                                </div>
+                            </div>
+                            @empty
+                            <div style="text-align:center; padding:16px; color:#94A3B8;">No users found.</div>
+                            @endforelse
+                        </div>
+                        <div id="staffUsersPagination"></div>
+                    </div>
+
+                    <!-- Right: Employee Invite Tokens -->
+                    <div>
+                        <div style="font-size:12px; font-weight:700; color:#334155; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;">
+                            <span>Active &amp; Pending Invite Tokens</span>
+                            <span class="badge badge-blue" style="font-size:10px;">{{ count($activeInvites) }} tokens</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px; max-height:360px; overflow-y:auto;">
+                            @forelse($activeInvites as $inv)
+                            <div class="inv-item" id="invite-row-{{ $inv->id }}" style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;">
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <code style="font-family:monospace; font-size:12px; font-weight:700; color:var(--brand-700); background:var(--brand-50); padding:2px 6px; border-radius:4px; border:1px solid var(--brand-200);">{{ $inv->token }}</code>
+                                        @if($inv->status === 'active' || $inv->status === 'pending')
+                                            <span class="badge badge-green" style="font-size:9.5px; padding:1px 6px;">Active &bull; {{ $inv->expires_diff }}</span>
+                                        @elseif($inv->status === 'used' || $inv->status === 'claimed')
+                                            <span class="badge badge-gray" style="font-size:9.5px; padding:1px 6px;">Claimed</span>
+                                        @else
+                                            <span class="badge badge-red" style="font-size:9.5px; padding:1px 6px;">Revoked</span>
+                                        @endif
+                                    </div>
+                                    <div style="font-size:11px; color:#64748B; margin-top:3px;">
+                                        Role: <strong style="color:#0F172A;">{{ $inv->role_label }}</strong> 
+                                        @if($inv->notes) &bull; <span style="font-style:italic;">"{{ $inv->notes }}"</span> @endif
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    @if($inv->status === 'active' || $inv->status === 'pending')
+                                    <button type="button" class="btn btn-outline btn-xs" style="padding:4px 8px; font-size:11px;"
+                                        title="Copy Registration Link"
+                                        onclick="copyInviteLink('{{ $inv->token }}', this)">
+                                        <i data-lucide="copy" style="width:12px;height:12px;"></i> Copy
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-xs" style="padding:4px 8px; font-size:11px; color:#DC2626; border-color:#FECACA;"
+                                        title="Revoke Token"
+                                        onclick="revokeInviteToken({{ $inv->id }}, this)">
+                                        <i data-lucide="x" style="width:12px;height:12px;"></i>
+                                    </button>
+                                    @endif
+                                </div>
+                            </div>
+                            @empty
+                            <div style="text-align:center; padding:24px; color:#94A3B8; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:8px;">
+                                <i data-lucide="key" style="width:24px;height:24px; margin:0 auto 6px; display:block; opacity:0.5;"></i>
+                                No invite tokens generated yet.<br>Click "Generate Invite Token" above to invite an employee.
+                            </div>
+                            @endforelse
                         </div>
                     </div>
-                    @empty
-                    <div style="text-align:center; padding:16px; color:#94A3B8;">No users found.</div>
-                    @endforelse
+
                 </div>
-                <div id="staffUsersPagination"></div>
             </div>
         </div>
 
@@ -423,10 +509,221 @@
         </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════════════════════════════
+         MODAL: GENERATE EMPLOYEE INVITE TOKEN
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div id="generateInviteModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+        <div class="card" style="width:100%; max-width:480px; margin:20px; border-radius:12px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.2);">
+            <div class="card-header" style="background:#0F766E; color:#fff; padding:16px 20px;">
+                <div>
+                    <div class="card-title" style="color:#fff; font-size:16px;"><i data-lucide="ticket" style="width:18px;height:18px; vertical-align:-3px;"></i> Issue Employee Invite Token</div>
+                    <div class="card-subtitle" style="color:#CCFBF1; font-size:11px;">Create a single-use token pre-assigned to a counter station</div>
+                </div>
+                <button type="button" onclick="closeGenerateInviteModal()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div class="card-body" style="padding:20px;">
+                <div id="inviteResultBanner" style="display:none; margin-bottom:16px; padding:12px; background:#F0FDFA; border:1px solid #99F6E4; border-radius:8px;">
+                    <div style="font-size:11px; font-weight:700; color:#0F766E; text-transform:uppercase;">Token Generated Successfully:</div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;">
+                        <code id="newGeneratedTokenDisplay" style="font-family:monospace; font-size:18px; font-weight:800; color:#0F766E; letter-spacing:1px;"></code>
+                        <button type="button" class="btn btn-primary btn-xs" id="copyGeneratedTokenBtn" onclick="copyNewTokenText()">Copy Token</button>
+                    </div>
+                    <div style="font-size:11px; color:#115E59; margin-top:6px;">
+                        Share this token and the link <a href="{{ route('mobileshop.register') }}" target="_blank" style="text-decoration:underline; font-weight:bold;">/auth/employee-register</a> with the employee.
+                    </div>
+                </div>
+
+                <form id="generateInviteForm" onsubmit="submitGenerateInvite(event)">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Counter Station &amp; Role <span style="color:#EF4444;">*</span></label>
+                        <select id="inviteRoleSelect" required style="width:100%; padding:9px 12px; border:1px solid #CBD5E1; border-radius:6px; font-size:13px; background:#fff;">
+                            <option value="sales-staff">Brand New Phones POS &amp; Billing (sales-staff)</option>
+                            <option value="secondhand-staff">Pre-Owned Phones &amp; Buyback Desk (secondhand-staff)</option>
+                            <option value="accessories-staff">Phone Accessories &amp; Spare Parts (accessories-staff)</option>
+                            <option value="cover-staff">Mobile Covers &amp; Tempered Glass (cover-staff)</option>
+                            <option value="repair-technician">Diagnostics &amp; Repair Technician (repair-technician)</option>
+                            <option value="store-admin">Store Administrator / Manager (store-admin)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Employee Reference / Note (Optional)</label>
+                        <input type="text" id="inviteNotesInput" placeholder="e.g. Rahul Sharma — North Counter" style="width:100%; padding:9px 12px; border:1px solid #CBD5E1; border-radius:6px; font-size:13px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:18px;">
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Token Expiration</label>
+                        <select id="inviteExpiryDays" style="width:100%; padding:9px 12px; border:1px solid #CBD5E1; border-radius:6px; font-size:13px; background:#fff;">
+                            <option value="7" selected>7 Days (Standard)</option>
+                            <option value="1">24 Hours (Urgent)</option>
+                            <option value="14">14 Days</option>
+                            <option value="30">30 Days</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button type="button" class="btn btn-outline" onclick="closeGenerateInviteModal()">Close</button>
+                        <button type="submit" id="generateInviteSubmitBtn" class="btn btn-primary" style="background:#0F766E; border-color:#0F766E;">
+                            <i data-lucide="plus" style="width:14px;height:14px;"></i> Issue Token
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
 <script>
+    // ══════════════════════════════════════════════════════════════════════
+    // EMPLOYEE INVITE TOKEN & ACCOUNT MANAGEMENT FUNCTIONS
+    // ══════════════════════════════════════════════════════════════════════
+    function openGenerateInviteModal() {
+        document.getElementById('inviteResultBanner').style.display = 'none';
+        document.getElementById('inviteNotesInput').value = '';
+        document.getElementById('generateInviteSubmitBtn').disabled = false;
+        document.getElementById('generateInviteModal').style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeGenerateInviteModal() {
+        document.getElementById('generateInviteModal').style.display = 'none';
+    }
+
+    function submitGenerateInvite(e) {
+        e.preventDefault();
+        var submitBtn = document.getElementById('generateInviteSubmitBtn');
+        submitBtn.disabled = true;
+
+        var role = document.getElementById('inviteRoleSelect').value;
+        var notes = document.getElementById('inviteNotesInput').value;
+        var expiryDays = document.getElementById('inviteExpiryDays').value;
+
+        fetch("{{ route('mobileshop.accounts.invite.generate') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                role: role,
+                notes: notes,
+                expires_days: expiryDays
+            })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                var banner = document.getElementById('inviteResultBanner');
+                document.getElementById('newGeneratedTokenDisplay').innerText = data.token;
+                banner.style.display = 'block';
+                submitBtn.disabled = false;
+                setTimeout(function() {
+                    window.location.reload();
+                }, 2200);
+            } else {
+                alert(data.message || 'Could not generate invite token.');
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(function(err) {
+            console.error(err);
+            alert('Failed to connect to server.');
+            submitBtn.disabled = false;
+        });
+    }
+
+    function copyInviteLink(token, btn) {
+        var registerUrl = "{{ url('/auth/employee-register') }}?token=" + encodeURIComponent(token);
+        navigator.clipboard.writeText(registerUrl).then(function() {
+            var origHtml = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check" style="width:12px;height:12px;"></i> Copied!';
+            if (window.lucide) window.lucide.createIcons();
+            setTimeout(function() {
+                btn.innerHTML = origHtml;
+                if (window.lucide) window.lucide.createIcons();
+            }, 1500);
+        }).catch(function() {
+            prompt('Copy registration link:', registerUrl);
+        });
+    }
+
+    function copyNewTokenText() {
+        var token = document.getElementById('newGeneratedTokenDisplay').innerText;
+        navigator.clipboard.writeText(token).then(function() {
+            var btn = document.getElementById('copyGeneratedTokenBtn');
+            btn.innerText = 'Copied!';
+            setTimeout(function() { btn.innerText = 'Copy Token'; }, 1500);
+        });
+    }
+
+    function revokeInviteToken(id, btn) {
+        if (!confirm('Are you sure you want to revoke this invite token? It will become permanently invalid.')) {
+            return;
+        }
+
+        btn.disabled = true;
+        var url = "{{ route('mobileshop.accounts.invite.revoke', ['id' => '__ID__']) }}".replace('__ID__', id);
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                var row = document.getElementById('invite-row-' + id);
+                if (row) {
+                    row.style.opacity = '0.5';
+                    row.innerHTML = '<span style="color:#DC2626; font-size:12px; font-weight:bold;">Token Revoked</span>';
+                }
+            } else {
+                alert(data.message || 'Could not revoke token.');
+                btn.disabled = false;
+            }
+        })
+        .catch(function(err) {
+            console.error(err);
+            alert('Failed to connect to server.');
+            btn.disabled = false;
+        });
+    }
+
+    function toggleStaffStatus(id, btn) {
+        if (!confirm('Toggle active status for this staff member?')) {
+            return;
+        }
+
+        btn.disabled = true;
+        var url = "{{ route('mobileshop.accounts.toggle_status', ['id' => '__ID__']) }}".replace('__ID__', id);
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Could not update staff status.');
+                btn.disabled = false;
+            }
+        })
+        .catch(function(err) {
+            console.error(err);
+            alert('Failed to connect to server.');
+            btn.disabled = false;
+        });
+    }
     function openEditUserCredentialsModal(id, name, email, role) {
         var form = document.getElementById('editUserForm');
         var updateUrl = "{{ route('mobileshop.masters.user.update', ['id' => '__ID__']) }}".replace('__ID__', id);

@@ -78,6 +78,15 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('masters/user/{id}/update', 'MobileShop\MastersController@updateUserCredentials')
         ->middleware('permission:read-mobileshop-masters|read-admin-panel')
         ->name('masters.user.update');
+    Route::post('accounts/invite/generate', 'MobileShop\MastersController@generateInviteToken')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel')
+        ->name('accounts.invite.generate');
+    Route::post('accounts/invite/{id}/revoke', 'MobileShop\MastersController@revokeInviteToken')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel')
+        ->name('accounts.invite.revoke');
+    Route::post('accounts/{id}/toggle-status', 'MobileShop\MastersController@toggleStaffStatus')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel')
+        ->name('accounts.toggle_status');
 
     // ── LOGIN SESSION MANAGEMENT (Admin only) ──
     Route::get('sessions', 'MobileShop\MastersController@getLoginSessions')
@@ -145,6 +154,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('stock/delete', 'MobileShop\StockController@deleteStockItem')
         ->middleware('permission:manage-stock-phones|manage-stock-secondhand|manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
         ->name('stock.delete');
+    Route::post('stock/delete/request-otp', 'MobileShop\StockController@requestStockDeleteOtp')
+        ->middleware('permission:manage-stock-phones|manage-stock-secondhand|manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
+        ->name('stock.delete.request_otp');
 
     // ── INVOICE / RECEIPT VIEWER & PDF EXPORT ──
     Route::get('invoice/{id}', 'MobileShop\SalesController@invoice')

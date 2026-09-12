@@ -283,64 +283,70 @@ class MobileShopRbacSeeder extends Seeder
         $adminUser->syncRoles([$adminRole->id]);
 
         // ─────────────────────────────────────────────────────────────────────
-        // DEMO STAFF ACCOUNTS (Password: 'password' — rotate before production)
+        // DEMO STAFF ACCOUNTS — ONLY IN NON-PRODUCTION WITH EXPLICIT FLAG
+        // In production, only the Store Admin is seeded. All employee accounts
+        // are created via the Invite Token onboarding system.
         // ─────────────────────────────────────────────────────────────────────
-        $staffUsers = [
-            [
-                'name'     => 'Vikram (New Phones Sales)',
-                'email'    => 'sales@mobitrack.local',
-                'password' => 'password',
-                'role'     => $salesRole,
-            ],
-            [
-                'name'     => 'Anil (Second Hand Buyback)',
-                'email'    => 'buyback@mobitrack.local',
-                'password' => 'password',
-                'role'     => $secondHandRole,
-            ],
-            [
-                'name'     => 'Aman (Accessories Counter)',
-                'email'    => 'accessories@mobitrack.local',
-                'password' => 'password',
-                'role'     => $accessoriesRole,
-            ],
-            [
-                'name'     => 'Ravi (Back Cover & Tempered)',
-                'email'    => 'cover@mobitrack.local',
-                'password' => 'password',
-                'role'     => $coverRole,
-            ],
-            [
-                'name'     => 'Sameer (Repair Technician)',
-                'email'    => 'tech@mobitrack.local',
-                'password' => 'password',
-                'role'     => $techRole,
-            ],
-        ];
+        $shouldSeedDemoStaff = !app()->isProduction() && env('SEED_DEMO_STAFF', false);
 
-        foreach ($staffUsers as $su) {
-            $user = User::where('email', $su['email'])->first();
-            if (!$user) {
-                $user = User::create([
-                    'name'         => $su['name'],
-                    'email'        => $su['email'],
-                    'password'     => $su['password'],
-                    'landing_page' => 'mobileshop.dashboard',
-                    'locale'       => 'en-GB',
-                    'enabled'      => 1,
-                ]);
-            } else {
-                $user->name         = $su['name'];
-                $user->password     = $su['password'];
-                $user->enabled      = 1;
-                $user->landing_page = 'mobileshop.dashboard';
-                $user->save();
-            }
+        if ($shouldSeedDemoStaff) {
+            $staffUsers = [
+                [
+                    'name'     => 'Vikram (New Phones Sales)',
+                    'email'    => 'sales@mobitrack.local',
+                    'password' => 'password',
+                    'role'     => $salesRole,
+                ],
+                [
+                    'name'     => 'Anil (Second Hand Buyback)',
+                    'email'    => 'buyback@mobitrack.local',
+                    'password' => 'password',
+                    'role'     => $secondHandRole,
+                ],
+                [
+                    'name'     => 'Aman (Accessories Counter)',
+                    'email'    => 'accessories@mobitrack.local',
+                    'password' => 'password',
+                    'role'     => $accessoriesRole,
+                ],
+                [
+                    'name'     => 'Ravi (Back Cover & Tempered)',
+                    'email'    => 'cover@mobitrack.local',
+                    'password' => 'password',
+                    'role'     => $coverRole,
+                ],
+                [
+                    'name'     => 'Sameer (Repair Technician)',
+                    'email'    => 'tech@mobitrack.local',
+                    'password' => 'password',
+                    'role'     => $techRole,
+                ],
+            ];
 
-            if (!$user->companies()->where('company_id', $companyId)->exists()) {
-                $user->companies()->attach($companyId);
+            foreach ($staffUsers as $su) {
+                $user = User::where('email', $su['email'])->first();
+                if (!$user) {
+                    $user = User::create([
+                        'name'         => $su['name'],
+                        'email'        => $su['email'],
+                        'password'     => $su['password'],
+                        'landing_page' => 'mobileshop.dashboard',
+                        'locale'       => 'en-GB',
+                        'enabled'      => 1,
+                    ]);
+                } else {
+                    $user->name         = $su['name'];
+                    $user->password     = $su['password'];
+                    $user->enabled      = 1;
+                    $user->landing_page = 'mobileshop.dashboard';
+                    $user->save();
+                }
+
+                if (!$user->companies()->where('company_id', $companyId)->exists()) {
+                    $user->companies()->attach($companyId);
+                }
+                $user->syncRoles([$su['role']->id]);
             }
-            $user->syncRoles([$su['role']->id]);
         }
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\MobileShop;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\Auth\User;
 use App\Models\Auth\Role;
@@ -77,7 +78,159 @@ class MastersController extends BaseMobileShopController
             \Illuminate\Support\Facades\Log::warning('Could not fetch login sessions in Masters: ' . $e->getMessage());
         }
 
-        return view('mobileshop.masters', compact('categories', 'financiers', 'suppliers', 'staffUsers', 'roles', 'loginSessions'));
+        $activeInvites = DB::table('ms_employee_invites')
+            ->where('company_id', $companyId)
+            ->orderByDesc('id')
+            ->get()
+            ->map(function ($inv) {
+                $roleModel = Role::where('name', $inv->role_name)->first();
+                $inv->role_label = $roleModel?->display_name ?? $inv->role_name;
+                $inv->notes = $inv->recipient_name;
+                $expiresAt = $inv->expires_at ? Carbon::parse($inv->expires_at) : null;
+                $inv->expires_diff = $expiresAt ? $expiresAt->diffForHumans() : 'No expiry';
+                return $inv;
+            });
+
+        return view('mobileshop.masters', compact('categories', 'financiers', 'suppliers', 'staffUsers', 'roles', 'loginSessions', 'activeInvites'));
+    }
+
+    /**
+     * Generate an Employee Invite Token
+     */
+    public function generateInviteToken(Request $request)
+    {
+        $currentUser = auth()->user();
+        abort_unless($currentUser && (
+            $currentUser->hasRole('store-admin') ||
+            $currentUser->hasRole('admin') ||
+            $currentUser->hasRole('owner') ||
+            $currentUser->can('read-mobileshop-masters')
+        ), 403, 'Admin privileges required to generate employee invite tokens.');
+
+        $roleName = $request->input('role_name') ?? $request->input('role');
+        $recipientNotes = $request->input('recipient_name') ?? $request->input('notes');
+        $expiresDays = (int) ($request->input('expires_days') ?? 7);
+        if ($expiresDays < 1 || $expiresDays > 90) {
+            $expiresDays = 7;
+        }
+
+        if (empty($roleName)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Role name is required.'], 422);
+            }
+            return redirect()->back()->with('error', 'Role is required.');
+        }
+
+        $companyId = $this->getCompanyId();
+
+        // Generate unique 8-character token (e.g. EMP-7X9K2P)
+        do {
+            $token = 'EMP-' . strtoupper(Str::random(6));
+        } while (DB::table('ms_employee_invites')->where('token', $token)->exists());
+
+        DB::table('ms_employee_invites')->insert([
+            'company_id'     => $companyId,
+            'token'          => $token,
+            'role_name'      => $roleName,
+            'recipient_name' => trim($recipientNotes ?? ''),
+            'created_by'     => $currentUser->id,
+            'expires_at'     => now()->addDays($expiresDays),
+            'status'         => 'active',
+            'created_at'     => now(),
+            'updated_at'     => now(),
+        ]);
+
+        $registerUrl = url('auth/employee-register?token=' . $token);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success'      => true,
+                'token'        => $token,
+                'register_url' => $registerUrl,
+                'message'      => "Invite Token '{$token}' generated successfully!",
+            ]);
+        }
+
+        return redirect()->route('mobileshop.masters', ['company_id' => $companyId, 'tab' => 'staff'])
+            ->with('success', "Invite Token '{$token}' generated successfully! Share this code or registration link with the employee: {$registerUrl}");
+    }
+
+    /**
+     * Revoke an unconsumed invite token
+     */
+    public function revokeInviteToken(Request $request, $id)
+    {
+        $currentUser = auth()->user();
+        abort_unless($currentUser && (
+            $currentUser->hasRole('store-admin') ||
+            $currentUser->hasRole('admin') ||
+            $currentUser->hasRole('owner')
+        ), 403, 'Admin privileges required to revoke invite tokens.');
+
+        $companyId = $this->getCompanyId();
+
+        DB::table('ms_employee_invites')
+            ->where('id', $id)
+            ->where('company_id', $companyId)
+            ->where('status', 'active')
+            ->update([
+                'status'     => 'revoked',
+                'updated_at' => now(),
+            ]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Invite token has been revoked.',
+            ]);
+        }
+
+        return redirect()->route('mobileshop.masters', ['company_id' => $companyId, 'tab' => 'staff'])
+            ->with('success', 'Invite token has been revoked.');
+    }
+
+    /**
+     * Toggle active/disabled status of a staff member
+     */
+    public function toggleStaffStatus(Request $request, $id)
+    {
+        $currentUser = auth()->user();
+        abort_unless($currentUser && (
+            $currentUser->hasRole('store-admin') ||
+            $currentUser->hasRole('admin') ||
+            $currentUser->hasRole('owner')
+        ), 403, 'Admin privileges required to toggle employee access.');
+
+        if ((int) $id === (int) $currentUser->id) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'You cannot disable your own active account.'], 422);
+            }
+            return redirect()->back()->with('error', 'You cannot disable your own active account.');
+        }
+
+        $targetUser = User::findOrFail($id);
+        if ($targetUser->hasRole('admin') && !$currentUser->hasRole('admin')) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Store Admin cannot modify the Super Admin account.'], 403);
+            }
+            return redirect()->back()->with('error', 'Store Admin cannot modify the Super Admin account.');
+        }
+
+        $targetUser->enabled = !$targetUser->enabled;
+        $targetUser->save();
+
+        $statusText = $targetUser->enabled ? 'enabled' : 'disabled';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'enabled' => (bool) $targetUser->enabled,
+                'message' => "Employee '{$targetUser->name}' has been {$statusText}.",
+            ]);
+        }
+
+        return redirect()->route('mobileshop.masters', ['company_id' => $this->getCompanyId(), 'tab' => 'staff'])
+            ->with('success', "Employee '{$targetUser->name}' has been {$statusText}.");
     }
 
     /**
