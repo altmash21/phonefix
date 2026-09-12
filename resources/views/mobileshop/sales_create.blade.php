@@ -291,7 +291,21 @@
 
                         <div id="giftInventorySource" style="display:grid; grid-template-columns: 2fr 1fr; gap:8px; align-items:flex-end;">
                             <div>
-                                <label class="form-label" style="font-size:10px; font-weight:700; color:#475569; margin-bottom:2px;">Select In-Stock Accessory</label>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                    <label class="form-label" style="font-size:10px; font-weight:700; color:#475569; margin:0;">Select In-Stock Accessory</label>
+                                    <span id="giftMatchBadge" style="display:none; font-size:9.5px; font-weight:700; color:#DB2777; background:#FCE7F3; padding:1px 6px; border-radius:4px;"></span>
+                                </div>
+                                <!-- Search Filter for Gift -->
+                                <div style="position:relative; margin-bottom:4px;">
+                                    <input type="text" id="giftSearchFilter" placeholder="🔍 Search gift / accessory..." 
+                                           oninput="filterGiftInventoryDropdown(this.value)" 
+                                           class="form-control" 
+                                           style="height:26px; font-size:11px; padding:2px 24px 2px 8px; border:1px solid #F472B6; background:#ffffff; border-radius:4px;">
+                                    <button type="button" onclick="clearGiftSearch()" id="giftSearchClearBtn" 
+                                            style="display:none; position:absolute; right:6px; top:4px; border:none; background:transparent; color:#94A3B8; font-size:11px; cursor:pointer;" title="Clear search">
+                                        ✕
+                                    </button>
+                                </div>
                                 <select class="form-control" name="gift_inventory_id" id="giftInventorySelect" onchange="onGiftInventoryChange()" style="height:30px; font-size:11.5px;">
                                     <option value="">— Select an accessory —</option>
                                     @foreach($giftInventory as $gi)
@@ -997,6 +1011,93 @@
         document.getElementById('giftInventorySource').style.display = source === 'inventory' ? 'grid' : 'none';
         document.getElementById('giftCustomSource').style.display = source === 'custom' ? 'grid' : 'none';
         recalcSaleFinancials();
+    }
+
+    var originalGiftOptions = [];
+    document.addEventListener('DOMContentLoaded', function() {
+        var sel = document.getElementById('giftInventorySelect');
+        if (sel) {
+            for (var i = 0; i < sel.options.length; i++) {
+                originalGiftOptions.push({
+                    value: sel.options[i].value,
+                    text: sel.options[i].text,
+                    cost: sel.options[i].dataset.cost || '0',
+                    name: sel.options[i].dataset.name || '',
+                    stock: sel.options[i].dataset.stock || '0'
+                });
+            }
+        }
+    });
+
+    function filterGiftInventoryDropdown(query) {
+        var sel = document.getElementById('giftInventorySelect');
+        var clearBtn = document.getElementById('giftSearchClearBtn');
+        var badge = document.getElementById('giftMatchBadge');
+        if (!sel) return;
+
+        var q = (query || '').toLowerCase().trim();
+        if (clearBtn) clearBtn.style.display = q ? 'inline' : 'none';
+
+        var prevVal = sel.value;
+        sel.innerHTML = '';
+
+        var firstMatch = null;
+        var matchCount = 0;
+
+        originalGiftOptions.forEach(function(item) {
+            if (!item.value) {
+                var opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = q ? '— ' + matchCount + ' matching gifts —' : '— Select an accessory —';
+                sel.appendChild(opt);
+                return;
+            }
+
+            if (!q || item.text.toLowerCase().includes(q) || item.name.toLowerCase().includes(q)) {
+                var opt = document.createElement('option');
+                opt.value = item.value;
+                opt.textContent = item.text;
+                opt.dataset.cost = item.cost;
+                opt.dataset.name = item.name;
+                opt.dataset.stock = item.stock;
+                if (item.value === prevVal) {
+                    opt.selected = true;
+                }
+                sel.appendChild(opt);
+                matchCount++;
+                if (!firstMatch) firstMatch = item;
+            }
+        });
+
+        if (badge) {
+            if (q) {
+                badge.textContent = matchCount + ' found';
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        if (sel.options[0]) {
+            sel.options[0].textContent = q ? ('— ' + matchCount + ' matching item' + (matchCount === 1 ? '' : 's') + ' —') : '— Select an accessory —';
+        }
+
+        if (q && matchCount === 1 && firstMatch) {
+            sel.value = firstMatch.value;
+            onGiftInventoryChange();
+        } else if (!sel.value) {
+            document.getElementById('giftCostInventory').value = '0.00';
+            recalcSaleFinancials();
+        }
+    }
+
+    function clearGiftSearch() {
+        var searchInput = document.getElementById('giftSearchFilter');
+        if (searchInput) {
+            searchInput.value = '';
+            filterGiftInventoryDropdown('');
+            searchInput.focus();
+        }
     }
 
     function onGiftInventoryChange() {

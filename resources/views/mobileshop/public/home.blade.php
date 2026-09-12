@@ -28,10 +28,10 @@
                     Brand New Sealed Flagships
                 </div>
                 <h1 class="apple-hero-display text-apple-ink">
-                    Titanium. So strong. So light. So Pro.
+                    Latest Flagship Smartphones in Mumbai.
                 </h1>
                 <p class="apple-lead text-apple-ink/70 max-w-2xl mx-auto pt-1">
-                    Official 100% genuine sealed devices with manufacturer warranty, valid GST tax invoice, and 45-minute Mumbai store pickup.
+                    Official 100% genuine sealed devices with manufacturer warranty, valid GST tax invoice, and fast showroom pickup in Bandra West.
                 </p>
                 
                 <!-- Dual Action Blue Pill CTAs -->
@@ -40,7 +40,7 @@
                         Explore Flagships ({{ $newCount }})
                     </a>
                     <a href="{{ route('public.store') }}" class="apple-btn-secondary-pill">
-                        Learn More
+                        Browse All Store
                     </a>
                 </div>
             </div>
@@ -73,8 +73,13 @@
                         <div class="apple-caption text-apple-muted-48 mt-0.5">
                             {{ $phone->storage ?? '128GB' }} · {{ $phone->color ?? 'Titanium' }}
                         </div>
-                        <div class="mt-4 flex items-center justify-between pt-3 border-t border-apple-hairline">
-                            <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($phone->selling_price, 0) }}</span>
+                        <div class="mt-4 pt-3 border-t border-apple-hairline flex items-center justify-between">
+                            <div>
+                                <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($phone->selling_price, 0) }}</span>
+                                <span class="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                                    0% EMI Available
+                                </span>
+                            </div>
                             <span class="apple-text-link text-[14px]">Buy <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
                         </div>
                     </a>
@@ -95,10 +100,10 @@
                     Certified Pre-Owned
                 </div>
                 <h2 class="apple-display-lg text-white">
-                    Pre-Owned. Re-engineered. Guaranteed battery health.
+                    Certified Pre-Owned Phones. Tested & Guaranteed.
                 </h2>
                 <p class="apple-lead text-white/70 max-w-2xl mx-auto pt-1">
-                    Every device passes our rigorous 50-point hardware diagnostic inspection. Backed by a 30-day replacement warranty and guaranteed 85%+ battery health.
+                    Every device passes our rigorous 50-point hardware testing. Backed by a 30-day replacement warranty, genuine tax invoice, and tested battery health.
                 </p>
 
                 <!-- Dual Action CTAs for Dark Canvas -->
@@ -107,7 +112,7 @@
                         Browse Pre-Owned ({{ $secondHandCount }})
                     </a>
                     <a href="{{ route('public.about') }}" class="apple-text-link-on-dark apple-body font-normal">
-                        See 50-point diagnostic criteria <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        See testing standards <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </a>
                 </div>
             </div>
@@ -143,6 +148,9 @@
                         <div>
                             <span class="text-[12px] text-white/40 block">Pre-Owned Value</span>
                             <span class="apple-body-strong text-white text-[20px]">₹{{ number_format($cpo->selling_price, 0) }}</span>
+                            <span class="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-700/60 px-1.5 py-0.5 rounded block mt-0.5">
+                                0% EMI Available
+                            </span>
                         </div>
                         <span class="apple-text-link-on-dark text-[14px]">View Device <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></span>
                     </div>
@@ -160,21 +168,21 @@
             
             <div class="max-w-3xl mx-auto space-y-3">
                 <div class="apple-tagline text-apple-ink/60 uppercase tracking-widest text-[13px]">
-                    Maurya Service Laboratory
+                    Maurya Service Center
                 </div>
                 <h2 class="apple-display-lg text-apple-ink">
-                    45-Minute Precision Repair Lab.
+                    Fast Smartphone Repair & Service.
                 </h2>
                 <p class="apple-lead text-apple-ink/70 max-w-2xl mx-auto pt-1">
-                    Board-level micro-soldering, authentic OEM display assemblies, and genuine battery health renewals with zero customer data wipe.
+                    Screen replacements, battery renewals, and camera repairs with genuine parts and zero data wipe while you wait.
                 </p>
 
                 <div class="pt-5 flex items-center justify-center gap-4 flex-wrap">
                     <a href="{{ route('public.track_repair') }}" class="apple-btn-primary">
-                        Track Live Job Sheet
+                        Track Repair Status
                     </a>
                     <a href="{{ route('public.contact') }}" class="apple-btn-secondary-pill">
-                        Book Counter Slot
+                        Visit Service Desk
                     </a>
                 </div>
             </div>

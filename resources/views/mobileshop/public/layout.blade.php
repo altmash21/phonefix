@@ -367,28 +367,28 @@
                 <span class="font-semibold tracking-normal text-[13px] hidden sm:inline">Maurya Mobile</span>
             </a>
 
-            <!-- Desktop Links (Quiet, Edge-to-Edge) -->
+            <!-- Desktop Links (Seamless, Clear, Customer-Friendly) -->
             <div class="hidden md:flex items-center gap-7 lg:gap-9 text-white/80">
-                <a href="{{ route('public.store') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.store') && !request('tab') ? 'text-white' : '' }}">Store</a>
-                <a href="{{ route('public.store', ['tab' => 'new']) }}" class="hover:text-white transition-colors {{ request('tab') === 'new' ? 'text-white' : '' }}">Flagship Phones</a>
-                <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="hover:text-white transition-colors {{ request('tab') === 'second_hand' ? 'text-white' : '' }}">Certified Pre-Owned</a>
-                <a href="{{ route('public.track_repair') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.track_repair') ? 'text-white' : '' }}">Express Repair</a>
-                <a href="{{ route('public.about') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.about') ? 'text-white' : '' }}">Environment</a>
-                <a href="{{ route('public.contact') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.contact') ? 'text-white' : '' }}">Showroom</a>
+                <a href="{{ route('public.store') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.store') && !request('tab') ? 'text-white font-medium' : '' }}">Store</a>
+                <a href="{{ route('public.store', ['tab' => 'new']) }}" class="hover:text-white transition-colors {{ request('tab') === 'new' ? 'text-white font-medium' : '' }}">New Phones</a>
+                <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="hover:text-white transition-colors {{ request('tab') === 'second_hand' ? 'text-white font-medium' : '' }}">Second Hand Phones</a>
+                <a href="{{ route('public.track_repair') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.track_repair') ? 'text-white font-medium' : '' }}">Repair & Service</a>
+                <a href="{{ route('public.about') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.about') ? 'text-white font-medium' : '' }}">About Us</a>
+                <a href="{{ route('public.contact') }}" class="hover:text-white transition-colors {{ request()->routeIs('public.contact') ? 'text-white font-medium' : '' }}">Contact & Store</a>
             </div>
 
             <!-- Right Utility Icons -->
             <div class="flex items-center gap-4 text-white/80">
                 <!-- Search Icon -->
-                <a href="{{ route('public.store') }}" title="Search Products" class="hover:text-white transition-colors">
+                <a href="{{ route('public.store') }}" title="Search Phones" class="hover:text-white transition-colors">
                     <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </a>
 
-                <!-- Track Repair / Bag Icon -->
-                <a href="{{ route('public.track_repair') }}" title="Repair Status" class="hover:text-white transition-colors">
+                <!-- Track Repair Status Icon -->
+                <a href="{{ route('public.track_repair') }}" title="Track Repair Status" class="hover:text-white transition-colors flex items-center gap-1">
                     <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -415,11 +415,11 @@
         <div id="apple-mobile-menu" class="hidden md:hidden bg-apple-black/95 backdrop-blur-xl border-t border-white/10 px-6 py-6 space-y-4 text-[16px] font-normal text-white/90">
             <a href="{{ route('public.landing') }}" class="block hover:text-white">Home</a>
             <a href="{{ route('public.store') }}" class="block hover:text-white">Store</a>
-            <a href="{{ route('public.store', ['tab' => 'new']) }}" class="block hover:text-white">Flagship Phones</a>
-            <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="block hover:text-white">Certified Pre-Owned</a>
-            <a href="{{ route('public.track_repair') }}" class="block hover:text-white">Express Repair Lab</a>
-            <a href="{{ route('public.about') }}" class="block hover:text-white">Environment & Trust</a>
-            <a href="{{ route('public.contact') }}" class="block hover:text-white">Showroom & Contact</a>
+            <a href="{{ route('public.store', ['tab' => 'new']) }}" class="block hover:text-white">New Phones</a>
+            <a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="block hover:text-white">Second Hand Phones</a>
+            <a href="{{ route('public.track_repair') }}" class="block hover:text-white">Repair & Service</a>
+            <a href="{{ route('public.about') }}" class="block hover:text-white">About Us</a>
+            <a href="{{ route('public.contact') }}" class="block hover:text-white">Contact & Store Location</a>
             <div class="pt-4 border-t border-white/15">
                 <a href="{{ route('login') }}" class="apple-btn-dark-utility w-full justify-center py-2">Staff Portal Login</a>
             </div>
@@ -444,7 +444,7 @@
                     @yield('subnav_cta')
                 @else
                     <a href="{{ route('public.store') }}" class="apple-btn-primary text-[14px] py-1.5 px-4">
-                        Buy Now
+                        Explore Store
                     </a>
                 @endif
             </div>
@@ -462,66 +462,68 @@
             
             <!-- Fine-print Disclaimers (12px / 400) -->
             <div class="apple-fine-print text-apple-muted-48 pb-8 border-b border-apple-hairline space-y-2.5">
-                <p>1. Certified Pre-Owned devices undergo an intensive 50-point hardware diagnostic test and battery health validation before retail release. Batteries below 85% health are renewed with genuine OEM modules.</p>
-                <p>2. Trade-in values will vary based on condition, year, and configuration of your eligible device. Store evaluation occurs in real-time at our Linking Road, Bandra showroom.</p>
-                <p>3. Express Repair services subject to parts in-stock availability. Micro-soldering and motherboard component replacements may require additional diagnostics time.</p>
+                <p>1. Certified Pre-Owned devices undergo an intensive 50-point hardware diagnostic test and battery health validation before retail release.</p>
+                <p>2. Trade-in values will vary based on condition, year, and configuration of your device. In-person instant evaluation at our Bandra West store.</p>
+                <p>3. Express Repair services subject to parts in-stock availability. Free diagnostics offered for all devices.</p>
             </div>
 
-            <!-- 5 Dense Link Columns (SF Pro Text 17px / 400 / 2.41 line-height) -->
+            <!-- 5 Dense Link Columns -->
             <div class="grid grid-cols-2 md:grid-cols-5 gap-8 py-10 border-b border-apple-hairline">
-                <!-- Column 1: Shop & Learn -->
+                <!-- Column 1: Shop & Explore -->
                 <div>
-                    <h3 class="apple-caption-strong text-apple-ink mb-2">Shop & Learn</h3>
+                    <h3 class="apple-caption-strong text-apple-ink mb-2">Shop & Explore</h3>
                     <ul class="apple-dense-link text-apple-muted-80">
-                        <li><a href="{{ route('public.store') }}" class="hover:text-apple-primary">Store</a></li>
-                        <li><a href="{{ route('public.store', ['tab' => 'new']) }}" class="hover:text-apple-primary">Flagship Devices</a></li>
-                        <li><a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="hover:text-apple-primary">Certified Pre-Owned</a></li>
-                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Device Trade-in</a></li>
-                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">0% EMI Financing</a></li>
+                        <li><a href="{{ route('public.store') }}" class="hover:text-apple-primary">All Phones</a></li>
+                        <li><a href="{{ route('public.store', ['tab' => 'new']) }}" class="hover:text-apple-primary">New Phones</a></li>
+                        <li><a href="{{ route('public.store', ['tab' => 'second_hand']) }}" class="hover:text-apple-primary">Second Hand Phones</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Sell / Exchange Phone</a></li>
+                        <li><a href="{{ route('public.store') }}" class="hover:text-apple-primary">0% EMI Available</a></li>
                     </ul>
                 </div>
 
                 <!-- Column 2: Service & Support -->
                 <div>
-                    <h3 class="apple-caption-strong text-apple-ink mb-2">Services & Lab</h3>
+                    <h3 class="apple-caption-strong text-apple-ink mb-2">Repair & Support</h3>
                     <ul class="apple-dense-link text-apple-muted-80">
                         <li><a href="{{ route('public.track_repair') }}" class="hover:text-apple-primary">Track Repair Live</a></li>
-                        <li><a href="{{ route('public.track_repair') }}" class="hover:text-apple-primary">Diagnostic Protocols</a></li>
+                        <li><a href="{{ route('public.track_repair') }}" class="hover:text-apple-primary">Check Repair Status</a></li>
                         <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Screen Replacement</a></li>
-                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Battery Health Renewal</a></li>
-                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">0% EMI Assistance</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Battery Replacement</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Water Damage Repair</a></li>
                     </ul>
                 </div>
 
-                <!-- Column 3: Accountability -->
+                <!-- Column 3: Trust & Policies -->
                 <div>
-                    <h3 class="apple-caption-strong text-apple-ink mb-2">Values</h3>
+                    <h3 class="apple-caption-strong text-apple-ink mb-2">Trust & Legal</h3>
                     <ul class="apple-dense-link text-apple-muted-80">
-                        <li><a href="{{ route('public.about') }}" class="hover:text-apple-primary">Environment & E-Waste</a></li>
-                        <li><a href="{{ route('public.privacy') }}" class="hover:text-apple-primary">Privacy & Data Zero-Wipe</a></li>
-                        <li><a href="{{ route('public.warranty') }}" class="hover:text-apple-primary">Warranty & Guarantees</a></li>
-                        <li><a href="{{ route('public.shipping') }}" class="hover:text-apple-primary">Showroom Pickup & Delivery</a></li>
+                        <li><a href="{{ route('public.about') }}" class="hover:text-apple-primary">About Our Store</a></li>
+                        <li><a href="{{ route('public.privacy') }}" class="hover:text-apple-primary">Privacy Policy</a></li>
+                        <li><a href="{{ route('public.terms') }}" class="hover:text-apple-primary">Terms of Service</a></li>
+                        <li><a href="{{ route('public.warranty') }}" class="hover:text-apple-primary">Warranty Information</a></li>
+                        <li><a href="{{ route('public.refunds') }}" class="hover:text-apple-primary">Returns & Refunds</a></li>
+                        <li><a href="{{ route('public.shipping') }}" class="hover:text-apple-primary">Shipping & Delivery</a></li>
                     </ul>
                 </div>
 
-                <!-- Column 4: Maurya Showroom -->
+                <!-- Column 4: Maurya Store -->
                 <div>
-                    <h3 class="apple-caption-strong text-apple-ink mb-2">Showroom</h3>
+                    <h3 class="apple-caption-strong text-apple-ink mb-2">Store Location</h3>
                     <ul class="apple-dense-link text-apple-muted-80">
-                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Bandra West Store</a></li>
-                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Hours & Directions</a></li>
-                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Instant Sell / Trade-in</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Linking Road, Bandra (W)</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Store Hours & Map</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Contact Support</a></li>
                         <li><a href="tel:9876543210" class="hover:text-apple-primary">+91 98765 43210</a></li>
                     </ul>
                 </div>
 
-                <!-- Column 5: Counter Staff -->
+                <!-- Column 5: Staff & Ops -->
                 <div>
-                    <h3 class="apple-caption-strong text-apple-ink mb-2">Staff & Ops</h3>
+                    <h3 class="apple-caption-strong text-apple-ink mb-2">Staff Portal</h3>
                     <ul class="apple-dense-link text-apple-muted-80">
-                        <li><a href="{{ route('login') }}" class="hover:text-apple-primary font-semibold">Staff Portal Login</a></li>
-                        <li><a href="{{ route('login') }}" class="hover:text-apple-primary">POS Terminal</a></li>
-                        <li><a href="{{ route('login') }}" class="hover:text-apple-primary">Lab Technician Desk</a></li>
+                        <li><a href="{{ route('login') }}" class="hover:text-apple-primary font-semibold">Staff Login</a></li>
+                        <li><a href="{{ route('login') }}" class="hover:text-apple-primary">Sales Register</a></li>
+                        <li><a href="{{ route('login') }}" class="hover:text-apple-primary">Service Desk</a></li>
                     </ul>
                 </div>
             </div>

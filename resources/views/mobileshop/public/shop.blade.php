@@ -120,7 +120,12 @@
                     <div class="mt-6 pt-4 border-t border-apple-hairline flex items-center justify-between">
                         <div>
                             <span class="text-[11px] text-apple-muted-48 block">Showroom Price</span>
-                            <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($item->selling_price, 0) }}</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($item->selling_price, 0) }}</span>
+                            </div>
+                            <span class="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                                0% EMI Available
+                            </span>
                         </div>
                         <a href="{{ route('public.product.show', $item->id) }}" class="apple-btn-primary text-[13px] py-1.5 px-4">
                             Buy Now
@@ -184,7 +189,12 @@
                     <div class="mt-6 pt-4 border-t border-apple-hairline flex items-center justify-between">
                         <div>
                             <span class="text-[11px] text-apple-muted-48 block">Pre-Owned Value</span>
-                            <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($cpo->selling_price, 0) }}</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($cpo->selling_price, 0) }}</span>
+                            </div>
+                            <span class="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                                0% EMI Available
+                            </span>
                         </div>
                         <a href="{{ route('public.product.show', $cpo->id) }}" class="apple-btn-primary text-[13px] py-1.5 px-4">
                             Buy Now

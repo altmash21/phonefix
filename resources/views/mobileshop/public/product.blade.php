@@ -99,11 +99,34 @@
                         {{ $device->brand }} {{ $device->model }}
                     </h1>
                     <div class="pt-2">
-                        <span class="apple-hero-display text-apple-ink text-[34px] sm:text-[40px]">
-                            ₹{{ number_format($device->selling_price, 0) }}
-                        </span>
-                        <div class="apple-body text-apple-muted-48 mt-1">
-                            Inclusive of all taxes · Or ₹{{ number_format($emiPlans[0]['monthly'], 0) }}/mo. for 3 months with 0% EMI.
+                        <div class="flex items-baseline gap-3">
+                            <span class="apple-hero-display text-apple-ink text-[34px] sm:text-[40px]">
+                                ₹{{ number_format($device->selling_price, 0) }}
+                            </span>
+                            <span class="text-xs font-semibold text-apple-muted-48">
+                                Inclusive of all GST
+                            </span>
+                        </div>
+
+                        <!-- Prominent EMI Available Box -->
+                        <div class="mt-3 p-3.5 rounded-2xl bg-emerald-50/90 border border-emerald-200 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                    <i data-lucide="credit-card" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-[13px] font-extrabold text-emerald-950 uppercase tracking-wide">0% EMI Available</span>
+                                        <span class="text-[10px] font-bold bg-emerald-200/80 text-emerald-900 px-1.5 py-0.5 rounded">No Cost EMI</span>
+                                    </div>
+                                    <div class="text-xs text-emerald-800 mt-0.5">
+                                        Starting at <strong>₹{{ number_format($emiPlans[0]['monthly'] ?? round($device->selling_price / 3), 0) }}/mo</strong> on Bajaj Finserv, HDFC & IDFC
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="#emi" class="apple-caption text-emerald-700 font-bold hover:underline shrink-0 text-[12px] flex items-center gap-0.5">
+                                View Plans <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                            </a>
                         </div>
                     </div>
                 </div>

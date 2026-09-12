@@ -17,73 +17,73 @@
 
 @section('content')
 
-    <!-- ════ 1. EDITORIAL HERO TILE (Parchment Canvas, Lead-Airy Weight 300) ════ -->
-    <section class="bg-apple-parchment text-apple-ink py-20 sm:py-32 border-b border-apple-hairline text-center overflow-hidden">
+    <!-- ════ 1. EDITORIAL HERO TILE ════ -->
+    <section class="bg-apple-parchment text-apple-ink py-16 sm:py-24 border-b border-apple-hairline text-center overflow-hidden">
         <div class="max-w-[1024px] mx-auto px-4 space-y-4">
             <span class="apple-caption-strong text-apple-primary uppercase tracking-widest text-[12px]">
-                Longevity & Environmental Responsibility
+                About Maurya Mobile &bull; Bandra West, Mumbai
             </span>
             <h1 class="apple-hero-display text-apple-ink max-w-3xl mx-auto">
-                The most sustainable phone is the one that lasts.
+                Honest Deals, Quality Phones & Reliable Service.
             </h1>
             <p class="apple-lead-airy text-apple-muted-80 max-w-2xl mx-auto pt-2">
-                We believe consumer electronics shouldn't be discarded prematurely. Through precision micro-soldering, authentic parts, and rigorous battery renewals, we extend the operational life of every device.
+                Serving Mumbai since 2018. We help you find the right smartphone at the best price, offer guaranteed pre-owned devices, and deliver fast repairs with genuine parts.
             </p>
         </div>
     </section>
 
-    <!-- ════ 2. TILE: 50-POINT DIAGNOSTIC SEAL (Pure White Canvas) ════ -->
-    <section id="diagnostics" class="bg-apple-canvas text-apple-ink py-20 sm:py-28 border-b border-apple-hairline">
+    <!-- ════ 2. TILE: THOROUGH TESTING ════ -->
+    <section id="diagnostics" class="bg-apple-canvas text-apple-ink py-16 sm:py-24 border-b border-apple-hairline">
         <div class="max-w-[1024px] mx-auto px-4">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 
                 <div class="lg:col-span-7 space-y-6">
-                    <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[12px]">Laboratory Verification</span>
+                    <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[12px]">Complete Peace of Mind</span>
                     <h2 class="apple-display-lg text-apple-ink">
-                        Every pre-owned device passes our 50-point diagnostic seal.
+                        Every pre-owned phone is thoroughly tested before you buy.
                     </h2>
                     <p class="apple-body text-apple-muted-80">
-                        Before any smartphone enters our showroom display, certified laboratory technicians test every transistor, sensor, and circuit pathway under factory simulation software.
+                        Before any smartphone is placed in our showroom display, our technicians test every essential feature: original display quality, camera lenses, microphones, speakers, Face ID / fingerprint sensors, and charging ports.
                     </p>
                     <p class="apple-body text-apple-muted-80">
-                        From display digitizer uniformity and Face ID infrared dot projectors to RF carrier transmission wattage and fast charging thermal dissipation, nothing is left to chance.
+                        You get a 100% functional phone with tested battery health, accompanied by our 30-day replacement warranty and a printed GST tax invoice.
                     </p>
 
                     <!-- 3 Metric Columns -->
                     <div class="grid grid-cols-3 gap-6 pt-6 border-t border-apple-hairline text-left">
                         <div>
                             <div class="apple-display-md text-apple-ink">50+</div>
-                            <div class="apple-caption text-apple-muted-48 mt-1">Verification Steps</div>
+                            <div class="apple-caption text-apple-muted-48 mt-1">Checkpoints Tested</div>
                         </div>
                         <div>
                             <div class="apple-display-md text-apple-ink">85%+</div>
-                            <div class="apple-caption text-apple-muted-48 mt-1">Battery Minimum</div>
+                            <div class="apple-caption text-apple-muted-48 mt-1">Minimum Battery Health</div>
                         </div>
                         <div>
                             <div class="apple-display-md text-apple-ink">30-Day</div>
-                            <div class="apple-caption text-apple-muted-48 mt-1">Store Replacement</div>
+                            <div class="apple-caption text-apple-muted-48 mt-1">Replacement Guarantee</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="lg:col-span-5 bg-apple-parchment rounded-[18px] border border-apple-hairline p-8 space-y-4">
-                    <h3 class="apple-tagline text-apple-ink">Key Diagnostic Checkpoints</h3>
+                    <h3 class="apple-tagline text-apple-ink">What We Inspect</h3>
                     <ul class="space-y-3 apple-caption text-apple-ink">
                         <li class="flex items-start gap-2.5">
                             <i data-lucide="check" class="w-4 h-4 text-apple-primary shrink-0 mt-0.5"></i>
-                            <span><strong>Motherboard Trace Integrity:</strong> Thermal imaging for short circuits and power leakages.</span>
+                            <span><strong>Original Screen & Touch:</strong> Crisp display, accurate colors, and zero dead pixels.</span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <i data-lucide="check" class="w-4 h-4 text-apple-primary shrink-0 mt-0.5"></i>
-                            <span><strong>True Tone & Display OLEDS:</strong> Zero burn-in, dead pixels, or aftermarket glass digitizers.</span>
+                            <span><strong>Cameras & Microphones:</strong> Clear front & back photos, zoom stability, and crisp calling audio.</span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <i data-lucide="check" class="w-4 h-4 text-apple-primary shrink-0 mt-0.5"></i>
-                            <span><strong>Biometric Sensors:</strong> Face ID TrueDepth and Ultrasonic fingerprint response verification.</span>
+                            <span><strong>Biometrics:</strong> Instant Face ID and fingerprint unlock response.</span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <i data-lucide="check" class="w-4 h-4 text-apple-primary shrink-0 mt-0.5"></i>
-                            <span><strong>Battery Cell Chemistry:</strong> Genuine cycle count inspection and peak wattage performance.</span>
+                            <span><strong>Battery Health:</strong> Verified healthy capacity and normal fast charging behavior.</span>
                         </li>
                     </ul>
                 </div>
@@ -92,19 +92,19 @@
         </div>
     </section>
 
-    <!-- ════ 3. TILE: E-WASTE REDUCTION (Near-Black #272729 Canvas) ════ -->
-    <section id="ewaste" class="bg-apple-tile-1 text-apple-body-dark py-20 sm:py-28 border-b border-white/10 text-center overflow-hidden">
+    <!-- ════ 3. TILE: REPAIR SAVINGS & LONGEVITY ════ -->
+    <section id="ewaste" class="bg-apple-tile-1 text-apple-body-dark py-16 sm:py-24 border-b border-white/10 text-center overflow-hidden">
         <div class="max-w-[1024px] mx-auto px-4">
             
             <div class="max-w-3xl mx-auto space-y-4">
                 <span class="apple-caption-strong text-apple-primary-dark uppercase tracking-widest text-[12px]">
-                    Zero Electronic Waste Goal
+                    Smart Repairs & Less Waste
                 </span>
                 <h2 class="apple-display-lg text-white">
-                    Repairing the micro-components, not swapping the board.
+                    We repair what's broken to save your phone and your money.
                 </h2>
                 <p class="apple-lead text-white/70 max-w-2xl mx-auto">
-                    Traditional service centers condemn entire motherboards over a 50-paise resistor. Our micro-soldering bench isolates individual BGA chips and SMD components to preserve your original device.
+                    Instead of telling you to replace your entire phone or pay for full motherboard swaps, we isolate and repair the exact damaged component. You save up to 70% on repair costs.
                 </p>
             </div>
 
