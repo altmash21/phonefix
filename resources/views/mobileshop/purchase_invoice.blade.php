@@ -4,8 +4,8 @@
 @section('page-title', $po->bill_type === 'non_gst' ? 'Estimate & Retail Purchase Bill' : 'Purchase Invoice & Delivery Bill')
 
 @section('page-actions')
-    <div style="display:flex; gap: 8px; align-items:center; flex-wrap:wrap;">
-        <button onclick="window.print()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0F172A; border-color:#94A3B8;">
+    <div class="invoice-action-buttons" style="display:flex; gap: 8px; align-items:center; flex-wrap:wrap;">
+        <button type="button" onclick="window.print()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0F172A; border-color:#94A3B8;">
             <i data-lucide="printer" style="width:13px;height:13px;"></i> Print / Save as PDF
         </button>
         <a href="{{ route('mobileshop.purchase.invoice.pdf', ['id' => $po->id]) }}" class="btn btn-primary btn-sm" style="font-weight:700; background:#5E6AD2;">
@@ -17,12 +17,29 @@
     </div>
 @endsection
 
-
-
 @section('content')
 <div class="invoice-page-wrapper" style="width: 100%; margin: 0; padding-bottom: 40px;">
 
-    <div class="printable-invoice-container" style="background: #ffffff; border: 1px solid #D1D5DB; border-radius: 4px; padding: 28px 32px; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <!-- ─── MOBILE PROMINENT ACTION TOOLBAR ─── -->
+    <div class="invoice-mobile-toolbar no-print" style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; gap: 6px; align-items: center;">
+            <button type="button" onclick="window.print()" class="btn btn-primary btn-sm" style="font-weight: 800; font-size: 12px; padding: 7px 14px; border-radius: 7px; display: inline-flex; align-items: center; gap: 6px; background:#5E6AD2; color:#fff; border:none; box-shadow:0 2px 6px rgba(94,106,210,0.3);">
+                <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Print / Save PDF
+            </button>
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center;">
+            <a href="{{ route('mobileshop.purchase.invoice.pdf', ['id' => $po->id]) }}" class="btn btn-sm btn-outline" style="font-weight: 700; font-size: 11.5px; padding: 6px 10px; border-radius: 7px; color:#5E6AD2; border-color:#C7D2FE;">
+                <i data-lucide="download" style="width:13px;height:13px;"></i> Download PDF
+            </a>
+            <a href="{{ route('mobileshop.purchase') }}" class="btn btn-sm btn-outline" style="font-weight: 700; font-size: 11.5px; padding: 6px 10px; border-radius: 7px; color:#475569; border-color:#CBD5E1;">
+                Back
+            </a>
+        </div>
+    </div>
+
+    <!-- ─── RESPONSIVE PREVIEW SCROLL WRAPPER ─── -->
+    <div class="invoice-scroll-wrapper">
+        <div class="printable-invoice-container" style="background: #ffffff; border: 1px solid #D1D5DB; border-radius: 4px; padding: 28px 32px; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
 
         <!-- TOP CORPORATE HEADER -->
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border-bottom: 2px solid #1F2937; padding-bottom: 16px;">
@@ -196,15 +213,57 @@
             <div>{{ setting('company.name', 'Maurya Mobile') }} &bull; Powered by Maurya Mobile ERP</div>
         </div>
 
-    </div>
+    </div><!-- /.invoice-scroll-wrapper -->
 
 </div>
 @endsection
 
 @push('styles')
 <style>
-    @media print {
+    .invoice-scroll-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background: #F1F5F9;
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);
+    }
+    @media (max-width: 767px) {
+        .invoice-scroll-wrapper {
+            padding: 4px;
+            margin: 0 -6px;
+            width: calc(100% + 12px);
+            background: #F8FAFC;
+        }
         .printable-invoice-container {
+            min-width: 580px !important;
+            padding: 14px 12px !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+        }
+    }
+    @media (min-width: 768px) {
+        .invoice-mobile-toolbar {
+            display: none !important;
+        }
+        .printable-invoice-container {
+            max-width: 820px;
+            margin: 0 auto;
+        }
+    }
+    @media print {
+        .invoice-mobile-toolbar {
+            display: none !important;
+        }
+        .invoice-scroll-wrapper {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+        }
+        .printable-invoice-container {
+            min-width: 0 !important;
             border: none !important;
             box-shadow: none !important;
             padding: 0 !important;

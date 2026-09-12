@@ -8,11 +8,12 @@ const autoprefixer = require('./node_modules/autoprefixer');
 const fs = require('fs');
 const path = require('path');
 
-const inputCSS = `@tailwind base;
-@tailwind components;
-@tailwind utilities;`;
+const inputSourcePath = path.resolve(__dirname, 'resources/assets/sass/mobileshop.css');
+const inputCSS = fs.existsSync(inputSourcePath)
+    ? fs.readFileSync(inputSourcePath, 'utf8')
+    : `@tailwind base;\n@tailwind components;\n@tailwind utilities;`;
 
-// Mobileshop-specific Tailwind config (mirrors the inline config in layout.blade.php)
+// Mobileshop-specific Tailwind config (mirrors the linear light design system tokens)
 const mobileshopConfig = {
     content: [
         './resources/views/mobileshop/**/*.blade.php',
@@ -56,6 +57,11 @@ const mobileshopConfig = {
                 mono: ["JetBrains Mono", "ui-monospace", "SF Mono", "Menlo", "monospace"],
             },
             screens: {
+                sm: "640px",
+                md: "768px",
+                lg: "1024px",
+                xl: "1280px",
+                "2xl": "1536px",
                 mobile: "480px",
                 tablet: "768px",
                 desktop: "1024px",
@@ -81,12 +87,11 @@ postcss([
     tailwindcss(mobileshopConfig),
     autoprefixer(),
 ])
-.process(inputCSS, { from: undefined })
+.process(inputCSS, { from: inputSourcePath })
 .then(result => {
     fs.writeFileSync(outputPath, result.css);
     const sizeKb = (result.css.length / 1024).toFixed(1);
     console.log(`✅ Built: public/css/mobileshop-panel.css (${sizeKb} KB)`);
-    console.log('✅ Now remove <script src="https://cdn.tailwindcss.com"> from layout.blade.php');
 })
 .catch(err => {
     console.error('❌ Build failed:', err.message);

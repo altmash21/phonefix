@@ -19,6 +19,25 @@
     }
     @media (max-width: 960px) {
         .pos-grid { grid-template-columns: 1fr; }
+        #posForm { padding-bottom: 90px; }
+        .mobile-sticky-pos-footer {
+            display: flex !important;
+            position: fixed;
+            bottom: var(--bottom-nav-height, 58px);
+            left: 0;
+            right: 0;
+            z-index: 960;
+            background: #FFFFFF;
+            border-top: 1px solid #E2E8F0;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+            padding: 10px 14px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+    }
+    @media (min-width: 961px) {
+        .mobile-sticky-pos-footer { display: none !important; }
     }
     .spec-pill-box {
         background: var(--lama-purple-light);
@@ -369,8 +388,17 @@
                     </button>
                 </div>
             </div>
-        </div>
+    </div>
 
+    <!-- ─── MOBILE STICKY POS FOOTER ─── -->
+    <div class="mobile-sticky-pos-footer" id="mobilePosStickyFooter">
+        <div>
+            <div style="font-size:9.5px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px;">SALE TOTAL</div>
+            <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickyPosTotal">₹0.00</div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnMobileSubmitPos" style="height:44px; padding:0 18px; font-size:13.5px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35);">
+            <i data-lucide="printer" style="width:16px;height:16px;"></i> Complete Sale
+        </button>
     </div>
 </form>
 @endsection
@@ -491,9 +519,16 @@
             const pd = parseFloat(amountPaid.value) || 0;
             const udh = Math.max(0, tot - pd);
 
-            summaryTotal.textContent = '₹' + tot.toFixed(2);
-            summaryPaid.textContent = '₹' + pd.toFixed(2);
-            summaryUdhari.textContent = '₹' + udh.toFixed(2);
+            const fmtTot = '₹' + tot.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            const fmtPd = '₹' + pd.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            const fmtUdh = '₹' + udh.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            summaryTotal.textContent = fmtTot;
+            summaryPaid.textContent = fmtPd;
+            summaryUdhari.textContent = fmtUdh;
+
+            const mobTot = document.getElementById('mobileStickyPosTotal');
+            if (mobTot) mobTot.textContent = fmtTot;
         }
 
         const isGstCheckbox = document.getElementById('isGstCheckbox');

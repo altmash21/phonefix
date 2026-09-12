@@ -13,65 +13,141 @@
 @endsection
 
 @section('content')
-<div style="max-width: 1280px; margin: 0 auto; padding-bottom: 50px;">
+<style>
+    /* ── Visible SVG Cross Delete Button ── */
+    .btn-ghost-delete {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        background: #F1F5F9;
+        border: 1px solid #CBD5E1;
+        color: #475569;
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+    .btn-ghost-delete:hover {
+        background: #FEF2F2 !important;
+        border-color: #FECACA !important;
+        color: #DC2626 !important;
+    }
 
-    <!-- ═══════════ AI OCR SLIP SCAN BANNER ═══════════ -->
-    <div style="background: linear-gradient(135deg, #EEF2FF 0%, #FAF5FF 100%); border: 1px solid #C7D2FE; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 2px 8px rgba(79,70,229,0.06);">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, #4F46E5, #7C3AED); display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
-                <i data-lucide="scan-line" style="width:20px; height:20px;"></i>
-            </div>
-            <div>
-                <div style="font-weight:700; font-size:14px; color:#1E1B4B; display:flex; align-items:center; gap:6px;">
-                    Instant EMI Bill & Receipt Auto-Fill (AI OCR)
-                    <span class="badge" style="background:#4F46E5; color:#fff; font-size:10px; padding:2px 7px; border-radius:999px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Gemini 1.5</span>
-                </div>
-                <div style="font-size:12px; color:#4338CA; margin-top:2px;">
-                    Upload customer finance slip, challan, or invoice photo/PDF. Review and edit extracted fields, confirm, and boom — form is populated!
-                </div>
-            </div>
+    /* ── Mobile Cart Card ── */
+    .sale-device-card {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 10px 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .sale-device-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        border-bottom: 1px solid #F1F5F9;
+        padding-bottom: 6px;
+    }
+
+    /* ── Responsive Viewport Switch ── */
+    @media (max-width: 767px) {
+        .sales-create-wrapper {
+            padding-bottom: 100px !important;
+        }
+        .selected-devices-desktop-table {
+            display: none !important;
+        }
+        .selected-devices-mobile-cards {
+            display: flex !important;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .mobile-sticky-sale-footer {
+            display: flex !important;
+            position: fixed;
+            bottom: var(--bottom-nav-height, 58px);
+            left: 0;
+            right: 0;
+            z-index: 960;
+            background: #FFFFFF;
+            border-top: 1px solid #E2E8F0;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+            padding: 10px 14px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+    }
+    @media (min-width: 768px) {
+        .selected-devices-mobile-cards {
+            display: none !important;
+        }
+        .mobile-sticky-sale-footer {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="sales-create-wrapper" style="max-width: 1280px; margin: 0 auto; padding-bottom: 50px;">
+
+    <!-- ═══════════ AI OCR SLIP SCAN BANNER (Compact toolbar strip) ═══════════ -->
+    <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 6px 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <i data-lucide="scan-line" style="width:16px; height:16px; color:#7C3AED; flex-shrink:0;"></i>
+            <span style="font-weight:700; font-size:12px; color:#1E1B4B; display:flex; align-items:center; gap:6px;">
+                Instant EMI Bill & Receipt Auto-Fill
+                <span class="badge" style="background:#4F46E5; color:#fff; font-size:9px; padding:1px 5px; border-radius:4px; font-weight:700;">Gemini 1.5</span>
+            </span>
+            <span style="font-size:11px; color:#4338CA;" class="hide-on-mobile">— scan customer finance slip to auto-fill fields</span>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:6px;">
             <input type="file" id="emiBillFileInput" accept="image/*,application/pdf" style="display:none;" onchange="handleEmiBillUpload(this)">
-            <button type="button" class="btn btn-sm" onclick="triggerEmiScan()" style="background:#4F46E5; color:#fff; border:none; font-weight:600; padding:8px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(79,70,229,0.3); cursor:pointer;">
-                <i data-lucide="upload-cloud" style="width:14px; height:14px;"></i> Upload Slip / Invoice
+            <button type="button" class="btn btn-sm" onclick="triggerEmiScan()" style="background:#4F46E5; color:#fff; border:none; font-weight:700; font-size:11.5px; padding:4px 12px; border-radius:6px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                <i data-lucide="upload-cloud" style="width:13px; height:13px;"></i> Scan Slip / Invoice
             </button>
         </div>
     </div>
 
     @if(session('success'))
-        <div class="flash-success" style="border-radius:10px; margin-bottom:16px; padding:12px 16px; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; display:flex; align-items:center; gap:8px;">
-            <i data-lucide="check-circle-2" style="width:18px;height:18px; color:#10B981;"></i> {{ session('success') }}
+        <div class="flash-success" style="border-radius:8px; margin-bottom:10px; padding:8px 12px; font-size:12px; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; display:flex; align-items:center; gap:6px;">
+            <i data-lucide="check-circle-2" style="width:15px;height:15px; color:#10B981;"></i> {{ session('success') }}
         </div>
     @endif
     @if(session('error'))
-        <div class="flash-error" style="border-radius:10px; margin-bottom:16px; padding:12px 16px; background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; display:flex; align-items:center; gap:8px;">
-            <i data-lucide="alert-circle" style="width:18px;height:18px; color:#EF4444;"></i> {{ session('error') }}
+        <div class="flash-error" style="border-radius:8px; margin-bottom:10px; padding:8px 12px; font-size:12px; background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; display:flex; align-items:center; gap:6px;">
+            <i data-lucide="alert-circle" style="width:15px;height:15px; color:#EF4444;"></i> {{ session('error') }}
         </div>
     @endif
 
     <form method="POST" action="{{ route('mobileshop.sales.store_multi') }}" id="newPhoneSaleForm" onsubmit="return validateSaleForm()">
         @csrf
 
-        <div style="display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap;">
+        <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
 
             <!-- ════════════════════ LEFT COLUMN: CUSTOMER, DEVICE SELECTION & GIFTS ════════════════════ -->
-            <div style="flex: 1 1 680px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+            <div style="flex: 1 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
 
                 <!-- ── 1. CUSTOMER DETAILS ── -->
-                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #E2E8F0; border-radius: 12px;">
-                    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:12px 18px;">
-                        <div class="card-title" style="font-size:14px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:8px;">
-                            <i data-lucide="user" style="width:16px;height:16px; color:var(--color-primary);"></i> Customer Details
+                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; border-radius: 8px;">
+                    <div class="card-header" style="background:#FAFAFA; border-bottom:1px solid #E2E8F0; padding:6px 12px;">
+                        <div class="card-title" style="font-size:12px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:6px;">
+                            <i data-lucide="user" style="width:14px;height:14px; color:var(--color-primary);"></i> Customer Details
                         </div>
                     </div>
-                    <div class="card-body" style="padding:16px 18px;">
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:14px;">
+                    <div class="card-body" style="padding:8px 12px;">
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:10px;">
                             <div class="form-group" style="margin:0;">
-                                <label class="form-label" style="font-size:12px; font-weight:600; color:#475569; margin-bottom:5px;">Customer Phone <span style="color:#EF4444;">*</span></label>
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Customer Phone <span style="color:#EF4444;">*</span></label>
                                 <div style="position:relative;">
-                                    <input type="text" class="form-control" name="customer_phone" id="customerPhone" list="customerPhoneList" required placeholder="10-digit mobile number" style="font-weight:600; padding-left:34px;">
-                                    <i data-lucide="phone" style="width:14px;height:14px; position:absolute; left:11px; top:11px; color:#94A3B8;"></i>
+                                    <input type="text" class="form-control" name="customer_phone" id="customerPhone" list="customerPhoneList" required placeholder="10-digit mobile" style="height:32px; font-size:12px; font-weight:700; padding-left:28px; border-radius:6px;">
+                                    <i data-lucide="phone" style="width:12px;height:12px; position:absolute; left:9px; top:10px; color:#94A3B8;"></i>
                                 </div>
                                 <datalist id="customerPhoneList">
                                     @foreach($customers as $c)
@@ -80,60 +156,57 @@
                                 </datalist>
                             </div>
                             <div class="form-group" style="margin:0;">
-                                <label class="form-label" style="font-size:12px; font-weight:600; color:#475569; margin-bottom:5px;">Customer Name <span style="color:#EF4444;">*</span></label>
-                                <input type="text" class="form-control" name="customer_name" id="customerName" required placeholder="Full name of customer" style="font-weight:600;">
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Customer Name <span style="color:#EF4444;">*</span></label>
+                                <input type="text" class="form-control" name="customer_name" id="customerName" required placeholder="Full customer name" style="height:32px; font-size:12px; font-weight:600; border-radius:6px;">
                             </div>
                             <div class="form-group" style="margin:0;">
-                                <label class="form-label" style="font-size:12px; font-weight:600; color:#475569; margin-bottom:5px;">Current Khata Balance</label>
-                                <input type="text" class="form-control" id="customerBalanceDisplay" readonly value="—" style="background:#F8FAFC; font-weight:800; color:#475569;">
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Khata Balance</label>
+                                <input type="text" class="form-control" id="customerBalanceDisplay" readonly value="—" style="height:32px; font-size:12px; background:#F8FAFC; font-weight:800; color:#475569; border-radius:6px;">
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ── 2. PHONE SELECTION (HIERARCHICAL & SEARCH) ── -->
-                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #E2E8F0; border-radius: 12px;">
-                    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                        <div class="card-title" style="font-size:14px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:8px;">
-                            <i data-lucide="smartphone" style="width:16px;height:16px; color:var(--color-primary);"></i> Select Phone(s)
-                            <span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:11px; padding:3px 8px; border-radius:6px; font-weight:700;">{{ $inStockDevices->count() }} In Stock</span>
+                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; border-radius: 8px;">
+                    <div class="card-header" style="background:#FAFAFA; border-bottom:1px solid #E2E8F0; padding:6px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div class="card-title" style="font-size:12px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:6px;">
+                            <i data-lucide="smartphone" style="width:14px;height:14px; color:var(--color-primary);"></i> Select Phone(s)
+                            <span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700;">{{ $inStockDevices->count() }} In Stock</span>
                         </div>
-                        <div style="position:relative; width:260px;">
-                            <input type="text" class="form-control" id="quickImeiSearch" placeholder="⚡ Scan / Type IMEI or Model…" style="font-size:12px; padding-left:30px; height:34px;" oninput="onQuickSearchInput()">
-                            <i data-lucide="search" style="width:14px;height:14px; position:absolute; left:9px; top:10px; color:#94A3B8;"></i>
-                            <div id="quickSearchResults" style="display:none; position:absolute; top:36px; left:0; right:0; background:#fff; border:1px solid #CBD5E1; border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,0.12); max-height:220px; overflow-y:auto; z-index:50;"></div>
+                        <div style="position:relative; width:220px;">
+                            <input type="text" class="form-control" id="quickImeiSearch" placeholder="⚡ Scan / Type IMEI…" style="font-size:11.5px; padding-left:26px; height:28px; border-radius:6px;" oninput="onQuickSearchInput()">
+                            <i data-lucide="search" style="width:12px;height:12px; position:absolute; left:8px; top:8px; color:#94A3B8;"></i>
+                            <div id="quickSearchResults" style="display:none; position:absolute; top:30px; left:0; right:0; background:#fff; border:1px solid #CBD5E1; border-radius:6px; box-shadow:0 6px 16px rgba(0,0,0,0.1); max-height:200px; overflow-y:auto; z-index:50;"></div>
                         </div>
                     </div>
 
-                    <div class="card-body" style="padding:16px 18px;">
+                    <div class="card-body" style="padding:8px 12px;">
 
                         <!-- STEP-BY-STEP CASCADING SELECTOR -->
-                        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px 16px; margin-bottom:16px;">
-                            <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">
-                                Step-by-Step Device Selector (100s of Phones Made Easy)
-                            </div>
-                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 120px; gap:10px; align-items:flex-end;">
+                        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; margin-bottom:8px;">
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) 100px; gap:8px; align-items:flex-end;">
                                 <div>
-                                    <label class="form-label" style="font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">1. Brand</label>
-                                    <select class="form-control" id="brandSelect" onchange="onBrandChange()" style="font-weight:600;">
+                                    <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">1. Brand</label>
+                                    <select class="form-control" id="brandSelect" onchange="onBrandChange()" style="height:30px; font-size:11.5px; font-weight:600; padding:2px 6px; border-radius:5px;">
                                         <option value="">— Select Brand —</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="form-label" style="font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">2. Phone Model</label>
-                                    <select class="form-control" id="modelSelect" onchange="onModelChange()" disabled style="font-weight:600;">
+                                    <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">2. Phone Model</label>
+                                    <select class="form-control" id="modelSelect" onchange="onModelChange()" disabled style="height:30px; font-size:11.5px; font-weight:600; padding:2px 6px; border-radius:5px;">
                                         <option value="">— Select Model —</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="form-label" style="font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">3. Variant & IMEI</label>
-                                    <select class="form-control" id="variantSelect" disabled style="font-weight:600;">
+                                    <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">3. Variant & IMEI</label>
+                                    <select class="form-control" id="variantSelect" disabled style="height:30px; font-size:11.5px; font-weight:600; padding:2px 6px; border-radius:5px;">
                                         <option value="">— Select Variant / IMEI —</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <button type="button" class="btn btn-primary" id="btnAddDevice" onclick="addSelectedDevice()" disabled style="width:100%; height:38px; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:5px;">
-                                        <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Phone
+                                    <button type="button" class="btn btn-primary" id="btnAddDevice" onclick="addSelectedDevice()" disabled style="width:100%; height:30px; font-size:11.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:4px; border-radius:5px;">
+                                        <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Phone
                                     </button>
                                 </div>
                             </div>
@@ -141,33 +214,40 @@
 
                         <!-- SELECTED DEVICES LIST / CART -->
                         <div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                <span style="font-size:12px; font-weight:700; color:#1E293B;">Selected Device(s) in this Sale:</span>
-                                <span id="selectedCountBadge" style="font-size:11px; font-weight:700; color:#64748B;">0 devices selected</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px;">Selected Device(s):</span>
+                                <span id="selectedCountBadge" style="font-size:10.5px; font-weight:700; color:#4F46E5;">0 devices selected</span>
                             </div>
 
-                            <div id="emptyDevicesState" style="text-align:center; padding:32px 20px; border:2px dashed #E2E8F0; border-radius:10px; background:#FAFAFA;">
-                                <i data-lucide="smartphone" style="width:28px;height:28px; color:#94A3B8; margin-bottom:6px;"></i>
-                                <div style="font-size:13px; font-weight:600; color:#64748B;">No device added yet</div>
-                                <div style="font-size:11.5px; color:#94A3B8;">Choose a Brand, Model & Variant above or scan an IMEI to add to this sale.</div>
+                            <div id="emptyDevicesState" style="text-align:center; padding:20px 14px; border:1.5px dashed #CBD5E1; border-radius:6px; background:#FAFAFA;">
+                                <i data-lucide="smartphone" style="width:20px;height:20px; color:#94A3B8; margin-bottom:4px;"></i>
+                                <div style="font-size:12px; font-weight:600; color:#64748B;">No device added yet</div>
+                                <div style="font-size:10.5px; color:#94A3B8;">Select a Brand, Model & IMEI above or scan barcode to add to this sale.</div>
                             </div>
 
-                            <div id="selectedDevicesTableWrap" style="display:none; overflow-x:auto;">
-                                <table class="data-table" style="width:100%; font-size:12.5px;">
-                                    <thead>
-                                        <tr style="background:#F1F5F9; color:#475569;">
-                                            <th style="width:22%;">Brand & Model</th>
-                                            <th style="width:18%;">Variant & Color</th>
-                                            <th style="width:20%;">IMEI 1</th>
-                                            <th style="width:14%; text-align:right;">Cost (₹)</th>
-                                            <th style="width:18%; text-align:right;">Sale Price (₹)</th>
-                                            <th style="width:8%; text-align:center;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="selectedDevicesList">
-                                        <!-- Dynamically added rows -->
-                                    </tbody>
-                                </table>
+                            <div id="selectedDevicesTableWrap" style="display:none;">
+                                <!-- Desktop Table View -->
+                                <div class="selected-devices-desktop-table" style="overflow-x:auto;">
+                                    <table class="data-table" style="width:100%; font-size:12px;">
+                                        <thead>
+                                            <tr style="background:#F8FAFC; color:#64748B; font-size:10px; text-transform:uppercase;">
+                                                <th style="width:26%; padding:6px 8px;">Brand & Model</th>
+                                                <th style="width:18%; padding:6px 8px;">Variant</th>
+                                                <th style="width:22%; padding:6px 8px;">IMEI 1</th>
+                                                <th style="width:14%; text-align:right; padding:6px 8px;">Cost (₹)</th>
+                                                <th style="width:16%; text-align:right; padding:6px 8px;">Sale Price (₹)</th>
+                                                <th style="width:4%; text-align:center; padding:6px 8px;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="selectedDevicesList">
+                                            <!-- Dynamically added desktop rows -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Mobile Stacked Cards View -->
+                                <div class="selected-devices-mobile-cards" id="selectedDevicesMobileCards">
+                                    <!-- Dynamically added mobile cards -->
+                                </div>
                             </div>
                         </div>
 
@@ -175,34 +255,34 @@
                 </div>
 
                 <!-- ── 3. PROMOTIONAL GIFTS & FREEBIES ── -->
-                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #E2E8F0; border-radius: 12px;">
-                    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:12px 18px; display:flex; justify-content:space-between; align-items:center;">
-                        <div class="card-title" style="font-size:14px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:8px;">
-                            <i data-lucide="gift" style="width:16px;height:16px; color:#EC4899;"></i> Complimentary Gift / Freebie
+                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; border-radius: 8px;">
+                    <div class="card-header" style="background:#FAFAFA; border-bottom:1px solid #E2E8F0; padding:6px 12px; display:flex; justify-content:space-between; align-items:center;">
+                        <div class="card-title" style="font-size:12px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:6px;">
+                            <i data-lucide="gift" style="width:14px;height:14px; color:#EC4899;"></i> Complimentary Gift / Freebie
                         </div>
-                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#475569; cursor:pointer;">
-                            <input type="checkbox" name="has_gift" id="hasGiftToggle" value="1" onchange="toggleGiftSection(this.checked)" style="width:16px; height:16px; accent-color:#EC4899; cursor:pointer;">
+                        <label style="display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#475569; cursor:pointer; margin:0;">
+                            <input type="checkbox" name="has_gift" id="hasGiftToggle" value="1" onchange="toggleGiftSection(this.checked)" style="width:14px; height:14px; accent-color:#EC4899; cursor:pointer;">
                             Add Gift to Sale
                         </label>
                     </div>
 
-                    <div class="card-body" id="giftBodySection" style="display:none; padding:16px 18px; background:#FDF2F8; border-top:1px solid #FCE7F3;">
-                        <div style="margin-bottom:12px; display:flex; gap:16px;">
-                            <label style="font-size:12px; font-weight:700; color:#334155; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    <div class="card-body" id="giftBodySection" style="display:none; padding:8px 12px; background:#FDF2F8; border-top:1px solid #FCE7F3;">
+                        <div style="margin-bottom:8px; display:flex; gap:12px;">
+                            <label style="font-size:11px; font-weight:700; color:#334155; cursor:pointer; display:flex; align-items:center; gap:4px; margin:0;">
                                 <input type="radio" name="gift_source" value="inventory" checked onchange="switchGiftSource('inventory')" style="accent-color:#EC4899;">
-                                From Shop Accessories Stock
+                                From Shop Stock
                             </label>
-                            <label style="font-size:12px; font-weight:700; color:#334155; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                            <label style="font-size:11px; font-weight:700; color:#334155; cursor:pointer; display:flex; align-items:center; gap:4px; margin:0;">
                                 <input type="radio" name="gift_source" value="custom" onchange="switchGiftSource('custom')" style="accent-color:#EC4899;">
-                                Custom Freebie (Smartwatch / Speaker / Bag)
+                                Custom Freebie (Smartwatch / Earbuds)
                             </label>
                         </div>
 
-                        <div id="giftInventorySource" style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; align-items:flex-end;">
+                        <div id="giftInventorySource" style="display:grid; grid-template-columns: 2fr 1fr; gap:8px; align-items:flex-end;">
                             <div>
-                                <label class="form-label" style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Select In-Stock Accessory</label>
-                                <select class="form-control" name="gift_inventory_id" id="giftInventorySelect" onchange="onGiftInventoryChange()">
-                                    <option value="">— Select an accessory/item —</option>
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#475569; margin-bottom:2px;">Select In-Stock Accessory</label>
+                                <select class="form-control" name="gift_inventory_id" id="giftInventorySelect" onchange="onGiftInventoryChange()" style="height:30px; font-size:11.5px;">
+                                    <option value="">— Select an accessory —</option>
                                     @foreach($giftInventory as $gi)
                                         <option value="{{ $gi->id }}" data-cost="{{ $gi->unit_cost }}" data-name="{{ $gi->name }}" data-stock="{{ $gi->stock_qty }}">
                                             {{ $gi->name }} (Stock: {{ $gi->stock_qty }} | Cost: ₹{{ number_format($gi->unit_cost, 0) }})
@@ -211,25 +291,25 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="form-label" style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Gift Purchase Cost (₹)</label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="gift_cost" id="giftCostInventory" value="0.00" oninput="recalcSaleFinancials()" style="font-weight:700;">
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#475569; margin-bottom:2px;">Gift Cost (₹)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" name="gift_cost" id="giftCostInventory" value="0.00" oninput="recalcSaleFinancials()" style="height:30px; font-size:12px; font-weight:700;">
                             </div>
                         </div>
 
-                        <div id="giftCustomSource" style="display:none; grid-template-columns: 2fr 1fr; gap:12px; align-items:flex-end;">
+                        <div id="giftCustomSource" style="display:none; grid-template-columns: 2fr 1fr; gap:8px; align-items:flex-end;">
                             <div>
-                                <label class="form-label" style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Custom Gift Item Description</label>
-                                <input type="text" class="form-control" name="gift_custom_name" id="giftCustomName" placeholder="e.g. Ultra Smart Watch, Bluetooth Earbuds" oninput="recalcSaleFinancials()">
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#475569; margin-bottom:2px;">Custom Gift Description</label>
+                                <input type="text" class="form-control" name="gift_custom_name" id="giftCustomName" placeholder="e.g. Ultra Smart Watch" oninput="recalcSaleFinancials()" style="height:30px; font-size:11.5px;">
                             </div>
                             <div>
-                                <label class="form-label" style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Gift Purchase Cost (₹)</label>
-                                <input type="number" step="0.01" min="0" class="form-control" id="giftCostCustom" placeholder="Cost to store" oninput="recalcSaleFinancials()" style="font-weight:700;">
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#475569; margin-bottom:2px;">Gift Cost (₹)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="giftCostCustom" placeholder="Cost" oninput="recalcSaleFinancials()" style="height:30px; font-size:12px; font-weight:700;">
                             </div>
                         </div>
 
-                        <div style="margin-top:10px; font-size:11.5px; color:#BE185D; display:flex; align-items:center; gap:6px;">
-                            <i data-lucide="info" style="width:13px;height:13px;"></i>
-                            <span>Billed to customer as <strong>₹0.00 (Promotional Free Gift)</strong>. Purchase cost will be automatically factored in to compute true net sale profit.</span>
+                        <div style="margin-top:6px; font-size:10.5px; color:#BE185D; display:flex; align-items:center; gap:4px;">
+                            <i data-lucide="info" style="width:12px;height:12px;"></i>
+                            <span>Billed to customer as <strong>₹0.00 (Free Gift)</strong>. Cost factored into net profit.</span>
                         </div>
                     </div>
                 </div>
@@ -237,55 +317,55 @@
             </div>
 
             <!-- ════════════════════ RIGHT COLUMN: PAYMENT MODES, EMI & PROFIT ════════════════════ -->
-            <div style="flex: 0 0 380px; width: 380px; max-width: 100%; display: flex; flex-direction: column; gap: 18px; position: sticky; top: 20px;">
+            <div style="flex: 0 0 340px; width: 340px; max-width: 100%; display: flex; flex-direction: column; gap: 10px;">
 
                 <!-- ── PAYMENT SELECTION CARD ── -->
-                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #E2E8F0; border-radius: 12px;">
-                    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:12px 18px;">
-                        <div class="card-title" style="font-size:14px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:8px;">
-                            <i data-lucide="wallet" style="width:16px;height:16px; color:var(--color-primary);"></i> Payment Mode
+                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; border-radius: 8px;">
+                    <div class="card-header" style="background:#FAFAFA; border-bottom:1px solid #E2E8F0; padding:6px 12px;">
+                        <div class="card-title" style="font-size:12px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:6px;">
+                            <i data-lucide="wallet" style="width:14px;height:14px; color:var(--color-primary);"></i> Payment Mode
                         </div>
                     </div>
-                    <div class="card-body" style="padding:16px 18px;">
+                    <div class="card-body" style="padding:8px 12px;">
 
                         <!-- Mode Segmented Selector -->
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:16px;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:10px;">
                             <label class="pay-mode-card" id="modeCardCash">
                                 <input type="radio" name="payment_mode" value="cash" checked onchange="onPaymentModeToggle('cash')">
-                                <span class="mode-title"><i data-lucide="banknote" style="width:16px;height:16px;"></i> Cash</span>
+                                <span class="mode-title"><i data-lucide="banknote" style="width:14px;height:14px;"></i> Cash</span>
                             </label>
                             <label class="pay-mode-card" id="modeCardOnline">
                                 <input type="radio" name="payment_mode" value="online" onchange="onPaymentModeToggle('online')">
-                                <span class="mode-title"><i data-lucide="qr-code" style="width:16px;height:16px;"></i> Online / UPI</span>
+                                <span class="mode-title"><i data-lucide="qr-code" style="width:14px;height:14px;"></i> Online / UPI</span>
                             </label>
                             <label class="pay-mode-card" id="modeCardEmi">
                                 <input type="radio" name="payment_mode" value="emi" onchange="onPaymentModeToggle('emi')">
-                                <span class="mode-title"><i data-lucide="landmark" style="width:16px;height:16px;"></i> EMI Finance</span>
+                                <span class="mode-title"><i data-lucide="landmark" style="width:14px;height:14px;"></i> EMI Finance</span>
                             </label>
                             <label class="pay-mode-card" id="modeCardKhata">
                                 <input type="radio" name="payment_mode" value="credit_udhari" onchange="onPaymentModeToggle('credit_udhari')">
-                                <span class="mode-title"><i data-lucide="book-open" style="width:16px;height:16px;"></i> Full Khata</span>
+                                <span class="mode-title"><i data-lucide="book-open" style="width:14px;height:14px;"></i> Full Khata</span>
                             </label>
                         </div>
 
                         <!-- CASH / ONLINE VIEW -->
                         <div id="panelCashOnline">
-                            <div class="form-group" style="margin-bottom:12px;">
-                                <label class="form-label" style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px;">Amount Paid Now (₹) <span style="color:#EF4444;">*</span></label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="amount_paid" id="amountPaid" value="0.00" oninput="recalcSaleFinancials()" required style="font-size:16px; font-weight:800;">
+                            <div class="form-group" style="margin-bottom:8px;">
+                                <label class="form-label" style="font-size:10.5px; font-weight:700; color:#334155; margin-bottom:2px;">Paid Now (₹) <span style="color:#EF4444;">*</span></label>
+                                <input type="number" step="0.01" min="0" class="form-control" name="amount_paid" id="amountPaid" value="0.00" oninput="recalcSaleFinancials()" required style="height:34px; font-size:15px; font-weight:800; border-radius:6px;">
                             </div>
-                            <div class="form-group" style="margin-bottom:6px;">
-                                <label class="form-label" style="font-size:12px; font-weight:600; color:#64748B; margin-bottom:4px;">Balance to Khata (Udhari)</label>
-                                <input type="text" class="form-control" id="cashBalanceDisplay" readonly value="₹0.00" style="background:#FEF2F2; font-weight:800; color:#DC2626; font-size:15px;">
+                            <div class="form-group" style="margin-bottom:4px;">
+                                <label class="form-label" style="font-size:10px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px;">Balance to Khata (Udhari)</label>
+                                <input type="text" class="form-control" id="cashBalanceDisplay" readonly value="₹0.00" style="height:30px; background:#FEF2F2; font-weight:800; color:#DC2626; font-size:13px; border-radius:6px; font-family:monospace;">
                             </div>
                         </div>
 
                         <!-- EMI VIEW -->
                         <div id="panelEmi" style="display:none;">
-                            <div class="form-group" style="margin-bottom:10px;">
-                                <label class="form-label" style="font-size:11.5px; font-weight:700; color:#334155; margin-bottom:3px;">EMI Finance Company <span style="color:#EF4444;">*</span></label>
-                                <select class="form-control" name="emi_provider_id" id="emiProviderSelect" onchange="onEmiProviderSelectChange()" style="font-weight:700;">
-                                    <option value="">— Select Finance Partner —</option>
+                            <div class="form-group" style="margin-bottom:8px;">
+                                <label class="form-label" style="font-size:10.5px; font-weight:700; color:#334155; margin-bottom:2px;">Finance Partner <span style="color:#EF4444;">*</span></label>
+                                <select class="form-control" name="emi_provider_id" id="emiProviderSelect" onchange="onEmiProviderSelectChange()" style="height:32px; font-size:12px; font-weight:700; border-radius:6px;">
+                                    <option value="">— Select Partner —</option>
                                     @foreach($emiProviders as $p)
                                         <option value="{{ $p->id }}"
                                             data-flat="{{ $p->processing_fee_flat ?? 0 }}"
@@ -297,60 +377,56 @@
                                 </select>
                             </div>
 
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
                                 <div class="form-group" style="margin:0;">
-                                    <label class="form-label" style="font-size:11px; font-weight:700; color:#334155; margin-bottom:3px;">EMI Tenure</label>
-                                    <select class="form-control" name="emi_tenure_months" id="emiTenureSelect" style="font-weight:700;">
-                                        <option value="3">3 Months</option>
-                                        <option value="6">6 Months</option>
-                                        <option value="8">8 Months</option>
-                                        <option value="9">9 Months</option>
-                                        <option value="10">10 Months</option>
-                                        <option value="12" selected>12 Months</option>
-                                        <option value="18">18 Months</option>
-                                        <option value="24">24 Months</option>
-                                        <option value="36">36 Months</option>
+                                    <label class="form-label" style="font-size:10px; font-weight:700; color:#334155; margin-bottom:2px;">Tenure</label>
+                                    <select class="form-control" name="emi_tenure_months" id="emiTenureSelect" style="height:30px; font-size:11.5px; font-weight:700; border-radius:6px;">
+                                        <option value="3">3 Mos</option>
+                                        <option value="6">6 Mos</option>
+                                        <option value="8">8 Mos</option>
+                                        <option value="9">9 Mos</option>
+                                        <option value="10">10 Mos</option>
+                                        <option value="12" selected>12 Mos</option>
+                                        <option value="18">18 Mos</option>
+                                        <option value="24">24 Mos</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="margin:0;">
-                                    <label class="form-label" style="font-size:11px; font-weight:700; color:#334155; margin-bottom:3px;">Processing Fee</label>
-                                    <div style="display:flex; gap:4px;">
-                                        <select class="form-control" name="emi_fee_type" id="emiFeeType" onchange="recalcSaleFinancials()" style="width:75px; padding:6px; font-size:11px; font-weight:700;">
+                                    <label class="form-label" style="font-size:10px; font-weight:700; color:#334155; margin-bottom:2px;">Fee</label>
+                                    <div style="display:flex; gap:3px;">
+                                        <select class="form-control" name="emi_fee_type" id="emiFeeType" onchange="recalcSaleFinancials()" style="width:65px; height:30px; padding:2px; font-size:10.5px; font-weight:700; border-radius:5px;">
                                             <option value="flat">₹ Flat</option>
                                             <option value="percent">% Pct</option>
                                         </select>
-                                        <input type="number" step="0.01" min="0" class="form-control" name="emi_fee_value" id="emiFeeValue" placeholder="0" oninput="recalcSaleFinancials()" style="font-weight:700; padding:6px 8px;">
+                                        <input type="number" step="0.01" min="0" class="form-control" name="emi_fee_value" id="emiFeeValue" placeholder="0" oninput="recalcSaleFinancials()" style="height:30px; font-size:11.5px; font-weight:700; padding:2px 6px; border-radius:5px;">
                                     </div>
                                 </div>
                             </div>
 
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-bottom:8px;">
                                 <div class="form-group" style="margin:0;">
-                                    <label class="form-label" style="font-size:11px; font-weight:700; color:#334155; margin-bottom:3px;">Downpayment Req. (₹)</label>
-                                    <input type="number" step="0.01" min="0" class="form-control" name="emi_downpayment_required" id="emiDownpaymentRequired" value="0.00" oninput="onEmiDownpaymentReqChange()" style="font-weight:700;">
+                                    <label class="form-label" style="font-size:10px; font-weight:700; color:#334155; margin-bottom:2px;">Downpayment (₹)</label>
+                                    <input type="number" step="0.01" min="0" class="form-control" name="emi_downpayment_required" id="emiDownpaymentRequired" value="0.00" oninput="onEmiDownpaymentReqChange()" style="height:30px; font-size:12px; font-weight:700; border-radius:5px;">
                                 </div>
                                 <div class="form-group" style="margin:0;">
-                                    <label class="form-label" style="font-size:11px; font-weight:700; color:#334155; margin-bottom:3px;">Loan Financed (₹)</label>
-                                    <input type="text" class="form-control" id="emiFinancedDisplay" readonly value="₹0.00" style="background:#F1F5F9; font-weight:800; color:#1E293B;">
+                                    <label class="form-label" style="font-size:10px; font-weight:700; color:#334155; margin-bottom:2px;">Financed (₹)</label>
+                                    <input type="text" class="form-control" id="emiFinancedDisplay" readonly value="₹0.00" style="height:30px; font-size:12px; background:#F1F5F9; font-weight:800; color:#1E293B; border-radius:5px; font-family:monospace;">
                                 </div>
                             </div>
 
-                            <div class="form-group" style="margin-bottom:10px;">
-                                <label class="form-label" style="font-size:11.5px; font-weight:700; color:#334155; margin-bottom:3px;">Customer Paid Now / DP Paid (₹) <span style="color:#EF4444;">*</span></label>
-                                <input type="number" step="0.01" min="0" class="form-control" id="emiAmountPaid" value="0.00" oninput="onEmiAmountPaidChange()" style="font-size:15px; font-weight:800; color:#059669;">
+                            <div class="form-group" style="margin-bottom:8px;">
+                                <label class="form-label" style="font-size:10.5px; font-weight:700; color:#334155; margin-bottom:2px;">DP Paid Now (₹) <span style="color:#EF4444;">*</span></label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="emiAmountPaid" value="0.00" oninput="onEmiAmountPaidChange()" style="height:32px; font-size:14px; font-weight:800; color:#059669; border-radius:6px;">
                             </div>
 
                             <!-- Partial Downpayment Alert -->
-                            <div id="emiShortfallNotice" style="display:none; background:#FFFBEB; border:1px solid #FCD34D; border-radius:8px; padding:10px; margin-bottom:10px; font-size:11.5px; color:#92400E;">
-                                <div style="font-weight:700; display:flex; align-items:center; gap:4px; margin-bottom:2px;">
-                                    <i data-lucide="alert-triangle" style="width:14px;height:14px; color:#D97706;"></i> Partial Downpayment Detected
-                                </div>
-                                <div>Customer is short <strong id="emiShortfallAmount">₹0.00</strong> on downpayment. This amount will be added to <strong>Customer Khata (Udhari)</strong>. Financed amount will balance out with the EMI partner ledger.</div>
+                            <div id="emiShortfallNotice" style="display:none; background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:6px 8px; margin-bottom:8px; font-size:10.5px; color:#92400E;">
+                                <div>Short <strong id="emiShortfallAmount">₹0.00</strong> &rarr; added to Khata (Udhari).</div>
                             </div>
 
                             <div class="form-group" style="margin:0;">
-                                <label class="form-label" style="font-size:11px; font-weight:600; color:#64748B; margin-bottom:3px;">Loan / File Reference No.</label>
-                                <input type="text" class="form-control" name="emi_loan_no" id="emiLoanNo" placeholder="e.g. BJF-982310" style="font-size:12px;">
+                                <label class="form-label" style="font-size:10px; font-weight:600; color:#64748B; margin-bottom:2px;">Loan / File Ref #</label>
+                                <input type="text" class="form-control" name="emi_loan_no" id="emiLoanNo" placeholder="e.g. BJF-982310" style="height:30px; font-size:11.5px; border-radius:5px;">
                             </div>
                         </div>
 
@@ -358,43 +434,43 @@
                 </div>
 
                 <!-- ── BILL TOTAL & LIVE PROFIT BREAKDOWN ── -->
-                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #E2E8F0; border-radius: 12px;">
-                    <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:12px 18px;">
-                        <div class="card-title" style="font-size:14px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:8px;">
-                            <i data-lucide="calculator" style="width:16px;height:16px; color:#10B981;"></i> Bill & Financial Summary
+                <div class="card" style="box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid #E2E8F0; border-radius: 8px;">
+                    <div class="card-header" style="background:#FAFAFA; border-bottom:1px solid #E2E8F0; padding:6px 12px;">
+                        <div class="card-title" style="font-size:12px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:6px;">
+                            <i data-lucide="calculator" style="width:14px;height:14px; color:#10B981;"></i> Summary & Invoice
                         </div>
                     </div>
-                    <div class="card-body" style="padding:16px 18px;">
+                    <div class="card-body" style="padding:10px 12px;">
 
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; color:#64748B;">
-                            <span>Devices Sale Total:</span>
-                            <strong id="summaryDevicesTotal" style="color:#1E293B;">₹0.00</strong>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; color:#64748B;">
+                            <span>Devices Total:</span>
+                            <strong id="summaryDevicesTotal" style="color:#1E293B; font-family:'JetBrains Mono', monospace;">₹0.00</strong>
                         </div>
-                        <div id="summaryGiftRow" style="display:none; justify-content:space-between; margin-bottom:8px; font-size:12.5px; color:#EC4899;">
-                            <span>🎁 Free Gift Added:</span>
-                            <span>₹0.00 <span style="font-size:11px; color:#64748B;">(Cost: <strong id="summaryGiftCost">₹0.00</strong>)</span></span>
+                        <div id="summaryGiftRow" style="display:none; justify-content:space-between; margin-bottom:6px; font-size:11.5px; color:#EC4899;">
+                            <span>🎁 Free Gift:</span>
+                            <span>FREE <span style="font-size:10.5px; color:#64748B;">(Cost: <strong id="summaryGiftCost">₹0.00</strong>)</span></span>
                         </div>
-                        <div style="border-top:1px solid #E2E8F0; padding-top:10px; margin-top:8px; display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;">
-                            <span style="font-size:14px; font-weight:700; color:#1E293B;">Total Bill Amount:</span>
-                            <span id="summaryBillTotal" style="font-size:22px; font-weight:900; color:var(--color-primary);">₹0.00</span>
+                        <div style="border-top:1px solid #E2E8F0; padding-top:8px; margin-top:6px; display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+                            <span style="font-size:12px; font-weight:700; color:#1E293B;">Total Bill:</span>
+                            <span id="summaryBillTotal" style="font-size:18px; font-weight:900; color:var(--color-primary); font-family:'JetBrains Mono', monospace;">₹0.00</span>
                         </div>
 
                         <!-- NET PROFIT LIVE METRIC -->
-                        <div style="background:#ECFDF5; border:1px solid #A7F3D0; border-radius:10px; padding:12px 14px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                                <span style="font-size:11.5px; font-weight:700; color:#065F46; text-transform:uppercase; letter-spacing:0.5px;">Net Store Profit</span>
-                                <span id="summaryProfitPercent" style="font-size:11px; font-weight:800; background:#D1FAE5; color:#065F46; padding:2px 6px; border-radius:4px;">0% Margin</span>
+                        <div style="background:#ECFDF5; border:1px solid #A7F3D0; border-radius:6px; padding:8px 10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                <span style="font-size:10px; font-weight:700; color:#065F46; text-transform:uppercase; letter-spacing:0.3px;">Net Store Profit</span>
+                                <span id="summaryProfitPercent" style="font-size:10px; font-weight:800; background:#D1FAE5; color:#065F46; padding:1px 5px; border-radius:3px;">0% Margin</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; align-items:baseline;">
-                                <div id="summaryNetProfit" style="font-size:20px; font-weight:900; color:#059669;">₹0.00</div>
-                                <div style="font-size:11px; color:#047857;">(Price - Phone Cost - Gift - Fees)</div>
+                                <div id="summaryNetProfit" style="font-size:16px; font-weight:900; color:#059669; font-family:'JetBrains Mono', monospace;">₹0.00</div>
+                                <div style="font-size:10px; color:#047857;">(Est. Gross Margin)</div>
                             </div>
                         </div>
 
                         <!-- CTA BUTTON -->
-                        <div style="margin-top:16px;">
-                            <button type="submit" class="btn btn-primary" id="btnSubmitSale" style="width:100%; height:46px; font-size:14px; font-weight:800; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                                <i data-lucide="receipt" style="width:18px;height:18px;"></i> Complete Sale & Invoice
+                        <div style="margin-top:12px;">
+                            <button type="submit" class="btn btn-primary" id="btnSubmitSale" style="width:100%; height:38px; font-size:13px; font-weight:800; border-radius:7px; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 2px 8px rgba(94,106,210,0.3);">
+                                <i data-lucide="receipt" style="width:15px;height:15px;"></i> Complete Sale & Bill
                             </button>
                         </div>
 
@@ -404,6 +480,18 @@
             </div>
 
         </div>
+
+        <!-- ─── MOBILE STICKY SALE FOOTER ─── -->
+        <div class="mobile-sticky-sale-footer" id="mobileSaleStickyFooter" style="display:none;">
+            <div>
+                <div style="font-size:9.5px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px;" id="mobileStickyDeviceCount">0 DEVICES SELECTED</div>
+                <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickySaleTotal">₹0.00</div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btnMobileSubmitSale" style="height:44px; padding:0 18px; font-size:13.5px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35);">
+                <i data-lucide="receipt" style="width:16px;height:16px;"></i> Complete Sale
+            </button>
+        </div>
+
     </form>
 </div>
 
@@ -760,6 +848,7 @@
 
     function renderSelectedDevices() {
         var listEl = document.getElementById('selectedDevicesList');
+        var mobileCardsEl = document.getElementById('selectedDevicesMobileCards');
         var wrapEl = document.getElementById('selectedDevicesTableWrap');
         var emptyEl = document.getElementById('emptyDevicesState');
         var countBadge = document.getElementById('selectedCountBadge');
@@ -776,28 +865,64 @@
         emptyEl.style.display = 'none';
         wrapEl.style.display = 'block';
         listEl.innerHTML = '';
+        if (mobileCardsEl) mobileCardsEl.innerHTML = '';
 
         selectedDevices.forEach(function(dev, idx) {
+            var formattedCost = '₹' + Number(dev.cost || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // 1. Desktop Table Row
             var tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="font-weight:700; color:#0F172A;">
+                <td style="padding:6px 8px; font-weight:700; color:#0F172A; font-size:12px; vertical-align:middle;">
                     <input type="hidden" name="device_ids[]" value="${dev.id}">
                     ${dev.brand} ${dev.model}
                 </td>
-                <td style="font-size:11.5px; color:#475569;">${dev.variant}</td>
-                <td style="font-family:monospace; font-size:12px; font-weight:600; color:#334155;">${dev.imei}</td>
-                <td style="text-align:right; font-family:monospace; color:#64748B;">₹${dev.cost.toLocaleString('en-IN', {minimumFractionDigits: 0})}</td>
-                <td style="text-align:right;">
+                <td style="padding:6px 8px; font-size:11px; color:#475569; vertical-align:middle;">${dev.variant}</td>
+                <td style="padding:6px 8px; font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:600; color:#334155; vertical-align:middle;">${dev.imei}</td>
+                <td style="padding:6px 8px; text-align:right; font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748B; vertical-align:middle;">${formattedCost}</td>
+                <td style="padding:6px 8px; text-align:right; vertical-align:middle;">
                     <input type="number" step="0.01" min="1" class="form-control" name="sale_prices[${dev.id}]" value="${dev.sale_price}"
-                           oninput="onSalePriceChange(${idx}, this)" style="padding:4px 8px; max-width:120px; text-align:right; font-weight:700; margin-left:auto;">
+                           oninput="onSalePriceChange(${idx}, this)" style="padding:2px 6px; height:28px; font-size:11.5px; max-width:110px; text-align:right; font-weight:700; margin-left:auto; border-radius:4px; font-family:'JetBrains Mono', monospace; color:#059669;">
                 </td>
-                <td style="text-align:center;">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="removeDevice(${idx})" title="Remove Device" style="padding:4px 7px; color:#EF4444; border-color:#FCA5A5;">
-                        <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                <td style="padding:6px 8px; text-align:center; vertical-align:middle;">
+                    <button type="button" class="btn-ghost-delete" onclick="removeDevice(${idx})" title="Remove Device">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
                     </button>
                 </td>
             `;
             listEl.appendChild(tr);
+
+            // 2. Mobile Stacked Card
+            if (mobileCardsEl) {
+                var card = document.createElement('div');
+                card.className = 'sale-device-card';
+                card.innerHTML = `
+                    <div class="sale-device-card-header">
+                        <div>
+                            <strong style="font-size:13px; color:#0F172A;">${dev.brand} ${dev.model}</strong>
+                            <div style="font-size:11px; color:#64748B; margin-top:2px;">${dev.variant} &bull; <span style="font-family:'JetBrains Mono', monospace; color:#334155;">${dev.imei}</span></div>
+                        </div>
+                        <button type="button" class="btn-ghost-delete" onclick="removeDevice(${idx})" title="Remove Device">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding-top:4px;">
+                        <span style="font-size:11px; color:#64748B;">Cost: <span style="font-family:'JetBrains Mono', monospace; font-weight:600;">${formattedCost}</span></span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <label style="font-size:11px; font-weight:700; color:#334155; margin:0;">Sale ₹</label>
+                            <input type="number" step="0.01" min="1" class="form-control" value="${dev.sale_price}"
+                                   oninput="onSalePriceChange(${idx}, this)" style="height:40px; font-size:13px; width:120px; text-align:right; font-weight:800; border-radius:6px; font-family:'JetBrains Mono', monospace; color:#059669;">
+                        </div>
+                    </div>
+                `;
+                mobileCardsEl.appendChild(card);
+            }
         });
 
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
@@ -966,9 +1091,16 @@
         var giftCost = getGiftCost();
 
         // Update displays
-        document.getElementById('summaryDevicesTotal').textContent = '₹' + billTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
-        document.getElementById('summaryBillTotal').textContent = '₹' + billTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        var formattedTotal = '₹' + billTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('summaryDevicesTotal').textContent = formattedTotal;
+        document.getElementById('summaryBillTotal').textContent = formattedTotal;
         document.getElementById('summaryGiftCost').textContent = '₹' + giftCost.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+        // Update Mobile Sticky Dock elements
+        var mobTotalEl = document.getElementById('mobileStickySaleTotal');
+        if (mobTotalEl) mobTotalEl.textContent = formattedTotal;
+        var mobCountEl = document.getElementById('mobileStickyDeviceCount');
+        if (mobCountEl) mobCountEl.textContent = `${selectedDevices.length} ${selectedDevices.length === 1 ? 'DEVICE' : 'DEVICES'} SELECTED`;
 
         var currentMode = document.querySelector('input[name="payment_mode"]:checked')?.value || 'cash';
         var isEmi = (currentMode === 'emi');

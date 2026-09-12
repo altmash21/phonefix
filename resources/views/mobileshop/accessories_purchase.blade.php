@@ -16,241 +16,354 @@
 
 @section('content')
 <style>
-    /* Suppress default browser spin buttons on bulk number inputs */
+    /* ── Hide browser number spinners ── */
     .bulk-num-input::-webkit-outer-spin-button,
-    .bulk-num-input::-webkit-inner-spin-button {
-        -webkit-appearance: none !important;
-        margin: 0 !important;
-    }
-    .bulk-num-input {
-        -moz-appearance: textfield !important;
-    }
+    .bulk-num-input::-webkit-inner-spin-button { -webkit-appearance: none !important; margin: 0 !important; }
+    .bulk-num-input { -moz-appearance: textfield !important; }
 
-    /* 2-Line Batch Intake Cards Container */
-    .batch-items-container {
+    /* ── Container Layout ── */
+    .restock-container {
+        max-width: 1420px;
+        margin: 0 auto;
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        padding: 16px;
-        background: #F8FAFC;
+        gap: 14px;
     }
 
-    .batch-item-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 14px 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-        transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .batch-item-card:hover {
-        border-color: #CBD5E1;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-    }
-
-    .batch-line-1,
-    .batch-line-2 {
-        display: flex;
-        align-items: flex-end;
-        gap: 12px;
+    /* ── High-Contrast Form Inputs ── */
+    .restock-input {
         width: 100%;
-    }
-
-    .field-col {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .field-label {
-        font-size: 11px;
-        font-weight: 700;
-        color: #475569;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        white-space: nowrap;
-        display: flex;
-        align-items: center;
-        gap: 2px;
-    }
-
-    .field-label .req {
-        color: #EF4444;
-        font-weight: 900;
-    }
-
-    .field-label.highlight-label {
-        color: #5E6AD2;
-        font-weight: 800;
-    }
-
-    .field-input {
-        font-size: 12.5px !important;
-        height: 36px !important;
-        border-radius: 8px !important;
+        color: #111827 !important;
+        font-weight: 600 !important;
+        background: #ffffff !important;
         border: 1px solid #CBD5E1 !important;
-        padding: 6px 10px !important;
-        background: #FFFFFF;
+        border-radius: 6px !important;
+        padding: 5px 8px !important;
+        font-size: 12.5px !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        box-sizing: border-box;
+    }
+    .restock-input:focus {
+        outline: none !important;
+        border-color: #6366F1 !important;
+        box-shadow: 0 0 0 2.5px rgba(99, 102, 241, 0.15) !important;
+        background: #ffffff !important;
+    }
+    .restock-input.cat-select {
+        background-color: #F8FAFC !important;
+        color: #3730A3 !important;
+        font-weight: 700 !important;
+        cursor: pointer;
+    }
+    .restock-input.num-field {
+        font-family: 'JetBrains Mono', monospace !important;
+        font-weight: 700 !important;
+        color: #111827 !important;
+    }
+    .restock-input.cost-field {
+        text-align: right;
+        color: #0F172A !important;
+    }
+    .restock-input.sell-field {
+        text-align: right;
+        color: #047857 !important;
+    }
+
+    /* ── Ghost Delete Cross Button (Clearly visible, turns red on hover) ── */
+    .btn-ghost-delete {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        background: #F1F5F9;
+        border: 1px solid #CBD5E1;
+        color: #475569;
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+    .btn-ghost-delete:hover {
+        background: #FEF2F2 !important;
+        border-color: #FECACA !important;
+        color: #DC2626 !important;
+    }
+
+    /* ── Stepper Component (Responsive) ── */
+    .stepper-wrap {
+        display: inline-flex;
+        align-items: center;
         width: 100%;
+        border: 1px solid #CBD5E1;
+        border-radius: 6px;
+        background: #ffffff;
+        overflow: hidden;
         transition: border-color 0.15s, box-shadow 0.15s;
     }
-
-    .field-input:focus {
-        border-color: #5E6AD2 !important;
-        box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.18) !important;
-        outline: none !important;
+    .stepper-wrap:focus-within {
+        border-color: #6366F1 !important;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
     }
-
-    .field-input.highlight-input {
-        border-color: #5E6AD2 !important;
-        background: #F4F5FD !important;
-        font-weight: 700 !important;
-    }
-
-    .item-index-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        background: #EEF2FF;
-        color: #4F46E5;
-        font-weight: 800;
-        font-size: 13px;
-        font-family: 'JetBrains Mono', monospace;
-        border: 1px solid #C7D2FE;
-        flex-shrink: 0;
-    }
-
-    .btn-remove-item {
-        width: 36px;
-        height: 36px;
-        border: 1px solid #FEE2E2;
-        background: #FEF2F2;
-        color: #DC2626;
-        border-radius: 8px;
+    .stepper-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        transition: all 0.15s;
-        flex-shrink: 0;
-        font-size: 16px;
-        font-weight: 800;
-    }
-
-    .btn-remove-item:hover {
-        background: #DC2626;
-        color: #FFFFFF;
-        border-color: #DC2626;
-    }
-
-    /* Modern Linear QTY Stepper Widget */
-    .qty-stepper-wrap {
-        display: inline-flex;
-        align-items: center;
-        border: 1px solid #CBD5E1;
-        border-radius: 8px;
-        background: #FFFFFF;
-        overflow: hidden;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-        transition: all 0.15s ease;
-        height: 36px;
-        width: 108px;
-    }
-    .qty-stepper-wrap:focus-within {
-        border-color: #5E6AD2 !important;
-        box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.18) !important;
-    }
-    .qty-btn {
-        width: 28px;
-        height: 100%;
-        border: none;
         background: #F8FAFC;
         color: #475569;
-        font-weight: 800;
         font-size: 15px;
-        line-height: 1;
+        font-weight: 800;
+        border: none;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
         user-select: none;
-        transition: background 0.12s, color 0.12s;
+        transition: background 0.1s, color 0.1s;
+        padding: 0;
+        flex-shrink: 0;
     }
-    .qty-btn:hover {
+    .stepper-btn:hover {
         background: #EDE9FE;
-        color: #5E6AD2;
+        color: #4F46E5;
     }
-    .qty-btn:active {
-        background: #DDD6FE;
-    }
-    .qty-btn-minus {
-        border-right: 1px solid #E2E8F0;
-    }
-    .qty-btn-plus {
-        border-left: 1px solid #E2E8F0;
-    }
-    .qty-input-field {
-        width: 52px !important;
+    .stepper-btn-minus { border-right: 1px solid #E2E8F0; }
+    .stepper-btn-plus  { border-left:  1px solid #E2E8F0; }
+    .stepper-input {
+        flex: 1;
         border: none !important;
         border-radius: 0 !important;
         text-align: center !important;
+        font-family: 'JetBrains Mono', monospace !important;
         font-weight: 800 !important;
-        font-size: 13.5px !important;
-        padding: 4px 2px !important;
-        height: 100% !important;
-        box-shadow: none !important;
+        color: #111827 !important;
+        padding: 0 !important;
         background: transparent !important;
-        color: #0F172A !important;
-    }
-    .qty-input-field:focus {
-        outline: none !important;
         box-shadow: none !important;
+        min-width: 0;
     }
 
-    .gift-checkbox-wrap {
-        height: 36px;
-        display: flex;
+    /* ── Quality OG / Normal Inline Pill ── */
+    .quality-toggle-pill {
+        display: none;
         align-items: center;
-        justify-content: center;
-        gap: 6px;
-        background: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 0 10px;
+        gap: 3px;
+        padding: 2px 6px;
+        background: #FEF3C7;
+        border: 1px solid #FCD34D;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 800;
+        color: #92400E;
         cursor: pointer;
+        margin-top: 3px;
+    }
+    .quality-toggle-pill.visible {
+        display: inline-flex;
     }
 
-    .line-total-display {
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        font-weight: 900;
-        font-size: 14.5px;
-        color: #0F172A;
-        font-family: 'JetBrains Mono', monospace;
-        padding: 0 8px;
-        background: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        min-width: 110px;
+    /* ==========================================================================
+       DESKTOP VIEWPORT (>= 880px): True Aligned Tabular Grid
+       ========================================================================== */
+    @media (min-width: 880px) {
+        .batch-grid-row {
+            display: grid;
+            grid-template-columns: 140px minmax(220px, 2fr) minmax(150px, 1.2fr) 96px 105px 105px 65px 105px 36px;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .batch-table-header {
+            background: #F8FAFC;
+            border-bottom: 2px solid #E2E8F0;
+            padding: 8px 14px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .batch-item-row {
+            padding: 7px 14px;
+            background: #FFFFFF;
+            border-bottom: 1px solid #F1F5F9;
+            transition: background 0.12s ease;
+        }
+        .batch-item-row:hover {
+            background: #FBFBFE;
+        }
+        .batch-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .restock-input {
+            height: 32px !important;
+            font-size: 12px !important;
+        }
+        .stepper-wrap {
+            height: 32px;
+        }
+        .stepper-btn {
+            width: 26px;
+            height: 100%;
+        }
+        .stepper-input {
+            font-size: 12.5px !important;
+        }
+
+        /* Hide mobile card chrome on desktop */
+        .mobile-card-top,
+        .mobile-card-label,
+        .mobile-sticky-footer {
+            display: none !important;
+        }
+
+        .desktop-total-cell {
+            text-align: right;
+        }
+        .desktop-total-amt {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 800;
+            color: #0F172A;
+            line-height: 1.2;
+        }
     }
 
-    @media (max-width: 900px) {
-        .batch-line-1, .batch-line-2 {
-            flex-wrap: wrap;
+    /* ==========================================================================
+       MOBILE & TABLET VIEWPORT (< 880px): Clean Card Transformation & Sticky Dock
+       ========================================================================== */
+    @media (max-width: 879px) {
+        .batch-table-header {
+            display: none !important;
+        }
+
+        .batch-items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+            background: #F8FAFC;
+            border-radius: 8px;
+        }
+
+        .batch-item-row {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mobile-card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            border-bottom: 1px solid #F1F5F9;
+            padding-bottom: 8px;
+        }
+
+        .mobile-row-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #EEF2FF;
+            color: #4F46E5;
+            font-weight: 800;
+            font-size: 10.5px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mobile-card-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 3px;
+        }
+
+        /* 44px touch targets on mobile */
+        .restock-input {
+            height: 44px !important;
+            font-size: 13.5px !important;
+            padding: 8px 10px !important;
+            border-radius: 7px !important;
+        }
+        .stepper-wrap {
+            height: 44px;
+            border-radius: 7px;
+        }
+        .stepper-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 18px;
+        }
+        .stepper-input {
+            font-size: 14px !important;
+        }
+        .btn-ghost-delete {
+            width: 36px;
+            height: 36px;
+        }
+
+        /* Mobile metric columns */
+        .mobile-metric-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr 1fr 0.7fr;
+            gap: 8px;
+        }
+
+        .mobile-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 8px;
+            border-top: 1px dashed #E2E8F0;
+        }
+
+        .desktop-total-cell {
+            display: none !important;
+        }
+        .desktop-action-cell {
+            display: none !important;
+        }
+
+        /* Ensure bottom margin so fixed dock doesn't obscure content */
+        .restock-container {
+            padding-bottom: 96px;
+        }
+
+        /* Mobile Sticky Footer Dock */
+        .mobile-sticky-footer {
+            display: flex !important;
+            position: fixed;
+            bottom: var(--bottom-nav-height, 58px);
+            left: 0;
+            right: 0;
+            z-index: 960;
+            background: #FFFFFF;
+            border-top: 1px solid #E2E8F0;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+            padding: 10px 14px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .desktop-summary-card {
+            display: none !important;
         }
     }
 </style>
-<div style="max-width: 1380px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+
+<div class="restock-container">
 
     @if(session('success'))
         <div class="flash-success" style="border-radius:10px; padding: 12px 18px; display:flex; align-items:center; gap:10px; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; font-weight:600;">
@@ -264,67 +377,48 @@
     @endif
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- AI INVOICE SCANNER & SMART OCR DROPZONE -->
+    <!-- AI INVOICE SCANNER — COMPACT OCR TOOLBAR -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="card" style="border: 1px solid #DDD6FE; background: linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 100%);">
-        <div class="card-body" style="padding: 20px 24px;">
-            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-                <div style="display:flex; align-items:center; gap:14px;">
-                    <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #7C3AED, #5E6AD2); display:flex; align-items:center; justify-content:center; color:#fff; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);">
-                        <i data-lucide="sparkles" style="width:24px;height:24px;"></i>
-                    </div>
-                    <div>
-                        <div style="font-size:16px; font-weight:800; color:#4C1D95; letter-spacing:-0.2px;">AI Invoice Scanner & OCR Intake</div>
-                        <div style="font-size:12.5px; color:#6D28D9; margin-top:2px;">
-                            Upload wholesale paper invoice photo (PNG, JPG) to auto-extract line items, phone models, quantities, and wholesale cost rates.
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <input type="file" id="invoiceFileInput" accept="image/*" style="display:none;" onchange="handleInvoiceFile(this.files[0])">
-                    <button type="button" onclick="document.getElementById('invoiceFileInput').click()" class="btn btn-primary" style="background:#6D28D9; border-color:#6D28D9; font-weight:700;">
-                        <i data-lucide="upload" style="width:14px;height:14px;"></i> Upload Invoice Photo
-                    </button>
-                    <button type="button" onclick="loadSampleInvoiceData()" class="btn btn-outline" style="background:#fff; color:#6D28D9; border-color:#DDD6FE; font-weight:700;">
-                        <i data-lucide="wand-2" style="width:14px;height:14px; color:#7C3AED;"></i> Load Demo Wholesale Bill
-                    </button>
-                </div>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:9px 14px; background:#F5F3FF; border:1px solid #DDD6FE; border-radius:8px;">
+        <i data-lucide="sparkles" style="width:15px;height:15px; color:#7C3AED; flex-shrink:0;"></i>
+        <span style="font-size:12px; font-weight:700; color:#4C1D95; flex:1; min-width:160px;">AI Invoice OCR &mdash; Scan wholesale vendor paper invoice to auto-fill items</span>
+        <input type="file" id="invoiceFileInput" accept="image/*" style="display:none;" onchange="handleInvoiceFile(this.files[0])">
+        <button type="button" onclick="document.getElementById('invoiceFileInput').click()" class="btn btn-sm" style="background:#6D28D9; color:#fff; border:none; font-weight:700; padding:5px 12px; border-radius:6px; font-size:11.5px; display:inline-flex; align-items:center; gap:5px;">
+            <i data-lucide="camera" style="width:13px;height:13px;"></i> Scan Bill
+        </button>
+        <button type="button" onclick="loadSampleInvoiceData()" class="btn btn-sm btn-outline" style="font-weight:700; font-size:11.5px; padding:5px 10px; border-radius:6px; color:#6D28D9; border-color:#DDD6FE;">
+            Demo Data
+        </button>
+        <!-- Inline OCR Progress -->
+        <div id="ocrProgressBox" style="display:none; width:100%; margin-top:6px;">
+            <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:#5B21B6; margin-bottom:3px;">
+                <span id="ocrStatusText">🔍 OCR running...</span>
+                <span id="ocrPercentText" style="font-family:monospace;">0%</span>
             </div>
-
-            <!-- OCR Progress Bar -->
-            <div id="ocrProgressBox" style="display:none; margin-top:16px; background:#fff; padding:14px 18px; border-radius:10px; border:1px solid #DDD6FE; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-                <div style="display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:#5B21B6; margin-bottom:8px;">
-                    <span id="ocrStatusText">🔍 Neural OCR worker initializing...</span>
-                    <span id="ocrPercentText" style="font-family:monospace;">0%</span>
-                </div>
-                <div style="width:100%; height:8px; background:#EDE9FE; border-radius:4px; overflow:hidden;">
-                    <div id="ocrProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #7C3AED, #5E6AD2); transition: width 0.25s ease;"></div>
-                </div>
+            <div style="width:100%; height:4px; background:#EDE9FE; border-radius:4px; overflow:hidden;">
+                <div id="ocrProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg,#7C3AED,#5E6AD2); transition:width 0.25s ease;"></div>
             </div>
         </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- BATCH RESTOCK FORM & LINE ITEMS TABLE -->
+    <!-- BATCH RESTOCK FORM -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <form action="{{ route('mobileshop.accessories.bulk_restock') }}" method="POST" id="bulkRestockForm" onsubmit="if(typeof MT !== 'undefined'){ MT.enqueue('create', 'ms_parts_inventory_history', {source:'bulkRestockForm', action:'bulkRestock'}); } return validateAndSubmitBulkRestock(this);">
         @csrf
 
-        <!-- ─── SUPPLIER & INVOICE DETAILS CARD ─── -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 16px 20px;">
-                <div>
-                    <div class="card-title" style="display:flex; align-items:center; gap:8px;">
-                        <i data-lucide="truck" style="width:16px;height:16px; color:var(--color-primary);"></i> Supplier & Shipment Metadata
-                    </div>
+        <!-- ─── SUPPLIER & SHIPMENT METADATA CARD ─── -->
+        <div class="card" style="margin-bottom: 12px; border-radius:8px; border:1px solid #E2E8F0; background:#FFFFFF;">
+            <div class="card-header" style="border-bottom: 1px solid #E2E8F0; padding: 7px 12px; background:#FAFAFA;">
+                <div class="card-title" style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#1E293B;">
+                    <i data-lucide="truck" style="width:14px;height:14px; color:var(--color-primary);"></i> Supplier & Shipment Details
                 </div>
             </div>
-            <div class="card-body" style="padding: 20px;">
-                <div class="form-row" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px;">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label" style="font-weight:700;">Supplier / Distributor Name <span style="color:#EF4444;">*</span></label>
-                        <input type="text" name="supplier_name" id="bulkSupplierName" list="suppliersList" placeholder="e.g. Metro Mobile Wholesale" class="form-control" style="font-weight:700;" required>
+            <div class="card-body" style="padding: 10px 12px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
+                    <div>
+                        <label class="mobile-card-label" style="display:block;">Supplier / Distributor <span style="color:#EF4444;">*</span></label>
+                        <input type="text" name="supplier_name" id="bulkSupplierName" list="suppliersList" placeholder="e.g. Metro Mobile Wholesale" class="restock-input" required>
                         <datalist id="suppliersList">
                             @if(isset($suppliers))
                                 @foreach($suppliers as $s)
@@ -334,54 +428,65 @@
                         </datalist>
                     </div>
 
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label" style="font-weight:700;">Supplier Invoice / PO Reference #</label>
-                        <input type="text" name="invoice_no" id="bulkInvoiceNo" placeholder="e.g. INV-98421" class="form-control" style="font-family:monospace; font-weight:700;">
+                    <div>
+                        <label class="mobile-card-label" style="display:block;">Invoice / PO #</label>
+                        <input type="text" name="invoice_no" id="bulkInvoiceNo" placeholder="e.g. INV-98421" class="restock-input num-field">
                     </div>
 
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label" style="font-weight:700;">Bill Type <span style="color:#EF4444;">*</span></label>
-                        <select name="bill_type" required class="form-control" style="font-weight:700;">
-                            <option value="gst">📜 Formal GST Tax Invoice (18% incl.)</option>
-                            <option value="non_gst">📄 Estimate / Wholesale Cash Slip (0% Tax)</option>
+                    <div>
+                        <label class="mobile-card-label" style="display:block;">Bill Type <span style="color:#EF4444;">*</span></label>
+                        <select name="bill_type" required class="restock-input">
+                            <option value="gst">📜 GST Tax Invoice (18% incl.)</option>
+                            <option value="non_gst">📄 Estimate / Cash Slip (0% Tax)</option>
                         </select>
                     </div>
 
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label" style="font-weight:700;">Intake Date</label>
-                        <input type="date" name="order_date" class="form-control" value="{{ now()->toDateString() }}" style="font-weight:600;">
+                    <div>
+                        <label class="mobile-card-label" style="display:block;">Intake Date</label>
+                        <input type="date" name="order_date" class="restock-input" value="{{ now()->toDateString() }}">
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ─── BATCH LINE ITEMS TABLE CARD ─── -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-bottom:1px solid var(--border-color); padding: 14px 20px; background:#FAFAFA;">
-                <div>
-                    <div class="card-title" style="display:flex; align-items:center; gap:8px;">
-                        <i data-lucide="layers" style="width:16px;height:16px; color:var(--color-primary);"></i> Batch Restock Items (<span id="bulkRowCount">0</span>)
-                    </div>
+        <!-- ─── BATCH ITEMS CARD ─── -->
+        <div class="card" style="border-radius:8px; border:1px solid #E2E8F0; background:#FFFFFF; overflow:hidden; margin-bottom:12px;">
+            <!-- Header Toolbar -->
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border-bottom:1px solid #E2E8F0; padding:8px 14px; background:#FAFAFA;">
+                <div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#1E293B;">
+                    <i data-lucide="layers" style="width:14px;height:14px; color:var(--color-primary);"></i>
+                    Batch Items &mdash; <span id="bulkRowCount" style="color:var(--color-primary); font-weight:800;">0</span> rows
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <button type="button" onclick="addBulkRow()" class="btn btn-outline btn-sm" style="font-weight:700;">
-                        <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Row
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <button type="button" onclick="addBulkRow()" class="btn btn-primary btn-sm" style="font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:6px;">
+                        <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Row
                     </button>
-                    <button type="button" onclick="addMultipleRows(5)" class="btn btn-outline btn-sm" style="font-weight:700;">
-                        <i data-lucide="copy-plus" style="width:13px;height:13px;"></i> +5 Rows
+                    <button type="button" onclick="addMultipleRows(5)" class="btn btn-outline btn-sm" style="font-weight:700; font-size:11.5px; padding:4px 9px; border-radius:6px;">
+                        +5 Rows
                     </button>
-                    <button type="button" onclick="clearAllRows()" class="btn btn-outline btn-sm" style="color:#DC2626; border-color:#FECACA; font-weight:700;">
-                        <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Clear All
+                    <button type="button" onclick="clearAllRows()" class="btn btn-outline btn-sm" style="color:#DC2626; border-color:#FECACA; font-weight:700; font-size:11.5px; padding:4px 9px; border-radius:6px;">
+                        <i data-lucide="trash-2" style="width:12px;height:12px;"></i> Clear
                     </button>
                 </div>
             </div>
 
-            <!-- Brand & Model Autocomplete Datalists -->
+            <!-- 1. DESKTOP ALIGNED TABLE HEADER -->
+            <div class="batch-table-header batch-grid-row" id="batchTableHeader">
+                <div>Category <span style="color:#EF4444;">*</span></div>
+                <div>Item Name & Model <span style="color:#EF4444;">*</span></div>
+                <div>Description / Specs</div>
+                <div style="text-align:center;">Qty <span style="color:#EF4444;">*</span></div>
+                <div style="text-align:right;">Cost ₹ <span style="color:#EF4444;">*</span></div>
+                <div style="text-align:right;">Sell ₹ <span style="color:#EF4444;">*</span></div>
+                <div style="text-align:center;">Alert</div>
+                <div style="text-align:right;">Total</div>
+                <div style="text-align:center;">Action</div>
+            </div>
+
+            <!-- Autocomplete datalists -->
             <datalist id="bulkBrandsDatalist">
                 @if(isset($knownBrands))
-                    @foreach($knownBrands as $b)
-                        <option value="{{ $b }}">{{ $b }}</option>
-                    @endforeach
+                    @foreach($knownBrands as $b)<option value="{{ $b }}">{{ $b }}</option>@endforeach
                 @endif
                 <option value="Samsung">Samsung</option>
                 <option value="Apple">Apple / iPhone</option>
@@ -394,50 +499,59 @@
                 <option value="Google">Google Pixel</option>
                 <option value="Universal">Universal / All Brands</option>
             </datalist>
-
             <datalist id="bulkModelsDatalist">
                 @if(isset($knownModels))
-                    @foreach($knownModels as $m)
-                        <option value="{{ $m }}">{{ $m }}</option>
-                    @endforeach
+                    @foreach($knownModels as $m)<option value="{{ $m }}">{{ $m }}</option>@endforeach
                 @endif
                 <option value="Universal">Universal / All Models</option>
             </datalist>
 
-            <!-- 2-Line Items List (Zero Horizontal Scrolling) -->
+            <!-- 2. BATCH ROWS CONTAINER -->
             <div id="bulkTableBody" class="batch-items-container">
-                <!-- Dynamic 2-line item cards inserted here -->
+                <!-- Rows injected dynamically by JS -->
             </div>
         </div>
 
-        <!-- ─── SUMMARY BAR & SUBMIT DOCK ─── -->
-        <div class="card" style="border: 1px solid var(--border-color); background: #FFFFFF; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
-            <div class="card-body" style="padding: 18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-                <div style="display:flex; align-items:center; gap:28px; flex-wrap:wrap;">
+        <!-- ─── DESKTOP SUMMARY STAT STRIP ─── -->
+        <div class="card desktop-summary-card" style="border:1px solid #E2E8F0; background:#FFFFFF; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.03); margin-bottom:20px;">
+            <div class="card-body" style="padding:10px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
                     <div>
-                        <span style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Total Line Items</span>
-                        <div style="font-size:18px; font-weight:900; color:#0F172A;" id="lblBulkLineCount">0 lines</div>
+                        <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Items</span>
+                        <div style="font-size:15px; font-weight:800; color:#0F172A;" id="lblBulkLineCount">0 lines</div>
                     </div>
-                    <div style="border-left:1px solid #E2E8F0; padding-left:28px;">
-                        <span style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Total Units Restocked</span>
-                        <div style="font-size:18px; font-weight:900; color:#0F172A;" id="lblBulkTotalUnits">0 units</div>
+                    <div style="border-left:1px solid #E2E8F0; padding-left:24px;">
+                        <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Units</span>
+                        <div style="font-size:15px; font-weight:800; color:#0F172A;" id="lblBulkTotalUnits">0 units</div>
                     </div>
-                    <div style="border-left:1px solid #E2E8F0; padding-left:28px;">
-                        <span style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Shipment Investment Value</span>
-                        <div style="font-size:22px; font-weight:900; color:#5E6AD2; font-family:'JetBrains Mono', monospace;" id="lblBulkTotalCost">₹0.00</div>
+                    <div style="border-left:1px solid #E2E8F0; padding-left:24px;">
+                        <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Total Cost</span>
+                        <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace;" id="lblBulkTotalCost">₹0.00</div>
                     </div>
                 </div>
 
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline" style="font-weight:700; padding:10px 18px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline btn-sm" style="font-weight:700; padding:6px 14px; border-radius:6px; font-size:12px;">
                         Cancel
                     </a>
-                    <button type="submit" class="btn btn-primary" id="btnSubmitBulkRestock" style="background:#5E6AD2; border-color:#5E6AD2; font-weight:800; padding:10px 24px; font-size:14px; box-shadow:0 4px 12px rgba(94, 106, 210, 0.35);">
-                        <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Submit Batch Restock
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitBulkRestock" style="background:#5E6AD2; border-color:#5E6AD2; font-weight:800; padding:7px 18px; font-size:12px; border-radius:6px; box-shadow:0 2px 6px rgba(94, 106, 210, 0.3);">
+                        <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Save Batch Restock
                     </button>
                 </div>
             </div>
         </div>
+
+        <!-- ─── MOBILE STICKY BOTTOM DOCK ─── -->
+        <div class="mobile-sticky-footer" id="mobileStickyFooter" style="display:none;">
+            <div>
+                <div style="font-size:9.5px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px;" id="mobileStickyCount">0 ITEMS &bull; 0 UNITS</div>
+                <div style="font-size:17px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickyTotal">₹0.00</div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btnMobileSubmitRestock" style="height:44px; padding:0 20px; font-size:13.5px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35);">
+                <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Save Restock
+            </button>
+        </div>
+
     </form>
 
 </div>
@@ -445,6 +559,7 @@
 
 @push('scripts')
 <script>
+    /* ── HTML Sanitizer ── */
     function escapeHtml(str) {
         if (!str && str !== 0) return '';
         return String(str)
@@ -455,6 +570,12 @@
             .replace(/'/g, '&#039;');
     }
     window.escapeHtml = escapeHtml;
+
+    /* ── Local Currency Formatter (₹9,585.00) ── */
+    function formatCurrency(num) {
+        const val = parseFloat(num) || 0;
+        return '₹' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
     const rawCatalogParts = {!! json_encode($parts ?? []) !!};
     const catalogParts = Array.isArray(rawCatalogParts) ? rawCatalogParts : Object.values(rawCatalogParts || {});
@@ -476,6 +597,21 @@
 
     let bulkRowIndex = 0;
 
+    // Auto-detect brand from item name text
+    function guessBrand(name) {
+        const n = (name || '').toLowerCase();
+        if (/iphone|apple/.test(n))                  return 'Apple';
+        if (/galaxy|samsung|s\d{2}\b|\ba\d{2}/.test(n)) return 'Samsung';
+        if (/redmi|poco|xiaomi|\bnote\s*\d/.test(n)) return 'Xiaomi';
+        if (/vivo|iqoo/.test(n))                     return 'Vivo';
+        if (/oppo|reno/.test(n))                     return 'Oppo';
+        if (/realme|narzo/.test(n))                  return 'Realme';
+        if (/oneplus/.test(n))                       return 'OnePlus';
+        if (/moto|motorola/.test(n))                 return 'Motorola';
+        if (/pixel|google/.test(n))                  return 'Google';
+        return 'Universal';
+    }
+
     function addBulkRow(itemData = null) {
         try {
             bulkRowIndex++;
@@ -483,9 +619,9 @@
             const container = document.getElementById('bulkTableBody');
             if (!container) return;
 
-            const card = document.createElement('div');
-            card.className = 'batch-item-card';
-            card.id = `bulk-row-${idx}`;
+            const row = document.createElement('div');
+            row.className = 'batch-item-row batch-grid-row';
+            row.id = `bulk-row-${idx}`;
 
             let catOptions = '';
             const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
@@ -519,112 +655,154 @@
             const costVal = itemData?.unit_cost ? parseFloat(itemData.unit_cost).toFixed(2) : '0.00';
             const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2);
             const isGiftChecked = (itemData?.is_gift_eligible || itemData?.category === 'tempered_glass') ? 'checked' : '';
-            const lineTotal = (qtyVal * parseFloat(costVal)).toFixed(2);
+            const lineTotal = (qtyVal * parseFloat(costVal));
+            const detectedBrand = guessBrand(nameVal || '') || brandVal;
+            const isFolder = itemData?.category === 'display_folder';
 
-            card.innerHTML = `
-                <!-- LINE 1: Core Item & Compatibility -->
-                <div class="batch-line-1">
-                    <div class="field-col" style="flex-shrink:0;">
-                        <label class="field-label" style="visibility:hidden;">#</label>
-                        <span class="item-index-badge">#${idx}</span>
+            row.innerHTML = `
+                <!-- Hidden form fields -->
+                <input type="hidden" name="items[${idx}][part_id]" id="partId_${idx}" value="${itemData?.part_id || ''}">
+                <input type="hidden" name="items[${idx}][brand]"   id="brand_${idx}" value="${escapeHtml(detectedBrand)}">
+                <input type="hidden" name="items[${idx}][compatible_model]" id="model_${idx}" value="${modelVal}">
+                <input type="hidden" name="items[${idx}][is_gift_eligible]" id="gift_${idx}" value="${isGiftChecked ? '1' : '0'}">
+                <input type="hidden" name="items[${idx}][display_type]" id="displayTypeVal_${idx}" value="${folderType}">
+
+                <!-- MOBILE CARD TOP BAR -->
+                <div class="mobile-card-top">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="mobile-row-badge">#${idx}</span>
+                        <span style="font-size:11px; font-weight:700; color:#64748B;" id="mobileCardCatLabel_${idx}">Category</span>
                     </div>
+                    <button type="button" class="btn-ghost-delete" onclick="removeBulkRow(${idx})" title="Remove item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
 
-                    <div class="field-col" style="flex: 3; min-width: 200px;">
-                        <label class="field-label">Item / Part Name <span class="req">*</span></label>
-                        <input type="text" name="items[${idx}][name]" value="${nameVal}" list="partList_${idx}" placeholder="e.g. Display Folder / 9D Tempered Glass" required class="form-control field-input" style="font-weight:700;" oninput="onBulkPartNameInput(${idx}, this.value)">
-                        <datalist id="partList_${idx}">
-                            ${partDatalist}
-                        </datalist>
-                        <input type="hidden" name="items[${idx}][part_id]" id="partId_${idx}" value="${itemData?.part_id || ''}">
-                    </div>
+                <!-- 1. CATEGORY -->
+                <div>
+                    <label class="mobile-card-label">Category</label>
+                    <select name="items[${idx}][category]" id="catSelect_${idx}"
+                        class="restock-input cat-select"
+                        onchange="onBulkCategoryChange(${idx}, this.value)">
+                        ${catOptions}
+                    </select>
+                </div>
 
-                    <div class="field-col" style="flex: 2; min-width: 145px;">
-                        <label class="field-label">Category</label>
-                        <select name="items[${idx}][category]" id="catSelect_${idx}" class="form-control field-input" style="font-weight:600;">
-                            ${catOptions}
-                        </select>
-                    </div>
+                <!-- 2. ITEM NAME & MODEL -->
+                <div>
+                    <label class="mobile-card-label">Item Name & Model</label>
+                    <input type="text" name="items[${idx}][name]" id="name_${idx}"
+                        value="${nameVal}" list="partList_${idx}"
+                        placeholder="e.g. 9D Glass iPhone 15 Pro / OLED Folder Galaxy A14"
+                        required class="restock-input"
+                        oninput="onBulkPartNameInput(${idx}, this.value)">
+                    <datalist id="partList_${idx}">${partDatalist}</datalist>
 
-                    <div class="field-col" style="flex: 1.8; min-width: 125px;">
-                        <label class="field-label">Fits Brand</label>
-                        <input type="text" name="items[${idx}][brand]" id="brand_${idx}" value="${brandVal}" list="bulkBrandsDatalist" placeholder="e.g. Samsung / Apple" class="form-control field-input" style="font-weight:600;">
-                    </div>
-
-                    <div class="field-col" style="flex: 2; min-width: 140px;">
-                        <label class="field-label highlight-label">Fits Model <span class="req">*</span></label>
-                        <input type="text" name="items[${idx}][compatible_model]" id="model_${idx}" value="${modelVal}" list="bulkModelsDatalist" placeholder="e.g. Galaxy A14 / iPhone 15" class="form-control field-input highlight-input" title="Compatible Phone Model (e.g. Galaxy S23, iPhone 14, or Universal)">
-                    </div>
-
-                    <div class="field-col" style="width: 95px; flex-shrink: 0;">
-                        <label class="field-label">Quality</label>
-                        <select name="items[${idx}][display_type]" id="displayType_${idx}" class="form-control field-input" style="font-weight:700;">
-                            <option value="Normal" ${folderType === 'Normal' ? 'selected' : ''}>Normal</option>
-                            <option value="OG" ${folderType === 'OG' ? 'selected' : ''}>OG</option>
-                        </select>
-                    </div>
-
-                    <div class="field-col" style="flex-shrink:0;">
-                        <label class="field-label" style="visibility:hidden;">✕</label>
-                        <button type="button" class="btn-remove-item" onclick="removeBulkRow(${idx})" title="Remove Item">✕</button>
+                    <!-- OG / Normal folder quality switch pill -->
+                    <div class="quality-toggle-pill ${isFolder ? 'visible' : ''}" id="qualityToggle_${idx}" onclick="toggleFolderQuality(${idx})">
+                        <span>Quality:</span> <strong id="qualityLabel_${idx}">${folderType} ✨</strong>
                     </div>
                 </div>
 
-                <!-- LINE 2: Specs, Quantity, Cost, Price, Gift, Subtotal -->
-                <div class="batch-line-2">
-                    <div class="field-col" style="flex: 3; min-width: 200px;">
-                        <label class="field-label">Description / Specs / Color</label>
-                        <input type="text" name="items[${idx}][description]" id="desc_${idx}" value="${descVal}" placeholder="e.g. Matte finish, oleophobic, 120Hz, etc." class="form-control field-input" style="font-size:12px;">
-                    </div>
+                <!-- 3. DESCRIPTION / SPECS -->
+                <div>
+                    <label class="mobile-card-label">Description / Specs</label>
+                    <input type="text" name="items[${idx}][description]" id="desc_${idx}"
+                        value="${descVal}" placeholder="e.g. Matte, 120Hz, Black"
+                        class="restock-input">
+                </div>
 
-                    <div class="field-col" style="width: 108px; flex-shrink: 0;">
-                        <label class="field-label">Quantity <span class="req">*</span></label>
-                        <div class="qty-stepper-wrap">
-                            <button type="button" tabindex="-1" class="qty-btn qty-btn-minus" onclick="adjustBulkQty(${idx}, -1)" title="Decrease quantity">−</button>
-                            <input type="number" name="items[${idx}][qty]" id="qty_${idx}" value="${qtyVal}" min="1" required class="form-control bulk-num-input qty-input-field" oninput="updateBulkRowTotal(${idx})">
-                            <button type="button" tabindex="-1" class="qty-btn qty-btn-plus" onclick="adjustBulkQty(${idx}, 1)" title="Increase quantity">+</button>
+                <!-- 4. MOBILE METRIC GRID (Transforms to tabular columns on desktop) -->
+                <div class="mobile-metric-grid" style="display:contents;">
+                    <!-- Qty Stepper -->
+                    <div>
+                        <label class="mobile-card-label">Qty</label>
+                        <div class="stepper-wrap">
+                            <button type="button" tabindex="-1" class="stepper-btn stepper-btn-minus" onclick="adjustBulkQty(${idx}, -1)">−</button>
+                            <input type="number" name="items[${idx}][qty]" id="qty_${idx}"
+                                value="${qtyVal}" min="1" required
+                                class="bulk-num-input stepper-input"
+                                oninput="updateBulkRowTotal(${idx})">
+                            <button type="button" tabindex="-1" class="stepper-btn stepper-btn-plus" onclick="adjustBulkQty(${idx}, 1)">+</button>
                         </div>
                     </div>
 
-                    <div class="field-col" style="width: 75px; flex-shrink: 0;">
-                        <label class="field-label" style="text-align:center;">Low Alert</label>
-                        <input type="number" name="items[${idx}][min_stock_alert]" id="alert_${idx}" value="${alertVal}" min="0" placeholder="3" class="form-control bulk-num-input field-input" style="text-align:center; font-weight:700; font-size:12px; padding:6px 4px;" title="Low stock threshold alert">
+                    <!-- Cost ₹ -->
+                    <div>
+                        <label class="mobile-card-label">Cost ₹</label>
+                        <input type="number" step="0.01" name="items[${idx}][unit_cost]" id="cost_${idx}"
+                            value="${costVal}" min="0" required
+                            class="bulk-num-input restock-input num-field cost-field"
+                            oninput="updateBulkRowTotal(${idx})">
                     </div>
 
-                    <div class="field-col" style="width: 110px; flex-shrink: 0;">
-                        <label class="field-label" style="text-align:right;">Cost (₹) <span class="req">*</span></label>
-                        <input type="number" step="0.01" name="items[${idx}][unit_cost]" id="cost_${idx}" value="${costVal}" min="0" required class="form-control bulk-num-input field-input" style="text-align:right; font-weight:700; font-size:13px;" oninput="updateBulkRowTotal(${idx})">
+                    <!-- Sell ₹ -->
+                    <div>
+                        <label class="mobile-card-label">Sell ₹</label>
+                        <input type="number" step="0.01" name="items[${idx}][selling_price]" id="price_${idx}"
+                            value="${priceVal}" min="0" required
+                            class="bulk-num-input restock-input num-field sell-field"
+                            oninput="updateBulkRowTotal(${idx})">
                     </div>
 
-                    <div class="field-col" style="width: 110px; flex-shrink: 0;">
-                        <label class="field-label" style="text-align:right;">Sell (₹)</label>
-                        <input type="number" step="0.01" name="items[${idx}][selling_price]" id="price_${idx}" value="${priceVal}" min="0" class="form-control bulk-num-input field-input" style="text-align:right; font-weight:700; font-size:13px; color:#16A34A;">
+                    <!-- Alert -->
+                    <div>
+                        <label class="mobile-card-label">Alert</label>
+                        <input type="number" name="items[${idx}][min_stock_alert]" id="alert_${idx}"
+                            value="${alertVal}" min="0" placeholder="3"
+                            class="bulk-num-input restock-input num-field" style="text-align:center;"
+                            title="Low stock threshold">
                     </div>
+                </div>
 
-                    <div class="field-col" style="width: 85px; flex-shrink: 0;">
-                        <label class="field-label" style="text-align:center;">🎁 Gift</label>
-                        <div class="gift-checkbox-wrap">
-                            <input type="checkbox" name="items[${idx}][is_gift_eligible]" value="1" ${isGiftChecked} id="gift_${idx}" style="width:16px; height:16px; accent-color:#5E6AD2; cursor:pointer;">
-                            <label for="gift_${idx}" style="font-size:11px; font-weight:700; color:#475569; cursor:pointer;">Eligible</label>
-                        </div>
-                    </div>
+                <!-- 5. DESKTOP TOTAL CELL -->
+                <div class="desktop-total-cell">
+                    <div class="desktop-total-amt" id="lineTotal_${idx}">${formatCurrency(lineTotal)}</div>
+                </div>
 
-                    <div class="field-col" style="width: 120px; flex-shrink: 0;">
-                        <label class="field-label" style="text-align:right;">Line Total</label>
-                        <div class="line-total-display" id="lineTotal_${idx}">
-                            ₹${lineTotal}
-                        </div>
-                    </div>
+                <!-- 6. DESKTOP GHOST DELETE BUTTON -->
+                <div class="desktop-action-cell" style="text-align:center;">
+                    <button type="button" class="btn-ghost-delete" onclick="removeBulkRow(${idx})" title="Remove item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- 7. MOBILE CARD FOOTER -->
+                <div class="mobile-card-footer">
+                    <span style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Line Total</span>
+                    <strong style="font-size:14px; font-family:'JetBrains Mono', monospace; font-weight:800; color:#0F172A;" id="mobileLineTotal_${idx}">${formatCurrency(lineTotal)}</strong>
                 </div>
             `;
 
-            container.appendChild(card);
+            container.appendChild(row);
             updateBulkSummary();
+
             try {
                 if (window.refreshIcons) window.refreshIcons();
                 else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             } catch (e) { /* noop */ }
         } catch (err) {
             console.error('addBulkRow failed:', err);
+        }
+    }
+
+    function toggleFolderQuality(idx) {
+        const valInput = document.getElementById(`displayTypeVal_${idx}`);
+        const labelEl = document.getElementById(`qualityLabel_${idx}`);
+        if (!valInput || !labelEl) return;
+
+        if (valInput.value === 'OG') {
+            valInput.value = 'Normal';
+            labelEl.textContent = 'Normal';
+        } else {
+            valInput.value = 'OG';
+            labelEl.textContent = 'OG ✨';
         }
     }
 
@@ -651,15 +829,68 @@
         }
     }
 
+    function onBulkCategoryChange(idx, val) {
+        // Show/hide OG/Normal pill switch only for display_folder
+        const qualityToggle = document.getElementById(`qualityToggle_${idx}`);
+        if (qualityToggle) {
+            if (val === 'display_folder') {
+                qualityToggle.classList.add('visible');
+            } else {
+                qualityToggle.classList.remove('visible');
+            }
+        }
+
+        // Auto-set gift eligible hidden field based on category
+        const giftEl = document.getElementById(`gift_${idx}`);
+        if (giftEl) {
+            const isGift = (val === 'tempered_glass' || val === 'back_cover_case' || val === 'general_accessory');
+            giftEl.value = isGift ? '1' : '0';
+        }
+
+        // Update mobile category badge
+        const catSelect = document.getElementById(`catSelect_${idx}`);
+        const mobileBadge = document.getElementById(`mobileCardCatLabel_${idx}`);
+        if (catSelect && mobileBadge && catSelect.selectedOptions[0]) {
+            mobileBadge.textContent = catSelect.selectedOptions[0].text;
+        }
+
+        // Filter part autocomplete
+        const dl = document.getElementById(`partList_${idx}`);
+        if (dl) {
+            const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
+            const filtered = val ? parts.filter(p => p && p.category === val) : parts;
+            let opts = '';
+            filtered.forEach(p => {
+                if (!p) return;
+                const pName = p.name || '';
+                const pCat = p.category || '';
+                const pCost = p.unit_cost || 0;
+                const pPrice = p.selling_price || 0;
+                const pQty = p.stock_qty || 0;
+                opts += `<option value="${escapeHtml(pName)}" data-id="${p.id || ''}" data-category="${escapeHtml(pCat)}" data-brand="${escapeHtml(p.brand || '')}" data-model="${escapeHtml(p.compatible_model || '')}" data-cost="${pCost}" data-price="${pPrice}">${escapeHtml(pName)} (Stock: ${pQty})</option>`;
+            });
+            dl.innerHTML = opts;
+        }
+    }
+
     function onBulkPartNameInput(idx, val) {
         const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
         const match = parts.find(p => p && p.name && p.name.toLowerCase() === val.toLowerCase().trim());
         if (match) {
             document.getElementById(`partId_${idx}`).value = match.id;
-            if (match.category) document.getElementById(`catSelect_${idx}`).value = match.category;
+            if (match.category) {
+                document.getElementById(`catSelect_${idx}`).value = match.category;
+                onBulkCategoryChange(idx, match.category);
+            }
+            const detectedB = guessBrand(val);
             if (match.brand) document.getElementById(`brand_${idx}`).value = match.brand;
+            else document.getElementById(`brand_${idx}`).value = detectedB;
             if (match.compatible_model) document.getElementById(`model_${idx}`).value = match.compatible_model;
-            if (match.display_type) document.getElementById(`displayType_${idx}`).value = match.display_type;
+            if (match.display_type) {
+                document.getElementById(`displayTypeVal_${idx}`).value = match.display_type;
+                const qLbl = document.getElementById(`qualityLabel_${idx}`);
+                if (qLbl) qLbl.textContent = match.display_type === 'OG' ? 'OG ✨' : 'Normal';
+            }
             if (match.description) document.getElementById(`desc_${idx}`).value = match.description;
             if (match.min_stock_alert !== undefined && match.min_stock_alert !== null) document.getElementById(`alert_${idx}`).value = match.min_stock_alert;
             if (match.unit_cost) document.getElementById(`cost_${idx}`).value = parseFloat(match.unit_cost).toFixed(2);
@@ -667,22 +898,23 @@
             updateBulkRowTotal(idx);
         } else {
             document.getElementById(`partId_${idx}`).value = '';
+            const b = guessBrand(val);
+            const bEl = document.getElementById(`brand_${idx}`);
+            if (bEl && b !== 'Universal') bEl.value = b;
         }
     }
 
     function updateBulkRowTotal(idx) {
         const qty = parseInt(document.getElementById(`qty_${idx}`)?.value || 0);
         const cost = parseFloat(document.getElementById(`cost_${idx}`)?.value || 0);
+        const sell = parseFloat(document.getElementById(`price_${idx}`)?.value || 0);
         const total = qty * cost;
-        const lineTotalEl = document.getElementById(`lineTotal_${idx}`);
-        if (lineTotalEl) {
-            lineTotalEl.textContent = '₹' + total.toFixed(2);
-        }
 
-        const priceEl = document.getElementById(`price_${idx}`);
-        if (priceEl && (parseFloat(priceEl.value) === 0 || isNaN(parseFloat(priceEl.value)))) {
-            priceEl.value = (cost * 1.5).toFixed(2);
-        }
+        const lineTotalEl = document.getElementById(`lineTotal_${idx}`);
+        if (lineTotalEl) lineTotalEl.textContent = formatCurrency(total);
+
+        const mobileLineTotalEl = document.getElementById(`mobileLineTotal_${idx}`);
+        if (mobileLineTotalEl) mobileLineTotalEl.textContent = formatCurrency(total);
 
         updateBulkSummary();
     }
@@ -699,7 +931,7 @@
     window.adjustBulkQty = adjustBulkQty;
 
     function updateBulkSummary() {
-        const rows = document.querySelectorAll('#bulkTableBody .batch-item-card, #bulkTableBody tr');
+        const rows = document.querySelectorAll('#bulkTableBody .batch-item-row');
         let totalUnits = 0;
         let totalCost = 0.0;
 
@@ -714,6 +946,8 @@
             }
         });
 
+        const formattedCost = formatCurrency(totalCost);
+
         const rowCountEl = document.getElementById('bulkRowCount');
         if (rowCountEl) rowCountEl.textContent = rows.length;
 
@@ -724,11 +958,18 @@
         if (totalUnitsEl) totalUnitsEl.textContent = `${totalUnits} units`;
 
         const totalCostEl = document.getElementById('lblBulkTotalCost');
-        if (totalCostEl) totalCostEl.textContent = '₹' + totalCost.toFixed(2);
+        if (totalCostEl) totalCostEl.textContent = formattedCost;
+
+        // Mobile Sticky Dock elements
+        const mobileTotalEl = document.getElementById('mobileStickyTotal');
+        if (mobileTotalEl) mobileTotalEl.textContent = formattedCost;
+
+        const mobileCountEl = document.getElementById('mobileStickyCount');
+        if (mobileCountEl) mobileCountEl.textContent = `${rows.length} ITEMS • ${totalUnits} UNITS`;
     }
 
     function validateAndSubmitBulkRestock(form) {
-        const rows = document.querySelectorAll('#bulkTableBody .batch-item-card, #bulkTableBody tr');
+        const rows = document.querySelectorAll('#bulkTableBody .batch-item-row');
         if (rows.length === 0) {
             alert('Please add at least 1 item to the batch restock.');
             return false;
@@ -753,6 +994,11 @@
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = '<i data-lucide="loader-2" style="width:16px;height:16px;" class="spin"></i> Processing Batch Restock...';
+        }
+        const mobBtn = document.getElementById('btnMobileSubmitRestock');
+        if (mobBtn) {
+            mobBtn.disabled = true;
+            mobBtn.innerHTML = '<i data-lucide="loader-2" style="width:16px;height:16px;" class="spin"></i> Processing...';
         }
         return true;
     }
@@ -922,7 +1168,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize 3 starter rows if table is empty
         const tbody = document.getElementById('bulkTableBody');
-        if (tbody && tbody.querySelectorAll('.batch-item-card, tr').length === 0) {
+        if (tbody && tbody.querySelectorAll('.batch-item-row').length === 0) {
             addBulkRow();
             addBulkRow();
             addBulkRow();

@@ -64,7 +64,7 @@
     /* Sizing */
     --topbar-height: 46px;
     --sidebar-width: 210px;
-    --bottom-nav-height: 50px;
+    --bottom-nav-height: 58px;
 
     /* Fonts */
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -461,7 +461,7 @@ a:hover {
 
 .btn-primary {
     background: var(--color-primary);
-    color: #ffffff !important;
+    color: #ffffff;
     border-color: transparent;
 }
 .btn-primary:hover {
@@ -475,7 +475,7 @@ a:hover {
 .btn-outline, .btn-secondary {
     background: var(--color-canvas);
     border-color: var(--color-hairline);
-    color: var(--color-ink) !important;
+    color: var(--color-ink);
 }
 .btn-outline:hover, .btn-secondary:hover {
     background: var(--color-surface-1);
@@ -485,7 +485,7 @@ a:hover {
 .btn-outline-danger {
     background: var(--color-canvas);
     border-color: var(--color-danger-border);
-    color: var(--color-danger) !important;
+    color: var(--color-danger);
 }
 .btn-outline-danger:hover {
     background: var(--color-danger-light);
@@ -723,9 +723,10 @@ textarea {
     padding: 5px 9px;
     font-size: 13px;
     font-family: inherit;
-    color: var(--color-ink);
-    background: var(--color-canvas);
-    border: 1px solid var(--color-hairline);
+    font-weight: 600;
+    color: #111827;
+    background: #ffffff;
+    border: 1px solid #CBD5E1;
     border-radius: var(--radius-sm);
     transition: all 0.15s ease;
     box-sizing: border-box;
@@ -734,8 +735,9 @@ textarea {
 .form-control:focus, .field-input:focus,
 input:focus, select:focus, textarea:focus {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-glow);
+    border-color: #6366F1;
+    box-shadow: 0 0 0 2.5px rgba(99, 102, 241, 0.15);
+    background: #ffffff;
 }
 
 /* ════ 9. SEARCH & FILTER TOOLBARS ════ */
@@ -912,10 +914,10 @@ input:focus, select:focus, textarea:focus {
 
 /* .hide-on-desktop / .hide-on-mobile toggles */
 .hide-on-desktop {
-    display: none !important;
+    display: none;
 }
 .show-on-mobile {
-    display: none !important;
+    display: none;
 }
 
 /* Modal backdrop helper class */
@@ -1110,20 +1112,20 @@ input:focus, select:focus, textarea:focus {
    11. MOBILE BOTTOM NAV & FAB (DESKTOP DEFAULT: HIDDEN)
    ================================================================ */
 .mobile-bottom-nav {
-    display: none !important;
+    display: none;
 }
 .mobile-fab-container {
-    display: none !important;
+    display: none;
 }
 /* Hamburger and drawer hidden on desktop by default */
 .topbar-hamburger {
-    display: none !important;
+    display: none;
 }
 .mobile-sidebar-overlay {
     display: none;
 }
 .mobile-sidebar-drawer {
-    display: none !important;
+    display: none;
 }
 
 @media (max-width: 1023px) {
@@ -1165,24 +1167,26 @@ input:focus, select:focus, textarea:focus {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 9.5px !important;
+        font-size: 10px !important;
         font-weight: 500 !important;
         color: var(--color-ink-muted) !important;
         text-decoration: none !important;
-        gap: 2px !important;
+        gap: 3px !important;
         min-width: 0 !important;
         height: 100% !important;
+        padding: 4px 2px !important;
         transition: color 0.12s ease !important;
     }
     .mobile-nav-item svg, .mobile-nav-item i {
-        width: 16px !important;
-        height: 16px !important;
+        width: 19px !important;
+        height: 19px !important;
         flex-shrink: 0 !important;
     }
     .mobile-nav-item span {
-        font-size: 9px !important;
-        line-height: 1 !important;
+        font-size: 10.5px !important;
+        line-height: 1.1 !important;
         font-weight: 500 !important;
+        letter-spacing: 0.1px !important;
     }
     .mobile-nav-item.active {
         color: var(--color-primary) !important;
@@ -1230,9 +1234,19 @@ input:focus, select:focus, textarea:focus {
         transform: translateY(100%) !important;
     }
 
-    /* Hide page-header-right actions on mobile (moved to FAB) */
+    /* Hide page-header-right actions on mobile by default (moved to FAB), EXCEPT on invoice / print pages */
     .page-header-right {
         display: none !important;
+    }
+    .page-header-right.show-on-mobile,
+    .page-header:has(.invoice-action-buttons) .page-header-right,
+    .invoice-view .page-header-right,
+    .has-mobile-header-actions .page-header-right {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100%;
+        margin-top: 6px;
     }
 
     /* ── Hamburger / Mobile Sidebar Drawer ── */
@@ -1556,14 +1570,14 @@ input:focus, select:focus, textarea:focus {
         height: 30px !important;
     }
     .mobile-bottom-nav {
-        height: 44px !important;
+        height: var(--bottom-nav-height, 58px) !important;
     }
     .mobile-nav-item {
         font-size: 10px !important;
     }
-    .mobile-nav-item svg {
-        width: 15px !important;
-        height: 15px !important;
+    .mobile-nav-item svg, .mobile-nav-item i {
+        width: 18px !important;
+        height: 18px !important;
     }
     .card-title {
         font-size: 13px !important;
@@ -1752,6 +1766,51 @@ input:focus, select:focus, textarea:focus {
         padding: 0 !important;
         border: none !important;
         box-shadow: none !important;
+    }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   UNIFIED FORM ROW DELETE ACTION BUTTONS (.btn-ghost-delete, .btn-del-row)
+   High visibility, soft neutral default, soft red on hover
+   ════════════════════════════════════════════════════════════════ */
+.btn-ghost-delete, .btn-del-row {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    background: #F1F5F9 !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 6px !important;
+    color: #475569 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: all 0.15s ease !important;
+    flex-shrink: 0 !important;
+}
+
+.btn-ghost-delete:hover, .btn-del-row:hover {
+    background: #FEF2F2 !important;
+    border-color: #FECACA !important;
+    color: #DC2626 !important;
+}
+
+.btn-ghost-delete svg, .btn-del-row svg {
+    width: 14px !important;
+    height: 14px !important;
+    stroke: currentColor !important;
+    stroke-width: 2.5px !important;
+    flex-shrink: 0 !important;
+}
+
+@media (max-width: 767px) {
+    .btn-ghost-delete, .btn-del-row {
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        min-height: 34px !important;
     }
 }
 
