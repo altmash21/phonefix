@@ -12,11 +12,18 @@
     <!-- Inter as the pristine SF Pro open substitute for non-Apple devices -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
+    <!-- Local Compiled CSS -->
+    <link rel="stylesheet" href="{{ asset('public/css/mobileshop-panel.css') }}">
+
     <!-- Lucide Icons (Local bundle with unpkg fallback) -->
     <script src="{{ asset('public/vendor/lucide/lucide.min.js') }}"></script>
     <script>
         if (typeof lucide === 'undefined') {
-            document.write('<script src="https://unpkg.com/lucide@latest"><\/script>');
+            (function() {
+                var s = document.createElement('script');
+                s.src = 'https://unpkg.com/lucide@latest';
+                document.head.appendChild(s);
+            })();
         }
     </script>
 

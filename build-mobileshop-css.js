@@ -17,6 +17,7 @@ const inputCSS = fs.existsSync(inputSourcePath)
 const mobileshopConfig = {
     content: [
         './resources/views/mobileshop/**/*.blade.php',
+        './resources/views/auth/**/*.blade.php',
     ],
     corePlugins: {
         preflight: false, // Don't reset base styles — admin-panel.css handles it
@@ -50,6 +51,39 @@ const mobileshopConfig = {
                 },
                 success: "#27a644",
                 danger: "#eb5757",
+                brand: {
+                    50: '#F0FDFA',
+                    100: '#CCFBF1',
+                    200: '#99F6E4',
+                    300: '#5EEAD4',
+                    400: '#2DD4BF',
+                    500: '#14B8A6',
+                    600: '#0F766E',
+                    700: '#115E59',
+                    800: '#134E4A',
+                    900: '#042F2E',
+                },
+                apple: {
+                    primary: '#0066cc',
+                    'primary-focus': '#0071e3',
+                    'primary-dark': '#2997ff',
+                    ink: '#1d1d1f',
+                    body: '#1d1d1f',
+                    'body-dark': '#ffffff',
+                    'body-muted': '#cccccc',
+                    'muted-80': '#333333',
+                    'muted-48': '#7a7a7a',
+                    'divider-soft': '#f0f0f0',
+                    hairline: '#e0e0e0',
+                    canvas: '#ffffff',
+                    parchment: '#f5f5f7',
+                    pearl: '#fafafc',
+                    'tile-1': '#272729',
+                    'tile-2': '#2a2a2c',
+                    'tile-3': '#252527',
+                    black: '#000000',
+                    'chip-translucent': 'rgba(210, 210, 215, 0.64)'
+                },
             },
             fontFamily: {
                 display: ["Inter", "SF Pro Display", "-apple-system", "system-ui", "Segoe UI", "Roboto", "sans-serif"],

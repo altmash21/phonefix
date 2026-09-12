@@ -15,8 +15,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Local Compiled CSS -->
+    <link rel="stylesheet" href="{{ asset('public/css/mobileshop-panel.css') }}">
+
+    <!-- Lucide Icons (Local bundle with unpkg fallback) -->
+    <script src="{{ asset('public/vendor/lucide/lucide.min.js') }}"></script>
+    <script>
+        if (typeof lucide === 'undefined') {
+            (function() {
+                var s = document.createElement('script');
+                s.src = 'https://unpkg.com/lucide@latest';
+                document.head.appendChild(s);
+            })();
+        }
+    </script>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>

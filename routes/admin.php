@@ -282,20 +282,3 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->name('accessories.search_parts');
 });
 
-// Static asset fallback for company-prefixed requests (e.g. /{company_id}/js/mobileshop/ui-utils.js)
-Route::get('js/mobileshop/ui-utils.js', function () {
-    $path = public_path('js/mobileshop/ui-utils.js');
-    abort_unless(file_exists($path), 404);
-    return response()->file($path, [
-        'Content-Type'  => 'application/javascript; charset=utf-8',
-        'Cache-Control' => 'public, max-age=86400, immutable',
-    ]);
-});
-Route::get('css/admin-panel.css', function () {
-    $path = public_path('css/admin-panel.css');
-    abort_unless(file_exists($path), 404);
-    return response()->file($path, [
-        'Content-Type'  => 'text/css; charset=utf-8',
-        'Cache-Control' => 'public, max-age=86400, immutable',
-    ]);
-});
