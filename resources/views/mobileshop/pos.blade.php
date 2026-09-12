@@ -73,11 +73,11 @@
                             </div>
                             <div>
                                 <div style="font-weight: 800; font-size: 14px; color: #581C87; display: flex; align-items: center; gap: 6px;">
-                                    <span>AI Auto-Fill from EMI Slip / Bill</span>
-                                    <span class="badge badge-purple" style="font-size: 10px; background: #E9D5FF; color: #6B21A8;">Gemini 1.5 Flash</span>
+                                    <span>AI Auto-Fill from Invoice / EMI Slip</span>
+                                    <span class="badge badge-purple" style="font-size: 10px; background: #E9D5FF; color: #6B21A8;">Gemini 2.0 Flash</span>
                                 </div>
                                 <div style="font-size: 11.5px; color: #6B21A8; margin-top: 2px;">
-                                    Upload/Capture Bajaj, TVS, HDB challan or invoice to auto-fill Customer, Device IMEI, Loan # & Down Payment!
+                                    Upload retail phone bill, tax invoice, or Bajaj/TVS/HDB finance slip to auto-fill Customer, Device IMEI & Payment!
                                 </div>
                             </div>
                         </div>
@@ -86,7 +86,7 @@
                             <input type="file" id="emiBillFileInput" accept="image/*,.pdf" capture="environment" style="display: none;" onchange="handleEmiBillUpload(this)">
                             <button type="button" onclick="document.getElementById('emiBillFileInput').click()" id="btnScanEmiBill" class="btn btn-primary btn-sm" style="background: #7E22CE; border-color: #7E22CE; font-weight: 700; padding: 8px 16px; box-shadow: 0 2px 6px rgba(126, 34, 206, 0.3);">
                                 <i data-lucide="camera" style="width: 15px; height: 15px;"></i>
-                                <span id="btnScanText">Scan / Upload EMI Bill</span>
+                                <span id="btnScanText">Scan / Upload Bill</span>
                             </button>
                         </div>
                     </div>
@@ -95,7 +95,7 @@
                     <div id="emiScanStatus" style="display: none; margin-top: 14px; padding: 12px 14px; background: #FFFFFF; border-radius: 10px; border: 1px solid #E9D5FF;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
                             <span style="font-size: 12px; font-weight: 700; color: #7E22CE;" id="emiScanStatusMsg">
-                                🔄 Reading document with Gemini AI...
+                                🔄 Reading document with Gemini 2.0 Flash AI...
                             </span>
                             <span style="font-size: 11px; font-weight: 700; color: #9333EA;" id="emiScanPercent">Scanning</span>
                         </div>
@@ -583,7 +583,7 @@
         formData.append('_token', '{{ csrf_token() }}');
 
         setTimeout(() => {
-            statusMsg.textContent = 'Analyzing with Google Gemini AI OCR...';
+            statusMsg.textContent = 'Analyzing with Google Gemini 2.0 Flash AI...';
             progressBar.style.width = '70%';
         }, 600);
 

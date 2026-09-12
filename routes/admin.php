@@ -109,6 +109,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('purchase/store-bulk', 'MobileShop\PurchaseController@storeBulkPurchase')
         ->middleware('permission:create-purchase-phones|create-purchase-secondhand|create-purchase-accessories|create-purchase-covers')
         ->name('purchase.store_bulk');
+    Route::post('purchase/scan-invoice', 'MobileShop\PurchaseController@scanPurchaseInvoice')
+        ->middleware('permission:read-mobileshop-purchase|create-purchase-phones|create-purchase-secondhand|create-purchase-accessories|create-purchase-covers')
+        ->name('purchase.scan_invoice');
     Route::get('sales/create', 'MobileShop\SalesController@saleCreate')
         ->middleware('permission:read-mobileshop-sales')
         ->name('sales.create');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\MobileShop;
 
+use App\Services\MobileShop\Ai\GeminiDocumentScannerService;
 use App\Services\MobileShop\Purchase\BulkPurchaseInwardService;
 use App\Services\MobileShop\Purchase\SupplierPaymentService;
 use Illuminate\Http\Request;
@@ -12,13 +13,16 @@ class PurchaseController extends BaseMobileShopController
 {
     protected BulkPurchaseInwardService $bulkPurchaseService;
     protected SupplierPaymentService $supplierPaymentService;
+    protected GeminiDocumentScannerService $scannerService;
 
     public function __construct(
         ?BulkPurchaseInwardService $bulkPurchaseService = null,
-        ?SupplierPaymentService $supplierPaymentService = null
+        ?SupplierPaymentService $supplierPaymentService = null,
+        ?GeminiDocumentScannerService $scannerService = null
     ) {
         $this->bulkPurchaseService = $bulkPurchaseService ?? new BulkPurchaseInwardService();
         $this->supplierPaymentService = $supplierPaymentService ?? new SupplierPaymentService();
+        $this->scannerService = $scannerService ?? new GeminiDocumentScannerService();
     }
     /**
      * Purchase Hub — Niche-scoped purchase/intake list.
@@ -348,5 +352,33 @@ class PurchaseController extends BaseMobileShopController
             return redirect()->back()->with('error', $result['message']);
         }
         return redirect()->back()->with('success', $result['message']);
+    }
+
+    /**
+     * AI Scan Vendor Distributor Purchase Invoice / Stock Intake Challan (Phones & Accessories)
+     */
+    public function scanPurchaseInvoice(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-purchase-phones') ||
+            auth()->user()->can('create-purchase-accessories') ||
+            auth()->user()->can('create-purchase-covers') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('sales-staff') ||
+            auth()->user()->hasRole('accessories-staff')
+        ), 403, 'Unauthorized action.');
+
+        $file = $request->file('invoice_image') ?? $request->file('bill_image');
+        if (!$file) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please upload or snap a photo of the vendor purchase bill or challan.',
+            ], 422);
+        }
+
+        $result = $this->scannerService->scanPurchaseInvoice($file, $this->getCompanyId());
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 }

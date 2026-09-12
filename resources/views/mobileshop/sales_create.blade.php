@@ -102,10 +102,10 @@
         <div style="display:flex; align-items:center; gap:8px;">
             <i data-lucide="scan-line" style="width:16px; height:16px; color:#7C3AED; flex-shrink:0;"></i>
             <span style="font-weight:700; font-size:12px; color:#1E1B4B; display:flex; align-items:center; gap:6px;">
-                Instant EMI Bill & Receipt Auto-Fill
-                <span class="badge" style="background:#4F46E5; color:#fff; font-size:9px; padding:1px 5px; border-radius:4px; font-weight:700;">Gemini 1.5</span>
+                AI Smart Bill & Receipt Auto-Fill
+                <span class="badge" style="background:#4F46E5; color:#fff; font-size:9px; padding:1px 5px; border-radius:4px; font-weight:700;">Gemini 2.0</span>
             </span>
-            <span style="font-size:11px; color:#4338CA;" class="hide-on-mobile">— scan customer finance slip to auto-fill fields</span>
+            <span style="font-size:11px; color:#4338CA;" class="hide-on-mobile">— scan customer retail invoice, cash memo or EMI slip to auto-fill fields</span>
         </div>
         <div style="display:flex; gap:6px;">
             <input type="file" id="emiBillFileInput" accept="image/*,application/pdf" style="display:none;" onchange="handleEmiBillUpload(this)">
@@ -532,7 +532,7 @@
         <h3 style="font-size:17px; font-weight:800; color:#1E293B; margin-bottom:6px;">Analyzing Document with AI</h3>
         <p style="font-size:13px; color:#64748B; margin:0; line-height:1.5;">Reading customer details, device IMEI, EMI partner, loan reference number, and downpayment…</p>
         <div style="margin-top:14px; display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#4F46E5; background:#EEF2FF; padding:4px 10px; border-radius:999px;">
-            <i data-lucide="sparkles" style="width:13px; height:13px;"></i> Powered by Gemini 1.5 Flash AI
+            <i data-lucide="sparkles" style="width:13px; height:13px;"></i> Powered by Gemini 2.0 Flash AI
         </div>
     </div>
 </div>
