@@ -363,6 +363,14 @@
                                 @endif
                             </td>
                             <td style="text-align:center; white-space:nowrap;">
+                                @if($sh->status === 'in_stock')
+                                <a href="{{ route('mobileshop.second_hand.pos', ['device_id' => $sh->id]) }}" 
+                                   class="btn btn-outline btn-xs" 
+                                   title="Sell at POS" 
+                                   style="padding:3px 7px; margin-right:4px; color:#7C3AED; border-color:#DDD6FE; background:#F5F3FF; display:inline-flex; align-items:center;">
+                                    <i data-lucide="shopping-bag" style="width:13px;height:13px;"></i>
+                                </a>
+                                @endif
                                 <button type="button" 
                                         class="btn btn-outline btn-xs" 
                                         title="View / Upload Photo" 

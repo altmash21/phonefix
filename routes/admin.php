@@ -215,6 +215,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('second-hand', 'MobileShop\StockController@secondHand')
         ->middleware('permission:read-mobileshop-secondhand')
         ->name('second_hand');
+    Route::get('second-hand/pos', 'MobileShop\StockController@secondHandPos')
+        ->middleware('permission:sell-mobileshop-secondhand|read-mobileshop-secondhand|read-mobileshop-sales|read-admin-panel')
+        ->name('second_hand.pos');
     Route::post('second-hand/buyback', 'MobileShop\StockController@storeSecondHand')
         ->middleware('permission:create-mobileshop-secondhand')
         ->name('second_hand.buyback');

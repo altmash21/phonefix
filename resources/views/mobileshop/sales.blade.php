@@ -32,9 +32,9 @@
         </a>
         @endif
         @if($canCreateSecondhand ?? false)
-        <button type="button" onclick="openSellShModal()" class="btn btn-outline btn-sm">
+        <a href="{{ route('mobileshop.second_hand.pos') }}" class="btn btn-outline btn-sm">
             <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Second Hand Phone</span><span class="mobile-btn-label">Sell Second Hand Phone</span>
-        </button>
+        </a>
         @endif
         <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm">
             <i data-lucide="building-2" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">EMI Ledger</span><span class="mobile-btn-label">EMI</span>
@@ -1025,10 +1025,10 @@
                 </a>
             @endif
             @if(($isAdmin ?? false) || ($canCreateSecondhand ?? false))
-                <button type="button" onclick="closeFabMenu(); openSellShModal()" class="fab-menu-item" style="color: #EA580C;">
+                <a href="{{ route('mobileshop.second_hand.pos') }}" class="fab-menu-item" style="color: #EA580C;">
                     <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
                     <span>Sell Second Hand Phone</span>
-                </button>
+                </a>
             @endif
         </div>
 

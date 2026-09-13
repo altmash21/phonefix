@@ -230,6 +230,38 @@ class StockController extends BaseMobileShopController
     }
 
     /**
+     * Dedicated Second-Hand Mobile POS Sale Page
+     */
+    public function secondHandPos(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('sell-mobileshop-secondhand') ||
+            auth()->user()->can('read-mobileshop-secondhand') ||
+            auth()->user()->can('read-mobileshop-sales') ||
+            auth()->user()->can('read-admin-panel') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin')
+        ), 403, 'Unauthorized action.');
+
+        $companyId = $this->getCompanyId();
+
+        $devices = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->where('type', 'second_hand')
+            ->where('status', 'in_stock')
+            ->orderBy('brand', 'asc')
+            ->orderBy('model', 'asc')
+            ->get();
+
+        $customers = DB::table('ms_customers')
+            ->where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('mobileshop.second_hand_pos', compact('devices', 'customers'));
+    }
+
+    /**
      * Store Second Hand Buyback (Intake)
      */
     public function storeSecondHand(Request $request)

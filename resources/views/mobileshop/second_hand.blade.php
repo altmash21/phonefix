@@ -5,9 +5,9 @@
 
 @section('page-actions')
     <div style="display:flex; gap:10px; align-items:center;">
-        <button onclick="openSellModal()" class="btn btn-primary btn-sm" style="background:var(--lama-purple-dark); box-shadow:0 2px 6px rgba(109,40,217,0.25);">
+        <a href="{{ route('mobileshop.second_hand.pos') }}" class="btn btn-primary btn-sm" style="background:var(--lama-purple-dark); box-shadow:0 2px 6px rgba(109,40,217,0.25); display:inline-flex; align-items:center; gap:6px;">
             <i data-lucide="shopping-bag" style="width:14px;height:14px;"></i> Sell Second Hand Phone
-        </button>
+        </a>
         <button onclick="openBuybackModal()" class="btn btn-outline btn-sm">
             <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase Second Hand Phone
         </button>
@@ -173,9 +173,9 @@
                         </td>
                         <td style="text-align:center;">
                             @if($m->status === 'in_stock')
-                                <button onclick="quickSellPhone({{ json_encode($m) }})" class="btn btn-primary btn-sm" style="background:var(--lama-purple-dark); font-size:11px; padding:4px 10px;">
+                                <a href="{{ route('mobileshop.second_hand.pos', ['device_id' => $m->id]) }}" class="btn btn-primary btn-sm" style="background:var(--lama-purple-dark); font-size:11px; padding:4px 10px; display:inline-flex; align-items:center; gap:4px;">
                                     <i data-lucide="shopping-bag" style="width:12px;height:12px;"></i> Sell
-                                </button>
+                                </a>
                             @else
                                 <span style="font-size:11px; color:#94A3B8; font-weight:700;">SOLD</span>
                             @endif
@@ -233,9 +233,9 @@
             @if($m->status === 'in_stock')
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding-top:6px; border-top:1px solid #F1F5F9; width:100%;">
                 <span class="badge badge-purple" style="font-size:10px;">{{ str_replace('_', ' ', $m->condition_grade) }}</span>
-                <button onclick="quickSellPhone({{ json_encode($m) }})" class="btn btn-primary btn-sm" style="font-size:11px; padding:4px 10px; height:auto; background:var(--lama-purple-dark);">
+                <a href="{{ route('mobileshop.second_hand.pos', ['device_id' => $m->id]) }}" class="btn btn-primary btn-sm" style="font-size:11px; padding:4px 10px; height:auto; background:var(--lama-purple-dark); display:inline-flex; align-items:center; gap:4px;">
                     <i data-lucide="shopping-bag" style="width:12px;height:12px;"></i> Sell Second Hand Phone
-                </button>
+                </a>
             </div>
             @endif
         </div>
