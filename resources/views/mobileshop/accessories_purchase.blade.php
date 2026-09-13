@@ -1020,128 +1020,194 @@
     async function handleInvoiceFile(file) {
         if (!file) return;
 
+        const fileInput = document.getElementById('invoiceFileInput');
         const progressBox = document.getElementById('ocrProgressBox');
         const progressBar = document.getElementById('ocrProgressBar');
         const statusText = document.getElementById('ocrStatusText');
         const percentText = document.getElementById('ocrPercentText');
 
+        if (file.size > 15 * 1024 * 1024) {
+            alert('File size exceeds 15MB. Please upload or snap a clearer, compressed photo.');
+            if (fileInput) fileInput.value = '';
+            return;
+        }
+
         progressBox.style.display = 'block';
-        progressBar.style.width = '10%';
-        statusText.textContent = '🚀 Initializing OCR neural worker...';
-        percentText.textContent = '10%';
+        progressBar.style.width = '15%';
+        statusText.textContent = '🚀 Uploading invoice slip...';
+        percentText.textContent = '15%';
+
+        // Progressive indicator ticks
+        const progressTimer1 = setTimeout(() => {
+            progressBar.style.width = '45%';
+            statusText.textContent = '🔍 Gemini AI reading handwriting, ditto marks & items...';
+            percentText.textContent = '45%';
+        }, 1200);
+
+        const progressTimer2 = setTimeout(() => {
+            progressBar.style.width = '75%';
+            statusText.textContent = '⚙️ Extracting display folders, quantities & wholesale rates...';
+            percentText.textContent = '75%';
+        }, 3200);
 
         try {
-            if (typeof Tesseract === 'undefined') {
-                statusText.textContent = '📦 Loading OCR engine...';
-                await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-            }
+            const formData = new FormData();
+            formData.append('invoice_image', file);
 
-            const worker = await Tesseract.createWorker('eng', 1, {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        const pct = Math.round(m.progress * 100);
-                        progressBar.style.width = `${pct}%`;
-                        statusText.textContent = `🔍 AI scanning invoice lines (${pct}%)...`;
-                        percentText.textContent = `${pct}%`;
-                    }
+            const response = await fetch("{{ route('mobileshop.purchase.scan_invoice') }}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
                 }
             });
 
-            statusText.textContent = '⚙️ Analyzing invoice text layout...';
-            const ret = await worker.recognize(file);
-            await worker.terminate();
+            clearTimeout(progressTimer1);
+            clearTimeout(progressTimer2);
+
+            const json = await response.json();
+            if (fileInput) fileInput.value = '';
+
+            if (!response.ok || !json.success) {
+                progressBox.style.display = 'none';
+                const errMsg = json.message || 'Could not scan the invoice image. Please check camera clarity or try again.';
+                alert('OCR Scan Notice: ' + errMsg);
+                return;
+            }
 
             progressBar.style.width = '100%';
-            statusText.textContent = '✅ Extraction complete! Parsing rows...';
+            statusText.textContent = '✅ Extraction complete! Populating restock items...';
             percentText.textContent = '100%';
 
             setTimeout(() => {
                 progressBox.style.display = 'none';
             }, 1200);
 
-            parseOcrTextToTable(ret.data.text);
+            const ocrData = (json.data && json.data.items) ? json.data : json;
+            populateOcrDataIntoTable(ocrData);
 
         } catch (err) {
-            console.error(err);
+            clearTimeout(progressTimer1);
+            clearTimeout(progressTimer2);
+            if (fileInput) fileInput.value = '';
+            console.error('OCR Upload Error:', err);
             progressBox.style.display = 'none';
-            alert('OCR extraction encountered an issue. Loading sample demonstration items.');
-            loadSampleInvoiceData();
+            alert('Network error while processing document: ' + err.message);
         }
     }
 
-    function parseOcrTextToTable(rawText) {
-        const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        const extractedItems = [];
+    function populateOcrDataIntoTable(ocrData) {
+        if (!ocrData) return;
 
-        lines.forEach(line => {
-            const numberMatches = line.match(/\b\d+(\.\d{1,2})?\b/g);
-            if (numberMatches && numberMatches.length >= 2) {
-                const qty = parseInt(numberMatches[0]) || 5;
-                const cost = parseFloat(numberMatches[1]) || 50;
+        // 1. Supplier Name auto-population
+        if (ocrData.supplier_name) {
+            const suppInput = document.getElementById('bulkSupplierName');
+            if (suppInput) {
+                suppInput.value = ocrData.supplier_name;
+            }
+        }
 
-                let name = line.replace(/\b\d+(\.\d{1,2})?\b/g, '').replace(/[@₹,\-\*\/]/g, '').trim();
-                if (name.length >= 3) {
-                    let cat = 'tempered_glass';
-                    if (/display|folder|combo|lcd|oled|screen/i.test(name)) cat = 'display_folder';
-                    else if (/front\s*glass|touch\s*glass|oca/i.test(name)) cat = 'front_glass';
-                    else if (/pin|charging\s*port|connector|jack/i.test(name)) cat = 'charging_pin';
-                    else if (/ic|motherboard|power\s*ic/i.test(name)) cat = 'ic_motherboard';
-                    else if (/battery|cell|mah/i.test(name)) cat = 'battery';
-                    else if (/cover|case|smoke|pouch|bumper/i.test(name)) cat = 'back_cover_case';
+        // 2. Invoice / PO / Slip No
+        const invNo = ocrData.supplier_invoice_no || ocrData.invoice_number || ocrData.invoice_no;
+        if (invNo) {
+            const invInput = document.getElementById('bulkInvoiceNo');
+            if (invInput) {
+                invInput.value = invNo;
+            }
+        }
 
-                    let brand = 'Universal';
-                    let model = 'Universal';
-                    if (/iphone\s*\d+(\s*pro\s*max|\s*pro|\s*plus)?/i.test(name)) {
-                        brand = 'Apple';
-                        const m = name.match(/iphone\s*\d+(\s*pro\s*max|\s*pro|\s*plus)?/i);
-                        if (m) model = m[0];
-                    } else if (/galaxy\s*[a-z0-9]+/i.test(name) || /samsung/i.test(name)) {
-                        brand = 'Samsung';
-                        const m = name.match(/galaxy\s*[a-z0-9]+/i);
-                        if (m) model = m[0];
-                    } else if (/redmi\s*note\s*\d+[a-z0-9]*/i.test(name) || /xiaomi/i.test(name)) {
-                        brand = 'Xiaomi';
-                        const m = name.match(/redmi\s*note\s*\d+[a-z0-9]*/i);
-                        if (m) model = m[0];
-                    } else if (/vivo\s*[a-z0-9]+/i.test(name)) {
-                        brand = 'Vivo';
-                        const m = name.match(/vivo\s*[a-z0-9]+/i);
-                        if (m) model = m[0];
-                    } else if (/oppo\s*[a-z0-9]+/i.test(name)) {
-                        brand = 'Oppo';
-                        const m = name.match(/oppo\s*[a-z0-9]+/i);
-                        if (m) model = m[0];
-                    } else if (/oneplus\s*[a-z0-9]+/i.test(name)) {
-                        brand = 'OnePlus';
-                        const m = name.match(/oneplus\s*[a-z0-9]+/i);
-                        if (m) model = m[0];
-                    } else if (/realme\s*[a-z0-9]+/i.test(name)) {
-                        brand = 'Realme';
-                        const m = name.match(/realme\s*[a-z0-9]+/i);
-                        if (m) model = m[0];
-                    }
+        // 3. Intake Date
+        if (ocrData.invoice_date) {
+            const dateInput = document.querySelector('input[name="order_date"]');
+            if (dateInput) {
+                dateInput.value = ocrData.invoice_date;
+            }
+        }
 
-                    extractedItems.push({
-                        name: name,
-                        category: cat,
-                        brand: brand,
-                        compatible_model: model,
-                        qty: qty > 500 ? 25 : qty,
-                        unit_cost: cost,
-                        selling_price: Math.round(cost * 1.5),
-                        is_gift_eligible: (cat === 'tempered_glass' || cat === 'back_cover_case') ? 1 : 0
-                    });
+        // 4. Populate Items
+        const items = ocrData.items || [];
+        if (!items || items.length === 0) {
+            alert('AI processed the slip, but could not detect any item lines. Please verify image clarity.');
+            return;
+        }
+
+        const tbody = document.getElementById('bulkTableBody');
+        tbody.innerHTML = '';
+        bulkRowIndex = 0;
+
+        items.forEach(it => {
+            const rawName = it.name || it.model || 'Item';
+            let cat = it.category || 'display_folder';
+            const nameLower = rawName.toLowerCase();
+
+            // Categorization mapping
+            if (/folder|combo|hd\+|og\b|display|screen|lcd|oled|tft|touch\s*display/i.test(nameLower) || it.type === 'folder' || cat === 'display_folder') {
+                cat = 'display_folder';
+            } else if (/front\s*glass|touch\s*glass|oca/i.test(nameLower) || cat === 'front_glass') {
+                cat = 'front_glass';
+            } else if (/pin|charging\s*port|connector|jack/i.test(nameLower) || cat === 'charging_pin') {
+                cat = 'charging_pin';
+            } else if (/ic\b|motherboard|power\s*ic|charging\s*ic/i.test(nameLower) || cat === 'ic_motherboard') {
+                cat = 'ic_motherboard';
+            } else if (/battery|cell|mah\b/i.test(nameLower) || cat === 'battery') {
+                cat = 'battery';
+            } else if (/back\s*panel|housing|body/i.test(nameLower) || cat === 'back_panel') {
+                cat = 'back_panel';
+            } else if (/cover|case|smoke|bumper|pouch|silicone/i.test(nameLower) || cat === 'back_cover_case') {
+                cat = 'back_cover_case';
+            } else if (/tempered|glass|11d|9d|matte|uv\s*glass|d\+/i.test(nameLower) || cat === 'tempered_glass') {
+                cat = 'tempered_glass';
+            } else {
+                cat = 'general_accessory';
+            }
+
+            const isOg = /og\b|\boriginal/i.test(nameLower) || (it.display_type && it.display_type.toUpperCase() === 'OG');
+            const displayType = isOg ? 'OG' : 'Normal';
+
+            const qty = parseInt(it.qty) || 1;
+            const cost = parseFloat(it.unit_cost) || 0;
+            let sellingPrice = parseFloat(it.selling_price) || 0;
+            if (sellingPrice <= cost) {
+                if (cat === 'display_folder') {
+                    sellingPrice = cost + 250;
+                } else if (cat === 'tempered_glass' || cat === 'back_cover_case') {
+                    sellingPrice = Math.round(cost * 2.5);
+                } else {
+                    sellingPrice = Math.round(cost * 1.35);
                 }
             }
+
+            const brand = it.brand || guessBrand(rawName);
+            const model = it.model || it.compatible_model || '';
+
+            addBulkRow({
+                name: rawName,
+                category: cat,
+                brand: brand,
+                compatible_model: model,
+                display_type: displayType,
+                qty: qty,
+                unit_cost: cost,
+                selling_price: sellingPrice,
+                is_gift_eligible: (cat === 'tempered_glass' || cat === 'back_cover_case') ? 1 : 0
+            });
         });
 
-        if (extractedItems.length > 0) {
-            document.getElementById('bulkTableBody').innerHTML = '';
-            bulkRowIndex = 0;
-            extractedItems.forEach(item => addBulkRow(item));
-            alert(`🎉 AI OCR Extracted ${extractedItems.length} items with phone models from supplier invoice!`);
-        } else {
-            loadSampleInvoiceData();
+        updateBulkSummary();
+
+        const supplierName = ocrData.supplier_name || 'Vendor Slip';
+        const totalFormatted = ocrData.bill_total ? '₹' + parseFloat(ocrData.bill_total).toLocaleString('en-IN') : '';
+        const flashMsg = `🎉 Extracted ${items.length} items from ${supplierName} ${totalFormatted ? '(' + totalFormatted + ')' : ''}! Review rows and click Process Restock.`;
+
+        const banner = document.createElement('div');
+        banner.style.cssText = 'background:#ECFDF5; border:1px solid #10B981; color:#065F46; padding:12px 16px; border-radius:8px; font-weight:700; font-size:13px; display:flex; align-items:center; gap:8px; margin-top:10px;';
+        banner.innerHTML = `<span>${flashMsg}</span>`;
+        const container = document.querySelector('.restock-container');
+        const form = document.getElementById('bulkRestockForm');
+        if (container && form) {
+            container.insertBefore(banner, form);
+            setTimeout(() => banner.remove(), 8000);
         }
     }
 

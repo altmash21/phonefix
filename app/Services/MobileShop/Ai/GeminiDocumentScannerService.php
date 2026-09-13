@@ -294,14 +294,23 @@ PROMPT;
     public function scanPurchaseInvoice($file, ?int $companyId = null): array
     {
         $prompt = <<<PROMPT
-You are an expert AI parser for wholesale and distributor invoices for mobile phone stores in India.
-Analyze this image of a Vendor Purchase Invoice, Wholesale Stock Delivery Challan, or Distributor Tax Invoice.
-The invoice may contain smartphones, accessories (chargers, earphones, covers, tempered glass, cables, speakers), or a combination of both.
+You are an expert AI parser for wholesale distributor invoices and handwritten stock slips (kachha parchi / challans) for mobile phone and spare parts stores in India.
+Analyze this image of a Vendor Purchase Invoice, Handwritten Paper Slip, Wholesale Delivery Challan, or Distributor Tax Invoice.
+The document may contain smartphones, spare parts (display screen folders/combos, touch glass, charging connectors, batteries), accessories (chargers, cables, covers, tempered glass), or a mixture.
+
+Slips and kachha bills commonly follow patterns like:
+- Vendor / Shop Name at header (e.g., "Karan Azamgarh", "Gaffar Wholesale", "Rajdhani Mobile")
+- Slip / Bill / Token number (e.g., "No. 46" -> supplier_invoice_no: "46")
+- Date (e.g., "1/9/26" -> invoice_date: "2026-09-01")
+- Line items with ditto marks (", ', or ,,) indicating repetition of the type above (e.g., repeat "HD+" or "Display Folder")
+- Quantity x Rate (e.g., "30 x 620" means 30 pieces at ₹620 each)
+- Underlined total at the bottom (e.g., "129300" -> bill_total: 129300.00)
+- Display Folders / Combos are often abbreviated with "HD+", "OG", "Crown", "Diamond", "TFT", "OLED", "Folder", "Combo". "Rlm" stands for Realme.
 
 Extract all supplier information and individual line items into a STRICT JSON object:
 
 {
-  "supplier_name": "Distributor / Supplier company name or null",
+  "supplier_name": "Distributor / Supplier name or null",
   "supplier_phone": "Supplier 10-digit mobile / phone number or null",
   "supplier_gstin": "Supplier 15-character GSTIN number or null",
   "supplier_invoice_no": "Invoice number or Bill number or null",
@@ -322,8 +331,11 @@ Extract all supplier information and individual line items into a STRICT JSON ob
     },
     {
       "type": "accessory",
-      "category": "Category (Charger, Cable, Audio/Earphones, Back Cover, Tempered Glass, Battery, Speaker, Smartwatch, Other)",
-      "name": "Accessory name description (e.g. Apple 20W Type-C Adapter, Boat Rockerz 255)",
+      "category": "display_folder / tempered_glass / back_cover_case / front_glass / charging_pin / battery / ic_motherboard / back_panel / charger / cable / audio / general_accessory",
+      "display_type": "OG / Normal (for display folders)",
+      "brand": "Brand name (e.g. Realme, Samsung, Xiaomi, Vivo, Oppo, Apple, OnePlus, Infinix, Narzo, Universal)",
+      "model": "Model name (e.g. C55 / C65, A53, Note 7, A57 New, Y20, C11, Narzo 30 Pro)",
+      "name": "Full descriptive name (e.g. Realme C55 / C65 HD+ OG Display Folder, Samsung A53 HD+ Display Folder)",
       "qty": 10,
       "unit_cost": 0.00,
       "selling_price": 0.00,
@@ -333,11 +345,14 @@ Extract all supplier information and individual line items into a STRICT JSON ob
 }
 
 Rules:
-1. Return ONLY the strict JSON object. No explanations or extra text.
+1. Return ONLY the strict JSON object. No markdown explanations or preamble.
 2. For each phone row, extract all visible 15-digit IMEI numbers into the "imeis" array.
-3. If selling_price / MRP is not explicitly stated on the wholesale invoice, calculate selling_price as unit_cost * 1.15 (standard 15% retail margin) rounded to the nearest ₹10.
-4. Categorize accessories into standard buckets: Charger, Cable, Audio/Earphones, Back Cover, Tempered Glass, Battery, Speaker, Smartwatch, Other.
-5. All numeric monetary fields must be numbers (e.g. 14500.00).
+3. If selling_price is not printed on the wholesale slip:
+   - For display folders/combos: estimate selling_price as unit_cost + ₹250 (e.g., cost 620 -> 870 or round to nearest ₹50).
+   - For tempered glass and covers: unit_cost * 2.5 rounded.
+   - For other items: unit_cost * 1.30 rounded.
+4. If an item is a screen, folder, combo, LCD, OLED, or HD+, set category to "display_folder". If it mentions OG/Original, set display_type to "OG", else "Normal".
+5. All numeric monetary fields must be numbers (e.g. 620.00).
 6. If supplier_phone contains +91 or spaces, clean to digits.
 PROMPT;
 
@@ -428,11 +443,23 @@ PROMPT;
                     $it['item_type'] = (!empty($it['type']) && $it['type'] === 'accessory') ? 'accessory' : 'phone';
                 }
                 if ($it['item_type'] === 'accessory') {
-                    if (empty($it['brand'])) {
-                        $it['brand'] = $it['category'] ?? 'Accessory';
+                    if (!empty($it['brand']) && strtolower($it['brand']) === 'other') {
+                        $it['brand'] = '';
                     }
-                    if (empty($it['model'])) {
-                        $it['model'] = $it['name'] ?? 'Accessory Item';
+                    if (!empty($it['model']) && strtolower($it['model']) === 'other') {
+                        $it['model'] = '';
+                    }
+                    if (empty($it['brand']) && !empty($it['name'])) {
+                        // Infer brand from name
+                        $nm = strtolower($it['name']);
+                        if (preg_match('/\b(realme|rlm|narzo)\b/', $nm)) $it['brand'] = 'Realme';
+                        elseif (preg_match('/\b(samsung|galaxy)\b/', $nm)) $it['brand'] = 'Samsung';
+                        elseif (preg_match('/\b(redmi|xiaomi|mi|poco)\b/', $nm)) $it['brand'] = 'Xiaomi';
+                        elseif (preg_match('/\b(vivo|iqoo)\b/', $nm)) $it['brand'] = 'Vivo';
+                        elseif (preg_match('/\b(oppo|reno)\b/', $nm)) $it['brand'] = 'Oppo';
+                        elseif (preg_match('/\b(apple|iphone)\b/', $nm)) $it['brand'] = 'Apple';
+                        elseif (preg_match('/\b(oneplus)\b/', $nm)) $it['brand'] = 'OnePlus';
+                        elseif (preg_match('/\b(infinix)\b/', $nm)) $it['brand'] = 'Infinix';
                     }
                 }
             }
