@@ -49,25 +49,31 @@
                         </span>
                     </x-slot>
 
-                    @can('update-common-dashboards')
-                        <x-dropdown.link href="{{ route('dashboards.edit', $dashboard->id) }}" id="show-more-actions-edit-dashboard-{{ $dashboard->id }}">
-                            {{ trans('general.edit') }}
-                        </x-dropdown.link>
-                    @endcan
+                    @if(\Illuminate\Support\Facades\Route::has('dashboards.edit'))
+                        @can('update-common-dashboards')
+                            <x-dropdown.link href="{{ route('dashboards.edit', $dashboard->id) }}" id="show-more-actions-edit-dashboard-{{ $dashboard->id }}">
+                                {{ trans('general.edit') }}
+                            </x-dropdown.link>
+                        @endcan
+                    @endif
 
-                    @can('delete-common-dashboards')
-                        <x-delete-link :model="$dashboard" :route="'dashboards.destroy'" />
+                    @if(\Illuminate\Support\Facades\Route::has('dashboards.destroy'))
+                        @can('delete-common-dashboards')
+                            <x-delete-link :model="$dashboard" :route="'dashboards.destroy'" />
 
-                        <div class="py-2 px-2">
-                            <div class="w-full border-t border-gray-200"></div>
-                        </div>
-                    @endcan
+                            <div class="py-2 px-2">
+                                <div class="w-full border-t border-gray-200"></div>
+                            </div>
+                        @endcan
+                    @endif
 
-                    @can('update-common-dashboards')
-                        <x-dropdown.link href="{{ route('dashboards.index') }}" id="show-more-actions-manage-dashboards">
-                            {{ trans('general.title.manage', ['type' => trans_choice('general.dashboards', 2)]) }}
-                        </x-dropdown.link>
-                    @endcan
+                    @if(\Illuminate\Support\Facades\Route::has('dashboards.index'))
+                        @can('update-common-dashboards')
+                            <x-dropdown.link href="{{ route('dashboards.index') }}" id="show-more-actions-manage-dashboards">
+                                {{ trans('general.title.manage', ['type' => trans_choice('general.dashboards', 2)]) }}
+                            </x-dropdown.link>
+                        @endcan
+                    @endif
                 </x-dropdown>
             </div>
         @endcanany

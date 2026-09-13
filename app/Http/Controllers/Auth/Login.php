@@ -162,9 +162,9 @@ class Login extends Controller
             ]);
         }
 
-        // Redirect to landing page if is user
-        $landing = ($user->landing_page && \Illuminate\Support\Facades\Route::has($user->landing_page)) ? $user->landing_page : 'mobileshop.dashboard';
-        $url = route($landing, ['company_id' => $company->id]);
+        // Redirect to MobileShop ERP dashboard
+        session()->forget('url.intended');
+        $url = route('mobileshop.dashboard', ['company_id' => $company->id]);
 
         return response()->json([
             'status' => null,
@@ -172,7 +172,7 @@ class Login extends Controller
             'error' => false,
             'message' => trans('auth.login_redirect'),
             'data' => null,
-            'redirect' => redirect()->intended($url)->getTargetUrl(),
+            'redirect' => $url,
         ]);
     }
 

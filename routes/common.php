@@ -11,10 +11,10 @@ use Livewire\Livewire;
  */
 
 Route::group(['middleware' => 'auth'], function () {
-    Route::group(['middleware' => ['permission:read-admin-panel']], function () {
-        Route::group(['middleware' => ['menu.admin']], function () {
-            Route::get('/', 'Common\Dashboards@show')->name('dashboard');
-        });
+    Route::group(['middleware' => ['permission:read-admin-panel|read-mobileshop-dashboard']], function () {
+        Route::get('/', function ($company_id) {
+            return redirect()->route('mobileshop.dashboard', ['company_id' => $company_id]);
+        })->name('dashboard');
     });
 });
 
