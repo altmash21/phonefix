@@ -668,7 +668,7 @@
                     regSuccAlert.classList.remove('hidden');
                     regSuccText.innerText = data.message || 'Account activated successfully! Launching station...';
                     setTimeout(() => {
-                        window.location.href = data.redirect || "{{ route('mobileshop.dashboard') }}";
+                        window.location.href = data.redirect || "{{ url('/1/mobileshop') }}";
                     }, 700);
                 } else {
                     regErrAlert.classList.remove('hidden');
