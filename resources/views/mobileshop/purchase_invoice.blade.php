@@ -46,15 +46,15 @@
             <tr>
                 <td style="vertical-align: top; width: 55%; padding-bottom: 12px;">
                     <div style="font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.3px; text-transform: uppercase;">
-                        {{ setting('company.name', 'Maurya Mobile Retail Store') }}
+                        {{ store_name('Maurya Mobile Retail Store') }}
                     </div>
                     <div style="font-size: 11px; color: #4B5563; margin-top: 4px; line-height: 1.5;">
-                        {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                        Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'procurement@mobitrack.local') }}
+                        {{ store_address() }}<br>
+                        Phone: {{ store_phone() }} &bull; Email: {{ setting('company.email', 'procurement@mobitrack.local') }}
                     </div>
                     <div style="font-size: 11px; font-weight: 700; color: #111827; margin-top: 4px;">
-                        Store GSTIN: <span style="font-family: monospace; font-weight: 700;">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>
-                        &nbsp;|&nbsp; State: {{ setting('company.state', 'Uttar Pradesh') }} (09)
+                        Store GSTIN: <span style="font-family: monospace; font-weight: 700;">{{ store_gstin() }}</span>
+                        &nbsp;|&nbsp; State: {{ store_state('Uttar Pradesh') }} (09)
                     </div>
                 </td>
                 <td style="vertical-align: top; width: 45%; text-align: right; padding-bottom: 12px;">

@@ -257,12 +257,22 @@
                 $cMsg = "🔔 *PAYMENT REMINDER*\n";
                 $cMsg .= "🏪 *{$stName}*\n";
                 $cMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                $cMsg .= "Dear *{$c->name}*,\n";
+                $cMsg .= "Dear *{$c->name}*,\n\n";
                 $cMsg .= "Greetings from *{$stName}*!\n\n";
-                $cMsg .= "This is a polite reminder regarding your pending balance: *₹" . number_format($c->udhari_balance, 2) . "*.\n\n";
-                $cMsg .= "Kindly arrange payment via UPI or Cash at our store counter.\n";
+                $cMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
+                $cMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($c->udhari_balance, 2) . "*\n\n";
+                if (!empty($stUpi)) {
+                    $cMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI (`{$stUpi}`) or Cash at our store counter.\n\n";
+                } else {
+                    $cMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
+                }
+                $cMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                 $cMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
-                $cMsg .= "_Thank you!_";
+                if (!empty($stLandline)) {
+                    $cMsg .= "☎️ *Landline:* {$stLandline}\n";
+                }
+                $cMsg .= "🏢 *Showroom:* {$stAddress}\n";
+                $cMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                 $cWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($cMsg);
             @endphp
             <div class="app-flat-row cust-udhari-mobile-card" data-debtor="{{ $isDebtor ? '1' : '0' }}" data-due="{{ $c->udhari_balance }}" data-search="{{ strtolower($c->name . ' ' . ($c->phone ?? '') . ' ' . ($c->address ?? '')) }}" style="padding:12px 14px; background:#fff; border:1px solid #E2E8F0; border-radius:10px;">

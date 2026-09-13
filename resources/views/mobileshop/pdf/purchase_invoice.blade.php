@@ -108,14 +108,14 @@
     <table class="table header-table">
         <tr>
             <td style="width: 58%; vertical-align: top;">
-                <div class="company-name">{{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
+                <div class="company-name">{{ store_name('Maurya Mobile Retail Store') }}</div>
                 <div style="font-size: 9.5px; color: #4b5563; margin-top: 3px;">
-                    {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                    Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'procurement@mobitrack.local') }}
+                    {{ store_address() }}<br>
+                    Phone: {{ store_phone() }} &bull; Email: {{ setting('company.email', 'procurement@mobitrack.local') }}
                 </div>
                 <div style="font-size: 9.5px; font-weight: bold; color: #111827; margin-top: 3px;">
-                    Store GSTIN: <span class="font-mono">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>
-                    &nbsp;|&nbsp; State: {{ setting('company.state', 'Uttar Pradesh') }} (09)
+                    Store GSTIN: <span class="font-mono">{{ store_gstin() }}</span>
+                    &nbsp;|&nbsp; State: {{ store_state('Uttar Pradesh') }} (09)
                 </div>
             </td>
             <td style="width: 42%; vertical-align: top; text-align: right;">

@@ -233,10 +233,30 @@ class ProcessPendingJobs extends Command
         $customer = $payload['customer_name'] ?? 'Valued Customer';
         $invoice = $payload['invoice_number'] ?? 'N/A';
         $amount = number_format((float) ($payload['amount'] ?? 0), 2);
+        $items = (array) ($payload['items'] ?? []);
         $storeName = store_name('MobiTrack');
         $storePhone = store_phone();
+        $storeAddress = store_address();
+        $pdfUrl = url("bill/{$invoice}/pdf");
 
-        $message = "Dear {$customer}, thank you for your purchase at {$storeName}! Invoice #{$invoice} for Rs. {$amount} has been generated successfully. Support: {$storePhone}";
+        $lines = [];
+        $lines[] = "*{$storeName}*";
+        $lines[] = "Tax Invoice #{$invoice}";
+        $lines[] = "Dear *{$customer}*,";
+        $lines[] = "Thank you for purchasing at {$storeName}!";
+        if (!empty($items)) {
+            $itemList = implode(', ', array_filter($items));
+            if (!empty($itemList)) {
+                $lines[] = "• *Items:* {$itemList}";
+            }
+        }
+        $lines[] = "• *Total Amount:* ₹{$amount}";
+        $lines[] = "📄 *Download / View PDF Bill:*";
+        $lines[] = $pdfUrl;
+        $lines[] = "Support: {$storePhone}";
+        $lines[] = $storeAddress;
+
+        $message = implode("\n", $lines);
 
         $webhook = config('mobileshop.whatsapp.webhook') ?: (config('services.whatsapp.webhook') ?: env('WA_WEBHOOK'));
         $fromPhone = config('mobileshop.whatsapp.phone') ?: (config('services.whatsapp.phone') ?: env('WA_PHONE'));
@@ -244,10 +264,17 @@ class ProcessPendingJobs extends Command
         if (!empty($webhook) && !empty($phone)) {
             try {
                 Http::timeout(5)->post($webhook, [
-                    'from'    => $fromPhone,
-                    'phone'   => $phone,
-                    'message' => $message,
-                    'invoice' => $invoice,
+                    'from'          => $fromPhone,
+                    'phone'         => $phone,
+                    'customer_name' => $customer,
+                    'invoice'       => $invoice,
+                    'amount'        => $payload['amount'] ?? 0,
+                    'items'         => $items,
+                    'pdf_url'       => $pdfUrl,
+                    'store_name'    => $storeName,
+                    'store_address' => $storeAddress,
+                    'store_phone'   => $storePhone,
+                    'message'       => $message,
                 ]);
             } catch (\Throwable $e) {
                 Log::warning("WhatsApp dispatch webhook failed: " . $e->getMessage());

@@ -581,6 +581,8 @@
                             $sName = store_name();
                             $sPhone = store_phone();
                             $sAddress = store_address();
+                            $rPhone = preg_replace('/[^0-9]/', '', $rep->customer_phone ?? '');
+                            if (strlen($rPhone) === 10) $rPhone = '91' . $rPhone;
                             $rNotifyMsg = "🔧 *DEVICE READY FOR PICKUP*\n";
                             $rNotifyMsg .= "🏪 *{$sName} Service Lab*\n";
                             $rNotifyMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
@@ -593,7 +595,7 @@
                             $rNotifyMsg .= "📞 *Helpdesk:* {$sPhone}\n";
                             $rNotifyMsg .= "_Please show this message at our counter to collect your device._";
                         @endphp
-                        <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $rep->customer_phone) }}?text={{ rawurlencode($rNotifyMsg) }}" 
+                        <a href="https://wa.me/{{ $rPhone }}?text={{ rawurlencode($rNotifyMsg) }}" 
                            target="_blank"
                            class="btn btn-sm btn-outline"
                            style="color:#16a34a; border-color:#86efac; gap:4px; font-size:11px;"
@@ -637,6 +639,8 @@
                             $sAddress = store_address();
                             $sUpi = store_upi_id();
                             $sLandline = store_landline();
+                            $debPhone = preg_replace('/[^0-9]/', '', $deb->phone ?? '');
+                            if (strlen($debPhone) === 10) $debPhone = '91' . $debPhone;
                             $debMsg = "🔔 *PAYMENT REMINDER*\n";
                             $debMsg .= "🏪 *{$sName}*\n";
                             $debMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
@@ -645,18 +649,19 @@
                             $debMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
                             $debMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($deb->udhari_balance, 2) . "*\n\n";
                             if (!empty($sUpi)) {
-                                $debMsg .= "Kindly arrange to clear this balance via UPI (`{$sUpi}`) or Cash at our store counter.\n";
+                                $debMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI (`{$sUpi}`) or Cash at our store counter.\n\n";
                             } else {
-                                $debMsg .= "Kindly arrange to clear this balance via UPI or Cash at our store counter.\n";
+                                $debMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
                             }
+                            $debMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                             $debMsg .= "📞 *Accounts Desk:* {$sPhone}\n";
                             if (!empty($sLandline)) {
                                 $debMsg .= "☎️ *Landline:* {$sLandline}\n";
                             }
                             $debMsg .= "🏢 *Showroom:* {$sAddress}\n";
-                            $debMsg .= "_If already settled recently, please disregard this message. Thank you!_";
+                            $debMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                         @endphp
-                        <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $deb->phone) }}?text={{ rawurlencode($debMsg) }}" 
+                        <a href="https://wa.me/{{ $debPhone }}?text={{ rawurlencode($debMsg) }}" 
                            target="_blank"
                            class="btn btn-sm btn-outline"
                            style="color:#e11d48; border-color:#fca5a5; gap:4px; font-size:11px;"

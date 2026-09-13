@@ -47,6 +47,16 @@ class WhatsAppReceiptService
             $mobMsg .= "• *Original Price:* ₹" . number_format(round($orig)) . "\n";
             $mobMsg .= "• *Discount:* -₹" . number_format(round($sale->discount_amount)) . "\n";
         }
+        $isGst = !empty($sale->gst_rate) && (float)$sale->gst_rate > 0;
+        if ($isGst) {
+            $gstRate = (float) $sale->gst_rate;
+            $taxable = round((float)$sale->total_amount / (1 + ($gstRate / 100)), 2);
+            $taxAmount = round((float)$sale->total_amount - $taxable, 2);
+            if ($taxAmount > 0) {
+                $mobMsg .= "• *Taxable Value:* ₹" . number_format($taxable, 2) . "\n";
+                $mobMsg .= "• *GST ({$gstRate}%):* ₹" . number_format($taxAmount, 2) . "\n";
+            }
+        }
         $mobMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
         if ($sale->udhari_amount > 0) {
             $mobMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";

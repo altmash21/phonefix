@@ -142,9 +142,9 @@
 
     <!-- 1. CENTERED STORE HEADER -->
     <div class="header-section">
-        <div class="company-name">{{ setting('company.name', 'Maurya Mobile Store') }}</div>
-        <div class="company-meta">{{ setting('company.address', 'Store Location, Commercial Complex') }}</div>
-        <div class="company-meta">Phone: {{ setting('company.phone', '+91 98765 43210') }} &middot; GSTIN: {{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</div>
+        <div class="company-name">{{ store_name('Maurya Mobile Store') }}</div>
+        <div class="company-meta">{{ store_address() }}</div>
+        <div class="company-meta">Phone: {{ store_phone() }} &middot; GSTIN: {{ store_gstin() }}</div>
     </div>
 
     <!-- DOTTED DIVIDER -->

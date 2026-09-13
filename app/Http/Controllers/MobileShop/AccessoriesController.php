@@ -456,15 +456,31 @@ class AccessoriesController extends BaseMobileShopController
         $sAddress = store_address();
         $pdfUrl = url("bill/{$sale->invoice_number}/pdf");
 
+        $items = DB::table('ms_accessory_sale_items')
+            ->where('accessory_sale_id', $sale->id)
+            ->get();
+        $itemNames = [];
+        foreach ($items as $it) {
+            $itemNames[] = "{$it->part_name} × {$it->quantity}";
+        }
+
         $accMsg = "*{$sName}*\n";
-        $accMsg .= "Invoice #{$sale->invoice_number}\n\n";
+        $accMsg .= ($sale->bill_type === 'non_gst' ? 'Estimate #' : 'Tax Invoice #') . $sale->invoice_number . "\n\n";
         $accMsg .= "Dear *" . ($sale->customer_name ?: 'Customer') . "*,\n";
-        $accMsg .= "Thank you for shopping with us!\n\n";
+        $accMsg .= "Thank you for shopping at {$sName}!\n\n";
         $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y') . "\n";
+        if (!empty($itemNames)) {
+            $accMsg .= "• *Items:* " . implode(', ', $itemNames) . "\n";
+        }
         if (isset($sale->discount_amount) && (float)$sale->discount_amount > 0) {
             $gross = (float)($sale->gross_total ?? ($sale->total_amount + $sale->discount_amount));
             $accMsg .= "• *Gross Items Total:* ₹" . number_format(round($gross)) . "\n";
             $accMsg .= "• *Discount Given:* -₹" . number_format(round($sale->discount_amount)) . "\n";
+        }
+        if ($sale->bill_type === 'gst' && (float)($sale->tax_amount ?? 0) > 0) {
+            $taxable = (float)($sale->subtotal - $sale->tax_amount);
+            $accMsg .= "• *Taxable Value:* ₹" . number_format($taxable, 2) . "\n";
+            $accMsg .= "• *GST (18%):* ₹" . number_format((float)$sale->tax_amount, 2) . "\n";
         }
         $accMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
         if ($sale->udhari_amount > 0) {

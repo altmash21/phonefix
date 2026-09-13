@@ -41,6 +41,11 @@
         $waMsg .= "• *Gross Items Total:* ₹" . number_format(round($accGross)) . "\n";
         $waMsg .= "• *Discount Given:* -₹" . number_format(round($accDiscount)) . "\n";
     }
+    if ($sale->bill_type === 'gst' && (float)($sale->tax_amount ?? 0) > 0) {
+        $taxable = (float)($sale->subtotal - $sale->tax_amount);
+        $waMsg .= "• *Taxable Value:* ₹" . number_format($taxable, 2) . "\n";
+        $waMsg .= "• *GST (18%):* ₹" . number_format((float)$sale->tax_amount, 2) . "\n";
+    }
     $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
     if ($sale->udhari_amount > 0) {
         $waMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";

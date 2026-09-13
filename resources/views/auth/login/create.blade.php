@@ -347,7 +347,7 @@
 
     <!-- Help note below card -->
     <div class="relative z-10 text-center text-xs text-slate-500 mt-4">
-        Need store access assistance? Contact Store Administrator at <strong class="text-slate-400">+91 98765 43210</strong>
+        Need store access assistance? Contact Store Administrator at <strong class="text-slate-400">{{ store_phone() }}</strong>
     </div>
     <!-- Interactive Script -->
     <script>

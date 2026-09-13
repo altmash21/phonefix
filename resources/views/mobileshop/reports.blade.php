@@ -571,8 +571,11 @@
                             @php
                                 $dPhone = preg_replace('/[^0-9]/', '', $debtor->phone ?? '');
                                 if (strlen($dPhone) === 10) $dPhone = '91' . $dPhone;
-                                $stName = setting('company.name', 'Maurya Mobile');
-                                $stPhone = setting('company.phone', '+91 98765 43210');
+                                $stName = store_name();
+                                $stPhone = store_phone();
+                                $stAddress = store_address();
+                                $stUpi = store_upi_id();
+                                $stLandline = store_landline();
                                 $dMsg = "🔔 *PAYMENT REMINDER*\n";
                                 $dMsg .= "🏪 *{$stName}*\n";
                                 $dMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
@@ -580,9 +583,18 @@
                                 $dMsg .= "Greetings from *{$stName}*!\n\n";
                                 $dMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
                                 $dMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($debtor->udhari_balance, 2) . "*\n\n";
-                                $dMsg .= "Kindly arrange to clear this balance via UPI or Cash at our store counter.\n";
+                                if (!empty($stUpi)) {
+                                    $dMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI (`{$stUpi}`) or Cash at our store counter.\n\n";
+                                } else {
+                                    $dMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
+                                }
+                                $dMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                                 $dMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
-                                $dMsg .= "_If already settled recently, please disregard this message. Thank you!_";
+                                if (!empty($stLandline)) {
+                                    $dMsg .= "☎️ *Landline:* {$stLandline}\n";
+                                }
+                                $dMsg .= "🏢 *Showroom:* {$stAddress}\n";
+                                $dMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                                 $dWaUrl = 'https://wa.me/' . $dPhone . '?text=' . rawurlencode($dMsg);
                             @endphp
                             <tr class="debtor-row" data-amount="{{ (float) $debtor->udhari_balance }}" data-search="{{ strtolower($debtor->name . ' ' . $debtor->phone . ' ' . $debtor->address) }}">

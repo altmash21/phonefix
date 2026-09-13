@@ -70,6 +70,10 @@
         $waMsg .= "• *Original Price:* ₹" . number_format(round($originalPrice)) . "\n";
         $waMsg .= "• *Discount:* -₹" . number_format(round($discountAmount)) . "\n";
     }
+    if ($isGstBill && $totalTaxAmount > 0) {
+        $waMsg .= "• *Taxable Value:* ₹" . number_format($taxableAmount, 2) . "\n";
+        $waMsg .= "• *GST ({$gstRate}%):* ₹" . number_format($totalTaxAmount, 2) . "\n";
+    }
     $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
     if ($sale->udhari_amount > 0) {
         $waMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";

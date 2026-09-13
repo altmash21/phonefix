@@ -90,8 +90,9 @@
                         @php
                             $waNum = preg_replace('/[^0-9]/', '', store_whatsapp());
                             if (strlen($waNum) === 10) $waNum = '91' . $waNum;
+                            $waInquiryMsg = "Hi " . store_name() . ", I have an inquiry regarding your smartphones and store services.";
                         @endphp
-                        <a href="https://wa.me/{{ $waNum }}" target="_blank" class="flex items-center justify-between p-3 rounded-[12px] bg-apple-parchment hover:bg-apple-hairline/60 transition-colors text-decoration-none">
+                        <a href="https://wa.me/{{ $waNum }}?text={{ rawurlencode($waInquiryMsg) }}" target="_blank" class="flex items-center justify-between p-3 rounded-[12px] bg-apple-parchment hover:bg-apple-hairline/60 transition-colors text-decoration-none">
                             <div class="flex items-center gap-3">
                                 <i data-lucide="message-circle" class="w-4 h-4 text-emerald-600"></i>
                                 <span class="apple-body text-apple-ink text-[15px]">WhatsApp Chat</span>
