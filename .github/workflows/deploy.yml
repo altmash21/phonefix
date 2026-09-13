@@ -132,6 +132,9 @@ jobs:
               # Run only pending new migrations (no reset)
               php artisan migrate --force
 
+              # Initialize / sync developer and admin accounts
+              php artisan mobileshop:setup-admin || true
+
               # Only seed if explicitly requested via workflow_dispatch
               if [ "$RUN_SEED" = "true" ]; then
                 echo "Running RBAC Seeder..."

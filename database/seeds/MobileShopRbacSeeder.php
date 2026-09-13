@@ -257,30 +257,45 @@ class MobileShopRbacSeeder extends Seeder
         ])->get());
 
         // ─────────────────────────────────────────────────────────────────────
-        // Default admin account (always present for login)
+        // Default Developer & Admin accounts (always present for login)
         // ─────────────────────────────────────────────────────────────────────
-        $adminUser = User::where('email', 'admin@mobitrack.local')->first();
-        if (!$adminUser) {
-            $adminUser = User::create([
-                'name'         => 'Store Admin',
-                'email'        => 'admin@mobitrack.local',
-                'password'     => 'password',
-                'landing_page' => 'mobileshop.dashboard',
-                'locale'       => 'en-GB',
-                'enabled'      => 1,
-            ]);
-        } else {
-            $adminUser->name         = 'Store Admin';
-            $adminUser->password     = 'password';
-            $adminUser->enabled      = 1;
-            $adminUser->landing_page = 'mobileshop.dashboard';
-            $adminUser->save();
-        }
+        $accounts = [
+            [
+                'name'     => 'altmash',
+                'email'    => 'altmash@mobitrack.local',
+                'password' => 'Password@12',
+            ],
+            [
+                'name'     => 'Store Admin',
+                'email'    => 'admin@mobitrack.local',
+                'password' => 'Password@12',
+            ],
+        ];
 
-        if (!$adminUser->companies()->where('company_id', $companyId)->exists()) {
-            $adminUser->companies()->attach($companyId);
+        foreach ($accounts as $acc) {
+            $user = User::where('email', $acc['email'])->orWhere('name', $acc['name'])->first();
+            if (!$user) {
+                $user = User::create([
+                    'name'         => $acc['name'],
+                    'email'        => $acc['email'],
+                    'password'     => $acc['password'],
+                    'landing_page' => 'dashboard',
+                    'locale'       => 'en-GB',
+                    'enabled'      => 1,
+                ]);
+            } else {
+                $user->name         = $acc['name'];
+                $user->password     = $acc['password'];
+                $user->enabled      = 1;
+                $user->landing_page = 'dashboard';
+                $user->save();
+            }
+
+            if (!$user->companies()->where('company_id', $companyId)->exists()) {
+                $user->companies()->attach($companyId);
+            }
+            $user->syncRoles([$adminRole->id]);
         }
-        $adminUser->syncRoles([$adminRole->id]);
 
         // ─────────────────────────────────────────────────────────────────────
         // DEMO STAFF ACCOUNTS — ONLY IN NON-PRODUCTION WITH EXPLICIT FLAG
