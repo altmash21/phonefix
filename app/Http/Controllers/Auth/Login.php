@@ -57,8 +57,10 @@ class Login extends Controller
             'password' => $request->input('password'),
         ];
 
+        $remember = $request->boolean('remember', true);
+
         // Attempt to login
-        if (! auth()->attempt($credentials, $request->get('remember', false))) {
+        if (! auth()->attempt($credentials, $remember)) {
             return $this->respondLoginFailed();
         }
 
