@@ -243,7 +243,7 @@
                 <td class="text-right font-mono">{{ number_format($taxableAmount, 2) }}</td>
                 <td class="text-right font-mono">{{ number_format($taxableAmount, 2) }}</td>
                 @if($isGstBill)
-                <td class="text-right font-mono" style="color:#4F46E5;">{{ number_format($totalTaxAmount, 2) }}</td>
+                <td class="text-right font-mono" style="color:#111827;">{{ number_format($totalTaxAmount, 2) }}</td>
                 @endif
                 <td class="text-right font-mono" style="font-weight: bold;">{{ number_format($sale->total_amount, 2) }}</td>
             </tr>
@@ -263,7 +263,7 @@
                     @if($isGstBill)
                     <td class="text-right font-mono" style="color: #6b7280;">0.00</td>
                     @endif
-                    <td class="text-right font-mono" style="font-weight: bold; color: #15803D;">FREE</td>
+                    <td class="text-right font-mono" style="font-weight: bold; color: #111827;">FREE</td>
                 </tr>
                 @endforeach
             @endif
@@ -275,7 +275,7 @@
         <tr>
             <td style="width: 55%; vertical-align: top; padding-right: 14px;">
                 @if($isGstBill)
-                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #4F46E5; margin-bottom: 4px;">Tax Calculation (GST @ 18% HSN 8517)</div>
+                <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #111827; margin-bottom: 4px;">Tax Calculation (GST @ 18% HSN 8517)</div>
                 <table class="tax-table">
                     <thead>
                         <tr>
@@ -335,9 +335,9 @@
                         <td style="background-color: #f9fafb; color: #4b5563;">SGST (9%)</td>
                         <td style="text-align: right;" class="font-mono">{{ number_format($sgstAmount, 2) }}</td>
                     </tr>
-                    <tr style="background-color: #f0f4ff;">
-                        <td style="color: #3730A3; font-weight: bold;">Total Tax (GST 18%)</td>
-                        <td style="text-align: right; color:#4F46E5; font-weight: bold;" class="font-mono">{{ number_format($totalTaxAmount, 2) }}</td>
+                    <tr style="background-color: #f9fafb;">
+                        <td style="color: #111827; font-weight: bold;">Total Tax (GST 18%)</td>
+                        <td style="text-align: right; color:#111827; font-weight: bold;" class="font-mono">{{ number_format($totalTaxAmount, 2) }}</td>
                     </tr>
                     @endif
                     <tr style="background-color: #f3f4f6; font-size: 12px; font-weight: bold; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
@@ -345,13 +345,13 @@
                         <td style="text-align: right; color: #111827;" class="font-mono">Rs. {{ number_format($sale->total_amount, 2) }}</td>
                     </tr>
                     <tr>
-                        <td style="color: #059669; font-weight: bold;">Amount Paid</td>
-                        <td style="text-align: right; color: #059669; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->amount_paid, 2) }}</td>
+                        <td style="color: #111827; font-weight: bold;">Amount Paid</td>
+                        <td style="text-align: right; color: #111827; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->amount_paid, 2) }}</td>
                     </tr>
                     @if($sale->udhari_amount > 0)
-                    <tr style="background-color: #fef2f2;">
-                        <td style="color: #dc2626; font-weight: bold;">Balance Due (Khata)</td>
-                        <td style="text-align: right; color: #dc2626; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->udhari_amount, 2) }}</td>
+                    <tr style="background-color: #f9fafb;">
+                        <td style="color: #111827; font-weight: bold;">Balance Due (Khata)</td>
+                        <td style="text-align: right; color: #111827; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->udhari_amount, 2) }}</td>
                     </tr>
                     @endif
                 </table>

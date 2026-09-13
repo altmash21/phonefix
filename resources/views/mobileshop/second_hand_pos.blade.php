@@ -469,19 +469,19 @@
 
                     <!-- Financial Breakdown Box -->
                     <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
-                        <div id="shDiscountSummaryRow" style="display:none; justify-content:space-between; font-size:13px; color:#DC2626; margin-bottom:6px;">
+                        <div id="shDiscountSummaryRow" style="display:none; justify-content:space-between; font-size:13px; color:#111827; margin-bottom:6px;">
                             <span>Discount Given:</span>
-                            <strong id="lblShDiscountTotal">-₹0</strong>
+                            <strong id="lblShDiscountTotal" style="color:#111827;">-₹0</strong>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; border-top:1px solid #E2E8F0; padding-top:6px;">
                             <span style="font-size:13px; font-weight:700; color:#0F172A;">Net Bill Amount:</span>
-                            <strong id="lblShFinalTotal" style="font-size:20px; font-weight:900; color:#059669; font-family:'JetBrains Mono', monospace;">₹0</strong>
+                            <strong id="lblShFinalTotal" style="font-size:20px; font-weight:900; color:#0F172A; font-family:'JetBrains Mono', monospace;">₹0</strong>
                         </div>
 
                         <!-- Staff Margin Indicator -->
-                        <div style="background:#ECFDF5; border:1px solid #A7F3D0; border-radius:6px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:11px; font-weight:700; color:#065F46;">Store Margin:</span>
-                            <span id="lblShProfitMargin" style="font-size:12px; font-weight:800; color:#059669; font-family:'JetBrains Mono', monospace;">₹0 (0%)</span>
+                        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:11px; font-weight:700; color:#475569;">Store Margin:</span>
+                            <span id="lblShProfitMargin" style="font-size:12px; font-weight:800; color:#0F172A; font-family:'JetBrains Mono', monospace;">₹0 (0%)</span>
                         </div>
                     </div>
 
@@ -501,16 +501,16 @@
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                             <label class="sh-input-label" style="margin:0;">Amount Paid Now (₹) *</label>
                             <div style="display:flex; gap:6px;">
-                                <button type="button" onclick="setShFullPaid()" style="font-size:10.5px; padding:2px 8px; border-radius:4px; font-weight:800; color:#16A34A; border:1px solid #BBF7D0; background:#F0FDF4; cursor:pointer;">Full Paid</button>
-                                <button type="button" onclick="setShZeroPaid()" style="font-size:10.5px; padding:2px 8px; border-radius:4px; font-weight:800; color:#DC2626; border:1px solid #FECDD3; background:#FFF1F2; cursor:pointer;">Udhari (₹0)</button>
+                                <button type="button" onclick="setShFullPaid()" style="font-size:10.5px; padding:2px 8px; border-radius:4px; font-weight:800; color:#111827; border:1px solid #CBD5E1; background:#F1F5F9; cursor:pointer;">Full Paid</button>
+                                <button type="button" onclick="setShZeroPaid()" style="font-size:10.5px; padding:2px 8px; border-radius:4px; font-weight:800; color:#111827; border:1px solid #CBD5E1; background:#F1F5F9; cursor:pointer;">Udhari (₹0)</button>
                             </div>
                         </div>
-                        <input type="number" step="1" name="amount_paid" id="shAmountPaid" required placeholder="0" class="sh-input-text" style="font-size:18px; font-weight:900; color:#16A34A;" oninput="onShAmountPaidInput()">
+                        <input type="number" step="1" name="amount_paid" id="shAmountPaid" required placeholder="0" class="sh-input-text" style="font-size:18px; font-weight:900; color:#0F172A;" oninput="onShAmountPaidInput()">
                     </div>
 
-                    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:12px; background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; padding:6px 10px;">
-                        <span style="color:#991B1B;">Balance to Khata (Udhari):</span>
-                        <strong id="lblShDueAmount" style="color:#DC2626; font-family:'JetBrains Mono', monospace;">₹0</strong>
+                    <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:6px 10px;">
+                        <span style="color:#475569;">Balance to Khata (Udhari):</span>
+                        <strong id="lblShDueAmount" style="color:#111827; font-family:'JetBrains Mono', monospace;">₹0</strong>
                     </div>
 
                     <div style="margin-bottom:14px;">

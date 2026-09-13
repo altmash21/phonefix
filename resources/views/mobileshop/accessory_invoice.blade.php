@@ -305,9 +305,9 @@
             <div style="display:flex; justify-content:space-between;"><span>Taxable:</span><span>₹{{ number_format($sale->subtotal - $sale->tax_amount, 2) }}</span></div>
             <div style="display:flex; justify-content:space-between;"><span>GST (18%):</span><span>₹{{ number_format($sale->tax_amount, 2) }}</span></div>
             <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>TOTAL:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
-            <div style="display:flex; justify-content:space-between; font-weight:700; color:#10B981;"><span>PAID:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700; color:#111827;"><span>PAID:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
             @if($sale->udhari_amount > 0)
-                <div style="display:flex; justify-content:space-between; font-weight:700; color:#DC2626;"><span>UDHARI DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:700; color:#111827;"><span>UDHARI DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
             @endif
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 8px; margin-top: 8px; text-align:center; font-size:9px; color:#6B7280; line-height:1.4;">
@@ -365,6 +365,18 @@
         }
     }
     @media print {
+        *, #viewA4 *, #viewThermal * {
+            color: #000000 !important;
+            text-shadow: none !important;
+        }
+        #viewA4, #viewThermal {
+            color: #000000 !important;
+            background: #ffffff !important;
+        }
+        table, th, td {
+            color: #000000 !important;
+            border-color: #374151 !important;
+        }
         .invoice-mobile-toolbar {
             display: none !important;
         }
@@ -383,6 +395,9 @@
             margin: 0 !important;
             width: 100% !important;
         }
+        #viewA4, #viewA4 * {
+            color: #000000 !important;
+        }
         #viewA4 table {
             border-color: #374151 !important;
         }
@@ -391,6 +406,9 @@
             box-shadow: none !important;
             padding: 2mm 0 !important;
             margin: 0 auto !important;
+        }
+        #viewThermal, #viewThermal * {
+            color: #000000 !important;
         }
     }
 </style>

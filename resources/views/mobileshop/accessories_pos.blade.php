@@ -222,6 +222,35 @@
         box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
     }
 
+    /* ── Whole Invoice Discount Pills ── */
+    .disc-pill-group {
+        display: inline-flex;
+        background: #F1F5F9;
+        border-radius: 6px;
+        padding: 2px;
+        gap: 2px;
+        border: 1px solid #E2E8F0;
+    }
+    .disc-pill-btn {
+        border: none;
+        background: transparent;
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748B;
+        padding: 4px 9px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .disc-pill-btn:hover {
+        color: #0F172A;
+    }
+    .disc-pill-btn.active {
+        background: #0F172A;
+        color: #FFFFFF;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+    }
+
     /* ── Live Search Dropdown ── */
     .app-search-dropdown {
         position: absolute;
@@ -603,20 +632,42 @@
                     </div>
                     <input type="hidden" name="payment_mode" id="accPaymentMode" value="cash">
 
+                    <!-- Whole Invoice Discount Selector -->
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label class="app-input-label" style="margin:0;">Invoice Discount</label>
+                            <div class="disc-pill-group">
+                                <button type="button" class="disc-pill-btn active" id="accDiscPill_none" onclick="setAccBillDiscountMode('none')">None</button>
+                                <button type="button" class="disc-pill-btn" id="accDiscPill_percent" onclick="setAccBillDiscountMode('percent')">% Off</button>
+                                <button type="button" class="disc-pill-btn" id="accDiscPill_flat" onclick="setAccBillDiscountMode('flat')">₹ Off</button>
+                                <button type="button" class="disc-pill-btn" id="accDiscPill_custom" onclick="setAccBillDiscountMode('custom')">Final ₹</button>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Input for Discount -->
+                        <div id="accBillDiscInputWrap" style="display:none; align-items:center; gap:8px;">
+                            <span id="accBillDiscPrefix" style="font-size:13px; font-weight:700; color:#475569;">₹</span>
+                            <div style="position:relative; flex:1;">
+                                <input type="number" id="accBillDiscValInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:14px; font-weight:800; padding:6px 10px;" placeholder="0" oninput="onAccBillDiscountInput(this.value)">
+                            </div>
+                            <span id="accBillDiscSummary" style="font-size:12px; font-weight:700; color:#111827;"></span>
+                        </div>
+                    </div>
+
                     <!-- Amount Paid Input & Fast Chips -->
                     <div style="margin-bottom: 14px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                             <label class="app-input-label" style="margin-bottom:0;">Amount Paid Now (₹) *</label>
                             <div style="display:flex; gap:6px;">
-                                <button type="button" onclick="setFullPayment()" style="font-size:11px; padding:3px 10px; border-radius:6px; font-weight:800; color:#16A34A; border:1px solid #BBF7D0; background:#F0FDF4; cursor:pointer;">
+                                <button type="button" onclick="setFullPayment()" style="font-size:11px; padding:3px 10px; border-radius:6px; font-weight:800; color:#111827; border:1px solid #CBD5E1; background:#F1F5F9; cursor:pointer;">
                                     Full Paid
                                 </button>
-                                <button type="button" onclick="setZeroPayment()" style="font-size:11px; padding:3px 10px; border-radius:6px; font-weight:800; color:#DC2626; border:1px solid #FECDD3; background:#FFF1F2; cursor:pointer;">
+                                <button type="button" onclick="setZeroPayment()" style="font-size:11px; padding:3px 10px; border-radius:6px; font-weight:800; color:#111827; border:1px solid #CBD5E1; background:#F1F5F9; cursor:pointer;">
                                     Udhari (₹0)
                                 </button>
                             </div>
                         </div>
-                        <input type="number" step="1" name="amount_paid" id="accAmountPaid" required placeholder="0" class="app-input-text" style="font-size:20px; font-weight:900; color:#16A34A;" oninput="onAmountPaidManualInput()">
+                        <input type="number" step="1" name="amount_paid" id="accAmountPaid" required placeholder="0" class="app-input-text" style="font-size:20px; font-weight:900; color:#111827;" oninput="onAmountPaidManualInput()">
                     </div>
 
                     <!-- Calculation Summary -->
@@ -625,9 +676,9 @@
                             <span>Gross Items Total:</span>
                             <strong id="lblItemsGross" style="color:#0F172A;">₹0</strong>
                         </div>
-                        <div id="lblDiscountRow" style="display:none; justify-content:space-between; font-size:13px; color:#DC2626; margin-bottom:6px;">
+                        <div id="lblDiscountRow" style="display:none; justify-content:space-between; font-size:13px; color:#111827; margin-bottom:6px;">
                             <span>Discount Total:</span>
-                            <strong id="lblDiscountAmount">-₹0</strong>
+                            <strong id="lblDiscountAmount" style="color:#111827;">-₹0</strong>
                         </div>
                         <div id="gstSummaryRow" style="display:none; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:6px;">
                             <span>GST (18% Included):</span>
@@ -635,15 +686,15 @@
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:800; color:#0F172A; margin-bottom:6px; border-top:1px solid #E2E8F0; padding-top:6px;">
                             <span>Bill Grand Total:</span>
-                            <strong id="lblGrandTotal" style="font-size:18px; color:#2563EB;">₹0</strong>
+                            <strong id="lblGrandTotal" style="font-size:18px; color:#111827;">₹0</strong>
                         </div>
-                        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:#16A34A; margin-bottom:6px;">
+                        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:#111827; margin-bottom:6px;">
                             <span>Paid Now:</span>
-                            <strong id="lblPaidAmount">₹0</strong>
+                            <strong id="lblPaidAmount" style="color:#111827;">₹0</strong>
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:800; border-top:1px dashed #CBD5E1; padding-top:8px;">
                             <span style="color:#475569;">Added to Khata (Remaining Due):</span>
-                            <strong id="lblDueAmount" style="color:#DC2626; font-size:15px;">₹0</strong>
+                            <strong id="lblDueAmount" style="color:#111827; font-size:15px;">₹0</strong>
                         </div>
                     </div>
 
@@ -930,8 +981,6 @@
                 model: selectedSearchItem.compatible_model || '',
                 category: selectedSearchItem.category || '',
                 original_price: origPrice,
-                discount_type: 'none',
-                discount_val: 0,
                 unit_price: origPrice,
                 quantity: selectedQaQty,
                 max_stock: selectedSearchItem.stock_qty
@@ -942,44 +991,55 @@
         clearSearch();
     }
 
-    // ── Cart Item Discount Handlers ──
-    function setCartItemDiscountType(index, type) {
-        if (!cart[index]) return;
-        cart[index].discount_type = type;
-        if (type === 'none') {
-            cart[index].discount_val = 0;
-            cart[index].unit_price = cart[index].original_price;
-        } else if (type === 'custom') {
-            cart[index].discount_val = cart[index].unit_price;
-        } else if (!cart[index].discount_val || cart[index].discount_val === 0) {
-            cart[index].discount_val = (type === 'percent' ? 10 : 50);
-            applyCartItemDiscount(cart[index]);
+    // ── Whole Invoice Discount Handlers ──
+    let accBillDiscountMode = 'none'; // 'none', 'percent', 'flat', 'custom'
+    let accBillDiscountVal = 0;
+
+    function setAccBillDiscountMode(mode) {
+        accBillDiscountMode = mode;
+        ['none', 'percent', 'flat', 'custom'].forEach(m => {
+            const pill = document.getElementById(`accDiscPill_${m}`);
+            if (pill) pill.classList.toggle('active', m === mode);
+        });
+
+        const wrap = document.getElementById('accBillDiscInputWrap');
+        const prefix = document.getElementById('accBillDiscPrefix');
+        const valInput = document.getElementById('accBillDiscValInput');
+
+        if (mode === 'none') {
+            if (wrap) wrap.style.display = 'none';
+            accBillDiscountVal = 0;
+            if (valInput) valInput.value = '';
         } else {
-            applyCartItemDiscount(cart[index]);
+            if (wrap) wrap.style.display = 'flex';
+            if (mode === 'percent') {
+                if (prefix) prefix.innerText = '%';
+                if (valInput) {
+                    valInput.placeholder = 'e.g. 10';
+                    if (!accBillDiscountVal) { accBillDiscountVal = 10; valInput.value = 10; }
+                }
+            } else if (mode === 'flat') {
+                if (prefix) prefix.innerText = '₹';
+                if (valInput) {
+                    valInput.placeholder = 'e.g. 200';
+                    if (!accBillDiscountVal) { accBillDiscountVal = 100; valInput.value = 100; }
+                }
+            } else if (mode === 'custom') {
+                if (prefix) prefix.innerText = '₹ Total';
+                const gross = getGrossTotal();
+                if (valInput) {
+                    valInput.placeholder = 'Set Final Bill Amount';
+                    if (!accBillDiscountVal) { accBillDiscountVal = gross; valInput.value = gross; }
+                }
+            }
         }
-        renderCart();
+
+        updateCalculations();
     }
 
-    function onCartItemDiscountValChange(index, val) {
-        if (!cart[index]) return;
-        var parsed = parseFloat(val) || 0;
-        cart[index].discount_val = Math.max(0, parsed);
-        applyCartItemDiscount(cart[index]);
-        renderCart();
-    }
-
-    function applyCartItemDiscount(item) {
-        if (item.discount_type === 'percent') {
-            var discAmt = Math.round((item.original_price * item.discount_val) / 100);
-            item.unit_price = Math.max(0, item.original_price - discAmt);
-        } else if (item.discount_type === 'flat') {
-            var discAmt = Math.round(item.discount_val);
-            item.unit_price = Math.max(0, item.original_price - discAmt);
-        } else if (item.discount_type === 'custom') {
-            item.unit_price = Math.max(0, Math.round(item.discount_val));
-        } else {
-            item.unit_price = item.original_price;
-        }
+    function onAccBillDiscountInput(val) {
+        accBillDiscountVal = Math.max(0, parseFloat(val) || 0);
+        updateCalculations();
     }
 
     // ── Render Cart Items ──
@@ -1022,7 +1082,7 @@
                 <div class="app-cart-item-card">
                     <input type="hidden" name="items[${index}][part_id]" value="${item.part_id}">
                     <input type="hidden" name="items[${index}][quantity]" value="${item.quantity}" id="cartQtyInput_${index}">
-                    <input type="hidden" name="items[${index}][unit_price]" value="${item.unit_price}">
+                    <input type="hidden" name="items[${index}][unit_price]" value="${item.unit_price}" id="cartUnitPrice_${index}">
                     
                     <div class="app-cart-item-header">
                         <div style="flex:1; min-width:0;">
@@ -1031,43 +1091,13 @@
                             </div>
                             <span style="font-size:11px; color:#64748B; font-weight:600;">${escapeHtml(item.category)} • Stock: ${item.max_stock}</span>
                         </div>
-                        <button type="button" onclick="removeCartItem(${index})" style="background:#FEE2E2; border:none; color:#DC2626; border-radius:6px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:800; font-size:13px;" title="Remove Item">✕</button>
-                    </div>
-
-                    <!-- Discount Selector Row -->
-                    <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; padding:6px 8px; display:flex; flex-direction:column; gap:4px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:10.5px; font-weight:700; color:#64748B;">MRP: ₹${Number(item.original_price).toLocaleString('en-IN')}</span>
-                            <div class="disc-pill-group">
-                                <button type="button" class="disc-pill-btn ${item.discount_type === 'none' ? 'active' : ''}" onclick="setCartItemDiscountType(${index}, 'none')">None</button>
-                                <button type="button" class="disc-pill-btn ${item.discount_type === 'percent' ? 'active' : ''}" onclick="setCartItemDiscountType(${index}, 'percent')">%</button>
-                                <button type="button" class="disc-pill-btn ${item.discount_type === 'flat' ? 'active' : ''}" onclick="setCartItemDiscountType(${index}, 'flat')">₹</button>
-                                <button type="button" class="disc-pill-btn ${item.discount_type === 'custom' ? 'active' : ''}" onclick="setCartItemDiscountType(${index}, 'custom')">Custom</button>
-                            </div>
-                        </div>
-                        ${item.discount_type === 'percent' ? `
-                            <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px;">
-                                <input type="number" min="0" max="100" class="app-input-text" style="width:50px; height:24px; font-size:11px; padding:0 4px; text-align:right; font-weight:700;" value="${item.discount_val}" onchange="onCartItemDiscountValChange(${index}, this.value)">
-                                <span style="font-size:10.5px; font-weight:700; color:#DC2626;">% off (-₹${Math.round((item.original_price * item.discount_val)/100).toLocaleString('en-IN')})</span>
-                            </div>
-                        ` : item.discount_type === 'flat' ? `
-                            <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px;">
-                                <span style="font-size:11px; font-weight:700; color:#64748B;">₹</span>
-                                <input type="number" min="0" class="app-input-text" style="width:65px; height:24px; font-size:11px; padding:0 4px; text-align:right; font-weight:700;" value="${item.discount_val}" onchange="onCartItemDiscountValChange(${index}, this.value)">
-                                <span style="font-size:10.5px; font-weight:700; color:#DC2626;">off</span>
-                            </div>
-                        ` : item.discount_type === 'custom' ? `
-                            <div style="display:flex; align-items:center; justify-content:flex-end; gap:4px;">
-                                <span style="font-size:11px; font-weight:700; color:#64748B;">Unit Rate: ₹</span>
-                                <input type="number" min="0" class="app-input-text" style="width:75px; height:24px; font-size:11px; padding:0 4px; text-align:right; font-weight:700;" value="${item.unit_price}" onchange="onCartItemDiscountValChange(${index}, this.value)">
-                            </div>
-                        ` : ''}
+                        <button type="button" onclick="removeCartItem(${index})" style="background:#F1F5F9; border:1px solid #CBD5E1; color:#334155; border-radius:6px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:800; font-size:13px;" title="Remove Item">✕</button>
                     </div>
 
                     <div class="app-cart-item-footer">
                         <!-- Rate Display -->
                         <div style="font-size:11.5px; font-weight:700; color:#334155;">
-                            Rate: <span style="color:#059669; font-weight:800;">₹${Number(item.unit_price).toLocaleString('en-IN')}</span>
+                            Rate: <span id="cartItemRate_${index}" style="color:#0F172A; font-weight:800;">₹${Number(Math.round(item.unit_price)).toLocaleString('en-IN')}</span>
                         </div>
 
                         <!-- Touch Stepper -->
@@ -1078,7 +1108,7 @@
                         </div>
 
                         <!-- Item Total -->
-                        <div style="font-size:15px; font-weight:900; color:#2563EB; font-family:'JetBrains Mono', monospace;">
+                        <div id="cartItemTotal_${index}" style="font-size:15px; font-weight:900; color:#0F172A; font-family:'JetBrains Mono', monospace;">
                             ₹${itemTotal.toLocaleString('en-IN')}
                         </div>
                     </div>
@@ -1144,31 +1174,89 @@
     }
 
     function getGrandTotal() {
-        return cart.reduce((sum, item) => sum + Math.round(item.quantity * item.unit_price), 0);
+        const gross = getGrossTotal();
+        if (accBillDiscountMode === 'percent') {
+            const discountAmt = Math.round((gross * accBillDiscountVal) / 100);
+            return Math.max(0, gross - discountAmt);
+        } else if (accBillDiscountMode === 'flat') {
+            const discountAmt = Math.min(gross, Math.round(accBillDiscountVal));
+            return Math.max(0, gross - discountAmt);
+        } else if (accBillDiscountMode === 'custom') {
+            return Math.max(0, Math.round(accBillDiscountVal));
+        }
+        return gross;
     }
 
     function updateCalculations() {
         const gross = getGrossTotal();
         const total = getGrandTotal();
-        const discount = Math.max(0, gross - total);
-        const isGst = document.getElementById('accIsGstCheckbox').checked;
+        const discountAmt = Math.max(0, gross - total);
+        const isGst = document.getElementById('accIsGstCheckbox') ? document.getElementById('accIsGstCheckbox').checked : false;
 
-        document.getElementById('lblItemsGross').innerText = `₹${gross.toLocaleString('en-IN')}`;
+        // Proportionally distribute grandTotal to cart items
+        if (cart.length > 0 && gross > 0) {
+            let allocatedTotal = 0;
+            cart.forEach((item, idx) => {
+                const itemGross = item.quantity * item.original_price;
+                const itemShare = itemGross / gross;
+                let itemNetTotal;
+                if (idx === cart.length - 1) {
+                    itemNetTotal = Math.max(0, total - allocatedTotal);
+                } else {
+                    itemNetTotal = Math.round(total * itemShare);
+                    allocatedTotal += itemNetTotal;
+                }
+                const unitPrice = item.quantity > 0 ? (itemNetTotal / item.quantity) : item.original_price;
+                item.unit_price = unitPrice;
+
+                const hiddenPriceInput = document.getElementById(`cartUnitPrice_${idx}`);
+                if (hiddenPriceInput) hiddenPriceInput.value = unitPrice;
+
+                const rateDisplay = document.getElementById(`cartItemRate_${idx}`);
+                if (rateDisplay) rateDisplay.innerText = `₹${Number(Math.round(unitPrice)).toLocaleString('en-IN')}`;
+
+                const totalDisplay = document.getElementById(`cartItemTotal_${idx}`);
+                if (totalDisplay) totalDisplay.innerText = `₹${Number(Math.round(itemNetTotal)).toLocaleString('en-IN')}`;
+            });
+        }
+
+        const summaryText = document.getElementById('accBillDiscSummary');
+        if (summaryText) {
+            if (accBillDiscountMode === 'percent') {
+                summaryText.innerText = `-₹${discountAmt.toLocaleString('en-IN')}`;
+            } else if (accBillDiscountMode === 'flat') {
+                summaryText.innerText = `-₹${discountAmt.toLocaleString('en-IN')}`;
+            } else if (accBillDiscountMode === 'custom') {
+                summaryText.innerText = `Net ₹${total.toLocaleString('en-IN')}`;
+            } else {
+                summaryText.innerText = '';
+            }
+        }
+
+        const grossLbl = document.getElementById('lblItemsGross');
+        if (grossLbl) grossLbl.innerText = `₹${gross.toLocaleString('en-IN')}`;
+
         const discRow = document.getElementById('lblDiscountRow');
         const discAmt = document.getElementById('lblDiscountAmount');
-        if (discount > 0) {
-            discAmt.innerText = `-₹${discount.toLocaleString('en-IN')}`;
-            discRow.style.display = 'flex';
-        } else {
-            discRow.style.display = 'none';
+        if (discRow && discAmt) {
+            if (discountAmt > 0) {
+                discAmt.innerText = `-₹${discountAmt.toLocaleString('en-IN')}`;
+                discRow.style.display = 'flex';
+            } else {
+                discRow.style.display = 'none';
+            }
         }
 
         if (isGst) {
             const gst = Math.round(total * 0.18 / 1.18); // Inclusive 18%
-            document.getElementById('lblGstAmount').innerText = `₹${gst.toLocaleString('en-IN')}`;
+            const gstLbl = document.getElementById('lblGstAmount');
+            if (gstLbl) gstLbl.innerText = `₹${gst.toLocaleString('en-IN')}`;
         }
-        document.getElementById('lblGrandTotal').innerText = `₹${total.toLocaleString('en-IN')}`;
-        document.getElementById('dockGrandTotal').innerText = `₹${total.toLocaleString('en-IN')}`;
+        const grandTotalLbl = document.getElementById('lblGrandTotal');
+        if (grandTotalLbl) grandTotalLbl.innerText = `₹${total.toLocaleString('en-IN')}`;
+
+        const dockGrandTotalLbl = document.getElementById('dockGrandTotal');
+        if (dockGrandTotalLbl) dockGrandTotalLbl.innerText = `₹${total.toLocaleString('en-IN')}`;
 
         // If amount paid is empty or equals previous total, auto-update
         const paidInput = document.getElementById('accAmountPaid');

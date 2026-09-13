@@ -183,7 +183,7 @@
                         <div style="font-size: 11px; color: #374151;">Financier: <strong>{{ $emiProvider->name }}</strong> (Loan No: {{ $sale->emi_loan_no ?: 'N/A' }})</div>
                     @endif
                     @if($isGstBill)
-                        <div style="font-size: 11px; color: #15803D; font-weight:700; margin-top: 2px;">Tax Regime: <strong>{{ strtoupper(str_replace('_', ' ', $sale->tax_type ?: 'intra_state')) }} @ 18% GST</strong></div>
+                        <div style="font-size: 11px; color: #111827; font-weight:700; margin-top: 2px;">Tax Regime: <strong>{{ strtoupper(str_replace('_', ' ', $sale->tax_type ?: 'intra_state')) }} @ 18% GST</strong></div>
                     @else
                         <div style="font-size: 11px; color: #374151; margin-top: 2px;">Bill Category: <strong>Retail / Non-GST Estimate</strong></div>
                     @endif
@@ -226,7 +226,7 @@
                     <td style="padding: 10px 8px; text-align: right; font-family: monospace;">{{ number_format($taxableAmount, 2) }}</td>
                     <td style="padding: 10px 8px; text-align: right; font-family: monospace;">{{ number_format($taxableAmount, 2) }}</td>
                     @if($isGstBill)
-                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; color:#4F46E5; font-weight:600;">{{ number_format($totalTaxAmount, 2) }}</td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; color:#111827; font-weight:600;">{{ number_format($totalTaxAmount, 2) }}</td>
                     @endif
                     <td style="padding: 10px; text-align: right; font-family: monospace; font-weight: 800; font-size: 12px; color: #111827;">{{ number_format($sale->total_amount, 2) }}</td>
                 </tr>
@@ -246,7 +246,7 @@
                         @if($isGstBill)
                         <td style="padding: 8px; text-align: right; font-family: monospace; color: #6B7280;">0.00</td>
                         @endif
-                        <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-family: monospace; color: #15803D;">FREE</td>
+                        <td style="padding: 8px 10px; text-align: right; font-weight: 700; font-family: monospace; color: #111827;">FREE</td>
                     </tr>
                     @endforeach
                 @endif
@@ -278,7 +278,7 @@
                     <div><span style="color: #64748B;">Quantity:</span> <strong>1 Unit</strong></div>
                     <div style="text-align: right;"><span style="color: #64748B;">Taxable:</span> <strong style="font-family: monospace;">₹{{ number_format($taxableAmount, 2) }}</strong></div>
                     @if($isGstBill)
-                    <div><span style="color: #64748B;">GST (18%):</span> <strong style="font-family: monospace; color:#4F46E5;">₹{{ number_format($totalTaxAmount, 2) }}</strong></div>
+                    <div><span style="color: #64748B;">GST (18%):</span> <strong style="font-family: monospace; color:#111827;">₹{{ number_format($totalTaxAmount, 2) }}</strong></div>
                     @endif
                     <div style="text-align: right;"><span style="color: #64748B;">Total:</span> <strong style="font-family: monospace; font-size: 13px; color: #111827;">₹{{ number_format($sale->total_amount, 2) }}</strong></div>
                 </div>
@@ -286,12 +286,12 @@
 
             @if(isset($gifts) && $gifts->count() > 0)
                 @foreach($gifts as $g)
-                <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px;">
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px;">
                     <div>
-                        <div style="font-weight: 700; color: #166534;">🎁 Free Gift: {{ $g->name }}</div>
-                        <div style="font-size: 10px; color: #15803D;">HSN: 85177090 &bull; Qty: {{ $g->qty }}</div>
+                        <div style="font-weight: 700; color: #111827;">🎁 Free Gift: {{ $g->name }}</div>
+                        <div style="font-size: 10px; color: #4B5563;">HSN: 85177090 &bull; Qty: {{ $g->qty }}</div>
                     </div>
-                    <span class="badge" style="background:#DCFCE7; color:#15803D; font-weight:800; font-size:11px;">FREE</span>
+                    <span class="badge" style="background:#E2E8F0; color:#111827; font-weight:800; font-size:11px;">FREE</span>
                 </div>
                 @endforeach
             @endif
@@ -302,15 +302,15 @@
             <tr>
                 <td class="inv-totals-tax-cell" style="width: 55%; vertical-align: top; padding-right: 16px;">
                     @if($isGstBill)
-                    <div style="font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #4F46E5; margin-bottom: 6px; display:flex; align-items:center; gap:5px;">
+                    <div style="font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #111827; margin-bottom: 6px; display:flex; align-items:center; gap:5px;">
                         <span>📋</span> GST Tax Breakdown (18% Mobile Handset HSN 8517)
                     </div>
                     <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 12px; border: 1px solid #E5E7EB; border-radius: 6px; overflow: hidden;">
                         <thead>
-                            <tr style="background: #EEF2FF; border-bottom: 1px solid #C7D2FE;">
-                                <th style="padding: 6px 8px; text-align: left; font-weight: 700; color: #3730A3; font-size: 9.5px;">Tax Component</th>
-                                <th style="padding: 6px 8px; text-align: right; font-weight: 700; color: #3730A3; font-size: 9.5px;">Rate</th>
-                                <th style="padding: 6px 8px; text-align: right; font-weight: 700; color: #3730A3; font-size: 9.5px;">Amount (₹)</th>
+                            <tr style="background: #F3F4F6; border-bottom: 1px solid #D1D5DB;">
+                                <th style="padding: 6px 8px; text-align: left; font-weight: 700; color: #111827; font-size: 9.5px;">Tax Component</th>
+                                <th style="padding: 6px 8px; text-align: right; font-weight: 700; color: #111827; font-size: 9.5px;">Rate</th>
+                                <th style="padding: 6px 8px; text-align: right; font-weight: 700; color: #111827; font-size: 9.5px;">Amount (₹)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -333,9 +333,9 @@
                                 </tr>
                             @endif
                             <tr style="background: #F8FAFC; font-weight: 800;">
-                                <td style="padding: 6px 8px; color: #1E1B4B;">Total GST Tax</td>
-                                <td style="padding: 6px 8px; text-align: right; color: #1E1B4B;">18.00%</td>
-                                <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #4F46E5;">₹{{ number_format($totalTaxAmount, 2) }}</td>
+                                <td style="padding: 6px 8px; color: #111827;">Total GST Tax</td>
+                                <td style="padding: 6px 8px; text-align: right; color: #111827;">18.00%</td>
+                                <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #111827;">₹{{ number_format($totalTaxAmount, 2) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -364,9 +364,9 @@
                             <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563;">SGST (9%)</td>
                             <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($sgstAmount, 2) }}</td>
                         </tr>
-                        <tr style="border-bottom: 1px solid #E5E7EB; background: #EEF2FF;">
-                            <td style="padding: 7px 10px; font-weight: 700; color: #3730A3;">Total GST (18%)</td>
-                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #4F46E5;">₹{{ number_format($totalTaxAmount, 2) }}</td>
+                        <tr style="border-bottom: 1px solid #E5E7EB; background: #F3F4F6;">
+                            <td style="padding: 7px 10px; font-weight: 700; color: #111827;">Total GST (18%)</td>
+                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #111827;">₹{{ number_format($totalTaxAmount, 2) }}</td>
                         </tr>
                         @endif
                         <tr style="background: #F3F4F6; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
@@ -374,13 +374,13 @@
                             <td style="padding: 9px 10px; text-align: right; font-weight: 900; font-size: 15px; font-family: monospace; color: #111827;">₹{{ number_format($sale->total_amount, 2) }}</td>
                         </tr>
                         <tr style="border-top: 1px solid #E5E7EB;">
-                            <td style="padding: 6px 10px; color: #059669; font-weight: 700;">Paid Now</td>
-                            <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #059669;">₹{{ number_format($sale->amount_paid, 2) }}</td>
+                            <td style="padding: 6px 10px; color: #111827; font-weight: 700;">Paid Now</td>
+                            <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #111827;">₹{{ number_format($sale->amount_paid, 2) }}</td>
                         </tr>
                         @if($sale->udhari_amount > 0)
-                        <tr style="border-top: 1px solid #FECACA; background: #FEF2F2;">
-                            <td style="padding: 6px 10px; color: #DC2626; font-weight: 800;">Balance Due (Khata)</td>
-                            <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: 900; color: #DC2626;">₹{{ number_format($sale->udhari_amount, 2) }}</td>
+                        <tr style="border-top: 1px solid #D1D5DB; background: #F9FAFB;">
+                            <td style="padding: 6px 10px; color: #111827; font-weight: 800;">Balance Due (Khata)</td>
+                            <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: 900; color: #111827;">₹{{ number_format($sale->udhari_amount, 2) }}</td>
                         </tr>
                         @endif
                     </table>
@@ -442,7 +442,7 @@
                 <div style="font-size:9px; color:#6B7280;">IMEI: {{ $sale->imei_1 }}</div>
                 @if(isset($gifts))
                     @foreach($gifts as $g)
-                        <div style="display:flex; justify-content:space-between; font-size:10px; color:#166534; margin-top:2px;">
+                        <div style="display:flex; justify-content:space-between; font-size:10px; color:#111827; margin-top:2px;">
                             <span>+ Free: {{ $g->name }}</span><span>FREE</span>
                         </div>
                     @endforeach
@@ -456,9 +456,9 @@
                 <div style="display:flex; justify-content:space-between; font-weight:700;"><span>Total GST (18%):</span><span>₹{{ number_format($totalTaxAmount, 2) }}</span></div>
                 @endif
                 <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>TOTAL:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
-                <div style="display:flex; justify-content:space-between; font-weight:700; color:#10B981;"><span>PAID:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:700; color:#111827;"><span>PAID:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
                 @if($sale->udhari_amount > 0)
-                    <div style="display:flex; justify-content:space-between; font-weight:700; color:#DC2626;"><span>UDHARI DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
+                    <div style="display:flex; justify-content:space-between; font-weight:700; color:#111827;"><span>UDHARI DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
                 @endif
             </div>
             <div style="border-top: 1px dashed #CBD5E1; padding-top: 8px; margin-top: 8px; text-align:center; font-size:9px; color:#6B7280; line-height:1.4;">
@@ -584,6 +584,18 @@
 
     /* ─── PHYSICAL PRINT & PDF EXPORT ─── */
     @media print {
+        *, #viewA4 *, #viewThermal * {
+            color: #000000 !important;
+            text-shadow: none !important;
+        }
+        #viewA4, #viewThermal {
+            color: #000000 !important;
+            background: #ffffff !important;
+        }
+        table, th, td {
+            color: #000000 !important;
+            border-color: #374151 !important;
+        }
         .invoice-mobile-toolbar,
         .invoice-action-buttons {
             display: none !important;

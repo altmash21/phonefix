@@ -183,7 +183,7 @@
                     <div class="card-header" style="background:#FAFAFA; border-bottom:1px solid #E2E8F0; padding:6px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div class="card-title" style="font-size:12px; font-weight:700; color:#1E293B; display:flex; align-items:center; gap:6px;">
                             <i data-lucide="smartphone" style="width:14px;height:14px; color:var(--color-primary);"></i> Select Phone(s)
-                            <span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700;">{{ $inStockDevices->count() }} In Stock</span>
+                            <span class="badge" style="background:#F1F5F9; color:#0F172A; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700;">{{ ($inStockDevices ?? collect())->count() }} In Stock</span>
                         </div>
                         <div style="position:relative; width:220px;">
                             <input type="text" class="form-control" id="quickImeiSearch" placeholder="⚡ Scan / Type IMEI…" style="font-size:11.5px; padding-left:26px; height:28px; border-radius:6px;" oninput="onQuickSearchInput()">
@@ -242,12 +242,10 @@
                                     <table class="data-table" style="width:100%; font-size:12px;">
                                         <thead>
                                             <tr style="background:#F8FAFC; color:#64748B; font-size:10px; text-transform:uppercase;">
-                                                <th style="width:24%; padding:6px 8px;">Brand & Model</th>
-                                                <th style="width:20%; padding:6px 8px;">Variant & IMEI</th>
-                                                <th style="width:12%; text-align:right; padding:6px 8px;">Cost (₹)</th>
-                                                <th style="width:12%; text-align:right; padding:6px 8px;">Orig Price</th>
-                                                <th style="width:18%; text-align:right; padding:6px 8px;">Discount</th>
-                                                <th style="width:10%; text-align:right; padding:6px 8px;">Sale Price</th>
+                                                <th style="width:34%; padding:6px 8px;">Brand & Model</th>
+                                                <th style="width:32%; padding:6px 8px;">Variant & IMEI</th>
+                                                <th style="width:16%; text-align:right; padding:6px 8px;">Cost (₹)</th>
+                                                <th style="width:14%; text-align:right; padding:6px 8px;">Price (₹)</th>
                                                 <th style="width:4%; text-align:center; padding:6px 8px;"></th>
                                             </tr>
                                         </thead>
@@ -309,7 +307,7 @@
                                 </div>
                                 <select class="form-control" name="gift_inventory_id" id="giftInventorySelect" onchange="onGiftInventoryChange()" style="height:30px; font-size:11.5px;">
                                     <option value="">— Select an accessory —</option>
-                                    @foreach($giftInventory as $gi)
+                                    @foreach($giftInventory ?? [] as $gi)
                                         <option value="{{ $gi->id }}" data-cost="{{ $gi->unit_cost }}" data-name="{{ $gi->name }}" data-stock="{{ $gi->stock_qty }}">
                                             {{ $gi->name }} (Stock: {{ $gi->stock_qty }} | Cost: ₹{{ number_format($gi->unit_cost, 0) }})
                                         </option>
@@ -392,7 +390,7 @@
                                 <label class="form-label" style="font-size:10.5px; font-weight:700; color:#334155; margin-bottom:2px;">Finance Partner <span style="color:#EF4444;">*</span></label>
                                 <select class="form-control" name="emi_provider_id" id="emiProviderSelect" onchange="onEmiProviderSelectChange()" style="height:32px; font-size:12px; font-weight:700; border-radius:6px;">
                                     <option value="">— Select Partner —</option>
-                                    @foreach($emiProviders as $p)
+                                    @foreach($emiProviders ?? [] as $p)
                                         <option value="{{ $p->id }}"
                                             data-flat="{{ $p->processing_fee_flat ?? 0 }}"
                                             data-pct="{{ $p->processing_fee_pct ?? 0 }}"
@@ -468,9 +466,27 @@
                     </div>
                     <div class="card-body" style="padding:10px 12px;">
 
-                        <div style="font-size:11px; font-weight:700; color:#4F46E5; background:#EEF2FF; padding:4px 8px; border-radius:6px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;">
+                        <div style="font-size:11px; font-weight:700; color:#111827; background:#F1F5F9; padding:4px 8px; border-radius:6px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;">
                             <span>📋 Bill Type</span>
                             <span>18% GST Tax Invoice</span>
+                        </div>
+
+                        <!-- WHOLE INVOICE DISCOUNT -->
+                        <div style="margin-bottom:10px; padding:8px 10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span style="font-size:11px; font-weight:700; color:#334155;">Invoice Discount</span>
+                                <div class="disc-pill-group" id="billDiscPillGroup">
+                                    <button type="button" class="disc-pill-btn active" id="btnBillDiscNone" onclick="setBillDiscountMode('none')">None</button>
+                                    <button type="button" class="disc-pill-btn" id="btnBillDiscPercent" onclick="setBillDiscountMode('percent')">%</button>
+                                    <button type="button" class="disc-pill-btn" id="btnBillDiscFlat" onclick="setBillDiscountMode('flat')">₹</button>
+                                    <button type="button" class="disc-pill-btn" id="btnBillDiscCustom" onclick="setBillDiscountMode('custom')">Custom</button>
+                                </div>
+                            </div>
+                            <div id="billDiscInputWrap" style="display:none; align-items:center; gap:6px;">
+                                <span id="billDiscPrefix" style="font-size:11px; font-weight:700; color:#64748B;">₹</span>
+                                <input type="number" min="0" id="billDiscountValInput" class="form-control" style="height:28px; font-size:12px; font-weight:700; text-align:right;" placeholder="0" oninput="onBillDiscountInput(this.value)">
+                                <span id="billDiscSuffix" style="font-size:11px; font-weight:700; color:#334155;">off</span>
+                            </div>
                         </div>
 
                         <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px; color:#64748B;">
@@ -621,7 +637,7 @@
                     <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">EMI Finance Partner</label>
                     <select id="ocrProviderSelect" class="form-control" style="font-weight:700; font-size:12px;">
                         <option value="">— Select Partner —</option>
-                        @foreach($emiProviders as $p)
+                        @foreach($emiProviders ?? [] as $p)
                             <option value="{{ $p->id }}">{{ $p->name }}</option>
                         @endforeach
                     </select>
@@ -734,8 +750,8 @@
 @push('scripts')
 <script>
     // In-Stock Devices Data Source
-    var rawDevices = @json($inStockDevices);
-    var customersData = @json($customers->map(function($c) { return ['phone' => $c->phone, 'name' => $c->name, 'bal' => (float)$c->udhari_balance]; }));
+    var rawDevices = @json($inStockDevices ?? []);
+    var customersData = @json(($customers ?? collect())->map(function($c) { return ['phone' => $c->phone, 'name' => $c->name, 'bal' => (float)$c->udhari_balance]; }));
     var selectedDevices = [];
 
     // Initialize Page
@@ -896,8 +912,6 @@
             imei: device.imei_1,
             cost: Math.round(parseFloat(device.purchase_cost) || 0),
             original_price: origPrice,
-            discount_type: 'none',
-            discount_val: 0,
             sale_price: origPrice
         });
         renderSelectedDevices();
@@ -912,45 +926,60 @@
         populateBrandDropdown();
     }
 
-    function setDeviceDiscountType(index, type) {
-        var dev = selectedDevices[index];
-        if (!dev) return;
-        dev.discount_type = type;
-        if (type === 'none') {
-            dev.discount_val = 0;
-            dev.sale_price = dev.original_price;
-        } else if (type === 'custom') {
-            dev.discount_val = dev.sale_price;
-        } else if (!dev.discount_val || dev.discount_val === 0) {
-            dev.discount_val = (type === 'percent' ? 5 : 500);
-            applyDeviceDiscount(dev);
+    var billDiscountMode = 'none'; // 'none', 'percent', 'flat', 'custom'
+    var billDiscountVal = 0;
+
+    function setBillDiscountMode(mode) {
+        billDiscountMode = mode;
+        ['None', 'Percent', 'Flat', 'Custom'].forEach(function(m) {
+            var btn = document.getElementById('btnBillDisc' + m);
+            if (btn) btn.classList.toggle('active', m.toLowerCase() === mode);
+        });
+
+        var wrap = document.getElementById('billDiscInputWrap');
+        var prefix = document.getElementById('billDiscPrefix');
+        var suffix = document.getElementById('billDiscSuffix');
+        var input = document.getElementById('billDiscountValInput');
+
+        if (mode === 'none') {
+            if (wrap) wrap.style.display = 'none';
+            billDiscountVal = 0;
+            if (input) input.value = '';
         } else {
-            applyDeviceDiscount(dev);
+            if (wrap) wrap.style.display = 'flex';
+            var gross = getDevicesGrossTotal();
+            if (mode === 'percent') {
+                if (prefix) prefix.textContent = '';
+                if (suffix) suffix.textContent = '% off';
+                if (input) {
+                    input.placeholder = 'e.g. 5';
+                    if (!billDiscountVal) billDiscountVal = 5;
+                    input.value = billDiscountVal;
+                }
+            } else if (mode === 'flat') {
+                if (prefix) prefix.textContent = '₹';
+                if (suffix) suffix.textContent = 'off';
+                if (input) {
+                    input.placeholder = 'e.g. 1000';
+                    if (!billDiscountVal) billDiscountVal = 1000;
+                    input.value = billDiscountVal;
+                }
+            } else if (mode === 'custom') {
+                if (prefix) prefix.textContent = '₹';
+                if (suffix) suffix.textContent = 'Final Bill';
+                if (input) {
+                    input.placeholder = 'Desired Total';
+                    billDiscountVal = gross;
+                    input.value = billDiscountVal;
+                }
+            }
         }
-        renderSelectedDevices();
+        recalcSaleFinancials();
     }
 
-    function onDeviceDiscountValChange(index, input) {
-        var dev = selectedDevices[index];
-        if (!dev) return;
-        var val = parseFloat(input.value) || 0;
-        dev.discount_val = Math.max(0, val);
-        applyDeviceDiscount(dev);
-        renderSelectedDevices();
-    }
-
-    function applyDeviceDiscount(dev) {
-        if (dev.discount_type === 'percent') {
-            var discAmt = Math.round((dev.original_price * dev.discount_val) / 100);
-            dev.sale_price = Math.max(0, dev.original_price - discAmt);
-        } else if (dev.discount_type === 'flat') {
-            var discAmt = Math.round(dev.discount_val);
-            dev.sale_price = Math.max(0, dev.original_price - discAmt);
-        } else if (dev.discount_type === 'custom') {
-            dev.sale_price = Math.max(0, Math.round(dev.discount_val));
-        } else {
-            dev.sale_price = dev.original_price;
-        }
+    function onBillDiscountInput(val) {
+        billDiscountVal = Math.max(0, Math.round(parseFloat(val) || 0));
+        recalcSaleFinancials();
     }
 
     function renderSelectedDevices() {
@@ -982,48 +1011,18 @@
             // 1. Desktop Table Row
             var tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="padding:6px 8px; font-weight:700; color:#0F172A; font-size:12px; vertical-align:middle;">
+                <td style="padding:8px 8px; font-weight:700; color:#0F172A; font-size:12px; vertical-align:middle;">
                     <input type="hidden" name="device_ids[]" value="${dev.id}">
-                    <input type="hidden" name="sale_prices[${dev.id}]" value="${dev.sale_price}">
+                    <input type="hidden" name="sale_prices[${dev.id}]" id="salePriceInput_${dev.id}" value="${dev.sale_price}">
                     ${dev.brand} ${dev.model}
                 </td>
-                <td style="padding:6px 8px; font-size:11px; color:#475569; vertical-align:middle;">
+                <td style="padding:8px 8px; font-size:11px; color:#475569; vertical-align:middle;">
                     <div>${dev.variant}</div>
                     <div style="font-family:'JetBrains Mono', monospace; font-size:10.5px; color:#64748B;">${dev.imei}</div>
                 </td>
-                <td style="padding:6px 8px; text-align:right; font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748B; vertical-align:middle;">${formattedCost}</td>
-                <td style="padding:6px 8px; text-align:right; font-family:'JetBrains Mono', monospace; font-size:11px; color:#334155; font-weight:700; vertical-align:middle;">${formattedOrig}</td>
-                <td style="padding:6px 8px; text-align:right; vertical-align:middle;">
-                    <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-end;">
-                        <div class="disc-pill-group">
-                            <button type="button" class="disc-pill-btn ${dev.discount_type === 'none' ? 'active' : ''}" onclick="setDeviceDiscountType(${idx}, 'none')">None</button>
-                            <button type="button" class="disc-pill-btn ${dev.discount_type === 'percent' ? 'active' : ''}" onclick="setDeviceDiscountType(${idx}, 'percent')">%</button>
-                            <button type="button" class="disc-pill-btn ${dev.discount_type === 'flat' ? 'active' : ''}" onclick="setDeviceDiscountType(${idx}, 'flat')">₹</button>
-                            <button type="button" class="disc-pill-btn ${dev.discount_type === 'custom' ? 'active' : ''}" onclick="setDeviceDiscountType(${idx}, 'custom')">Custom</button>
-                        </div>
-                        ${dev.discount_type === 'percent' ? `
-                            <div style="display:flex; align-items:center; gap:2px; margin-top:2px;">
-                                <input type="number" min="0" max="100" class="form-control" style="width:52px; height:24px; font-size:11px; padding:1px 4px; text-align:right; font-weight:700;" value="${dev.discount_val}" oninput="onDeviceDiscountValChange(${idx}, this)">
-                                <span style="font-size:10px; font-weight:700; color:#DC2626;">% off (-₹${Math.round((dev.original_price * dev.discount_val)/100).toLocaleString('en-IN')})</span>
-                            </div>
-                        ` : dev.discount_type === 'flat' ? `
-                            <div style="display:flex; align-items:center; gap:2px; margin-top:2px;">
-                                <span style="font-size:11px; font-weight:700; color:#64748B;">₹</span>
-                                <input type="number" min="0" class="form-control" style="width:68px; height:24px; font-size:11px; padding:1px 4px; text-align:right; font-weight:700;" value="${dev.discount_val}" oninput="onDeviceDiscountValChange(${idx}, this)">
-                                <span style="font-size:10px; font-weight:700; color:#DC2626;">off</span>
-                            </div>
-                        ` : dev.discount_type === 'custom' ? `
-                            <div style="display:flex; align-items:center; gap:2px; margin-top:2px;">
-                                <span style="font-size:11px; font-weight:700; color:#64748B;">₹</span>
-                                <input type="number" min="1" class="form-control" style="width:80px; height:24px; font-size:11px; padding:1px 4px; text-align:right; font-weight:700;" value="${dev.sale_price}" oninput="onDeviceDiscountValChange(${idx}, this)">
-                            </div>
-                        ` : ''}
-                    </div>
-                </td>
-                <td style="padding:6px 8px; text-align:right; vertical-align:middle;">
-                    <span style="font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:900; color:#059669;">${formattedSale}</span>
-                </td>
-                <td style="padding:6px 8px; text-align:center; vertical-align:middle;">
+                <td style="padding:8px 8px; text-align:right; font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748B; vertical-align:middle;">${formattedCost}</td>
+                <td style="padding:8px 8px; text-align:right; font-family:'JetBrains Mono', monospace; font-size:12px; color:#1E293B; font-weight:800; vertical-align:middle;">${formattedOrig}</td>
+                <td style="padding:8px 8px; text-align:center; vertical-align:middle;">
                     <button type="button" class="btn-ghost-delete" onclick="removeDevice(${idx})" title="Remove Device">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1053,36 +1052,7 @@
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding-top:6px; font-size:11px; color:#64748B;">
                         <span>Cost: <strong style="font-family:'JetBrains Mono', monospace;">${formattedCost}</strong></span>
-                        <span>Orig: <strong style="font-family:'JetBrains Mono', monospace; color:#334155;">${formattedOrig}</strong></span>
-                    </div>
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:6px 8px; margin-top:6px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
-                        <span style="font-size:10.5px; font-weight:700; color:#475569;">Discount:</span>
-                        <div class="disc-pill-group">
-                            <button type="button" class="disc-pill-btn ${dev.discount_type === 'none' ? 'active' : ''}" onclick="setDeviceDiscountType(${idx}, 'none')">None</button>
-                            <button type="button" class="disc-pill-btn ${dev.discount_type === 'percent' ? 'active' : ''}" onclick="setDeviceDiscountType(${idx}, 'percent')">%</button>
-                            <button type="button" class="disc-pill-btn ${dev.discount_type === 'flat' ? 'active' : ''}" onclick="setDeviceDiscountType(${idx}, 'flat')">₹</button>
-                            <button type="button" class="disc-pill-btn ${dev.discount_type === 'custom' ? 'active' : ''}" onclick="setDeviceDiscountType(${idx}, 'custom')">Custom</button>
-                        </div>
-                        ${dev.discount_type === 'percent' ? `
-                            <div style="display:flex; align-items:center; gap:4px; width:100%; justify-content:flex-end;">
-                                <input type="number" min="0" max="100" class="form-control" style="width:60px; height:28px; font-size:12px; padding:2px 6px; text-align:right; font-weight:700;" value="${dev.discount_val}" oninput="onDeviceDiscountValChange(${idx}, this)">
-                                <span style="font-size:11px; font-weight:700; color:#DC2626;">% off (-₹${Math.round((dev.original_price * dev.discount_val)/100).toLocaleString('en-IN')})</span>
-                            </div>
-                        ` : dev.discount_type === 'flat' ? `
-                            <div style="display:flex; align-items:center; gap:4px; width:100%; justify-content:flex-end;">
-                                <span style="font-size:11px; font-weight:700; color:#64748B;">₹ off:</span>
-                                <input type="number" min="0" class="form-control" style="width:80px; height:28px; font-size:12px; padding:2px 6px; text-align:right; font-weight:700;" value="${dev.discount_val}" oninput="onDeviceDiscountValChange(${idx}, this)">
-                            </div>
-                        ` : dev.discount_type === 'custom' ? `
-                            <div style="display:flex; align-items:center; gap:4px; width:100%; justify-content:flex-end;">
-                                <span style="font-size:11px; font-weight:700; color:#64748B;">Set Price ₹:</span>
-                                <input type="number" min="1" class="form-control" style="width:100px; height:28px; font-size:12px; padding:2px 6px; text-align:right; font-weight:700;" value="${dev.sale_price}" oninput="onDeviceDiscountValChange(${idx}, this)">
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:6px;">
-                        <span style="font-size:12px; font-weight:700; color:#334155;">Final Sale Price:</span>
-                        <span style="font-size:16px; font-weight:900; color:#059669; font-family:'JetBrains Mono', monospace;">${formattedSale}</span>
+                        <span>Price: <strong style="font-family:'JetBrains Mono', monospace; font-size:13px; color:#0F172A;">${formattedOrig}</strong></span>
                     </div>
                 `;
                 mobileCardsEl.appendChild(card);
@@ -1342,8 +1312,36 @@
 
     function recalcSaleFinancials() {
         var grossTotal = getDevicesGrossTotal();
-        var billTotal = getDevicesTotal();
-        var totalDiscount = Math.max(0, grossTotal - billTotal);
+        var discountAmt = 0;
+        var billTotal = grossTotal;
+
+        if (billDiscountMode === 'percent') {
+            discountAmt = Math.round((grossTotal * billDiscountVal) / 100);
+            billTotal = Math.max(0, grossTotal - discountAmt);
+        } else if (billDiscountMode === 'flat') {
+            discountAmt = Math.round(billDiscountVal);
+            billTotal = Math.max(0, grossTotal - discountAmt);
+        } else if (billDiscountMode === 'custom') {
+            billTotal = Math.max(0, Math.round(billDiscountVal));
+            discountAmt = Math.max(0, grossTotal - billTotal);
+        }
+
+        // Apportion billTotal across each device's sale_price and hidden form input
+        if (selectedDevices.length > 0) {
+            var allocated = 0;
+            selectedDevices.forEach(function(dev, i) {
+                if (i === selectedDevices.length - 1) {
+                    dev.sale_price = Math.max(0, billTotal - allocated);
+                } else {
+                    var share = grossTotal > 0 ? (dev.original_price / grossTotal) : (1 / selectedDevices.length);
+                    dev.sale_price = Math.round(billTotal * share);
+                    allocated += dev.sale_price;
+                }
+                var hiddenInput = document.getElementById('salePriceInput_' + dev.id);
+                if (hiddenInput) hiddenInput.value = dev.sale_price;
+            });
+        }
+
         var devicesCost = getDevicesCost();
         var giftCost = getGiftCost();
 
@@ -1351,8 +1349,8 @@
         document.getElementById('summaryDevicesTotal').textContent = '₹' + grossTotal.toLocaleString('en-IN');
         var discRow = document.getElementById('summaryDiscountRow');
         var discVal = document.getElementById('summaryDiscountTotal');
-        if (totalDiscount > 0) {
-            discVal.textContent = '-₹' + totalDiscount.toLocaleString('en-IN');
+        if (discountAmt > 0) {
+            discVal.textContent = '-₹' + discountAmt.toLocaleString('en-IN');
             discRow.style.display = 'flex';
         } else {
             discRow.style.display = 'none';
