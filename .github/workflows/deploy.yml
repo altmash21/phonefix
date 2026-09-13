@@ -27,12 +27,6 @@ jobs:
           extensions: mbstring, dom, fileinfo, gd, intl, json, openssl, pdo, pdo_mysql, zip, bcmath
           coverage: none
 
-      - name: Setup Node.js 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
       - name: Cache Composer Dependencies
         uses: actions/cache@v4
         with:
@@ -42,11 +36,6 @@ jobs:
 
       - name: Install PHP Dependencies (Production)
         run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
-
-      - name: Install NPM & Compile Frontend Assets
-        run: |
-          npm ci
-          npm run production
 
       - name: Prepare Staging Folders (app/ and public_html/)
         run: |

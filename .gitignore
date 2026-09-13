@@ -73,9 +73,7 @@ fabric.properties
 /node_modules
 /public/hot
 /public/storage
-/public/js/*
-!/public/js/mobileshop/
-/public/mix-manifest.json
+# Compiled frontend assets pre-built for fast deployment
 /storage/*.key
 /vendor
 /.idea
