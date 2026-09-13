@@ -20,7 +20,7 @@
                         Official Paid Receipt
                     </span>
                     <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        {{ setting('company.name', 'Maurya Mobile Store') }}
+                        {{ store_name() }}
                     </h1>
                     <p class="text-xs text-slate-500 mt-0.5">
                         Invoice #{{ $invoice_number }} &bull; {{ date('d M Y, h:i A', strtotime($sale->created_at)) }}
@@ -167,8 +167,8 @@
 
             <!-- Store Info Footer -->
             <div class="text-center pt-4 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
-                <div>{{ setting('company.name', 'Maurya Mobile Store') }} &bull; Linking Road, Bandra West, Mumbai</div>
-                <div>Customer Support: <a href="tel:{{ setting('company.phone', '+919876543210') }}" class="font-bold text-slate-600">{{ setting('company.phone', '+91 98765 43210') }}</a></div>
+                <div>{{ store_name() }} &bull; {{ store_address() }}</div>
+                <div>Customer Support: <a href="tel:{{ preg_replace('/[^0-9]/', '', store_phone()) }}" class="font-bold text-slate-600">{{ store_phone() }}</a>@if(!empty(store_landline())) &bull; Landline: <a href="tel:{{ preg_replace('/[^0-9]/', '', store_landline()) }}" class="font-bold text-slate-600">{{ store_landline() }}</a>@endif</div>
             </div>
 
         </div>

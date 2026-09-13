@@ -5,7 +5,7 @@
 
 @section('subnav_title', $device->brand . ' ' . $device->model)
 @section('subnav_cta')
-    <a href="tel:9876543210" class="apple-btn-primary text-[13px] py-1.5 px-4">
+    <a href="tel:{{ preg_replace('/[^0-9]/', '', store_phone()) }}" class="apple-btn-primary text-[13px] py-1.5 px-4">
         Buy · ₹{{ number_format($device->selling_price, 0) }}
     </a>
 @endsection
@@ -164,20 +164,24 @@
                     @endif
                     <div class="flex items-center gap-3 text-apple-ink">
                         <i data-lucide="map-pin" class="w-4 h-4 text-apple-primary shrink-0"></i>
-                        <span><strong>Express Store Pickup:</strong> Ready today at Linking Road, Bandra West showroom.</span>
+                        <span><strong>Express Store Pickup:</strong> Ready today at our {{ store_city() }} showroom.</span>
                     </div>
                 </div>
 
                 <!-- Primary Purchase Action Buttons -->
+                @php
+                    $prodWa = preg_replace('/[^0-9]/', '', store_whatsapp());
+                    if (strlen($prodWa) === 10) $prodWa = '91' . $prodWa;
+                @endphp
                 <div class="space-y-3 pt-2">
-                    <a href="https://wa.me/919876543210?text=Hi%20Maurya%20Mobile,%20I%20want%20to%20buy/reserve%20{{ urlencode($device->brand . ' ' . $device->model) }}%20listed%20for%20₹{{ $device->selling_price }}" 
+                    <a href="https://wa.me/{{ $prodWa }}?text={{ rawurlencode('Hi ' . store_name() . ', I want to buy/reserve ' . $device->brand . ' ' . $device->model . ' listed for ₹' . $device->selling_price) }}" 
                        target="_blank" 
                        class="apple-btn-primary w-full py-3.5 text-[17px] font-medium shadow-sm">
                         <i data-lucide="message-circle" class="w-5 h-5"></i>
                         Reserve on WhatsApp / Store Pickup
                     </a>
-                    <a href="tel:9876543210" class="apple-btn-secondary-pill w-full py-3 text-[16px]">
-                        <i data-lucide="phone" class="w-4 h-4"></i> Call Showroom Desk (+91 98765 43210)
+                    <a href="tel:{{ preg_replace('/[^0-9]/', '', store_phone()) }}" class="apple-btn-secondary-pill w-full py-3 text-[16px]">
+                        <i data-lucide="phone" class="w-4 h-4"></i> Call Showroom Desk ({{ store_phone() }})
                     </a>
                 </div>
 
@@ -226,7 +230,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <a href="https://wa.me/919876543210?text=Hi%20Maurya%20Mobile,%20I%20want%20to%20reserve%20{{ urlencode($device->brand . ' ' . $device->model) }}" 
+                <a href="https://wa.me/{{ $prodWa }}?text={{ rawurlencode('Hi ' . store_name() . ', I want to reserve ' . $device->brand . ' ' . $device->model) }}" 
                    target="_blank"
                    class="apple-btn-primary text-[14px] py-2 px-5">
                     Reserve Device
@@ -241,7 +245,7 @@
         <div class="max-w-[1024px] mx-auto px-4">
             <div class="mb-8">
                 <h2 class="apple-display-md text-apple-ink">You may also like.</h2>
-                <p class="apple-body text-apple-muted-48">Other devices in stock today at our Bandra West showroom.</p>
+                <p class="apple-body text-apple-muted-48">Other devices in stock today at our {{ store_city() }} showroom.</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

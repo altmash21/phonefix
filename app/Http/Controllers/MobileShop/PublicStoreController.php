@@ -161,7 +161,8 @@ class PublicStoreController extends BaseMobileShopController
 
         Log::info('Public customer contact inquiry received:', $validated);
 
-        return redirect()->route('public.contact')->with('success', "Thank you, {$validated['name']}! Your message has been received by our Bandra store counter. We will call you shortly on {$validated['phone']}.");
+        $sName = store_name();
+        return redirect()->route('public.contact')->with('success', "Thank you, {$validated['name']}! Your message has been received by our {$sName} store counter. We will call you shortly on {$validated['phone']}.");
     }
 
     /**

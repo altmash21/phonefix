@@ -1,8 +1,13 @@
 @extends('mobileshop.layout')
 
 @php
-    $storeName = setting('company.name', 'Maurya Mobile Retail Store');
-    $storePhone = setting('company.phone', '+91 98765 43210');
+    $storeName = store_name();
+    $storePhone = store_phone();
+    $storeAddress = store_address();
+    $storeGstin = store_gstin();
+    $storeState = store_state();
+    $storeUpi = store_upi_id();
+    $storeLandline = store_landline();
     $cleanPhone = preg_replace('/[^0-9]/', '', $sale->customer_phone ?? '');
     if (strlen($cleanPhone) === 10) {
         $cleanPhone = '91' . $cleanPhone;
@@ -68,11 +73,17 @@
     $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
     if ($sale->udhari_amount > 0) {
         $waMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
+        if (!empty($storeUpi)) {
+            $waMsg .= "• *Pay via UPI:* `{$storeUpi}`\n";
+        }
     }
     $waMsg .= "\n📄 *Download / View PDF Bill:*\n";
     $waMsg .= $pdfBillUrl . "\n\n";
     $waMsg .= "Support: {$storePhone}\n";
-    $waMsg .= "Shop #14, Linking Road, Bandra West, Mumbai";
+    if (!empty($storeLandline)) {
+        $waMsg .= "Landline: {$storeLandline}\n";
+    }
+    $waMsg .= "{$storeAddress}";
 
     $waInvoiceUrl = 'https://wa.me/' . $cleanPhone . '?text=' . rawurlencode($waMsg);
 @endphp
@@ -140,15 +151,15 @@
             <tr>
                 <td class="inv-header-left" style="vertical-align: top; width: 55%; padding-bottom: 12px;">
                     <div style="font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.3px; text-transform: uppercase;">
-                        {{ setting('company.name', 'Maurya Mobile Retail Store') }}
+                        {{ $storeName }}
                     </div>
                     <div style="font-size: 11px; color: #4B5563; margin-top: 4px; line-height: 1.5;">
-                        {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                        Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'support@mobitrack.local') }}
+                        {{ $storeAddress }}<br>
+                        Phone: {{ $storePhone }}@if(!empty($storeLandline)) &bull; Landline: {{ $storeLandline }}@endif &bull; Email: {{ setting('company.email', 'support@mobitrack.local') }}
                     </div>
                     <div style="font-size: 11px; font-weight: 700; color: #111827; margin-top: 4px;">
-                        GSTIN: <span style="font-family: monospace; font-weight: 700;">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>
-                        &nbsp;|&nbsp; State: {{ setting('company.state', 'Uttar Pradesh') }} (09)
+                        GSTIN: <span style="font-family: monospace; font-weight: 700;">{{ $storeGstin }}</span>
+                        &nbsp;|&nbsp; State: {{ $storeState }} (09)
                     </div>
                 </td>
                 <td class="inv-header-right" style="vertical-align: top; width: 45%; text-align: right; padding-bottom: 12px;">
@@ -434,7 +445,7 @@
                     </ol>
                 </td>
                 <td class="inv-signature-cell" style="width: 40%; vertical-align: top; text-align: right;">
-                    <div style="font-size: 11px; font-weight: 700; color: #111827;">For {{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #111827;">For {{ $storeName }}</div>
                     <div style="height: 48px;"></div>
                     <div style="border-top: 1px solid #4B5563; display: inline-block; padding-top: 4px; font-size: 9.5px; color: #4B5563; min-width: 170px; text-align: center;">
                         Authorised Signatory
@@ -446,7 +457,7 @@
         <!-- BOTTOM DISCLAIMER STRIP -->
         <div style="margin-top: 24px; padding-top: 8px; border-top: 1px solid #E5E7EB; display: flex; justify-content: space-between; font-size: 9px; color: #9CA3AF; flex-wrap: wrap; gap: 4px;">
             <div>Computer generated invoice &bull; Original for Recipient</div>
-            <div>{{ setting('company.name', 'Maurya Mobile') }} &bull; Powered by Maurya Mobile ERP</div>
+            <div>{{ $storeName }} &bull; Powered by MobiTrack ERP</div>
         </div>
 
         </div><!-- /#viewA4 -->
@@ -454,10 +465,10 @@
         <!-- ─── 80MM THERMAL RECEIPT (COUNTER POS) ─── -->
         <div id="viewThermal" class="card" style="display:none; max-width: 320px; margin: 0 auto; padding: 18px; font-family: 'Courier New', monospace; font-size: 11px; color: #111827; background:#fff; border:1px dashed #9CA3AF;">
             <div style="text-align:center; margin-bottom: 8px;">
-                <div style="font-weight:800; font-size:14px; text-transform:uppercase;">{{ setting('company.name', 'Maurya Mobile ERP') }}</div>
-                <div style="font-size:10px; color:#6B7280;">{{ setting('company.address', '') }}</div>
-                <div style="font-size:10px; color:#6B7280;">Ph: {{ setting('company.phone', '') }}</div>
-                <div style="font-size:10px; font-weight:700; color:#1E293B;">GSTIN: {{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</div>
+                <div style="font-weight:800; font-size:14px; text-transform:uppercase;">{{ $storeName }}</div>
+                <div style="font-size:10px; color:#6B7280;">{{ $storeAddress }}</div>
+                <div style="font-size:10px; color:#6B7280;">Ph: {{ $storePhone }}@if(!empty($storeLandline)) &bull; {{ $storeLandline }}@endif</div>
+                <div style="font-size:10px; font-weight:700; color:#1E293B;">GSTIN: {{ $storeGstin }}</div>
             </div>
             <div style="border-top: 1px dashed #CBD5E1; padding-top: 6px; font-size:10px; line-height:1.4;">
                 <div>Inv: <strong>{{ $sale->invoice_number }}</strong></div>

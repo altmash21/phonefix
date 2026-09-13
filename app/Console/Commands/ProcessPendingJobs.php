@@ -233,13 +233,18 @@ class ProcessPendingJobs extends Command
         $customer = $payload['customer_name'] ?? 'Valued Customer';
         $invoice = $payload['invoice_number'] ?? 'N/A';
         $amount = number_format((float) ($payload['amount'] ?? 0), 2);
+        $storeName = store_name('MobiTrack');
+        $storePhone = store_phone();
 
-        $message = "Dear {$customer}, thank you for your purchase at MobiTrack! Invoice #{$invoice} for Rs. {$amount} has been generated successfully.";
+        $message = "Dear {$customer}, thank you for your purchase at {$storeName}! Invoice #{$invoice} for Rs. {$amount} has been generated successfully. Support: {$storePhone}";
 
-        $webhook = config('services.whatsapp.webhook');
+        $webhook = config('mobileshop.whatsapp.webhook') ?: (config('services.whatsapp.webhook') ?: env('WA_WEBHOOK'));
+        $fromPhone = config('mobileshop.whatsapp.phone') ?: (config('services.whatsapp.phone') ?: env('WA_PHONE'));
+
         if (!empty($webhook) && !empty($phone)) {
             try {
                 Http::timeout(5)->post($webhook, [
+                    'from'    => $fromPhone,
                     'phone'   => $phone,
                     'message' => $message,
                     'invoice' => $invoice,

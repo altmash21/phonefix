@@ -454,7 +454,7 @@
             <!-- Fine-print Disclaimers (12px / 400) -->
             <div class="apple-fine-print text-apple-muted-48 pb-8 border-b border-apple-hairline space-y-2.5">
                 <p>1. Certified Pre-Owned devices undergo an intensive 50-point hardware diagnostic test and battery health validation before retail release.</p>
-                <p>2. Trade-in values will vary based on condition, year, and configuration of your device. In-person instant evaluation at our Bandra West store.</p>
+                <p>2. Trade-in values will vary based on condition, year, and configuration of your device. In-person instant evaluation at our {{ store_city() }} showroom.</p>
                 <p>3. Express Repair services subject to parts in-stock availability. Free diagnostics offered for all devices.</p>
             </div>
 
@@ -497,14 +497,14 @@
                     </ul>
                 </div>
 
-                <!-- Column 4: Maurya Store -->
+                <!-- Column 4: Store Location -->
                 <div>
                     <h3 class="apple-caption-strong text-apple-ink mb-2">Store Location</h3>
                     <ul class="apple-dense-link text-apple-muted-80">
-                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Linking Road, Bandra (W)</a></li>
+                        <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">{{ store_address_short() }}</a></li>
                         <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Store Hours & Map</a></li>
                         <li><a href="{{ route('public.contact') }}" class="hover:text-apple-primary">Contact Support</a></li>
-                        <li><a href="tel:9876543210" class="hover:text-apple-primary">+91 98765 43210</a></li>
+                        <li><a href="tel:{{ preg_replace('/[^0-9]/', '', store_phone()) }}" class="hover:text-apple-primary">{{ store_phone() }}</a></li>
                     </ul>
                 </div>
 
@@ -522,7 +522,7 @@
             <!-- Bottom Legal Band -->
             <div class="pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 apple-fine-print text-apple-muted-48">
                 <div>
-                    Copyright © {{ date('Y') }} Maurya Mobile Inc. All rights reserved. Linking Road, Bandra West, Mumbai.
+                    Copyright © {{ date('Y') }} {{ store_name() }}. All rights reserved. {{ store_address() }}.
                 </div>
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <a href="{{ route('public.privacy') }}" class="hover:text-apple-ink">Privacy Policy</a>

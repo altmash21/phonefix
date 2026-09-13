@@ -22,7 +22,7 @@
                         Store. <span class="text-apple-muted-48 font-normal">The finest technology, verified.</span>
                     </h1>
                     <p class="apple-body text-apple-muted-48 mt-2">
-                        Linking Road Showroom · Live inventory available for instant counter inspection.
+                        {{ store_name() }} &bull; {{ store_city() }} &bull; Live inventory available for instant counter inspection.
                     </p>
                 </div>
 

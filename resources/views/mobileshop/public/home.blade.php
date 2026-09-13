@@ -23,10 +23,10 @@
                     Brand New Sealed Flagships
                 </div>
                 <h1 class="apple-hero-display text-apple-ink">
-                    Latest Flagship Smartphones in Mumbai.
+                    Latest Flagship Smartphones in {{ store_city() }}.
                 </h1>
                 <p class="apple-lead text-apple-ink/70 max-w-2xl mx-auto pt-1">
-                    Official 100% genuine sealed devices with manufacturer warranty, valid GST tax invoice, and fast showroom pickup in Bandra West.
+                    Official 100% genuine sealed devices with manufacturer warranty, valid GST tax invoice, and fast showroom pickup in {{ store_city() }}.
                 </p>
                 
                 <!-- Dual Action Blue Pill CTAs -->
@@ -232,12 +232,12 @@
                 <!-- Tile A: Smartphone Exchange -->
                 <div class="bg-apple-tile-1 border border-white/10 rounded-[18px] p-8 sm:p-10 flex flex-col justify-between">
                     <div>
-                        <span class="apple-caption text-apple-primary-dark uppercase tracking-wider font-semibold">Maurya Trade-In</span>
+                        <span class="apple-caption text-apple-primary-dark uppercase tracking-wider font-semibold">{{ store_name() }} Trade-In</span>
                         <h3 class="apple-display-md text-white mt-2">
                             Exchange your device.<br>Get instant valuation.
                         </h3>
                         <p class="apple-body text-white/70 mt-3">
-                            Bring your old iPhone, Samsung Galaxy, or OnePlus device to our Linking Road counter for a real-time diagnostic evaluation and immediate trade credit.
+                            Bring your old iPhone, Samsung Galaxy, or OnePlus device to our {{ store_city() }} counter for a real-time diagnostic evaluation and immediate trade credit.
                         </p>
                     </div>
                     <div class="mt-8 pt-6 border-t border-white/10">
@@ -278,7 +278,7 @@
                 Looking for a specific device?
             </h2>
             <p class="apple-body text-apple-muted-48">
-                Search our real-time physical inventory at our Linking Road showroom.
+                Search our real-time physical inventory at our {{ store_city() }} showroom.
             </p>
 
             <!-- Apple Pill Search Input -->

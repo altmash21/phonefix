@@ -142,8 +142,11 @@
             </thead>
             <tbody>
                 @php
-                    $stName = setting('company.name', 'Maurya Mobile');
-                    $stPhone = setting('company.phone', '+91 98765 43210');
+                    $stName = store_name();
+                    $stPhone = store_phone();
+                    $stAddress = store_address();
+                    $stUpi = store_upi_id();
+                    $stLandline = store_landline();
                 @endphp
                 @forelse($customers as $c)
                     @php
@@ -156,10 +159,17 @@
                         $cMsg .= "Greetings from *{$stName}*!\n\n";
                         $cMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
                         $cMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($c->udhari_balance, 2) . "*\n\n";
-                        $cMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
+                        if (!empty($stUpi)) {
+                            $cMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI (`{$stUpi}`) or Cash at our store counter.\n\n";
+                        } else {
+                            $cMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
+                        }
                         $cMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                         $cMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
-                        $cMsg .= "🏢 *Showroom:* Shop #14, Linking Road, Bandra West, Mumbai\n";
+                        if (!empty($stLandline)) {
+                            $cMsg .= "☎️ *Landline:* {$stLandline}\n";
+                        }
+                        $cMsg .= "🏢 *Showroom:* {$stAddress}\n";
                         $cMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                         $cWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($cMsg);
                         $isDebtor = ($c->udhari_balance > 0);
@@ -642,8 +652,11 @@
                 <tbody>
                     @php
                         $activeDebtors = $customers->where('udhari_balance', '>', 0)->sortByDesc('udhari_balance');
-                        $stName = setting('company.name', 'Maurya Mobile');
-                        $stPhone = setting('company.phone', '+91 98765 43210');
+                        $stName = store_name();
+                        $stPhone = store_phone();
+                        $stAddress = store_address();
+                        $stUpi = store_upi_id();
+                        $stLandline = store_landline();
                     @endphp
                     @forelse($activeDebtors as $d)
                         @php
@@ -656,10 +669,17 @@
                             $dMsg .= "Greetings from *{$stName}*!\n\n";
                             $dMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
                             $dMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($d->udhari_balance, 2) . "*\n\n";
-                            $dMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
+                            if (!empty($stUpi)) {
+                                $dMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI (`{$stUpi}`) or Cash at our store counter.\n\n";
+                            } else {
+                                $dMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI or Cash at our store counter.\n\n";
+                            }
                             $dMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                             $dMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
-                            $dMsg .= "🏢 *Showroom:* Shop #14, Linking Road, Bandra West, Mumbai\n";
+                            if (!empty($stLandline)) {
+                                $dMsg .= "☎️ *Landline:* {$stLandline}\n";
+                            }
+                            $dMsg .= "🏢 *Showroom:* {$stAddress}\n";
                             $dMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                             $dWaUrl = 'https://wa.me/' . $dPhone . '?text=' . rawurlencode($dMsg);
                         @endphp

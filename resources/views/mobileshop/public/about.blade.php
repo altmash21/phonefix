@@ -11,13 +11,13 @@
     <section class="bg-apple-parchment text-apple-ink py-16 sm:py-24 border-b border-apple-hairline text-center overflow-hidden">
         <div class="max-w-[1024px] mx-auto px-4 space-y-4">
             <span class="apple-caption-strong text-apple-primary uppercase tracking-widest text-[12px]">
-                About Maurya Mobile &bull; Bandra West, Mumbai
+                About {{ store_name() }} &bull; {{ store_city() }}
             </span>
             <h1 class="apple-hero-display text-apple-ink max-w-3xl mx-auto">
                 Honest Deals, Quality Phones & Reliable Service.
             </h1>
             <p class="apple-lead-airy text-apple-muted-80 max-w-2xl mx-auto pt-2">
-                Serving Mumbai since 2018. We help you find the right smartphone at the best price, offer guaranteed pre-owned devices, and deliver fast repairs with genuine parts.
+                Serving {{ store_city() }} since 2018. We help you find the right smartphone at the best price, offer guaranteed pre-owned devices, and deliver fast repairs with genuine parts.
             </p>
         </div>
     </section>
@@ -128,7 +128,7 @@
             
             <div class="max-w-2xl mx-auto space-y-3">
                 <h2 class="apple-display-lg text-apple-ink">
-                    Bandra West Showroom.
+                    {{ store_city() }} Showroom.
                 </h2>
                 <p class="apple-lead text-apple-muted-48">
                     Experience physical products with full tactile testing and instant expert assistance.

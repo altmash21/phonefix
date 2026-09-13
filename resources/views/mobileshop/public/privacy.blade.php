@@ -47,7 +47,7 @@
             <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[11px]">Section 01</span>
             <h2 class="apple-display-md text-apple-ink">1. Information We Collect</h2>
             <p class="apple-body text-apple-muted-80">
-                When you interact with Maurya Mobile in-store at our Bandra West showroom or online via our digital portal, we only collect information essential for transaction execution, legal compliance, and customer warranty support:
+                When you interact with {{ store_name() }} in-store at our {{ store_city() }} showroom or online via our digital portal, we only collect information essential for transaction execution, legal compliance, and customer warranty support:
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div class="p-5 rounded-2xl bg-apple-parchment border border-apple-hairline space-y-2">
@@ -187,9 +187,9 @@
                 </p>
                 <div class="space-y-1 font-mono text-apple-ink pt-1">
                     <div><strong>Officer:</strong> Altmash (Store Administration Head)</div>
-                    <div><strong>Showroom:</strong> Maurya Mobile, Linking Road, Bandra West, Mumbai 400050</div>
+                    <div><strong>Showroom:</strong> {{ store_name() }}, {{ store_address() }}</div>
                     <div><strong>Email:</strong> <a href="mailto:privacy@mobitrack.local" class="text-apple-primary hover:underline">privacy@mobitrack.local</a></div>
-                    <div><strong>Helpline:</strong> +91 98765 43210 (Mon–Sat, 10:30 AM to 8:30 PM)</div>
+                    <div><strong>Helpline:</strong> {{ store_phone() }} (Mon–Sat, 10:30 AM to 8:30 PM)</div>
                 </div>
             </div>
         </section>

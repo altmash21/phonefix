@@ -578,16 +578,19 @@
                             </div>
                         </div>
                         @php
+                            $sName = store_name();
+                            $sPhone = store_phone();
+                            $sAddress = store_address();
                             $rNotifyMsg = "🔧 *DEVICE READY FOR PICKUP*\n";
-                            $rNotifyMsg .= "🏪 *Maurya Mobile Service Lab*\n";
+                            $rNotifyMsg .= "🏪 *{$sName} Service Lab*\n";
                             $rNotifyMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                             $rNotifyMsg .= "Dear *{$rep->customer_name}*,\n\n";
                             $rNotifyMsg .= "Great news! Your *{$rep->brand} {$rep->model}* has been successfully serviced and passed quality inspection.\n\n";
                             $rNotifyMsg .= "📋 *Job Ticket #:* {$rep->ticket_number}\n";
                             $rNotifyMsg .= "💰 *Service Amount:* *₹" . number_format($rep->total_amount, 2) . "*\n\n";
-                            $rNotifyMsg .= "📍 *Pickup Location:* Shop #14, Linking Road, Bandra West\n";
+                            $rNotifyMsg .= "📍 *Pickup Location:* {$sAddress}\n";
                             $rNotifyMsg .= "🕒 *Store Hours:* 10:00 AM – 9:30 PM (Daily)\n";
-                            $rNotifyMsg .= "📞 *Helpdesk:* +91 98765 43210\n";
+                            $rNotifyMsg .= "📞 *Helpdesk:* {$sPhone}\n";
                             $rNotifyMsg .= "_Please show this message at our counter to collect your device._";
                         @endphp
                         <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $rep->customer_phone) }}?text={{ rawurlencode($rNotifyMsg) }}" 
@@ -629,16 +632,28 @@
                             </div>
                         </div>
                         @php
+                            $sName = store_name();
+                            $sPhone = store_phone();
+                            $sAddress = store_address();
+                            $sUpi = store_upi_id();
+                            $sLandline = store_landline();
                             $debMsg = "🔔 *PAYMENT REMINDER*\n";
-                            $debMsg .= "🏪 *Maurya Mobile Store*\n";
+                            $debMsg .= "🏪 *{$sName}*\n";
                             $debMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                             $debMsg .= "Dear *{$deb->name}*,\n\n";
-                            $debMsg .= "Greetings from *Maurya Mobile*!\n\n";
+                            $debMsg .= "Greetings from *{$sName}*!\n\n";
                             $debMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
                             $debMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($deb->udhari_balance, 2) . "*\n\n";
-                            $debMsg .= "Kindly arrange to clear this balance via UPI or Cash at our store counter.\n";
-                            $debMsg .= "📞 *Accounts Desk:* +91 98765 43210\n";
-                            $debMsg .= "🏢 *Showroom:* Shop #14, Linking Road, Bandra West\n";
+                            if (!empty($sUpi)) {
+                                $debMsg .= "Kindly arrange to clear this balance via UPI (`{$sUpi}`) or Cash at our store counter.\n";
+                            } else {
+                                $debMsg .= "Kindly arrange to clear this balance via UPI or Cash at our store counter.\n";
+                            }
+                            $debMsg .= "📞 *Accounts Desk:* {$sPhone}\n";
+                            if (!empty($sLandline)) {
+                                $debMsg .= "☎️ *Landline:* {$sLandline}\n";
+                            }
+                            $debMsg .= "🏢 *Showroom:* {$sAddress}\n";
                             $debMsg .= "_If already settled recently, please disregard this message. Thank you!_";
                         @endphp
                         <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $deb->phone) }}?text={{ rawurlencode($debMsg) }}" 

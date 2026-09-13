@@ -30,8 +30,9 @@ class WhatsAppReceiptService
             $cPhone = '91' . $cPhone;
         }
 
-        $sName = setting('company.name', 'Maurya Mobile Store');
-        $sPhone = setting('company.phone', '+91 98765 43210');
+        $sName = store_name();
+        $sPhone = store_phone();
+        $sAddress = store_address();
         $pdfUrl = url("bill/{$sale->invoice_number}/pdf");
 
         $mobMsg = "*{$sName}*\n";
@@ -41,14 +42,27 @@ class WhatsAppReceiptService
         $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . (!empty($sale->storage) ? " ({$sale->storage})" : "") . "\n";
         $mobMsg .= "• *IMEI:* `{$sale->imei_1}`\n";
         $mobMsg .= "• *Date:* " . Carbon::parse($sale->created_at)->format('d M Y') . "\n";
+        if (isset($sale->discount_amount) && (float)$sale->discount_amount > 0) {
+            $orig = (float)($sale->original_price ?? ($sale->total_amount + $sale->discount_amount));
+            $mobMsg .= "• *Original Price:* ₹" . number_format(round($orig)) . "\n";
+            $mobMsg .= "• *Discount:* -₹" . number_format(round($sale->discount_amount)) . "\n";
+        }
         $mobMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
         if ($sale->udhari_amount > 0) {
             $mobMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
+            $upiId = store_upi_id();
+            if (!empty($upiId)) {
+                $mobMsg .= "• *Pay via UPI:* `{$upiId}`\n";
+            }
         }
         $mobMsg .= "\n📄 *Download / View PDF Bill:*\n";
         $mobMsg .= "{$pdfUrl}\n\n";
         $mobMsg .= "Support: {$sPhone}\n";
-        $mobMsg .= "Shop #14, Linking Road, Bandra West, Mumbai";
+        $landline = store_landline();
+        if (!empty($landline)) {
+            $mobMsg .= "Landline: {$landline}\n";
+        }
+        $mobMsg .= "{$sAddress}";
 
         return 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($mobMsg);
     }

@@ -137,14 +137,14 @@
     <table class="table header-table">
         <tr>
             <td style="width: 58%; vertical-align: top;">
-                <div class="company-name">{{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
+                <div class="company-name">{{ store_name() }}</div>
                 <div style="font-size: 9.5px; color: #4b5563; margin-top: 3px;">
-                    {{ setting('company.address', 'Store Location, Commercial Complex') }}<br>
-                    Phone: {{ setting('company.phone', '+91 98765 43210') }} &bull; Email: {{ setting('company.email', 'support@mobitrack.local') }}
+                    {{ store_address() }}<br>
+                    Phone: {{ store_phone() }}@if(!empty(store_landline())) &bull; Landline: {{ store_landline() }}@endif &bull; Email: {{ setting('company.email', 'support@mobitrack.local') }}
                 </div>
                 <div style="font-size: 9.5px; font-weight: bold; color: #111827; margin-top: 3px;">
-                    GSTIN: <span class="font-mono">{{ setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5')) }}</span>
-                    &nbsp;|&nbsp; State: {{ setting('company.state', 'Uttar Pradesh') }} (09)
+                    GSTIN: <span class="font-mono">{{ store_gstin() }}</span>
+                    &nbsp;|&nbsp; State: {{ store_state() }} (09)
                 </div>
             </td>
             <td style="width: 42%; vertical-align: top; text-align: right;">
@@ -306,7 +306,7 @@
                 </ol>
             </td>
             <td style="width: 40%; vertical-align: top; text-align: right;">
-                <div style="font-size: 10px; font-weight: bold; color: #111827;">For {{ setting('company.name', 'Maurya Mobile Retail Store') }}</div>
+                <div style="font-size: 10px; font-weight: bold; color: #111827;">For {{ store_name() }}</div>
                 <div style="height: 42px;"></div>
                 <div style="border-top: 1px solid #4b5563; display: inline-block; padding-top: 3px; font-size: 9px; color: #4b5563; min-width: 160px; text-align: center;">
                     Authorised Signatory

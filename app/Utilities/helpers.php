@@ -458,3 +458,120 @@ if (! function_exists('calculation_to_quantity')) {
         return \App\Utilities\SafeMathEvaluator::evaluate((string) $quantity);
     }
 }
+
+if (! function_exists('store_name')) {
+    function store_name(?string $default = null): string
+    {
+        return config('mobileshop.store_name')
+            ?: (env('STORE_NAME')
+            ?: (setting('company.name') ?: ($default ?? 'Maurya Mobile Store')));
+    }
+}
+
+if (! function_exists('store_phone')) {
+    function store_phone(?string $default = null): string
+    {
+        return config('mobileshop.store_phone')
+            ?: (env('STORE_PHONE')
+            ?: (setting('company.phone') ?: ($default ?? '+91 98765 43210')));
+    }
+}
+
+if (! function_exists('store_whatsapp')) {
+    function store_whatsapp(?string $default = null): string
+    {
+        return config('mobileshop.store_whatsapp')
+            ?: (env('STORE_WHATSAPP')
+            ?: store_phone($default));
+    }
+}
+
+if (! function_exists('store_city')) {
+    function store_city(?string $default = null): string
+    {
+        return config('mobileshop.store_city')
+            ?: (env('STORE_CITY')
+            ?: (setting('company.city') ?: ($default ?? 'Mumbai')));
+    }
+}
+
+if (! function_exists('store_state')) {
+    function store_state(?string $default = null): string
+    {
+        return config('mobileshop.store_state')
+            ?: (env('STORE_STATE')
+            ?: (setting('company.state') ?: ($default ?? 'Maharashtra')));
+    }
+}
+
+if (! function_exists('store_pin')) {
+    function store_pin(?string $default = null): string
+    {
+        return config('mobileshop.store_pin')
+            ?: (env('STORE_PIN')
+            ?: (setting('company.pin') ?: ($default ?? '400050')));
+    }
+}
+
+if (! function_exists('store_address')) {
+    function store_address(?string $default = null): string
+    {
+        $addr = config('mobileshop.store_address') ?: env('STORE_ADDRESS');
+        if (!empty($addr)) {
+            $city = store_city();
+            $state = store_state();
+            $pin = store_pin();
+
+            $full = $addr;
+            if (!empty($city) && !str_contains(strtolower($full), strtolower($city))) {
+                $full .= ', ' . $city;
+            }
+            if (!empty($state) && !str_contains(strtolower($full), strtolower($state))) {
+                $full .= ', ' . $state;
+            }
+            if (!empty($pin) && !str_contains($full, $pin)) {
+                $full .= ' ' . $pin;
+            }
+            return $full;
+        }
+
+        return setting('company.address') ?: ($default ?? 'Shop #14, Linking Road, Bandra West, Mumbai 400050');
+    }
+}
+
+if (! function_exists('store_address_short')) {
+    function store_address_short(?string $default = null): string
+    {
+        $addr = config('mobileshop.store_address') ?: env('STORE_ADDRESS');
+        if (!empty($addr)) {
+            return $addr;
+        }
+        return setting('company.address') ?: ($default ?? 'Linking Road, Bandra (W)');
+    }
+}
+
+if (! function_exists('store_gstin')) {
+    function store_gstin(?string $default = null): string
+    {
+        return config('mobileshop.store_gstin')
+            ?: (env('STORE_GSTIN')
+            ?: (setting('company.tax_number') ?: (setting('company.gstin') ?: ($default ?? '09AAACA1234F1Z5'))));
+    }
+}
+
+if (! function_exists('store_upi_id')) {
+    function store_upi_id(?string $default = null): string
+    {
+        return config('mobileshop.store_upi_id')
+            ?: (env('STORE_UPI_ID') ?: ($default ?? ''));
+    }
+}
+
+if (! function_exists('store_landline')) {
+    function store_landline(?string $default = null): string
+    {
+        return config('mobileshop.store_landline')
+            ?: (env('STORE_LANDLINE') ?: ($default ?? ''));
+    }
+}
+

@@ -4,10 +4,12 @@
 @section('page-title', 'Statement of Account')
 
 @php
-    $storeName = setting('company.name', 'Maurya Mobile Store');
-    $storePhone = setting('company.phone', '+91 98765 43210');
-    $storeAddress = setting('company.address', 'Store Location, Commercial Complex');
-    $storeGstin = setting('company.tax_number', setting('company.gstin', '09AAACA1234F1Z5'));
+    $storeName = store_name();
+    $storePhone = store_phone();
+    $storeAddress = store_address();
+    $storeGstin = store_gstin();
+    $storeUpi = store_upi_id();
+    $storeLandline = store_landline();
 
     $cleanPhone = preg_replace('/[^0-9]/', '', $customer->phone ?? '');
     if (strlen($cleanPhone) === 10) {
@@ -43,9 +45,16 @@
     $waMsg .= "• *Total Amount Received:* ₹" . number_format($totalPaid, 2) . "\n";
     $waMsg .= "👉 *NET OUTSTANDING BALANCE:* *₹" . number_format($closingBalance, 2) . "*\n";
     $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    $waMsg .= "💡 _Please clear the pending balance via UPI or Cash at our store counter at your earliest convenience._\n\n";
+    if (!empty($storeUpi)) {
+        $waMsg .= "💡 _Please clear the pending balance via UPI (`{$storeUpi}`) or Cash at our store counter at your earliest convenience._\n\n";
+    } else {
+        $waMsg .= "💡 _Please clear the pending balance via UPI or Cash at our store counter at your earliest convenience._\n\n";
+    }
     $waMsg .= "📞 *Accounts Desk:* {$storePhone}\n";
-    $waMsg .= "🏢 *Showroom:* Shop #14, Linking Road, Bandra West, Mumbai\n";
+    if (!empty($storeLandline)) {
+        $waMsg .= "☎️ *Landline:* {$storeLandline}\n";
+    }
+    $waMsg .= "🏢 *Showroom:* {$storeAddress}\n";
     $waMsg .= "_Note: Please report any discrepancies within 7 business days._";
 
     $waStatementUrl = 'https://wa.me/' . $cleanPhone . '?text=' . rawurlencode($waMsg);

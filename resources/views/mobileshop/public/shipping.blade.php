@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Shipping, Showroom Pickup & Delivery — Maurya Mobile Mumbai')
-@section('meta_description', 'Learn about 2-hour in-store showroom pickup in Bandra West, same-day Mumbai express courier, and insured pan-India delivery at Maurya Mobile.')
+@section('title', 'Shipping, Showroom Pickup & Delivery — ' . store_name())
+@section('meta_description', 'Learn about 2-hour in-store showroom pickup in ' . store_city() . ' and insured delivery at ' . store_name() . '.')
 
 @section('subnav_title', 'Delivery Guide')
 @section('subnav_links')
@@ -28,7 +28,7 @@
                 Showroom Pickup & Delivery Policy.
             </h1>
             <p class="apple-lead-airy text-apple-muted-80 max-w-2xl mx-auto pt-2">
-                Whether collecting in person from our Bandra West flagship showroom or requesting insured dispatch across India, your smartphone arrives safely and on time.
+                Whether collecting in person from our {{ store_city() }} showroom or requesting insured dispatch across India, your smartphone arrives safely and on time.
             </p>
             <div class="pt-2 flex items-center justify-center gap-4 text-xs text-apple-muted-48">
                 <span>Tamper-Evident Security Seals</span>
@@ -44,14 +44,14 @@
         <!-- SECTION 1: IN-STORE SHOWROOM PICKUP -->
         <section id="pickup" class="space-y-4 scroll-mt-24">
             <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[11px]">Option 01</span>
-            <h2 class="apple-display-md text-apple-ink">1. Express Showroom Pickup (Bandra West)</h2>
+            <h2 class="apple-display-md text-apple-ink">1. Express Showroom Pickup ({{ store_city() }})</h2>
             <p class="apple-body text-apple-muted-80">
                 The fastest way to experience your new smartphone. Orders reserved online or by phone are pre-inspected and staged for collection at our flagship retail counter within <strong>2 hours</strong>:
             </p>
             <div class="p-6 rounded-2xl bg-apple-parchment border border-apple-hairline space-y-3 text-xs">
                 <div class="flex items-center justify-between font-mono text-apple-ink border-b border-apple-hairline pb-2">
                     <span>Pickup Location:</span>
-                    <strong>Maurya Mobile, Linking Road, Bandra West, Mumbai 400050</strong>
+                    <strong>{{ store_name() }}, {{ store_address() }}</strong>
                 </div>
                 <div class="flex items-center justify-between font-mono text-apple-ink border-b border-apple-hairline pb-2">
                     <span>Counter Timings:</span>

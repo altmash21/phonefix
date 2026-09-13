@@ -40,4 +40,9 @@ return [
         'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-3.6-flash'),
     ],
 
+    'whatsapp' => [
+        'webhook' => env('WA_WEBHOOK'),
+        'phone'   => env('WA_PHONE'),
+    ],
+
 ];

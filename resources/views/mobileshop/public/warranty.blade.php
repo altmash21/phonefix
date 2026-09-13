@@ -125,10 +125,10 @@
             <h2 class="apple-display-md text-apple-ink">4. How to File a Warranty Claim</h2>
             <div class="space-y-3 apple-body text-apple-muted-80">
                 <p>
-                    <strong>Step 1:</strong> Locate your printed or digital GST Tax Invoice issued by Maurya Mobile showing the handset dual-IMEI numbers.
+                    <strong>Step 1:</strong> Locate your printed or digital GST Tax Invoice issued by {{ store_name() }} showing the handset dual-IMEI numbers.
                 </p>
                 <p>
-                    <strong>Step 2:</strong> Visit our Bandra West showroom service desk or contact our helpline at <strong>+91 98765 43210</strong>.
+                    <strong>Step 2:</strong> Visit our {{ store_city() }} showroom service desk or contact our helpline at <strong>{{ store_phone() }}</strong>.
                 </p>
                 <p>
                     <strong>Step 3:</strong> Our certified technician will conduct a 15-minute intake diagnosis to verify IMEI matching, check warranty status, and inspect hardware.

@@ -451,8 +451,9 @@ class AccessoriesController extends BaseMobileShopController
             $cPhone = '91' . $cPhone;
         }
 
-        $sName = setting('company.name', 'Maurya Mobile Store');
-        $sPhone = setting('company.phone', '+91 98765 43210');
+        $sName = store_name();
+        $sPhone = store_phone();
+        $sAddress = store_address();
         $pdfUrl = url("bill/{$sale->invoice_number}/pdf");
 
         $accMsg = "*{$sName}*\n";
@@ -460,14 +461,27 @@ class AccessoriesController extends BaseMobileShopController
         $accMsg .= "Dear *" . ($sale->customer_name ?: 'Customer') . "*,\n";
         $accMsg .= "Thank you for shopping with us!\n\n";
         $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y') . "\n";
+        if (isset($sale->discount_amount) && (float)$sale->discount_amount > 0) {
+            $gross = (float)($sale->gross_total ?? ($sale->total_amount + $sale->discount_amount));
+            $accMsg .= "• *Gross Items Total:* ₹" . number_format(round($gross)) . "\n";
+            $accMsg .= "• *Discount Given:* -₹" . number_format(round($sale->discount_amount)) . "\n";
+        }
         $accMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
         if ($sale->udhari_amount > 0) {
             $accMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
+            $upiId = store_upi_id();
+            if (!empty($upiId)) {
+                $accMsg .= "• *Pay via UPI:* `{$upiId}`\n";
+            }
         }
         $accMsg .= "\n📄 *Download / View PDF Bill:*\n";
         $accMsg .= "{$pdfUrl}\n\n";
         $accMsg .= "Support: {$sPhone}\n";
-        $accMsg .= "Shop #14, Linking Road, Bandra West, Mumbai";
+        $landline = store_landline();
+        if (!empty($landline)) {
+            $accMsg .= "Landline: {$landline}\n";
+        }
+        $accMsg .= "{$sAddress}";
 
         return redirect()->away('https://wa.me/' . $cPhone . '?text=' . rawurlencode($accMsg));
     }
