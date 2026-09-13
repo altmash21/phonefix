@@ -4,22 +4,9 @@
 @section('page-title', 'Repair Service Desk & Job Sheets')
 
 @section('page-actions')
-    <div style="display:flex;align-items:center;gap:10px;">
-        <select class="page-view-select" id="headerStageSelect" onchange="applyRepairFilter(this.value)">
-            <option value="all">All Stages</option>
-            <option value="received">1. Received</option>
-            <option value="in_diagnosis">2. In Diagnosis</option>
-            <option value="waiting_for_parts">3. Waiting for Parts</option>
-            <option value="waiting_approval">4. Waiting Approval</option>
-            <option value="in_repair">5. In Repair (Bench)</option>
-            <option value="ready">6. Ready for Pickup</option>
-            <option value="delivered">7. Delivered</option>
-            <option value="cancelled">8. Cancelled / Unfixed</option>
-        </select>
-        <button class="btn btn-primary btn-sm" onclick="toggleForm()">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> Log New Repair
-        </button>
-    </div>
+    <button class="btn btn-primary btn-sm" onclick="toggleForm()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> Log New Repair
+    </button>
 @endsection
 
 @push('styles')
@@ -218,22 +205,9 @@
         <div>
             <div class="card-title">Repair Service Desk Queue</div>
         </div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <select id="stageFilterDropdown" class="form-control" style="width:auto;min-width:170px;font-size:12.5px;font-weight:600;padding:6px 10px;" onchange="applyRepairFilter(this.value)">
-                <option value="all">All Stages ({{ array_sum($statusCounts ?? []) ?: count($tickets ?? []) }})</option>
-                <option value="received">1. Received ({{ $statusCounts['received'] ?? 0 }})</option>
-                <option value="in_diagnosis">2. In Diagnosis ({{ $statusCounts['in_diagnosis'] ?? 0 }})</option>
-                <option value="waiting_for_parts">3. Waiting Parts ({{ $statusCounts['waiting_for_parts'] ?? 0 }})</option>
-                <option value="waiting_approval">4. Waiting Approval ({{ $statusCounts['waiting_approval'] ?? 0 }})</option>
-                <option value="in_repair">5. In Repair ({{ $statusCounts['in_repair'] ?? 0 }})</option>
-                <option value="ready">6. Ready for Pickup ({{ $statusCounts['ready'] ?? 0 }})</option>
-                <option value="delivered">7. Delivered ({{ $statusCounts['delivered'] ?? 0 }})</option>
-                <option value="cancelled">8. Cancelled ({{ $statusCounts['cancelled'] ?? 0 }})</option>
-            </select>
-            <div class="search-bar">
-                <i data-lucide="search" style="width:15px;height:15px;"></i>
-                <input type="text" id="repairSearchInput" placeholder="Search ticket, customer, device, fault..." oninput="onRepairSearch(this.value)">
-            </div>
+        <div class="search-bar">
+            <i data-lucide="search" style="width:15px;height:15px;"></i>
+            <input type="text" id="repairSearchInput" placeholder="Search ticket, customer, device, fault..." oninput="onRepairSearch(this.value)">
         </div>
     </div>
 
@@ -944,12 +918,6 @@ function applyRepairFilter(status, btnElement) {
             const el = document.getElementById(map[status]);
             if (el) el.classList.add('active');
         }
-    }
-
-    // Sync dropdown if changed from pill
-    const dropdown = document.getElementById('stageFilterDropdown');
-    if (dropdown && dropdown.value !== status) {
-        dropdown.value = status;
     }
 
     renderFilteredRepairs();
