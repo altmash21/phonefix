@@ -286,7 +286,7 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:update-mobileshop-repairs|read-mobileshop-repairs')
         ->name('repairs.store');
     Route::post('repairs/{id}/update', 'MobileShop\RepairsController@updateRepairStatus')
-        ->middleware('permission:update-mobileshop-repairs')
+        ->middleware('permission:update-mobileshop-repairs|read-mobileshop-repairs')
         ->name('repairs.update');
 
     Route::get('parts/search', 'MobileShop\AccessoriesController@searchParts')

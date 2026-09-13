@@ -63,11 +63,15 @@
 
                 @php
                     $statusConfig = match($ticket->status) {
-                        'delivered'   => ['label' => 'Delivered to Customer', 'color' => 'bg-emerald-50 text-emerald-800 border-emerald-200'],
-                        'completed'   => ['label' => 'Ready for Pickup', 'color' => 'bg-emerald-50 text-emerald-800 border-emerald-200'],
-                        'in_progress' => ['label' => 'Under Active Service', 'color' => 'bg-blue-50 text-blue-800 border-blue-200'],
-                        'cancelled'   => ['label' => 'Service Cancelled', 'color' => 'bg-neutral-100 text-neutral-800 border-neutral-300'],
-                        default       => ['label' => 'Checked-In / Queue', 'color' => 'bg-amber-50 text-amber-800 border-amber-200']
+                        'received'          => ['label' => 'Checked-In / Intake Queue', 'color' => 'bg-purple-50 text-purple-800 border-purple-200'],
+                        'in_diagnosis'      => ['label' => 'In Diagnosis / Testing', 'color' => 'bg-blue-50 text-blue-800 border-blue-200'],
+                        'waiting_for_parts' => ['label' => 'Waiting for Spare Parts', 'color' => 'bg-rose-50 text-rose-800 border-rose-200'],
+                        'waiting_approval'  => ['label' => 'Awaiting Customer Approval', 'color' => 'bg-amber-50 text-amber-800 border-amber-200'],
+                        'in_repair'         => ['label' => 'Under Active Bench Service', 'color' => 'bg-orange-50 text-orange-800 border-orange-200'],
+                        'ready'             => ['label' => 'Ready for Pickup / Tested', 'color' => 'bg-emerald-50 text-emerald-800 border-emerald-200'],
+                        'delivered'         => ['label' => 'Delivered to Customer', 'color' => 'bg-emerald-50 text-emerald-800 border-emerald-200'],
+                        'cancelled'         => ['label' => 'Service Cancelled / Returned', 'color' => 'bg-neutral-100 text-neutral-800 border-neutral-300'],
+                        default             => ['label' => 'Checked-In / Queue', 'color' => 'bg-amber-50 text-amber-800 border-amber-200']
                     };
                 @endphp
                 <div>
@@ -79,15 +83,24 @@
 
             <!-- Milestone Step Progress Tracker (Apple Minimalist) -->
             @php
+                $isCancelled = ($ticket->status === 'cancelled');
                 $step = match($ticket->status) {
-                    'received'    => 1,
-                    'in_progress' => 2,
-                    'completed'   => 3,
-                    'delivered'   => 4,
-                    default       => 1
+                    'received'                                              => 1,
+                    'in_diagnosis', 'waiting_for_parts', 'waiting_approval' => 2,
+                    'in_repair'                                             => 2,
+                    'ready'                                                 => 3,
+                    'delivered'                                             => 4,
+                    'cancelled'                                             => 0,
+                    default                                                 => 1
                 };
             @endphp
             <div class="py-6">
+                @if($isCancelled)
+                    <div class="bg-neutral-100 border border-neutral-200 rounded-xl p-4 text-center text-neutral-700">
+                        <div class="font-bold text-[15px]">Ticket Marked as Cancelled / Returned</div>
+                        <div class="text-[13px] text-neutral-500 mt-1">This job sheet has been closed and returned without repair. Any remaining service balance is waived.</div>
+                    </div>
+                @else
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-6 text-left relative">
                     <!-- Step 1 -->
                     <div class="space-y-1.5 {{ $step >= 1 ? 'opacity-100' : 'opacity-40' }}">
@@ -105,9 +118,27 @@
                         <div class="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold {{ $step >= 2 ? 'bg-apple-primary text-white' : 'bg-apple-hairline text-apple-muted-48' }}">
                             2
                         </div>
-                        <div class="apple-body-strong text-apple-ink text-[15px]">Micro-Soldering</div>
+                        <div class="apple-body-strong text-apple-ink text-[15px]">
+                            @if(in_array($ticket->status, ['waiting_for_parts']))
+                                Parts Sourcing
+                            @elseif(in_array($ticket->status, ['waiting_approval']))
+                                Approval Needed
+                            @elseif(in_array($ticket->status, ['in_diagnosis']))
+                                Diagnostic Testing
+                            @else
+                                Bench Repair
+                            @endif
+                        </div>
                         <div class="apple-fine-print text-apple-muted-48">
-                            Clean bench parts install
+                            @if($ticket->status === 'waiting_for_parts')
+                                Awaiting component dispatch
+                            @elseif($ticket->status === 'waiting_approval')
+                                Customer estimate pending
+                            @elseif($ticket->status === 'in_diagnosis')
+                                Hardware & board diagnostics
+                            @else
+                                Active bench service & install
+                            @endif
                         </div>
                     </div>
 
@@ -116,9 +147,9 @@
                         <div class="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold {{ $step >= 3 ? 'bg-apple-primary text-white' : 'bg-apple-hairline text-apple-muted-48' }}">
                             3
                         </div>
-                        <div class="apple-body-strong text-apple-ink text-[15px]">Quality Inspection</div>
+                        <div class="apple-body-strong text-apple-ink text-[15px]">Ready for Pickup</div>
                         <div class="apple-fine-print text-apple-muted-48">
-                            {{ $ticket->completed_at ? date('d M, h:i A', strtotime($ticket->completed_at)) : '24-point hardware check' }}
+                            {{ $ticket->completed_at ? date('d M, h:i A', strtotime($ticket->completed_at)) : 'Quality tested & verified' }}
                         </div>
                     </div>
 
@@ -133,6 +164,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
 
             <!-- Reported Faults & Billing Summary -->
@@ -157,7 +189,11 @@
                         </div>
                         <div class="flex justify-between apple-body-strong pt-2 border-t border-apple-hairline text-apple-ink">
                             <span>Balance Payable on Pickup:</span>
-                            <span class="text-apple-primary">₹{{ number_format($ticket->balance_due, 2) }}</span>
+                            @if($ticket->status === 'cancelled')
+                                <span class="text-neutral-500 font-medium">Waived (Cancelled)</span>
+                            @else
+                                <span class="text-apple-primary">₹{{ number_format($ticket->balance_due, 2) }}</span>
+                            @endif
                         </div>
                     </div>
                 </div>

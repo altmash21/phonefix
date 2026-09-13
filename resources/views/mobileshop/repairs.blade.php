@@ -5,14 +5,16 @@
 
 @section('page-actions')
     <div style="display:flex;align-items:center;gap:10px;">
-        <select class="page-view-select" onchange="if(this.value) window.location=this.value">
-            <option value="{{ route('mobileshop.repairs') }}">All Repairs</option>
-            <option value="?status=received" {{ request('status')=='received' ? 'selected' : '' }}>Received</option>
-            <option value="?status=in_diagnosis" {{ request('status')=='in_diagnosis' ? 'selected' : '' }}>In Diagnosis</option>
-            <option value="?status=waiting_for_parts" {{ request('status')=='waiting_for_parts' ? 'selected' : '' }}>Waiting Parts</option>
-            <option value="?status=in_repair" {{ request('status')=='in_repair' ? 'selected' : '' }}>In Repair</option>
-            <option value="?status=ready" {{ request('status')=='ready' ? 'selected' : '' }}>Ready for Pickup</option>
-            <option value="?status=delivered" {{ request('status')=='delivered' ? 'selected' : '' }}>Delivered</option>
+        <select class="page-view-select" id="headerStageSelect" onchange="applyRepairFilter(this.value)">
+            <option value="all">All Stages</option>
+            <option value="received">1. Received</option>
+            <option value="in_diagnosis">2. In Diagnosis</option>
+            <option value="waiting_for_parts">3. Waiting for Parts</option>
+            <option value="waiting_approval">4. Waiting Approval</option>
+            <option value="in_repair">5. In Repair (Bench)</option>
+            <option value="ready">6. Ready for Pickup</option>
+            <option value="delivered">7. Delivered</option>
+            <option value="cancelled">8. Cancelled / Unfixed</option>
         </select>
         <button class="btn btn-primary btn-sm" onclick="toggleForm()">
             <i data-lucide="plus" style="width:14px;height:14px;"></i> Log New Repair
@@ -216,7 +218,18 @@
         <div>
             <div class="card-title">Repair Service Desk Queue</div>
         </div>
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select id="stageFilterDropdown" class="form-control" style="width:auto;min-width:170px;font-size:12.5px;font-weight:600;padding:6px 10px;" onchange="applyRepairFilter(this.value)">
+                <option value="all">All Stages ({{ array_sum($statusCounts ?? []) ?: count($tickets ?? []) }})</option>
+                <option value="received">1. Received ({{ $statusCounts['received'] ?? 0 }})</option>
+                <option value="in_diagnosis">2. In Diagnosis ({{ $statusCounts['in_diagnosis'] ?? 0 }})</option>
+                <option value="waiting_for_parts">3. Waiting Parts ({{ $statusCounts['waiting_for_parts'] ?? 0 }})</option>
+                <option value="waiting_approval">4. Waiting Approval ({{ $statusCounts['waiting_approval'] ?? 0 }})</option>
+                <option value="in_repair">5. In Repair ({{ $statusCounts['in_repair'] ?? 0 }})</option>
+                <option value="ready">6. Ready for Pickup ({{ $statusCounts['ready'] ?? 0 }})</option>
+                <option value="delivered">7. Delivered ({{ $statusCounts['delivered'] ?? 0 }})</option>
+                <option value="cancelled">8. Cancelled ({{ $statusCounts['cancelled'] ?? 0 }})</option>
+            </select>
             <div class="search-bar">
                 <i data-lucide="search" style="width:15px;height:15px;"></i>
                 <input type="text" id="repairSearchInput" placeholder="Search ticket, customer, device, fault..." oninput="onRepairSearch(this.value)">
@@ -226,24 +239,33 @@
 
     <!-- Interactive Status Filter Bar (Scrollable Rail on Mobile) -->
     <div class="repair-status-rail">
-        <span style="font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-right:4px; flex-shrink:0;">Status:</span>
+        <span style="font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; margin-right:4px; flex-shrink:0;">Stage:</span>
         <button type="button" class="filter-pill active" id="pill-rep-all" onclick="applyRepairFilter('all', this)">
-            <i data-lucide="layers" style="width:13px;height:13px;"></i> All Jobs <span class="pill-count">{{ count($tickets ?? []) }}</span>
+            <i data-lucide="layers" style="width:13px;height:13px;"></i> All <span class="pill-count">{{ array_sum($statusCounts ?? []) ?: count($tickets ?? []) }}</span>
         </button>
         <button type="button" class="filter-pill" id="pill-rep-received" onclick="applyRepairFilter('received', this)">
-            <i data-lucide="inbox" style="width:13px;height:13px;"></i> Received <span class="pill-count">{{ collect($tickets ?? [])->where('status', 'received')->count() }}</span>
+            <i data-lucide="inbox" style="width:13px;height:13px;"></i> Received <span class="pill-count">{{ $statusCounts['received'] ?? 0 }}</span>
         </button>
-        <button type="button" class="filter-pill filter-pill-warning" id="pill-rep-in-repair" onclick="applyRepairFilter('in_repair', this)">
-            <i data-lucide="wrench" style="width:13px;height:13px;"></i> In Repair <span class="pill-count">{{ collect($tickets ?? [])->whereIn('status', ['in_diagnosis', 'in_repair'])->count() }}</span>
+        <button type="button" class="filter-pill" id="pill-rep-in_diagnosis" onclick="applyRepairFilter('in_diagnosis', this)">
+            <i data-lucide="microscope" style="width:13px;height:13px;"></i> In Diagnosis <span class="pill-count">{{ $statusCounts['in_diagnosis'] ?? 0 }}</span>
         </button>
-        <button type="button" class="filter-pill filter-pill-danger" id="pill-rep-waiting" onclick="applyRepairFilter('waiting_for_parts', this)">
-            <i data-lucide="clock" style="width:13px;height:13px;"></i> Waiting Parts <span class="pill-count">{{ collect($tickets ?? [])->where('status', 'waiting_for_parts')->count() }}</span>
+        <button type="button" class="filter-pill filter-pill-danger" id="pill-rep-waiting_for_parts" onclick="applyRepairFilter('waiting_for_parts', this)">
+            <i data-lucide="clock" style="width:13px;height:13px;"></i> Waiting Parts <span class="pill-count">{{ $statusCounts['waiting_for_parts'] ?? 0 }}</span>
+        </button>
+        <button type="button" class="filter-pill filter-pill-warning" id="pill-rep-waiting_approval" onclick="applyRepairFilter('waiting_approval', this)">
+            <i data-lucide="help-circle" style="width:13px;height:13px;"></i> Waiting Approval <span class="pill-count">{{ $statusCounts['waiting_approval'] ?? 0 }}</span>
+        </button>
+        <button type="button" class="filter-pill filter-pill-warning" id="pill-rep-in_repair" onclick="applyRepairFilter('in_repair', this)">
+            <i data-lucide="wrench" style="width:13px;height:13px;"></i> In Repair <span class="pill-count">{{ $statusCounts['in_repair'] ?? 0 }}</span>
         </button>
         <button type="button" class="filter-pill filter-pill-success" id="pill-rep-ready" onclick="applyRepairFilter('ready', this)">
-            <i data-lucide="check-circle" style="width:13px;height:13px;"></i> Ready for Pickup <span class="pill-count">{{ collect($tickets ?? [])->where('status', 'ready')->count() }}</span>
+            <i data-lucide="check-circle" style="width:13px;height:13px;"></i> Ready for Pickup <span class="pill-count">{{ $statusCounts['ready'] ?? 0 }}</span>
         </button>
         <button type="button" class="filter-pill" id="pill-rep-delivered" onclick="applyRepairFilter('delivered', this)">
-            <i data-lucide="package-check" style="width:13px;height:13px;"></i> Delivered <span class="pill-count">{{ collect($tickets ?? [])->where('status', 'delivered')->count() }}</span>
+            <i data-lucide="package-check" style="width:13px;height:13px;"></i> Delivered <span class="pill-count">{{ $statusCounts['delivered'] ?? 0 }}</span>
+        </button>
+        <button type="button" class="filter-pill" id="pill-rep-cancelled" onclick="applyRepairFilter('cancelled', this)">
+            <i data-lucide="ban" style="width:13px;height:13px;"></i> Cancelled <span class="pill-count">{{ $statusCounts['cancelled'] ?? 0 }}</span>
         </button>
     </div>
 
@@ -324,10 +346,11 @@
                             if ($st === 'received') $badgeClass = 'badge-purple';
                             elseif ($st === 'in_diagnosis') $badgeClass = 'badge-blue';
                             elseif ($st === 'waiting_for_parts') $badgeClass = 'badge-red';
+                            elseif ($st === 'waiting_approval') $badgeClass = 'badge-yellow';
                             elseif ($st === 'in_repair') $badgeClass = 'badge-orange';
                             elseif ($st === 'ready') $badgeClass = 'badge-green';
                             elseif ($st === 'delivered') $badgeClass = 'badge-green';
-                            elseif ($st === 'cancelled') $badgeClass = 'badge-red';
+                            elseif ($st === 'cancelled') $badgeClass = 'badge-gray';
                         @endphp
                         <span class="badge {{ $badgeClass }}" style="text-transform:uppercase;font-size:10px;letter-spacing:0.5px;">
                             {{ str_replace('_', ' ', $st) }}
@@ -338,13 +361,38 @@
                         <div style="font-size:10px;color:#94A3B8;">{{ \Carbon\Carbon::parse($repair->created_at)->format('h:i A') }}</div>
                     </td>
                     <td style="text-align:center;white-space:nowrap;">
-                        <div style="display:flex;gap:6px;justify-content:center;">
-                            <button class="btn btn-primary btn-sm" style="padding:4px 10px;font-size:11px;"
+                        <div style="display:flex;gap:5px;justify-content:center;align-items:center;">
+                            @if($st === 'received')
+                                <button type="button" class="btn btn-outline btn-sm" style="padding:3px 8px;font-size:11px;color:#2563EB;border-color:#BFDBFE;" onclick="quickTransition({{ $repair->id }}, 'in_diagnosis', '{{ $repair->ticket_number }}')" title="Start Diagnosis">
+                                    <i data-lucide="microscope" style="width:11px;height:11px;"></i> Diagnose
+                                </button>
+                            @elseif($st === 'in_diagnosis')
+                                <button type="button" class="btn btn-outline btn-sm" style="padding:3px 8px;font-size:11px;color:#EA580C;border-color:#FED7AA;" onclick="quickTransition({{ $repair->id }}, 'in_repair', '{{ $repair->ticket_number }}')" title="Move to Bench Repair">
+                                    <i data-lucide="wrench" style="width:11px;height:11px;"></i> To Bench
+                                </button>
+                            @elseif($st === 'waiting_for_parts')
+                                <button type="button" class="btn btn-outline btn-sm" style="padding:3px 8px;font-size:11px;color:#EA580C;border-color:#FED7AA;" onclick="quickTransition({{ $repair->id }}, 'in_repair', '{{ $repair->ticket_number }}')" title="Parts Received, Start Repair">
+                                    <i data-lucide="play" style="width:11px;height:11px;"></i> Start Repair
+                                </button>
+                            @elseif($st === 'waiting_approval')
+                                <button type="button" class="btn btn-outline btn-sm" style="padding:3px 8px;font-size:11px;color:#16A34A;border-color:#BBF7D0;" onclick="quickTransition({{ $repair->id }}, 'in_repair', '{{ $repair->ticket_number }}')" title="Customer Approved, Start Repair">
+                                    <i data-lucide="check" style="width:11px;height:11px;"></i> Approved
+                                </button>
+                            @elseif($st === 'in_repair')
+                                <button type="button" class="btn btn-outline btn-sm" style="padding:3px 8px;font-size:11px;color:#16A34A;border-color:#BBF7D0;" onclick="quickTransition({{ $repair->id }}, 'ready', '{{ $repair->ticket_number }}')" title="Mark Ready for Pickup">
+                                    <i data-lucide="check-circle" style="width:11px;height:11px;"></i> Ready
+                                </button>
+                            @elseif($st === 'ready')
+                                <button type="button" class="btn btn-sm" style="padding:3px 8px;font-size:11px;background:#16A34A;color:#fff;border:none;" onclick="openUpdateModal({{ json_encode($repair) }}, 'delivered')" title="Deliver and Settle Balance">
+                                    <i data-lucide="handshake" style="width:11px;height:11px;"></i> Deliver
+                                </button>
+                            @endif
+                            <button class="btn btn-primary btn-sm" style="padding:4px 9px;font-size:11px;"
                                 onclick="openUpdateModal({{ json_encode($repair) }})">
-                                <i data-lucide="wrench" style="width:12px;height:12px;"></i> Service / Update
+                                <i data-lucide="edit-3" style="width:11px;height:11px;"></i> Update
                             </button>
                             <a href="{{ route('public.track_repair', ['ticket_number' => $repair->ticket_number]) }}" target="_blank" class="btn-icon" title="Public Tracking View">
-                                <i data-lucide="external-link" style="width:14px;height:14px;"></i>
+                                <i data-lucide="external-link" style="width:13px;height:13px;"></i>
                             </a>
                         </div>
                     </td>
@@ -379,10 +427,11 @@
                 if ($st === 'received') { $badgeBg = '#EDE9FE'; $badgeColor = '#6D28D9'; }
                 elseif ($st === 'in_diagnosis') { $badgeBg = '#DBEAFE'; $badgeColor = '#1D4ED8'; }
                 elseif ($st === 'waiting_for_parts') { $badgeBg = '#FEE2E2'; $badgeColor = '#B91C1C'; }
+                elseif ($st === 'waiting_approval') { $badgeBg = '#FEF3C7'; $badgeColor = '#92400E'; }
                 elseif ($st === 'in_repair') { $badgeBg = '#FFEDD5'; $badgeColor = '#C2410C'; }
                 elseif ($st === 'ready') { $badgeBg = '#DCFCE7'; $badgeColor = '#15803D'; }
                 elseif ($st === 'delivered') { $badgeBg = '#DCFCE7'; $badgeColor = '#15803D'; }
-                elseif ($st === 'cancelled') { $badgeBg = '#FEE2E2'; $badgeColor = '#B91C1C'; }
+                elseif ($st === 'cancelled') { $badgeBg = '#F1F5F9'; $badgeColor = '#64748B'; }
                 
                 $balanceDue = (float)($repair->balance_due ?? 0);
                 $totalAmount = (float)($repair->total_amount ?? $repair->estimated_cost ?? 0);
@@ -424,10 +473,23 @@
                             </span>
                         @endif
                     </div>
-                    <div class="row-actions" style="display:flex; gap:6px; align-items:center;">
-                        <button type="button" class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:11px; height:28px;"
+                    <div class="row-actions" style="display:flex; gap:5px; align-items:center;">
+                        @if($st === 'received')
+                            <button type="button" class="btn btn-outline btn-sm" style="padding:3px 7px;font-size:10.5px;color:#2563EB;border-color:#BFDBFE;" onclick="quickTransition({{ $repair->id }}, 'in_diagnosis', '{{ $repair->ticket_number }}')">Diagnose</button>
+                        @elseif($st === 'in_diagnosis')
+                            <button type="button" class="btn btn-outline btn-sm" style="padding:3px 7px;font-size:10.5px;color:#EA580C;border-color:#FED7AA;" onclick="quickTransition({{ $repair->id }}, 'in_repair', '{{ $repair->ticket_number }}')">To Bench</button>
+                        @elseif($st === 'waiting_for_parts')
+                            <button type="button" class="btn btn-outline btn-sm" style="padding:3px 7px;font-size:10.5px;color:#EA580C;border-color:#FED7AA;" onclick="quickTransition({{ $repair->id }}, 'in_repair', '{{ $repair->ticket_number }}')">Repair</button>
+                        @elseif($st === 'waiting_approval')
+                            <button type="button" class="btn btn-outline btn-sm" style="padding:3px 7px;font-size:10.5px;color:#16A34A;border-color:#BBF7D0;" onclick="quickTransition({{ $repair->id }}, 'in_repair', '{{ $repair->ticket_number }}')">Approved</button>
+                        @elseif($st === 'in_repair')
+                            <button type="button" class="btn btn-outline btn-sm" style="padding:3px 7px;font-size:10.5px;color:#16A34A;border-color:#BBF7D0;" onclick="quickTransition({{ $repair->id }}, 'ready', '{{ $repair->ticket_number }}')">Ready</button>
+                        @elseif($st === 'ready')
+                            <button type="button" class="btn btn-sm" style="padding:3px 7px;font-size:10.5px;background:#16A34A;color:#fff;border:none;" onclick="openUpdateModal({{ json_encode($repair) }}, 'delivered')">Deliver</button>
+                        @endif
+                        <button type="button" class="btn btn-primary btn-sm" style="padding:4px 8px; font-size:11px; height:28px;"
                             onclick="openUpdateModal({{ json_encode($repair) }})">
-                            <i data-lucide="wrench" style="width:12px;height:12px;"></i> Service
+                            <i data-lucide="edit-3" style="width:11px;height:11px;"></i>
                         </button>
                         <a href="{{ route('public.track_repair', ['ticket_number' => $repair->ticket_number]) }}" target="_blank" class="compact-action-btn" title="Public Tracking View" style="padding:4px 6px; border:1px solid #CBD5E1; border-radius:6px; color:#475569; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
                             <i data-lucide="external-link" style="width:13px;height:13px;"></i>
@@ -467,14 +529,15 @@
                 <!-- Status Selection -->
                 <div class="form-group" style="margin-bottom:16px;">
                     <label class="form-label required" style="font-weight:700;">Repair Stage / Status</label>
-                    <select name="status" id="modalStatusSelect" class="form-control" style="font-weight:600;" required>
-                        <option value="received">Received (Intake / Awaiting Inspection)</option>
-                        <option value="in_diagnosis">In Diagnosis (Checking Faults)</option>
-                        <option value="waiting_for_parts">Waiting for Spare Parts</option>
-                        <option value="in_repair">In Repair (On Technician Bench)</option>
-                        <option value="ready">Ready for Pickup (Repair Completed)</option>
-                        <option value="delivered">Delivered to Customer (Closed)</option>
-                        <option value="cancelled">Cancelled / Returned Unfixed</option>
+                    <select name="status" id="modalStatusSelect" class="form-control" style="font-weight:600;" required onchange="calculateModalTotals()">
+                        <option value="received">1. Received (Intake / Awaiting Inspection)</option>
+                        <option value="in_diagnosis">2. In Diagnosis (Hardware / Circuit Testing)</option>
+                        <option value="waiting_for_parts">3. Waiting for Spare Parts</option>
+                        <option value="waiting_approval">4. Waiting for Customer Approval</option>
+                        <option value="in_repair">5. In Repair (On Service Bench)</option>
+                        <option value="ready">6. Ready for Pickup (Repair Completed & Tested)</option>
+                        <option value="delivered">7. Delivered to Customer (Closed)</option>
+                        <option value="cancelled">8. Cancelled / Returned Unfixed</option>
                     </select>
                 </div>
 
@@ -538,11 +601,19 @@
                         <div>Existing Parts Cost: <strong id="lblPrevParts">₹0.00</strong></div>
                         <div>+ New Part Added: <strong id="lblNewPart">₹0.00</strong></div>
                         <div>+ Labor Charge: <strong id="lblLabor">₹0.00</strong></div>
-                        <div>- Advance Paid: <strong id="lblAdvance" style="color:var(--lama-green-dark);">₹0.00</strong></div>
+                        <div>- Total Advance Paid: <strong id="lblAdvance" style="color:var(--lama-green-dark);">₹0.00</strong></div>
                         <div style="grid-column: span 2; border-top: 1px solid #94A3B8; padding-top: 6px; display:flex; justify-content:space-between; font-weight:800; font-size:14px;">
-                            <span>Grand Total Bill: <span id="lblGrandTotal" style="color:var(--brand-700);">₹0.00</span></span>
+                            <span>Grand Total: <span id="lblGrandTotal" style="color:var(--brand-700);">₹0.00</span></span>
                             <span>Balance Due: <span id="lblBalanceDue" style="color:#DC2626;">₹0.00</span></span>
                         </div>
+                    </div>
+                    <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #CBD5E1; display:flex; justify-content:space-between; align-items:center;">
+                        <button type="button" id="btnQuickPayBalance" onclick="quickFillBalancePayment()" class="btn btn-sm btn-outline" style="display:none; font-size:11px; padding:3px 10px; color:#16A34A; border-color:#86EFAC; background:#F0FDF4; font-weight:700;">
+                            ⚡ Settle Remaining Balance (Collect ₹<span id="quickPayAmt">0.00</span>)
+                        </button>
+                        <span id="cancelledNotice" style="display:none; font-size:11px; font-weight:700; color:#DC2626;">
+                            🚫 Job Cancelled: Balance due is waived.
+                        </span>
                     </div>
                 </div>
 
@@ -579,7 +650,7 @@ function toggleForm() {
     else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 }
 
-function openUpdateModal(repair) {
+function openUpdateModal(repair, targetStatus = null) {
     currentTicket = repair;
     const modal = document.getElementById('updateRepairModal');
     
@@ -592,13 +663,27 @@ function openUpdateModal(repair) {
     document.getElementById('modalCustomerDevice').textContent = `${repair.customer_name} (${repair.customer_phone}) • ${repair.brand} ${repair.model}`;
 
     // Prefill fields
-    document.getElementById('modalStatusSelect').value = repair.status || 'received';
-    document.getElementById('modalLaborInput').value = repair.labor_charge || 0;
+    const currentStatus = targetStatus || repair.status || 'received';
+    document.getElementById('modalStatusSelect').value = currentStatus;
+
+    // Preserve labor charge and ensure estimate balance is not wiped out
+    let labor = parseFloat(repair.labor_charge || 0);
+    if (labor <= 0 && parseFloat(repair.estimated_cost || 0) > 0) {
+        const existingParts = parseFloat(repair.parts_cost || 0);
+        labor = Math.max(0, parseFloat(repair.estimated_cost) - existingParts);
+    }
+    document.getElementById('modalLaborInput').value = labor > 0 ? labor.toFixed(2) : (repair.labor_charge !== null && repair.labor_charge !== undefined && repair.labor_charge > 0 ? repair.labor_charge : '');
+
     document.getElementById('modalPartQty').value = 1;
     document.getElementById('modalPaymentInput').value = '';
     clearSelectedRepairPart();
 
     calculateModalTotals();
+
+    // If opening directly to deliver stage, auto-suggest remaining balance payment
+    if (targetStatus === 'delivered') {
+        quickFillBalancePayment();
+    }
 
     modal.style.display = 'flex';
     if (window.refreshIcons) window.refreshIcons();
@@ -706,15 +791,48 @@ function calculateModalTotals() {
     const qty = parseInt(document.getElementById('modalPartQty').value || 1);
     const newPartCost = unitPrice * qty;
     document.getElementById('modalPartCostDisplay').value = `₹${newPartCost.toFixed(2)}`;
+
     const labor = parseFloat(document.getElementById('modalLaborInput').value || 0);
     const additionalPay = parseFloat(document.getElementById('modalPaymentInput').value || 0);
+    const currentStatus = document.getElementById('modalStatusSelect').value;
+
     const totalParts = prevParts + newPartCost;
     let grandTotal = labor + totalParts;
     if (grandTotal === 0 && parseFloat(currentTicket.estimated_cost || 0) > 0) {
         grandTotal = parseFloat(currentTicket.estimated_cost);
     }
+
     const totalPaid = prevAdvance + additionalPay;
-    const balanceDue = Math.max(0, grandTotal - totalPaid);
+    const isCancelled = (currentStatus === 'cancelled');
+
+    let balanceDue = 0;
+    const cancelledNotice = document.getElementById('cancelledNotice');
+    const btnQuickPay = document.getElementById('btnQuickPayBalance');
+    const quickPayAmt = document.getElementById('quickPayAmt');
+
+    if (isCancelled) {
+        if (labor > 0 || totalParts > 0) {
+            balanceDue = Math.max(0, grandTotal - totalPaid);
+        } else {
+            grandTotal = totalPaid;
+            balanceDue = 0;
+        }
+        if (cancelledNotice) cancelledNotice.style.display = 'inline';
+    } else {
+        balanceDue = Math.max(0, grandTotal - totalPaid);
+        if (cancelledNotice) cancelledNotice.style.display = 'none';
+    }
+
+    if (btnQuickPay && quickPayAmt) {
+        const remainingDue = Math.max(0, grandTotal - prevAdvance);
+        if (remainingDue > 0 && !isCancelled) {
+            quickPayAmt.textContent = remainingDue.toFixed(2);
+            btnQuickPay.style.display = 'inline-flex';
+        } else {
+            btnQuickPay.style.display = 'none';
+        }
+    }
+
     document.getElementById('lblPrevParts').textContent = `₹${prevParts.toFixed(2)}`;
     document.getElementById('lblNewPart').textContent = `₹${newPartCost.toFixed(2)}`;
     document.getElementById('lblLabor').textContent = `₹${labor.toFixed(2)}`;
@@ -723,12 +841,90 @@ function calculateModalTotals() {
     document.getElementById('lblBalanceDue').textContent = `₹${balanceDue.toFixed(2)}`;
 }
 
+function quickFillBalancePayment() {
+    if (!currentTicket) return;
+    const prevParts = parseFloat(currentTicket.parts_cost || 0);
+    const prevAdvance = parseFloat(currentTicket.advance_paid || 0);
+    const unitPrice = parseFloat(selectedRepairPart?.selling_price || 0);
+    const qty = parseInt(document.getElementById('modalPartQty').value || 1);
+    const newPartCost = unitPrice * qty;
+    const labor = parseFloat(document.getElementById('modalLaborInput').value || 0);
+    const totalParts = prevParts + newPartCost;
+    let grandTotal = labor + totalParts;
+    if (grandTotal === 0 && parseFloat(currentTicket.estimated_cost || 0) > 0) {
+        grandTotal = parseFloat(currentTicket.estimated_cost);
+    }
+    const remainingDue = Math.max(0, grandTotal - prevAdvance);
+    document.getElementById('modalPaymentInput').value = remainingDue > 0 ? remainingDue.toFixed(2) : '';
+    calculateModalTotals();
+}
+
+function quickTransition(ticketId, newStatus, ticketNumber) {
+    const statusLabels = {
+        'received': 'Received',
+        'in_diagnosis': 'In Diagnosis',
+        'waiting_for_parts': 'Waiting for Parts',
+        'waiting_approval': 'Waiting Approval',
+        'in_repair': 'In Repair',
+        'ready': 'Ready for Pickup',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled'
+    };
+    const targetName = statusLabels[newStatus] || newStatus;
+    if (!confirm(`Move ticket ${ticketNumber || ('#' + ticketId)} to "${targetName}"?`)) {
+        return;
+    }
+
+    const updateUrl = "{{ route('mobileshop.repairs.update', ['id' => ':id']) }}".replace(':id', ticketId);
+
+    const formData = new FormData();
+    formData.append('_token', '{{ csrf_token() }}');
+    formData.append('status', newStatus);
+
+    fetch(updateUrl, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Failed to update repair status.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        // Fallback: standard form submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = updateUrl;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        const statusInput = document.createElement('input');
+        statusInput.type = 'hidden';
+        statusInput.name = 'status';
+        statusInput.value = newStatus;
+        form.appendChild(statusInput);
+        document.body.appendChild(form);
+        form.submit();
+    });
+}
+
 let currentRepairStatus = 'all';
 let currentRepairSearch = '';
 
 function applyRepairFilter(status, btnElement) {
     currentRepairStatus = status;
 
+    // Update active pill
     document.querySelectorAll('.repair-status-rail .filter-pill').forEach(p => p.classList.remove('active'));
     if (btnElement) {
         btnElement.classList.add('active');
@@ -736,12 +932,24 @@ function applyRepairFilter(status, btnElement) {
         const map = { 
             'all': 'pill-rep-all', 
             'received': 'pill-rep-received', 
-            'in_repair': 'pill-rep-in-repair', 
-            'waiting_for_parts': 'pill-rep-waiting', 
+            'in_diagnosis': 'pill-rep-in_diagnosis',
+            'waiting_for_parts': 'pill-rep-waiting_for_parts', 
+            'waiting_approval': 'pill-rep-waiting_approval',
+            'in_repair': 'pill-rep-in_repair', 
             'ready': 'pill-rep-ready', 
-            'delivered': 'pill-rep-delivered' 
+            'delivered': 'pill-rep-delivered',
+            'cancelled': 'pill-rep-cancelled'
         };
-        if (map[status]) document.getElementById(map[status])?.classList.add('active');
+        if (map[status]) {
+            const el = document.getElementById(map[status]);
+            if (el) el.classList.add('active');
+        }
+    }
+
+    // Sync dropdown if changed from pill
+    const dropdown = document.getElementById('stageFilterDropdown');
+    if (dropdown && dropdown.value !== status) {
+        dropdown.value = status;
     }
 
     renderFilteredRepairs();
@@ -761,9 +969,7 @@ function renderFilteredRepairs() {
         const rowText = row.textContent.toLowerCase();
 
         let matchStatus = true;
-        if (currentRepairStatus === 'in_repair') {
-            matchStatus = (status === 'in_diagnosis' || status === 'in_repair');
-        } else if (currentRepairStatus !== 'all') {
+        if (currentRepairStatus !== 'all') {
             matchStatus = (status === currentRepairStatus);
         }
 
@@ -786,9 +992,7 @@ function renderFilteredRepairs() {
         const cardText = card.textContent.toLowerCase();
 
         let matchStatus = true;
-        if (currentRepairStatus === 'in_repair') {
-            matchStatus = (status === 'in_diagnosis' || status === 'in_repair');
-        } else if (currentRepairStatus !== 'all') {
+        if (currentRepairStatus !== 'all') {
             matchStatus = (status === currentRepairStatus);
         }
 

@@ -16,12 +16,21 @@ class RepairsController extends BaseMobileShopController
         abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-repairs') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('repair-technician')), 403, 'Unauthorized access to repair service desk.');
 
         $companyId = $this->getCompanyId();
+        $selectedStatus = $request->query('status', 'all');
+
+        $statusCounts = DB::table('ms_repair_tickets')
+            ->where('company_id', $companyId)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
         $query = DB::table('ms_repair_tickets')
             ->join('ms_customers', 'ms_repair_tickets.customer_id', '=', 'ms_customers.id')
             ->select('ms_repair_tickets.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
             ->where('ms_repair_tickets.company_id', $companyId);
 
-        if ($request->filled('status')) {
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('ms_repair_tickets.status', $request->status);
         }
 
@@ -45,7 +54,7 @@ class RepairsController extends BaseMobileShopController
         $customers = DB::table('ms_customers')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
         $repairs = $tickets;
 
-        return view('mobileshop.repairs', compact('tickets', 'repairs', 'parts', 'customers'));
+        return view('mobileshop.repairs', compact('tickets', 'repairs', 'parts', 'customers', 'statusCounts', 'selectedStatus'));
     }
 
     /**
@@ -178,13 +187,37 @@ class RepairsController extends BaseMobileShopController
                 }
             }
 
-            $additionalPayment = (float) ($request->additional_payment ?? 0.00);
-            $totalAdvance = (float) $ticket->advance_paid + $additionalPayment;
-            $grandTotal = $laborCharge + $totalPartsCost;
-            if ($grandTotal == 0 && (float) $ticket->estimated_cost > 0) {
-                $grandTotal = (float) $ticket->estimated_cost;
+            // If labor charge wasn't explicitly set, preserve the estimate balance
+            if ($laborCharge == 0 && (float)$ticket->labor_charge == 0 && (float)$ticket->estimated_cost > $totalPartsCost) {
+                $laborCharge = max(0.00, (float)$ticket->estimated_cost - $totalPartsCost);
             }
-            $balanceDue = max(0.00, $grandTotal - $totalAdvance);
+
+            $additionalPayment = (float) ($request->additional_payment ?? 0.00);
+
+            // Settle full balance toggle (used on delivery)
+            if ($request->boolean('settle_full_balance')) {
+                $calcGrand = ($status === 'cancelled') ? (float)$ticket->advance_paid : ($laborCharge + $totalPartsCost);
+                $remainingDue = max(0.00, $calcGrand - (float)$ticket->advance_paid);
+                $additionalPayment = max($additionalPayment, $remainingDue);
+            }
+
+            $totalAdvance = (float) $ticket->advance_paid + $additionalPayment;
+
+            if ($status === 'cancelled') {
+                if ($laborCharge > 0) {
+                    $grandTotal = $laborCharge + $totalPartsCost;
+                    $balanceDue = max(0.00, $grandTotal - $totalAdvance);
+                } else {
+                    $grandTotal = $totalAdvance;
+                    $balanceDue = 0.00;
+                }
+            } else {
+                $grandTotal = $laborCharge + $totalPartsCost;
+                if ($grandTotal == 0 && (float) $ticket->estimated_cost > 0) {
+                    $grandTotal = (float) $ticket->estimated_cost;
+                }
+                $balanceDue = max(0.00, $grandTotal - $totalAdvance);
+            }
 
             DB::table('ms_repair_tickets')->where('id', $id)->update([
                 'status' => $status,
@@ -193,7 +226,7 @@ class RepairsController extends BaseMobileShopController
                 'total_amount' => $grandTotal,
                 'advance_paid' => $totalAdvance,
                 'balance_due' => $balanceDue,
-                'completed_at' => ($status === 'ready' || $status === 'delivered') ? ($ticket->completed_at ?? now()) : $ticket->completed_at,
+                'completed_at' => in_array($status, ['ready', 'delivered']) ? ($ticket->completed_at ?? now()) : $ticket->completed_at,
                 'delivered_at' => ($status === 'delivered') ? ($ticket->delivered_at ?? now()) : $ticket->delivered_at,
                 'updated_at' => now(),
             ]);
