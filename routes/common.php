@@ -15,6 +15,26 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/', function ($company_id) {
             return redirect()->route('mobileshop.dashboard', ['company_id' => $company_id]);
         })->name('dashboard');
+
+        Route::get('dashboards', function ($company_id) {
+            return redirect()->route('mobileshop.dashboard', ['company_id' => $company_id]);
+        })->name('dashboards.index');
+
+        Route::get('dashboards/create', function ($company_id) {
+            return redirect()->route('mobileshop.dashboard', ['company_id' => $company_id]);
+        })->name('dashboards.create');
+
+        Route::get('dashboards/{id}/edit', function ($company_id) {
+            return redirect()->route('mobileshop.dashboard', ['company_id' => $company_id]);
+        })->name('dashboards.edit');
+
+        Route::get('dashboards/{id}/switch', function ($company_id) {
+            return redirect()->route('mobileshop.dashboard', ['company_id' => $company_id]);
+        })->name('dashboards.switch');
+
+        Route::delete('dashboards/{id}', function ($company_id) {
+            return redirect()->route('mobileshop.dashboard', ['company_id' => $company_id]);
+        })->name('dashboards.destroy');
     });
 });
 

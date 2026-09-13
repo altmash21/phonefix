@@ -50,38 +50,7 @@ class Dashboards extends Controller
      */
     public function show($dashboard_id = null)
     {
-        $dashboard_id = $dashboard_id ?? session('dashboard_id');
-
-        try {
-            $dashboard = Dashboard::findOrFail($dashboard_id);
-        } catch (ModelNotFoundException $e) {
-            $dashboard = user()->dashboards()->enabled()->first();
-        }
-
-        if (empty($dashboard)) {
-            $dashboard = $this->dispatch(new CreateDashboard([
-                'company_id' => company_id(),
-                'name' => trans_choice('general.dashboards', 1),
-                'default_widgets' => 'core',
-            ]));
-        }
-
-        session(['dashboard_id' => $dashboard->id]);
-
-        $widgets = Widget::where('dashboard_id', $dashboard->id)->orderBy('sort', 'asc')->get()->filter(function ($widget) {
-            return Widgets::canShow($widget->class);
-        });
-
-        $user_dashboards = user()->dashboards()->enabled()->get();
-
-        $date_picker_shortcuts = $this->getDatePickerShortcuts();
-
-        if (! request()->has('start_date')) {
-            request()->merge(['start_date' => $date_picker_shortcuts[trans('general.date_range.this_year')]['start']]);
-            request()->merge(['end_date' => $date_picker_shortcuts[trans('general.date_range.this_year')]['end']]);
-        }
-
-        return view('common.dashboards.show', compact('dashboard', 'widgets', 'user_dashboards', 'date_picker_shortcuts'));
+        return redirect()->route('mobileshop.dashboard', ['company_id' => company_id()]);
     }
 
     /**
