@@ -35,7 +35,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install PHP Dependencies (Production)
-        run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader
+        run: composer install --prefer-dist --no-interaction --no-progress --no-dev --optimize-autoloader --no-scripts
 
       - name: Prepare Staging Folders (app/ and public_html/)
         run: |
