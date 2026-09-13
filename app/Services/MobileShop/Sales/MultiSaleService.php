@@ -145,6 +145,8 @@ class MultiSaleService
 
                 // True Net Profit
                 $finalProfit = round($salePrice - (float) $d['device']->purchase_cost - $itemGiftCost - $itemEmiFee, 2);
+                $origPrice = (float) $d['device']->selling_price;
+                $itemDiscount = max(0.00, round($origPrice - $salePrice, 2));
 
                 $saleId = DB::table('ms_mobile_sales')->insertGetId([
                     'company_id'          => $companyId,
@@ -153,6 +155,8 @@ class MultiSaleService
                     'invoice_number'      => $invoiceNumber,
                     'bill_type'           => $gst['billType'],
                     'device_id'           => $d['device']->id,
+                    'original_price'      => $origPrice,
+                    'discount_amount'     => $itemDiscount,
                     'sale_price'          => $salePrice,
                     'gift_cost'           => $itemGiftCost,
                     'final_profit'        => $finalProfit,

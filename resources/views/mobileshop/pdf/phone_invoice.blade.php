@@ -29,6 +29,15 @@
         $sgstAmount = 0.00;
         $igstAmount = 0.00;
     }
+
+    $discountAmount = (float) ($sale->discount_amount ?? 0);
+    $originalPrice = (float) ($sale->original_price ?? 0);
+    if ($discountAmount <= 0 && $originalPrice > (float)$sale->total_amount) {
+        $discountAmount = round($originalPrice - (float)$sale->total_amount, 2);
+    }
+    if ($originalPrice <= 0 && $discountAmount > 0) {
+        $originalPrice = round((float)$sale->total_amount + $discountAmount, 2);
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -237,6 +246,11 @@
                         IMEI 1: {{ $sale->imei_1 }}
                         @if($sale->imei_2) &bull; IMEI 2: {{ $sale->imei_2 }} @endif
                     </div>
+                    @if($discountAmount > 0)
+                    <div style="font-size: 8.5px; color: #111827; font-weight: bold; margin-top: 1px;">
+                        Original Price: Rs. {{ number_format($originalPrice, 2) }} &bull; Discount: -Rs. {{ number_format($discountAmount, 2) }}
+                    </div>
+                    @endif
                 </td>
                 <td class="text-center font-mono" style="font-size: 9.5px;">{{ $sale->hsn_code ?: '85171300' }}</td>
                 <td class="text-center font-mono" style="font-weight: bold;">1</td>
@@ -306,7 +320,7 @@
                         <tr style="background-color: #f9fafb; font-weight: bold;">
                             <td>Total GST Liability</td>
                             <td class="text-right">18.00%</td>
-                            <td class="text-right font-mono" style="color:#4F46E5;">Rs. {{ number_format($totalTaxAmount, 2) }}</td>
+                            <td class="text-right font-mono" style="color:#111827;">Rs. {{ number_format($totalTaxAmount, 2) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -322,6 +336,16 @@
 
             <td style="width: 45%; vertical-align: top;">
                 <table class="summary-table">
+                    @if($discountAmount > 0)
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Gross Original Price</td>
+                        <td style="text-align: right;" class="font-mono">Rs. {{ number_format($originalPrice, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #111827; font-weight: bold;">Discount Given</td>
+                        <td style="text-align: right; color: #111827; font-weight: bold;" class="font-mono">-Rs. {{ number_format($discountAmount, 2) }}</td>
+                    </tr>
+                    @endif
                     <tr>
                         <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Subtotal (Taxable Value)</td>
                         <td style="text-align: right;" class="font-mono">{{ number_format($taxableAmount, 2) }}</td>

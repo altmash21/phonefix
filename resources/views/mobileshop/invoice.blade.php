@@ -40,6 +40,15 @@
         $igstAmount = 0.00;
     }
 
+    $discountAmount = (float) ($sale->discount_amount ?? 0);
+    $originalPrice = (float) ($sale->original_price ?? 0);
+    if ($discountAmount <= 0 && $originalPrice > (float)$sale->total_amount) {
+        $discountAmount = round($originalPrice - (float)$sale->total_amount, 2);
+    }
+    if ($originalPrice <= 0 && $discountAmount > 0) {
+        $originalPrice = round((float)$sale->total_amount + $discountAmount, 2);
+    }
+
     $pdfBillUrl = url('bill/' . $sale->invoice_number . '/pdf');
 
     $waMsg = "*{$storeName}*\n";
@@ -52,6 +61,10 @@
         $waMsg .= "• *IMEI 2:* `{$sale->imei_2}`\n";
     }
     $waMsg .= "• *Date:* " . date('d M Y', strtotime($sale->created_at)) . "\n";
+    if ($discountAmount > 0) {
+        $waMsg .= "• *Original Price:* ₹" . number_format(round($originalPrice)) . "\n";
+        $waMsg .= "• *Discount:* -₹" . number_format(round($discountAmount)) . "\n";
+    }
     $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
     if ($sale->udhari_amount > 0) {
         $waMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
@@ -220,6 +233,11 @@
                             IMEI 1: {{ $sale->imei_1 }}
                             @if($sale->imei_2) &bull; IMEI 2: {{ $sale->imei_2 }} @endif
                         </div>
+                        @if($discountAmount > 0)
+                        <div style="font-size: 9.5px; color: #111827; font-weight: 700; margin-top: 2px;">
+                            Original Price: ₹{{ number_format($originalPrice, 2) }} &bull; Discount: -₹{{ number_format($discountAmount, 2) }}
+                        </div>
+                        @endif
                     </td>
                     <td style="padding: 10px 8px; text-align: center; font-family: monospace; font-size: 11px;">{{ $sale->hsn_code ?: '85171300' }}</td>
                     <td style="padding: 10px 6px; text-align: center; font-weight: 700; color: #111827;">1</td>
@@ -267,6 +285,11 @@
                             IMEI 1: {{ $sale->imei_1 }}
                             @if($sale->imei_2) | 2: {{ $sale->imei_2 }} @endif
                         </div>
+                        @if($discountAmount > 0)
+                        <div style="font-size: 10.5px; color: #111827; font-weight: 700; margin-top: 4px;">
+                            Orig: ₹{{ number_format($originalPrice, 2) }} &bull; Discount: -₹{{ number_format($discountAmount, 2) }}
+                        </div>
+                        @endif
                     </div>
                     <div style="text-align: right; flex-shrink: 0;">
                         <span style="font-size: 9.5px; font-weight: 700; color: #64748B; text-transform: uppercase;">HSN</span>
@@ -351,6 +374,16 @@
 
                 <td class="inv-totals-summary-cell" style="width: 45%; vertical-align: top;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; border: 1px solid #E5E7EB; border-radius: 6px; overflow: hidden;">
+                        @if($discountAmount > 0)
+                        <tr style="border-bottom: 1px solid #E5E7EB;">
+                            <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563; width: 55%;">Gross Original Price</td>
+                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($originalPrice, 2) }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #E5E7EB;">
+                            <td style="padding: 7px 10px; background: #F9FAFB; color: #111827; font-weight: 700;">Discount Given</td>
+                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #111827;">-₹{{ number_format($discountAmount, 2) }}</td>
+                        </tr>
+                        @endif
                         <tr style="border-bottom: 1px solid #E5E7EB;">
                             <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563; width: 55%;">Subtotal (Taxable)</td>
                             <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($taxableAmount, 2) }}</td>

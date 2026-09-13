@@ -101,6 +101,9 @@ class PosSaleService
             // Atomic Sequential Invoice Number
             $invoiceNumber = MobileShopInvoiceHelper::getNextInvoiceNumber($companyId, 'INV');
 
+            $origPrice = (float) $device->selling_price;
+            $itemDiscount = max(0.00, round($origPrice - $salePrice, 2));
+
             // Create Sale Record
             $saleId = DB::table('ms_mobile_sales')->insertGetId([
                 'company_id'          => $companyId,
@@ -109,6 +112,8 @@ class PosSaleService
                 'invoice_number'      => $invoiceNumber,
                 'bill_type'           => $billType,
                 'device_id'           => $device->id,
+                'original_price'      => $origPrice,
+                'discount_amount'     => $itemDiscount,
                 'sale_price'          => $salePrice,
                 'tax_rate'            => $taxRate,
                 'tax_type'            => $isStateMatch ? 'intra_state' : 'inter_state',

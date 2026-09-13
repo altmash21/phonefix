@@ -13,6 +13,15 @@
 
     $pdfBillUrl = url('bill/' . $sale->invoice_number . '/pdf');
 
+    $accDiscount = (float) ($sale->discount_amount ?? 0);
+    $accGross = (float) ($sale->gross_total ?? 0);
+    if ($accDiscount <= 0 && $accGross > (float)$sale->total_amount) {
+        $accDiscount = round($accGross - (float)$sale->total_amount, 2);
+    }
+    if ($accGross <= 0 && $accDiscount > 0) {
+        $accGross = round((float)$sale->total_amount + $accDiscount, 2);
+    }
+
     $waMsg = "*{$storeName}*\n";
     $waMsg .= ($sale->bill_type === 'non_gst' ? 'Estimate #' : 'Tax Invoice #') . $sale->invoice_number . "\n\n";
     $waMsg .= "Dear *" . ($sale->customer_name ?: 'Customer') . "*,\n";
@@ -24,6 +33,10 @@
         $itemNames[] = "{$it->part_name} × {$it->quantity}";
     }
     $waMsg .= implode(', ', $itemNames) . "\n";
+    if ($accDiscount > 0) {
+        $waMsg .= "• *Gross Items Total:* ₹" . number_format(round($accGross)) . "\n";
+        $waMsg .= "• *Discount Given:* -₹" . number_format(round($accDiscount)) . "\n";
+    }
     $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
     if ($sale->udhari_amount > 0) {
         $waMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
@@ -232,6 +245,16 @@
 
                 <td style="width: 45%; vertical-align: top;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; border: 1px solid #E5E7EB;">
+                        @if($accDiscount > 0)
+                        <tr style="border-bottom: 1px solid #E5E7EB;">
+                            <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563; width: 55%;">Gross Items Total</td>
+                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($accGross, 2) }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #E5E7EB;">
+                            <td style="padding: 7px 10px; background: #F9FAFB; color: #111827; font-weight: 700;">Discount Given</td>
+                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #111827;">-₹{{ number_format($accDiscount, 2) }}</td>
+                        </tr>
+                        @endif
                         <tr style="border-bottom: 1px solid #E5E7EB;">
                             <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563; width: 55%;">Subtotal (Taxable)</td>
                             <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($sale->bill_type === 'gst' ? ($sale->subtotal - $sale->tax_amount) : $sale->subtotal, 2) }}</td>
@@ -302,8 +325,14 @@
             @endforeach
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 6px; margin-top: 6px; font-size:10px;">
-            <div style="display:flex; justify-content:space-between;"><span>Taxable:</span><span>₹{{ number_format($sale->subtotal - $sale->tax_amount, 2) }}</span></div>
+            @if($accDiscount > 0)
+            <div style="display:flex; justify-content:space-between;"><span>Gross Total:</span><span>₹{{ number_format($accGross, 2) }}</span></div>
+            <div style="display:flex; justify-content:space-between; font-weight:700;"><span>Discount:</span><span>-₹{{ number_format($accDiscount, 2) }}</span></div>
+            @endif
+            <div style="display:flex; justify-content:space-between;"><span>Taxable:</span><span>₹{{ number_format($sale->bill_type === 'gst' ? ($sale->subtotal - $sale->tax_amount) : $sale->subtotal, 2) }}</span></div>
+            @if($sale->bill_type === 'gst')
             <div style="display:flex; justify-content:space-between;"><span>GST (18%):</span><span>₹{{ number_format($sale->tax_amount, 2) }}</span></div>
+            @endif
             <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>TOTAL:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
             <div style="display:flex; justify-content:space-between; font-weight:700; color:#111827;"><span>PAID:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
             @if($sale->udhari_amount > 0)

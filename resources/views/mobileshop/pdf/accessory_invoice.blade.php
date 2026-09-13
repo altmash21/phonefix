@@ -1,3 +1,13 @@
+@php
+    $accDiscount = (float) ($sale->discount_amount ?? 0);
+    $accGross = (float) ($sale->gross_total ?? 0);
+    if ($accDiscount <= 0 && $accGross > (float)$sale->total_amount) {
+        $accDiscount = round($accGross - (float)$sale->total_amount, 2);
+    }
+    if ($accGross <= 0 && $accDiscount > 0) {
+        $accGross = round((float)$sale->total_amount + $accDiscount, 2);
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -189,11 +199,18 @@
         </thead>
         <tbody>
             @foreach($items as $idx => $it)
+            @php
+                $itDiscount = (float) ($it->discount_amount ?? 0);
+                $itOrig = (float) ($it->original_price ?? 0);
+            @endphp
             <tr>
                 <td class="text-center" style="color: #4b5563;">{{ $idx + 1 }}</td>
                 <td>
                     <div style="font-weight: bold; font-size: 11px; color: #111827;">{{ $it->part_name }}</div>
                     <div style="font-size: 8.5px; color: #6b7280;">Genuine Accessory / Spare Part</div>
+                    @if($itDiscount > 0)
+                        <div style="font-size: 8px; color: #111827; font-weight: bold; margin-top: 1px;">Discount: -Rs. {{ number_format($itDiscount, 2) }} (MRP: Rs. {{ number_format($itOrig > 0 ? $itOrig : ($it->unit_price + $itDiscount), 2) }})</div>
+                    @endif
                 </td>
                 <td class="text-center font-mono" style="font-size: 9.5px;">85177090</td>
                 <td class="text-center font-mono" style="font-weight: bold;">{{ $it->quantity }}</td>
@@ -248,6 +265,16 @@
 
             <td style="width: 45%; vertical-align: top;">
                 <table class="summary-table">
+                    @if($accDiscount > 0)
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Gross Items Total</td>
+                        <td style="text-align: right;" class="font-mono">Rs. {{ number_format($accGross, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #111827; font-weight: bold;">Discount Given</td>
+                        <td style="text-align: right; color: #111827; font-weight: bold;" class="font-mono">-Rs. {{ number_format($accDiscount, 2) }}</td>
+                    </tr>
+                    @endif
                     <tr>
                         <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Subtotal (Taxable Value)</td>
                         <td style="text-align: right;" class="font-mono">{{ number_format($sale->bill_type === 'gst' ? ($sale->subtotal - $sale->tax_amount) : $sale->subtotal, 2) }}</td>

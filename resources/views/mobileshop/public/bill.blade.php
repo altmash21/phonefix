@@ -53,6 +53,17 @@
             <div class="space-y-3">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Purchase Details</h3>
 
+                @php
+                    $discountAmount = (float) ($sale->discount_amount ?? 0);
+                    $grossTotal = (float) ($sale->gross_total ?? ($sale->original_price ?? 0));
+                    if ($discountAmount <= 0 && $grossTotal > (float)$sale->total_amount) {
+                        $discountAmount = round($grossTotal - (float)$sale->total_amount, 2);
+                    }
+                    if ($grossTotal <= 0 && $discountAmount > 0) {
+                        $grossTotal = round((float)$sale->total_amount + $discountAmount, 2);
+                    }
+                @endphp
+
                 @if($type === 'phone')
                     <div class="p-4 rounded-2xl border border-slate-200 bg-white space-y-2">
                         <div class="flex items-center justify-between">
@@ -63,6 +74,12 @@
                                 ₹{{ number_format(round($sale->total_amount)) }}
                             </span>
                         </div>
+                        @if($discountAmount > 0)
+                            <div class="text-xs text-slate-700 font-medium">
+                                Discount Applied: <span class="font-bold text-slate-900">-₹{{ number_format(round($discountAmount)) }}</span>
+                                <span class="text-slate-400 line-through ml-1">₹{{ number_format(round($grossTotal)) }}</span>
+                            </div>
+                        @endif
                         <div class="text-xs text-slate-600 space-y-1">
                             @if(!empty($sale->storage) || !empty($sale->color))
                                 <div><span class="text-slate-400">Variant:</span> {{ $sale->storage }} {{ $sale->color }}</div>
@@ -85,8 +102,17 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($items as $item)
+                                    @php
+                                        $itemDisc = (float) ($item->discount_amount ?? 0);
+                                        $itemOrig = (float) ($item->original_price ?? 0);
+                                    @endphp
                                     <tr>
-                                        <td class="p-3 font-semibold text-slate-800">{{ $item->part_name }}</td>
+                                        <td class="p-3">
+                                            <div class="font-semibold text-slate-800">{{ $item->part_name }}</div>
+                                            @if($itemDisc > 0)
+                                                <div class="text-[10px] text-slate-600 font-medium">Disc: -₹{{ number_format(round($itemDisc)) }} (MRP: ₹{{ number_format(round($itemOrig > 0 ? $itemOrig : ($item->unit_price + $itemDisc))) }})</div>
+                                            @endif
+                                        </td>
                                         <td class="p-3 text-center text-slate-600">{{ $item->quantity }}</td>
                                         <td class="p-3 text-right font-bold text-slate-900">₹{{ number_format(round($item->line_total)) }}</td>
                                     </tr>
@@ -99,6 +125,16 @@
 
             <!-- Financial Summary -->
             <div class="bg-slate-50 p-4 rounded-2xl space-y-2 text-xs">
+                @if($discountAmount > 0)
+                    <div class="flex justify-between text-slate-500">
+                        <span>Gross Items Total</span>
+                        <span class="font-bold text-slate-700">₹{{ number_format(round($grossTotal)) }}</span>
+                    </div>
+                    <div class="flex justify-between text-slate-900 font-bold">
+                        <span>Discount Given</span>
+                        <span class="font-bold text-slate-900">-₹{{ number_format(round($discountAmount)) }}</span>
+                    </div>
+                @endif
                 <div class="flex justify-between font-bold text-slate-900 text-base border-b border-slate-200 pb-2">
                     <span>Total Bill Amount</span>
                     <span class="text-slate-900 font-black">₹{{ number_format(round($sale->total_amount)) }}</span>

@@ -55,6 +55,7 @@ class AccessorySaleService
             $invoiceNumber = MobileShopInvoiceHelper::getNextInvoiceNumber($companyId, 'ACC');
 
             $subtotal = 0.00;
+            $grossTotal = 0.00;
             $lineItemsData = [];
 
             // Lock and Validate Every Item in Cart
@@ -99,24 +100,32 @@ class AccessorySaleService
                 ]);
 
                 $lineTotal = round($price * $qty, 2);
+                $origUnitPrice = (float) ($part->selling_price ?: $price);
+                $origLineTotal = round($origUnitPrice * $qty, 2);
+                $lineDiscount = max(0.00, round($origLineTotal - $lineTotal, 2));
+
                 $subtotal += $lineTotal;
+                $grossTotal += $origLineTotal;
 
                 $lineItemsData[] = [
-                    'company_id' => $companyId,
-                    'part_id'    => $part->id,
-                    'part_name'  => $part->name,
-                    'hsn_code'   => $part->hsn_code ?? '85177090',
-                    'quantity'   => $qty,
-                    'unit_cost'  => $part->unit_cost,
-                    'unit_price' => $price,
-                    'tax_rate'   => 18.00,
-                    'tax_amount' => round($lineTotal - ($lineTotal / 1.18), 2),
-                    'line_total' => $lineTotal,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'company_id'      => $companyId,
+                    'part_id'         => $part->id,
+                    'part_name'       => $part->name,
+                    'hsn_code'        => $part->hsn_code ?? '85177090',
+                    'quantity'        => $qty,
+                    'unit_cost'       => $part->unit_cost,
+                    'unit_price'      => $price,
+                    'original_price'  => $origUnitPrice,
+                    'discount_amount' => $lineDiscount,
+                    'tax_rate'        => 18.00,
+                    'tax_amount'      => round($lineTotal - ($lineTotal / 1.18), 2),
+                    'line_total'      => $lineTotal,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
                 ];
             }
 
+            $invoiceDiscount = max(0.00, round($grossTotal - $subtotal, 2));
             $isGst = $request->boolean('is_gst') || ($request->bill_type === 'gst');
             $billType = $isGst ? 'gst' : 'non_gst';
 
@@ -132,6 +141,8 @@ class AccessorySaleService
                 'invoice_number'  => $invoiceNumber,
                 'bill_type'       => $billType,
                 'customer_id'     => $customer->id,
+                'gross_total'     => $grossTotal,
+                'discount_amount' => $invoiceDiscount,
                 'subtotal'        => $subtotal,
                 'tax_rate'        => $gstCalc['taxRate'],
                 'tax_amount'      => $gstCalc['totalTax'],
