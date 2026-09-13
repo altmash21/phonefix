@@ -30,25 +30,25 @@ class WhatsAppReceiptService
             $cPhone = '91' . $cPhone;
         }
 
-        $sName = setting('company.name', 'Maurya Mobile');
-        $mobMsg = "🧾 *TAX INVOICE & RECEIPT*\n";
-        $mobMsg .= "🏪 *{$sName}*\n";
-        $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        $mobMsg .= "Dear *{$sale->customer_name}*,\n";
-        $mobMsg .= "Thank you for purchasing at *{$sName}*!\n\n";
-        $mobMsg .= "📋 *INVOICE DETAILS*\n";
-        $mobMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
-        $mobMsg .= "• *Date:* " . Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
+        $sName = setting('company.name', 'Maurya Mobile Store');
+        $sPhone = setting('company.phone', '+91 98765 43210');
+        $pdfUrl = url("bill/{$sale->invoice_number}/pdf");
+
+        $mobMsg = "*{$sName}*\n";
+        $mobMsg .= "Invoice #{$sale->invoice_number}\n\n";
+        $mobMsg .= "Dear *" . ($sale->customer_name ?: 'Customer') . "*,\n";
+        $mobMsg .= "Thank you for your purchase!\n\n";
         $mobMsg .= "• *Device:* {$sale->brand} {$sale->model}" . (!empty($sale->storage) ? " ({$sale->storage})" : "") . "\n";
-        $mobMsg .= "• *IMEI 1:* `{$sale->imei_1}`\n\n";
-        $mobMsg .= "💰 *Total Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
+        $mobMsg .= "• *IMEI:* `{$sale->imei_1}`\n";
+        $mobMsg .= "• *Date:* " . Carbon::parse($sale->created_at)->format('d M Y') . "\n";
+        $mobMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
         if ($sale->udhari_amount > 0) {
-            $mobMsg .= "⚠️ *Balance Due:* *₹" . number_format($sale->udhari_amount, 2) . "*\n";
+            $mobMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
         }
-        $mobMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        $mobMsg .= "🛡️ Official Warranty & Genuine GST Bill\n";
-        $mobMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
-        $mobMsg .= "_Please retain this digital receipt for your records._";
+        $mobMsg .= "\n📄 *Download / View PDF Bill:*\n";
+        $mobMsg .= "{$pdfUrl}\n\n";
+        $mobMsg .= "Support: {$sPhone}\n";
+        $mobMsg .= "Shop #14, Linking Road, Bandra West, Mumbai";
 
         return 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($mobMsg);
     }

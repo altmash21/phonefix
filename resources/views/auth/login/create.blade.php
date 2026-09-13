@@ -58,11 +58,18 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.12);
-                .btn-teal {
-            background: #0F766E;
+        }
+        .btn-teal {
+            background-color: #0F766E !important;
+            color: #FFFFFF !important;
         }
         .btn-teal:hover {
-            background: #115E59;
+            background-color: #115E59 !important;
+            color: #FFFFFF !important;
+        }
+        .btn-teal:active {
+            background-color: #042F2E !important;
+            color: #FFFFFF !important;
         }
     </style>
 </head>
@@ -176,9 +183,10 @@
 
                 <!-- Submit Button -->
                 <button type="submit" id="submitBtn"
-                        class="w-full py-3 rounded-xl btn-teal text-white font-semibold text-xs shadow-md shadow-brand-700/20 flex items-center justify-center gap-2 transition-colors">
-                    <i data-lucide="log-in" class="w-4 h-4"></i>
-                    <span id="btnText">Unlock & Enter Terminal</span>
+                        style="background-color: #0F766E !important; color: #FFFFFF !important;"
+                        class="w-full py-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-md shadow-teal-900/30 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                    <i data-lucide="log-in" class="w-4 h-4 text-white"></i>
+                    <span id="btnText" class="text-white font-bold">Unlock & Enter Terminal</span>
                 </button>
             </form>
 
@@ -311,9 +319,10 @@
 
                 <!-- Submit Registration -->
                 <button type="submit" id="regSubmitBtn"
-                        class="w-full py-3 rounded-xl btn-teal text-white font-semibold text-xs shadow-md shadow-brand-700/20 flex items-center justify-center gap-2 transition-colors mt-2">
-                    <i data-lucide="user-check" class="w-4 h-4"></i>
-                    <span id="regBtnText">Create Account &amp; Unlock Terminal</span>
+                        style="background-color: #0F766E !important; color: #FFFFFF !important;"
+                        class="w-full py-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-md shadow-teal-900/30 flex items-center justify-center gap-2 transition-all cursor-pointer mt-2">
+                    <i data-lucide="user-check" class="w-4 h-4 text-white"></i>
+                    <span id="regBtnText" class="text-white font-bold">Create Account &amp; Unlock Terminal</span>
                 </button>
             </form>
 

@@ -50,6 +50,10 @@ Route::get('refund-policy', 'MobileShop\PublicStoreController@publicRefunds')->n
 Route::get('warranty-policy', 'MobileShop\PublicStoreController@publicWarranty')->name('public.warranty');
 Route::get('shipping-policy', 'MobileShop\PublicStoreController@publicShipping')->name('public.shipping');
 
+// Public Customer Bill & PDF Routes (from WhatsApp links)
+Route::get('bill/{invoice_number}', 'MobileShop\PublicBillController@show')->name('public.bill.show');
+Route::get('bill/{invoice_number}/pdf', 'MobileShop\PublicBillController@pdf')->name('public.bill.pdf');
+
 // Compatibility & Clean Short Aliases
 Route::get('home', function() { return redirect()->route('public.landing'); });
 Route::get('privacy', function() { return redirect()->route('public.privacy'); });

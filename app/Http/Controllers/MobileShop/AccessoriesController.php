@@ -451,20 +451,23 @@ class AccessoriesController extends BaseMobileShopController
             $cPhone = '91' . $cPhone;
         }
 
-        $sName = setting('company.name', 'Maurya Mobile');
-        $accMsg = "🧾 *PURCHASE INVOICE & RECEIPT*\n";
-        $accMsg .= "🏪 *{$sName}*\n";
-        $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        $accMsg .= "Dear *" . ($sale->customer_name ?: 'Valued Customer') . "*,\n";
-        $accMsg .= "Thank you for shopping at *{$sName}*!\n\n";
-        $accMsg .= "📋 *INVOICE DETAILS*\n";
-        $accMsg .= "• *Invoice #:* {$sale->invoice_number}\n";
-        $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y, h:i A') . "\n";
-        $accMsg .= "• *Amount:* ₹" . number_format($sale->total_amount, 2) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n\n";
-        $accMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        $accMsg .= "🛡️ Genuine Accessories & GST Receipt\n";
-        $accMsg .= "📍 Linking Road, Bandra West, Mumbai\n";
-        $accMsg .= "_Thank you for choosing {$sName}!_";
+        $sName = setting('company.name', 'Maurya Mobile Store');
+        $sPhone = setting('company.phone', '+91 98765 43210');
+        $pdfUrl = url("bill/{$sale->invoice_number}/pdf");
+
+        $accMsg = "*{$sName}*\n";
+        $accMsg .= "Invoice #{$sale->invoice_number}\n\n";
+        $accMsg .= "Dear *" . ($sale->customer_name ?: 'Customer') . "*,\n";
+        $accMsg .= "Thank you for shopping with us!\n\n";
+        $accMsg .= "• *Date:* " . \Carbon\Carbon::parse($sale->created_at)->format('d M Y') . "\n";
+        $accMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
+        if ($sale->udhari_amount > 0) {
+            $accMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
+        }
+        $accMsg .= "\n📄 *Download / View PDF Bill:*\n";
+        $accMsg .= "{$pdfUrl}\n\n";
+        $accMsg .= "Support: {$sPhone}\n";
+        $accMsg .= "Shop #14, Linking Road, Bandra West, Mumbai";
 
         return redirect()->away('https://wa.me/' . $cPhone . '?text=' . rawurlencode($accMsg));
     }
