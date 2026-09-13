@@ -25,18 +25,13 @@ class AccessoryRestockService
             'min_stock_alert'  => 'nullable|integer|min:0',
         ]);
 
-        $categoryRow = DB::table('ms_part_categories')
-            ->where('company_id', $companyId)
-            ->where(function ($q) use ($request) {
-                $q->where('slug', $request->category)
-                  ->orWhere('name', $request->category);
-            })
-            ->first();
+        $categoryRow = AccessoryCategoryService::resolveCategory($companyId, $request->category, $request->name);
+        $finalCategorySlug = $categoryRow ? $categoryRow->slug : AccessoryCategoryService::canonicalSlug($request->category, $request->name);
         $isGift = $request->has('is_gift_eligible') ? 1 : ($categoryRow ? ($categoryRow->is_gift_eligible ? 1 : 0) : 0);
 
         $partId = DB::table('ms_parts_inventory')->insertGetId([
             'company_id'       => $companyId,
-            'category'         => $request->category,
+            'category'         => $finalCategorySlug,
             'category_id'      => $categoryRow?->id,
             'is_gift_eligible' => $isGift,
             'brand'            => $request->brand ?: 'Universal',
@@ -163,17 +158,13 @@ class AccessoryRestockService
 
                     $existingCount++;
                 } else {
-                    $categoryRow = DB::table('ms_part_categories')
-                        ->where('company_id', $companyId)
-                        ->where(function ($q) use ($categorySlug) {
-                            $q->where('slug', $categorySlug)->orWhere('name', $categorySlug);
-                        })
-                        ->first();
+                    $categoryRow = AccessoryCategoryService::resolveCategory($companyId, $categorySlug, $partName);
+                    $finalCategorySlug = $categoryRow ? $categoryRow->slug : AccessoryCategoryService::canonicalSlug($categorySlug, $partName);
 
                     $newPartId = DB::table('ms_parts_inventory')->insertGetId([
                         'company_id'       => $companyId,
                         'name'             => $partName,
-                        'category'         => $categoryRow ? $categoryRow->slug : $categorySlug,
+                        'category'         => $finalCategorySlug,
                         'category_id'      => $categoryRow?->id,
                         'brand'            => $brand,
                         'compatible_model' => $model,

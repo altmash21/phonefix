@@ -583,17 +583,62 @@
     let catalogCategories = Array.isArray(rawCatalogCategories) ? rawCatalogCategories : Object.values(rawCatalogCategories || {});
     if (!catalogCategories || catalogCategories.length === 0) {
         catalogCategories = [
-            { slug: 'display_folder', name: 'Display / Screen Folder' },
-            { slug: 'front_glass', name: 'Front Glass / Touch Glass' },
-            { slug: 'charging_pin', name: 'Charging Pin / Port' },
-            { slug: 'ic_motherboard', name: 'IC / Motherboard Chip' },
+            { slug: 'folder_display', name: 'Display Screen / Folder' },
+            { slug: 'front_glass', name: 'Front Glass' },
+            { slug: 'charging_port', name: 'Charging Pin / Port' },
+            { slug: 'ic_chip', name: 'IC / Motherboard Chip' },
             { slug: 'battery', name: 'Battery' },
             { slug: 'back_panel', name: 'Back Panel / Housing Glass' },
-            { slug: 'back_cover_case', name: 'Back Cover & Cases 🎁' },
+            { slug: 'back_cover', name: 'Back Cover & Cases 🎁' },
             { slug: 'tempered_glass', name: 'Tempered Glass 🎁' },
-            { slug: 'general_accessory', name: 'General Accessory 🎁' }
+            { slug: 'charger_cable', name: 'Chargers & Cables 🎁' },
+            { slug: 'earphones_audio', name: 'Earphones & Audio 🎁' },
+            { slug: 'camera_module', name: 'Camera Module' },
+            { slug: 'general_accessory', name: 'General Accessories 🎁' }
         ];
     }
+
+    /* ── Canonicalize category names & aliases to standard DB slugs ── */
+    function canonicalizeCategory(cat, name = '') {
+        const text = (String(cat || '') + ' ' + String(name || '')).toLowerCase().trim();
+        const c = String(cat || '').toLowerCase().trim().replace(/[-\s]/g, '_');
+
+        if (/folder|display|screen|lcd|oled|tft|combo|touch\s*display/.test(text) || c === 'display_folder' || c === 'folder_display') {
+            return 'folder_display';
+        }
+        if (/front\s*glass|touch\s*glass|oca/.test(text) || c === 'front_glass') {
+            return 'front_glass';
+        }
+        if (/pin|charging\s*port|connector|charging\s*jack|cc\s*board|sub\s*board/.test(text) || c === 'charging_pin' || c === 'charging_port') {
+            return 'charging_port';
+        }
+        if (/ic\b|motherboard|power\s*ic|charging\s*ic|wtr|pmic|cpu\s*ic|chip/.test(text) || c === 'ic_motherboard' || c === 'ic_chip') {
+            return 'ic_chip';
+        }
+        if (/battery|cell|mah\b/.test(text) || c === 'battery') {
+            return 'battery';
+        }
+        if (/back\s*panel|housing|housing\s*glass|body/.test(text) || c === 'back_panel') {
+            return 'back_panel';
+        }
+        if (/cover|case|smoke|bumper|pouch|silicone|leather|matte\s*case/.test(text) || c === 'back_cover_case' || c === 'back_cover') {
+            return 'back_cover';
+        }
+        if (/tempered|11d|9d|21d|uv\s*glass|d\+|screen\s*guard|screen\s*protector/.test(text) || c === 'tempered_glass') {
+            return 'tempered_glass';
+        }
+        if (/charger|cable|adapter|type-c|lightning|micro\s*usb|braided|fast\s*charg|power\s*bank|pd\s*cable/.test(text) || c === 'charger' || c === 'cable' || c === 'charger_cable') {
+            return 'charger_cable';
+        }
+        if (/earphone|headphone|audio|buds|airpod|neckband|tws|bluetooth\s*headset|speaker|mic\b|aux|sound/.test(text) || c === 'audio' || c === 'earphones_audio') {
+            return 'earphones_audio';
+        }
+        if (/camera|lens|camera\s*glass|camera\s*module/.test(text) || c === 'camera_module') {
+            return 'camera_module';
+        }
+        return c || 'general_accessory';
+    }
+    window.canonicalizeCategory = canonicalizeCategory;
 
     let bulkRowIndex = 0;
 
@@ -623,14 +668,28 @@
             row.className = 'batch-item-row batch-grid-row';
             row.id = `bulk-row-${idx}`;
 
+            const targetCat = canonicalizeCategory(itemData?.category, itemData?.name);
+
             let catOptions = '';
+            let matchedOption = false;
             const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
             cats.forEach(cat => {
                 if (!cat) return;
                 const slug = cat.slug || cat.name || '';
                 const name = cat.name || cat.slug || '';
-                const sel = (itemData && (itemData.category === slug || itemData.category === name)) ? 'selected' : '';
-                catOptions += `<option value="${escapeHtml(slug)}" ${sel}>${escapeHtml(name)}</option>`;
+                const isSelected = itemData && (
+                    itemData.category === slug ||
+                    itemData.category === name ||
+                    targetCat === slug ||
+                    canonicalizeCategory(slug) === targetCat ||
+                    canonicalizeCategory(name) === targetCat
+                );
+                if (isSelected && !matchedOption) {
+                    matchedOption = true;
+                    catOptions += `<option value="${escapeHtml(slug)}" selected>${escapeHtml(name)}</option>`;
+                } else {
+                    catOptions += `<option value="${escapeHtml(slug)}">${escapeHtml(name)}</option>`;
+                }
             });
 
             let partDatalist = '';
@@ -654,10 +713,13 @@
             const qtyVal = itemData?.qty || 1;
             const costVal = itemData?.unit_cost ? parseFloat(itemData.unit_cost).toFixed(2) : '0.00';
             const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2);
-            const isGiftChecked = (itemData?.is_gift_eligible || itemData?.category === 'tempered_glass') ? 'checked' : '';
+            const isGiftChecked = (itemData?.is_gift_eligible || targetCat === 'tempered_glass' || targetCat === 'back_cover' || targetCat === 'charger_cable' || targetCat === 'earphones_audio' || targetCat === 'general_accessory') ? 'checked' : '';
             const lineTotal = (qtyVal * parseFloat(costVal));
             const detectedBrand = guessBrand(nameVal || '') || brandVal;
-            const isFolder = itemData?.category === 'display_folder';
+            const isFolder = (targetCat === 'folder_display');
+
+            const matchedCatObj = cats.find(c => (c.slug === targetCat || canonicalizeCategory(c.slug) === targetCat));
+            const catDisplayName = matchedCatObj?.name || 'Category';
 
             row.innerHTML = `
                 <!-- Hidden form fields -->
@@ -781,6 +843,21 @@
             `;
 
             container.appendChild(row);
+
+            // Ensure select value is set explicitly to targetCat if provided
+            const selectEl = document.getElementById(`catSelect_${idx}`);
+            if (selectEl && targetCat) {
+                for (let i = 0; i < selectEl.options.length; i++) {
+                    const optVal = selectEl.options[i].value;
+                    const optText = selectEl.options[i].text;
+                    if (optVal === targetCat || canonicalizeCategory(optVal) === targetCat || canonicalizeCategory(optText) === targetCat) {
+                        selectEl.selectedIndex = i;
+                        onBulkCategoryChange(idx, selectEl.value);
+                        break;
+                    }
+                }
+            }
+
             updateBulkSummary();
 
             try {
@@ -830,10 +907,12 @@
     }
 
     function onBulkCategoryChange(idx, val) {
-        // Show/hide OG/Normal pill switch only for display_folder
+        const canonicalVal = canonicalizeCategory(val);
+
+        // Show/hide OG/Normal pill switch only for folder_display
         const qualityToggle = document.getElementById(`qualityToggle_${idx}`);
         if (qualityToggle) {
-            if (val === 'display_folder') {
+            if (canonicalVal === 'folder_display' || val === 'display_folder') {
                 qualityToggle.classList.add('visible');
             } else {
                 qualityToggle.classList.remove('visible');
@@ -843,7 +922,13 @@
         // Auto-set gift eligible hidden field based on category
         const giftEl = document.getElementById(`gift_${idx}`);
         if (giftEl) {
-            const isGift = (val === 'tempered_glass' || val === 'back_cover_case' || val === 'general_accessory');
+            const isGift = (
+                canonicalVal === 'tempered_glass' || 
+                canonicalVal === 'back_cover' || 
+                canonicalVal === 'charger_cable' || 
+                canonicalVal === 'earphones_audio' || 
+                canonicalVal === 'general_accessory'
+            );
             giftEl.value = isGift ? '1' : '0';
         }
 
@@ -858,7 +943,7 @@
         const dl = document.getElementById(`partList_${idx}`);
         if (dl) {
             const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
-            const filtered = val ? parts.filter(p => p && p.category === val) : parts;
+            const filtered = val ? parts.filter(p => p && (p.category === val || canonicalizeCategory(p.category) === canonicalVal)) : parts;
             let opts = '';
             filtered.forEach(p => {
                 if (!p) return;
@@ -879,8 +964,18 @@
         if (match) {
             document.getElementById(`partId_${idx}`).value = match.id;
             if (match.category) {
-                document.getElementById(`catSelect_${idx}`).value = match.category;
-                onBulkCategoryChange(idx, match.category);
+                const targetCat = canonicalizeCategory(match.category, match.name);
+                const selectEl = document.getElementById(`catSelect_${idx}`);
+                if (selectEl) {
+                    for (let i = 0; i < selectEl.options.length; i++) {
+                        const optVal = selectEl.options[i].value;
+                        if (optVal === targetCat || canonicalizeCategory(optVal) === targetCat) {
+                            selectEl.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                onBulkCategoryChange(idx, selectEl?.value || targetCat);
             }
             const detectedB = guessBrand(val);
             if (match.brand) document.getElementById(`brand_${idx}`).value = match.brand;
@@ -901,6 +996,22 @@
             const b = guessBrand(val);
             const bEl = document.getElementById(`brand_${idx}`);
             if (bEl && b !== 'Universal') bEl.value = b;
+
+            // Auto-detect category from typed item name
+            if (val && val.length >= 2) {
+                const autoCat = canonicalizeCategory('', val);
+                const selectEl = document.getElementById(`catSelect_${idx}`);
+                if (selectEl && autoCat && autoCat !== 'general_accessory') {
+                    for (let i = 0; i < selectEl.options.length; i++) {
+                        const optVal = selectEl.options[i].value;
+                        if (optVal === autoCat || canonicalizeCategory(optVal) === autoCat) {
+                            selectEl.selectedIndex = i;
+                            onBulkCategoryChange(idx, selectEl.value);
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1138,29 +1249,8 @@
 
         items.forEach(it => {
             const rawName = it.name || it.model || 'Item';
-            let cat = it.category || 'display_folder';
+            const cat = canonicalizeCategory(it.category, rawName);
             const nameLower = rawName.toLowerCase();
-
-            // Categorization mapping
-            if (/folder|combo|hd\+|og\b|display|screen|lcd|oled|tft|touch\s*display/i.test(nameLower) || it.type === 'folder' || cat === 'display_folder') {
-                cat = 'display_folder';
-            } else if (/front\s*glass|touch\s*glass|oca/i.test(nameLower) || cat === 'front_glass') {
-                cat = 'front_glass';
-            } else if (/pin|charging\s*port|connector|jack/i.test(nameLower) || cat === 'charging_pin') {
-                cat = 'charging_pin';
-            } else if (/ic\b|motherboard|power\s*ic|charging\s*ic/i.test(nameLower) || cat === 'ic_motherboard') {
-                cat = 'ic_motherboard';
-            } else if (/battery|cell|mah\b/i.test(nameLower) || cat === 'battery') {
-                cat = 'battery';
-            } else if (/back\s*panel|housing|body/i.test(nameLower) || cat === 'back_panel') {
-                cat = 'back_panel';
-            } else if (/cover|case|smoke|bumper|pouch|silicone/i.test(nameLower) || cat === 'back_cover_case') {
-                cat = 'back_cover_case';
-            } else if (/tempered|glass|11d|9d|matte|uv\s*glass|d\+/i.test(nameLower) || cat === 'tempered_glass') {
-                cat = 'tempered_glass';
-            } else {
-                cat = 'general_accessory';
-            }
 
             const isOg = /og\b|\boriginal/i.test(nameLower) || (it.display_type && it.display_type.toUpperCase() === 'OG');
             const displayType = isOg ? 'OG' : 'Normal';
@@ -1169,9 +1259,9 @@
             const cost = parseFloat(it.unit_cost) || 0;
             let sellingPrice = parseFloat(it.selling_price) || 0;
             if (sellingPrice <= cost) {
-                if (cat === 'display_folder') {
+                if (cat === 'folder_display' || cat === 'display_folder') {
                     sellingPrice = cost + 250;
-                } else if (cat === 'tempered_glass' || cat === 'back_cover_case') {
+                } else if (cat === 'tempered_glass' || cat === 'back_cover' || cat === 'back_cover_case') {
                     sellingPrice = Math.round(cost * 2.5);
                 } else {
                     sellingPrice = Math.round(cost * 1.35);
@@ -1190,7 +1280,7 @@
                 qty: qty,
                 unit_cost: cost,
                 selling_price: sellingPrice,
-                is_gift_eligible: (cat === 'tempered_glass' || cat === 'back_cover_case') ? 1 : 0
+                is_gift_eligible: (cat === 'tempered_glass' || cat === 'back_cover' || cat === 'charger_cable' || cat === 'earphones_audio' || cat === 'general_accessory') ? 1 : 0
             });
         });
 
@@ -1220,11 +1310,11 @@
 
         const sampleItems = [
             { name: '9D Super Clear Tempered Glass (iPhone 14/15)', category: 'tempered_glass', brand: 'Apple', compatible_model: 'iPhone 14 / 15', qty: 50, unit_cost: 22.00, selling_price: 149.00, is_gift_eligible: 1 },
-            { name: 'Matte Smoke Anti-Drop Bumper Case (Galaxy S24)', category: 'back_cover_case', brand: 'Samsung', compatible_model: 'Galaxy S24', qty: 25, unit_cost: 45.00, selling_price: 199.00, is_gift_eligible: 1 },
-            { name: 'Original OLED Display Screen Folder (iPhone 14)', category: 'display_folder', brand: 'Apple', compatible_model: 'iPhone 14', display_type: 'OG', qty: 5, unit_cost: 1650.00, selling_price: 2499.00, is_gift_eligible: 0 },
+            { name: 'Matte Smoke Anti-Drop Bumper Case (Galaxy S24)', category: 'back_cover', brand: 'Samsung', compatible_model: 'Galaxy S24', qty: 25, unit_cost: 45.00, selling_price: 199.00, is_gift_eligible: 1 },
+            { name: 'Original OLED Display Screen Folder (iPhone 14)', category: 'folder_display', brand: 'Apple', compatible_model: 'iPhone 14', display_type: 'OG', qty: 5, unit_cost: 1650.00, selling_price: 2499.00, is_gift_eligible: 0 },
             { name: 'Samsung Galaxy A54 Front Outer Glass with OCA', category: 'front_glass', brand: 'Samsung', compatible_model: 'Galaxy A54', qty: 15, unit_cost: 110.00, selling_price: 399.00, is_gift_eligible: 0 },
-            { name: 'Type-C 65W Braided Fast Charging Cable (1.5m)', category: 'tempered_glass', brand: 'Universal', compatible_model: 'Universal Type-C', qty: 30, unit_cost: 38.00, selling_price: 199.00, is_gift_eligible: 1 },
-            { name: 'Universal Type-C Charging Pin Connector Jack', category: 'charging_pin', brand: 'Universal', compatible_model: 'Type-C All Devices', qty: 40, unit_cost: 12.00, selling_price: 99.00, is_gift_eligible: 0 },
+            { name: 'Type-C 65W Braided Fast Charging Cable (1.5m)', category: 'charger_cable', brand: 'Universal', compatible_model: 'Universal Type-C', qty: 30, unit_cost: 38.00, selling_price: 199.00, is_gift_eligible: 1 },
+            { name: 'Universal Type-C Charging Pin Connector Jack', category: 'charging_port', brand: 'Universal', compatible_model: 'Type-C All Devices', qty: 40, unit_cost: 12.00, selling_price: 99.00, is_gift_eligible: 0 },
             { name: 'High Capacity 5000mAh Battery (Redmi Note 12)', category: 'battery', brand: 'Xiaomi', compatible_model: 'Redmi Note 12 5G', qty: 8, unit_cost: 340.00, selling_price: 799.00, is_gift_eligible: 0 }
         ];
 

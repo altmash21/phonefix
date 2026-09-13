@@ -62,10 +62,7 @@ class AccessoriesController extends BaseMobileShopController
             ->limit(500)
             ->get();
 
-        $categories = DB::table('ms_part_categories')
-            ->where('company_id', $companyId)
-            ->orderBy('name', 'asc')
-            ->get();
+        $categories = $this->categoryService->getCategories($companyId);
 
         $partsQuery = DB::table('ms_parts_inventory')
             ->where('company_id', $companyId)
@@ -108,10 +105,7 @@ class AccessoriesController extends BaseMobileShopController
             ->orderBy('name')
             ->get();
 
-        $categories = DB::table('ms_part_categories')
-            ->where('company_id', $companyId)
-            ->orderBy('name', 'asc')
-            ->get();
+        $categories = $this->categoryService->getCategories($companyId);
 
         $parts = DB::table('ms_parts_inventory')
             ->where('company_id', $companyId)

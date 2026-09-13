@@ -331,7 +331,7 @@ Extract all supplier information and individual line items into a STRICT JSON ob
     },
     {
       "type": "accessory",
-      "category": "display_folder / tempered_glass / back_cover_case / front_glass / charging_pin / battery / ic_motherboard / back_panel / charger / cable / audio / general_accessory",
+      "category": "folder_display / tempered_glass / back_cover / front_glass / charging_port / battery / ic_chip / back_panel / charger_cable / earphones_audio / camera_module / general_accessory",
       "display_type": "OG / Normal (for display folders)",
       "brand": "Brand name (e.g. Realme, Samsung, Xiaomi, Vivo, Oppo, Apple, OnePlus, Infinix, Narzo, Universal)",
       "model": "Model name (e.g. C55 / C65, A53, Note 7, A57 New, Y20, C11, Narzo 30 Pro)",
@@ -351,7 +351,19 @@ Rules:
    - For display folders/combos: estimate selling_price as unit_cost + ₹250 (e.g., cost 620 -> 870 or round to nearest ₹50).
    - For tempered glass and covers: unit_cost * 2.5 rounded.
    - For other items: unit_cost * 1.30 rounded.
-4. If an item is a screen, folder, combo, LCD, OLED, or HD+, set category to "display_folder". If it mentions OG/Original, set display_type to "OG", else "Normal".
+4. Categorize items accurately using standard slugs:
+   - "folder_display": Screen, folder, combo, LCD, OLED, TFT, touch display. (If OG/Original, set display_type to "OG", else "Normal").
+   - "tempered_glass": Tempered glass, screen guard, 11D, 9D, UV glass.
+   - "back_cover": Back covers, cases, smoke cases, bumper, silicone covers, pouches.
+   - "charger_cable": Chargers, USB cables, Type-C cables, power adapters, fast chargers, power banks.
+   - "earphones_audio": Earphones, headphones, TWS, airpods, earbuds, bluetooth neckband, speakers.
+   - "battery": Mobile batteries, replacement cells, mAh batteries.
+   - "charging_port": Charging pin, CC board, charging jack, connector.
+   - "front_glass": Outer touch glass, OCA glass.
+   - "ic_chip": Motherboard IC, power IC, charging IC, CPU chip.
+   - "back_panel": Mobile back housing, body glass, rear panel.
+   - "camera_module": Camera lens, camera glass, camera module.
+   - "general_accessory": Other accessories.
 5. All numeric monetary fields must be numbers (e.g. 620.00).
 6. If supplier_phone contains +91 or spaces, clean to digits.
 PROMPT;
@@ -398,7 +410,7 @@ PROMPT;
                     ],
                     [
                         'type'          => 'accessory',
-                        'category'      => 'Charger',
+                        'category'      => 'charger_cable',
                         'name'          => 'Samsung 25W Super Fast Type-C Adapter Original',
                         'qty'           => 4,
                         'unit_cost'     => 650.00,
@@ -443,6 +455,9 @@ PROMPT;
                     $it['item_type'] = (!empty($it['type']) && $it['type'] === 'accessory') ? 'accessory' : 'phone';
                 }
                 if ($it['item_type'] === 'accessory') {
+                    // Normalize category to standard database slug
+                    $it['category'] = self::normalizeCategorySlug($it['category'] ?? '', $it['name'] ?? '');
+
                     if (!empty($it['brand']) && strtolower($it['brand']) === 'other') {
                         $it['brand'] = '';
                     }
@@ -498,5 +513,50 @@ PROMPT;
             'matched_supplier_id' => $matchedSupplierId,
             'model_used'          => $apiResult['model_used'] ?? null,
         ]);
+    }
+
+    /**
+     * Normalize raw OCR category or item name into canonical database category slug
+     */
+    public static function normalizeCategorySlug(?string $cat, ?string $name = ''): string
+    {
+        $combined = strtolower(trim(($cat ?? '') . ' ' . ($name ?? '')));
+        $c = strtolower(trim($cat ?? ''));
+
+        if (preg_match('/folder|combo|display|screen|lcd|oled|tft|touch\s*display|touch\s*screen/', $combined) || in_array($c, ['display_folder', 'folder_display'])) {
+            return 'folder_display';
+        }
+        if (preg_match('/front.*glass|outer\s*glass|touch\s*glass|touchpad|oca/', $combined) || $c === 'front_glass') {
+            return 'front_glass';
+        }
+        if (preg_match('/pin|charging|port|connector|jack|cc\s*board|sub\s*board/', $combined) || in_array($c, ['charging_pin', 'charging_port'])) {
+            return 'charging_port';
+        }
+        if (preg_match('/\bic\b|motherboard|power\s*ic|charging\s*ic|audio\s*ic|wtr|pmic|cpu|chip/', $combined) || in_array($c, ['ic_motherboard', 'ic_chip'])) {
+            return 'ic_chip';
+        }
+        if (preg_match('/battery|cell|\bmah\b/', $combined) || $c === 'battery') {
+            return 'battery';
+        }
+        if (preg_match('/back\s*panel|housing|rear\s*panel|body\s*panel|housing\s*glass/', $combined) || $c === 'back_panel') {
+            return 'back_panel';
+        }
+        if (preg_match('/cover|case|smoke|bumper|pouch|silicone|leather|matte\s*case|skin/', $combined) || in_array($c, ['back_cover_case', 'back_cover'])) {
+            return 'back_cover';
+        }
+        if (preg_match('/tempered|11d|9d|21d|uv\s*glass|d\+|screen\s*guard|screen\s*protector|privacy\s*glass/', $combined) || $c === 'tempered_glass') {
+            return 'tempered_glass';
+        }
+        if (preg_match('/charger|cable|adapter|type-c|lightning|micro\s*usb|braided|fast\s*charg|power\s*bank|pd\s*cable|dock|usb\s*cord/', $combined) || in_array($c, ['charger', 'cable', 'charger_cable'])) {
+            return 'charger_cable';
+        }
+        if (preg_match('/earphone|headphone|audio|buds|airpod|neckband|tws|bluetooth\s*headset|speaker|mic\b|aux|sound|handsfree/', $combined) || in_array($c, ['audio', 'earphones_audio'])) {
+            return 'earphones_audio';
+        }
+        if (preg_match('/camera|lens/', $combined) || $c === 'camera_module') {
+            return 'camera_module';
+        }
+
+        return !empty($c) ? $c : 'general_accessory';
     }
 }
