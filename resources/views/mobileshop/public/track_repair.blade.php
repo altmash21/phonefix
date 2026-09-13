@@ -181,18 +181,18 @@
                     <div class="bg-apple-parchment rounded-[12px] p-4 space-y-2 text-[14px]">
                         <div class="flex justify-between text-apple-muted-48">
                             <span>Service Estimate:</span>
-                            <span class="text-apple-ink font-medium">₹{{ number_format($ticket->estimated_cost ?? $ticket->total_amount, 2) }}</span>
+                            <span class="text-apple-ink font-medium">₹{{ number_format($ticket->estimated_cost ?? $ticket->total_amount, 0) }}</span>
                         </div>
                         <div class="flex justify-between text-apple-muted-48">
                             <span>Advance Deposit Paid:</span>
-                            <span class="text-emerald-700 font-medium">₹{{ number_format($ticket->advance_paid, 2) }}</span>
+                            <span class="text-emerald-700 font-medium">₹{{ number_format($ticket->advance_paid, 0) }}</span>
                         </div>
                         <div class="flex justify-between apple-body-strong pt-2 border-t border-apple-hairline text-apple-ink">
                             <span>Balance Payable on Pickup:</span>
                             @if($ticket->status === 'cancelled')
                                 <span class="text-neutral-500 font-medium">Waived (Cancelled)</span>
                             @else
-                                <span class="text-apple-primary">₹{{ number_format($ticket->balance_due, 2) }}</span>
+                                <span class="text-apple-primary">₹{{ number_format($ticket->balance_due, 0) }}</span>
                             @endif
                         </div>
                     </div>

@@ -166,11 +166,11 @@
             <div class="repair-form-grid-3">
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">Estimated Repair Cost (₹)</label>
-                    <input type="number" step="0.01" inputmode="decimal" name="estimated_cost" class="form-control" placeholder="0.00">
+                    <input type="number" step="1" inputmode="numeric" name="estimated_cost" class="form-control" placeholder="0">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">Advance Deposit Received (₹)</label>
-                    <input type="number" step="0.01" inputmode="decimal" name="advance_paid" class="form-control" placeholder="0.00">
+                    <input type="number" step="1" inputmode="numeric" name="advance_paid" class="form-control" placeholder="0">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
                     <label class="form-label">Physical Condition / Remarks</label>
@@ -301,14 +301,14 @@
                         @endif
                     </td>
                     <td style="font-size:12px;white-space:nowrap;">
-                        <div>Labor: <strong>₹{{ number_format($repair->labor_charge ?? 0, 2) }}</strong></div>
-                        <div>Parts: <strong>₹{{ number_format($repair->parts_cost ?? 0, 2) }}</strong></div>
+                        <div>Labor: <strong>₹{{ number_format($repair->labor_charge ?? 0, 0) }}</strong></div>
+                        <div>Parts: <strong>₹{{ number_format($repair->parts_cost ?? 0, 0) }}</strong></div>
                         <div style="font-weight:800;color:#0F172A;border-top:1px dashed #CBD5E1;padding-top:2px;margin-top:2px;">
-                            Total: ₹{{ number_format($repair->total_amount ?? $repair->estimated_cost ?? 0, 2) }}
+                            Total: ₹{{ number_format($repair->total_amount ?? $repair->estimated_cost ?? 0, 0) }}
                         </div>
-                        <div style="font-size:11px;color:var(--lama-green-dark);font-weight:600;">Paid: ₹{{ number_format($repair->advance_paid ?? 0, 2) }}</div>
+                        <div style="font-size:11px;color:var(--lama-green-dark);font-weight:600;">Paid: ₹{{ number_format($repair->advance_paid ?? 0, 0) }}</div>
                         @if(($repair->balance_due ?? 0) > 0)
-                            <div style="font-size:11px;color:#DC2626;font-weight:700;">Due: ₹{{ number_format($repair->balance_due, 2) }}</div>
+                            <div style="font-size:11px;color:#DC2626;font-weight:700;">Due: ₹{{ number_format($repair->balance_due, 0) }}</div>
                         @else
                             <div style="font-size:11px;color:#16A34A;font-weight:700;">✓ Fully Paid</div>
                         @endif
@@ -536,7 +536,7 @@
                                 </div>
                             </div>
                             <div style="text-align:right;">
-                                <div id="selectedPartPrice" style="font-weight:800; font-size:13px; color:#1D4ED8;">₹0.00</div>
+                                <div id="selectedPartPrice" style="font-weight:800; font-size:13px; color:#1D4ED8;">₹0</div>
                                 <div id="selectedPartStock" style="font-size:10px; color:#64748B;"></div>
                             </div>
                         </div>
@@ -551,7 +551,7 @@
                         </div>
                         <div>
                             <label class="form-label" style="font-size:11px;">Selected Part Cost (₹)</label>
-                            <input type="text" id="modalPartCostDisplay" value="₹0.00" readonly class="form-control" style="background:#F1F5F9; font-weight:700; color:var(--brand-700);">
+                            <input type="text" id="modalPartCostDisplay" value="₹0" readonly class="form-control" style="background:#F1F5F9; font-weight:700; color:var(--brand-700);">
                         </div>
                     </div>
                 </div>
@@ -560,11 +560,11 @@
                 <div class="repair-form-grid-2" style="margin-bottom:16px;">
                     <div class="form-group" style="margin-bottom:0;">
                         <label class="form-label">Labor / Service Fee (₹)</label>
-                        <input type="number" step="0.01" inputmode="decimal" name="labor_charge" id="modalLaborInput" class="form-control" placeholder="0.00" oninput="calculateModalTotals()">
+                        <input type="number" step="1" inputmode="numeric" name="labor_charge" id="modalLaborInput" class="form-control" placeholder="0" oninput="calculateModalTotals()">
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
                         <label class="form-label">Collect Additional Payment (₹)</label>
-                        <input type="number" step="0.01" inputmode="decimal" name="additional_payment" id="modalPaymentInput" class="form-control" placeholder="0.00" oninput="calculateModalTotals()">
+                        <input type="number" step="1" inputmode="numeric" name="additional_payment" id="modalPaymentInput" class="form-control" placeholder="0" oninput="calculateModalTotals()">
                     </div>
                 </div>
 
@@ -572,18 +572,18 @@
                 <div style="background:#F1F5F9; border:1px solid #CBD5E1; border-radius:8px; padding:12px 16px; margin-bottom:18px;">
                     <div style="font-size:12px; font-weight:700; color:#334155; margin-bottom:6px;">Job Sheet Billing Summary:</div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size:13px;">
-                        <div>Existing Parts Cost: <strong id="lblPrevParts">₹0.00</strong></div>
-                        <div>+ New Part Added: <strong id="lblNewPart">₹0.00</strong></div>
-                        <div>+ Labor Charge: <strong id="lblLabor">₹0.00</strong></div>
-                        <div>- Total Advance Paid: <strong id="lblAdvance" style="color:var(--lama-green-dark);">₹0.00</strong></div>
+                        <div>Existing Parts Cost: <strong id="lblPrevParts">₹0</strong></div>
+                        <div>+ New Part Added: <strong id="lblNewPart">₹0</strong></div>
+                        <div>+ Labor Charge: <strong id="lblLabor">₹0</strong></div>
+                        <div>- Total Advance Paid: <strong id="lblAdvance" style="color:var(--lama-green-dark);">₹0</strong></div>
                         <div style="grid-column: span 2; border-top: 1px solid #94A3B8; padding-top: 6px; display:flex; justify-content:space-between; font-weight:800; font-size:14px;">
-                            <span>Grand Total: <span id="lblGrandTotal" style="color:var(--brand-700);">₹0.00</span></span>
-                            <span>Balance Due: <span id="lblBalanceDue" style="color:#DC2626;">₹0.00</span></span>
+                            <span>Grand Total: <span id="lblGrandTotal" style="color:var(--brand-700);">₹0</span></span>
+                            <span>Balance Due: <span id="lblBalanceDue" style="color:#DC2626;">₹0</span></span>
                         </div>
                     </div>
                     <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #CBD5E1; display:flex; justify-content:space-between; align-items:center;">
                         <button type="button" id="btnQuickPayBalance" onclick="quickFillBalancePayment()" class="btn btn-sm btn-outline" style="display:none; font-size:11px; padding:3px 10px; color:#16A34A; border-color:#86EFAC; background:#F0FDF4; font-weight:700;">
-                            ⚡ Settle Remaining Balance (Collect ₹<span id="quickPayAmt">0.00</span>)
+                            ⚡ Settle Remaining Balance (Collect ₹<span id="quickPayAmt">0</span>)
                         </button>
                         <span id="cancelledNotice" style="display:none; font-size:11px; font-weight:700; color:#DC2626;">
                             🚫 Job Cancelled: Balance due is waived.
@@ -646,7 +646,7 @@ function openUpdateModal(repair, targetStatus = null) {
         const existingParts = parseFloat(repair.parts_cost || 0);
         labor = Math.max(0, parseFloat(repair.estimated_cost) - existingParts);
     }
-    document.getElementById('modalLaborInput').value = labor > 0 ? labor.toFixed(2) : (repair.labor_charge !== null && repair.labor_charge !== undefined && repair.labor_charge > 0 ? repair.labor_charge : '');
+    document.getElementById('modalLaborInput').value = labor > 0 ? Math.round(labor) : (repair.labor_charge !== null && repair.labor_charge !== undefined && repair.labor_charge > 0 ? Math.round(repair.labor_charge) : '');
 
     document.getElementById('modalPartQty').value = 1;
     document.getElementById('modalPaymentInput').value = '';
@@ -697,7 +697,7 @@ function selectRepairPart(part) {
     if (card) {
         document.getElementById('selectedPartTitle').textContent = part.name;
         document.getElementById('selectedPartSub').textContent = [part.brand, part.compatible_model].filter(Boolean).join(' • ') || 'Universal';
-        document.getElementById('selectedPartPrice').textContent = '₹' + parseFloat(part.selling_price).toFixed(2);
+        document.getElementById('selectedPartPrice').textContent = '₹' + Math.round(parseFloat(part.selling_price || 0));
         document.getElementById('selectedPartStock').textContent = 'In Stock: ' + part.stock_qty;
         document.getElementById('selectedPartCatBadge').textContent = (part.category || 'PART').toUpperCase();
         card.style.display = 'flex';
@@ -743,7 +743,7 @@ function performRepairPartsSearch(query) {
                     '</div>' +
                 '</div>' +
                 '<div style="text-align:right;">' +
-                    '<div style="font-weight:800; font-size:12.5px; color:#0F172A;">₹' + parseFloat(p.selling_price).toFixed(2) + '</div>' +
+                    '<div style="font-weight:800; font-size:12.5px; color:#0F172A;">₹' + Math.round(parseFloat(p.selling_price || 0)) + '</div>' +
                     '<div style="font-size:10px; color:' + (outOfStock ? '#DC2626' : '#16A34A') + '; font-weight:600;">' + (outOfStock ? 'Out of Stock' : 'Stock: ' + p.stock_qty) + '</div>' +
                 '</div>' +
             '</div>';
@@ -764,7 +764,7 @@ function calculateModalTotals() {
     const unitPrice = parseFloat(selectedRepairPart?.selling_price || 0);
     const qty = parseInt(document.getElementById('modalPartQty').value || 1);
     const newPartCost = unitPrice * qty;
-    document.getElementById('modalPartCostDisplay').value = `₹${newPartCost.toFixed(2)}`;
+    document.getElementById('modalPartCostDisplay').value = `₹${Math.round(newPartCost)}`;
 
     const labor = parseFloat(document.getElementById('modalLaborInput').value || 0);
     const additionalPay = parseFloat(document.getElementById('modalPaymentInput').value || 0);
@@ -800,19 +800,19 @@ function calculateModalTotals() {
     if (btnQuickPay && quickPayAmt) {
         const remainingDue = Math.max(0, grandTotal - prevAdvance);
         if (remainingDue > 0 && !isCancelled) {
-            quickPayAmt.textContent = remainingDue.toFixed(2);
+            quickPayAmt.textContent = Math.round(remainingDue);
             btnQuickPay.style.display = 'inline-flex';
         } else {
             btnQuickPay.style.display = 'none';
         }
     }
 
-    document.getElementById('lblPrevParts').textContent = `₹${prevParts.toFixed(2)}`;
-    document.getElementById('lblNewPart').textContent = `₹${newPartCost.toFixed(2)}`;
-    document.getElementById('lblLabor').textContent = `₹${labor.toFixed(2)}`;
-    document.getElementById('lblAdvance').textContent = `₹${totalPaid.toFixed(2)}`;
-    document.getElementById('lblGrandTotal').textContent = `₹${grandTotal.toFixed(2)}`;
-    document.getElementById('lblBalanceDue').textContent = `₹${balanceDue.toFixed(2)}`;
+    document.getElementById('lblPrevParts').textContent = `₹${Math.round(prevParts)}`;
+    document.getElementById('lblNewPart').textContent = `₹${Math.round(newPartCost)}`;
+    document.getElementById('lblLabor').textContent = `₹${Math.round(labor)}`;
+    document.getElementById('lblAdvance').textContent = `₹${Math.round(totalPaid)}`;
+    document.getElementById('lblGrandTotal').textContent = `₹${Math.round(grandTotal)}`;
+    document.getElementById('lblBalanceDue').textContent = `₹${Math.round(balanceDue)}`;
 }
 
 function quickFillBalancePayment() {
@@ -829,7 +829,7 @@ function quickFillBalancePayment() {
         grandTotal = parseFloat(currentTicket.estimated_cost);
     }
     const remainingDue = Math.max(0, grandTotal - prevAdvance);
-    document.getElementById('modalPaymentInput').value = remainingDue > 0 ? remainingDue.toFixed(2) : '';
+    document.getElementById('modalPaymentInput').value = remainingDue > 0 ? Math.round(remainingDue) : '';
     calculateModalTotals();
 }
 
