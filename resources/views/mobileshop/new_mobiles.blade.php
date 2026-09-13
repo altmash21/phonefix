@@ -6,9 +6,9 @@
 @section('page-actions')
     <div style="display:flex; gap:10px; align-items:center;">
         @if(auth()->user()->can('create-mobileshop-pos') || auth()->user()->can('read-mobileshop-new') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff'))
-        <button onclick="openAddMobileModal()" class="btn btn-outline btn-sm">
+        <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-outline btn-sm">
             <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase New Phone
-        </button>
+        </a>
         @endif
         <a href="{{ route('mobileshop.pos') }}" class="btn btn-primary btn-sm">
             <i data-lucide="shopping-cart" style="width:14px;height:14px;"></i> Sell New Phone
@@ -147,9 +147,9 @@
                             </div>
                             <div style="font-weight:800; font-size:16px; color:#0F172A;">No Brand New Phones in Stock</div>
                             <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">Add your first boxed smartphone with photo and IMEI serial numbers to start selling on the POS terminal.</div>
-                            <button onclick="openAddMobileModal()" class="btn btn-primary" style="margin-top:6px;">
-                                <i data-lucide="plus" style="width:15px;height:15px;"></i> Add First Phone to Stock
-                            </button>
+                            <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-primary" style="margin-top:6px;">
+                                <i data-lucide="plus" style="width:15px;height:15px;"></i> Purchase New Phone
+                            </a>
                         </div>
                     </td>
                 </tr>
@@ -206,108 +206,12 @@
 
 <!-- Mobile Floating Action Button -->
 <div class="mobile-fab-container">
-    <button type="button" class="btn-app-fab" onclick="openAddMobileModal()" title="Purchase New Phone">
+    <a href="{{ route('mobileshop.purchase.create') }}" class="btn-app-fab" title="Purchase New Phone" style="text-decoration:none;">
         <i data-lucide="plus" style="width:20px;height:20px;"></i>
         <span>Purchase New Phone</span>
-    </button>
+    </a>
 </div>
 
-<!-- Modal: Add Brand New Phone (With Photo Upload) -->
-<div id="addMobileModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
-    <div class="card" style="max-width: 520px; width: 100%; max-height:90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px;">
-        <div class="card-header" style="border-bottom:1px solid var(--card-border); padding:14px 18px;">
-            <div class="card-title">Add Brand New Mobile to Stock</div>
-            <button onclick="closeAddMobileModal()" class="btn-icon">✕</button>
-        </div>
-        <div class="card-body" style="padding:16px 18px;">
-            <form action="{{ route('mobileshop.new_mobiles.store') }}" method="POST" enctype="multipart/form-data" id="newMobilesForm">
-                @csrf
-                <input type="hidden" name="redirect_to" value="{{ route('mobileshop.new_mobiles') }}">
-
-                <!-- Dual Photo Upload Field with Live Previews -->
-                <div style="margin-bottom: 14px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px;">
-                    <div style="font-size:11px; font-weight:800; color:#1E3A8A; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                        <i data-lucide="camera" style="width:13px;height:13px;color:#2563EB;"></i> Device & Packaging Photos
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <!-- 1. Phone Photo -->
-                        <div style="background:#fff; border:1px dashed #BFDBFE; border-radius:10px; padding:10px; text-align:center;">
-                            <div id="photoPreviewBox" style="display:none; margin-bottom:6px;">
-                                <img id="newPhonePreviewImg" src="" alt="Phone Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
-                            </div>
-                            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:5px 10px; border-radius:6px; border:1px solid #BFDBFE; width:100%; justify-content:center;">
-                                <i data-lucide="smartphone" style="width:13px;height:13px;"></i> Device Photo
-                                <input type="file" name="photo" id="newPhonePhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'newPhonePreviewImg', 'photoPreviewBox')">
-                            </label>
-                            <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Main Phone Photo</div>
-                        </div>
-
-                        <!-- 2. Box / Bill Photo -->
-                        <div style="background:#fff; border:1px dashed #CBD5E1; border-radius:10px; padding:10px; text-align:center;">
-                            <div id="newPhoneBoxPreviewBox" style="display:none; margin-bottom:6px;">
-                                <img id="newPhoneBoxPreviewImg" src="" alt="Box Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
-                            </div>
-                            <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#475569; background:#F1F5F9; padding:5px 10px; border-radius:6px; border:1px solid #CBD5E1; width:100%; justify-content:center;">
-                                <i data-lucide="package" style="width:13px;height:13px;"></i> Box / Bill (Opt)
-                                <input type="file" name="box_photo" id="newPhoneBoxPhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'newPhoneBoxPreviewImg', 'newPhoneBoxPreviewBox')">
-                            </label>
-                            <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Packaging / Invoice</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label required">Brand</label>
-                        <input type="text" name="brand" placeholder="e.g. Samsung / Apple" required class="form-control">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label required">Model</label>
-                        <input type="text" name="model" placeholder="e.g. Galaxy S24 Ultra" required class="form-control">
-                    </div>
-                </div>
-
-                <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label">Color</label>
-                        <input type="text" name="color" placeholder="e.g. Titanium Black" class="form-control">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label">RAM & Storage</label>
-                        <input type="text" name="storage" placeholder="e.g. 12GB / 256GB" class="form-control">
-                    </div>
-                </div>
-
-                <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label required">Primary IMEI (IMEI 1)</label>
-                        <input type="text" name="imei_1" required placeholder="15-digit IMEI" class="form-control" style="font-family:monospace; font-weight:700;">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label">Secondary IMEI 2</label>
-                        <input type="text" name="imei_2" placeholder="Optional" class="form-control" style="font-family:monospace;">
-                    </div>
-                </div>
-
-                <div class="form-row" style="margin-bottom: 14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label required">Purchase Cost (₹)</label>
-                        <input type="number" step="0.01" name="purchase_cost" required placeholder="0.00" class="form-control">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label class="form-label required">Selling Price (₹)</label>
-                        <input type="number" step="0.01" name="selling_price" required placeholder="0.00" class="form-control" style="font-weight:700; color:var(--lama-green-dark);">
-                    </div>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--card-border);">
-                    <button type="button" onclick="closeAddMobileModal()" class="btn btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Purchase New Phone</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <!-- Lightbox Modal for Photo Preview -->
 <div id="imageLightboxModal" style="display:none; position:fixed; inset:0; z-index:300; background:rgba(15,23,42,0.85); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;" onclick="closeImageLightbox()">
@@ -435,11 +339,6 @@ function closeImageLightbox() {
     if (modal) modal.style.display = 'none';
 }
 
-function openAddMobileModal() {
-    document.getElementById('addMobileModal').style.display = 'flex';
-}
-function closeAddMobileModal() {
-    document.getElementById('addMobileModal').style.display = 'none';
-}
+
 </script>
 @endpush

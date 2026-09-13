@@ -59,7 +59,7 @@
                 </a>
                 @endif
                 @if(auth()->user()->can('create-purchase-phones') || auth()->user()->can('manage-stock-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.stock', ['tab' => 'new_phones']) }}" class="dropdown-item-link">
+                <a href="{{ route('mobileshop.purchase.create') }}" class="dropdown-item-link">
                     <i data-lucide="smartphone" style="width:15px;height:15px;"></i> Purchase New Phone
                 </a>
                 @endif
@@ -69,8 +69,8 @@
                 </a>
                 @endif
                 @if(auth()->user()->can('create-purchase-accessories') || auth()->user()->can('create-purchase-covers') || auth()->user()->can('manage-stock-accessories') || auth()->user()->can('manage-stock-covers') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.stock', ['tab' => 'parts']) }}" class="dropdown-item-link">
-                    <i data-lucide="headphones" style="width:15px;height:15px;"></i> Purchase Accessories
+                <a href="{{ route('mobileshop.accessories.purchase') }}" class="dropdown-item-link">
+                    <i data-lucide="headphones" style="width:15px;height:15px;"></i> Purchase Accessories & Covers
                 </a>
                 @endif
                 @if(auth()->user()->can('manage-stock-repairs') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))

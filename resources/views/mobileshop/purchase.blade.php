@@ -18,11 +18,8 @@
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
         @if($canAddPhones ?? false)
         <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-primary btn-sm">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase New Phone (Bulk)
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase New Phone
         </a>
-        <button type="button" onclick="openPurchaseAddMobileModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="smartphone" style="width:14px;height:14px;"></i> Purchase New Phone
-        </button>
         @endif
         @if($canAddSecondhand ?? false)
         <button type="button" onclick="openPurchaseBuybackModal()" class="btn btn-outline btn-sm">
@@ -31,11 +28,8 @@
         @endif
         @if(($canAddAccessories ?? false) || ($canAddCovers ?? false))
         <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-outline btn-sm" style="color: #7C3AED; border-color: #DDD6FE;">
-            <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Purchase Back Cover, Tempered & Accessories (Bulk)
+            <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Purchase Accessories & Covers
         </a>
-        <button type="button" onclick="openPurchaseAddPartModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Purchase Accessories
-        </button>
         @endif
         @if(($isAdmin ?? false) || ($canAddPhones ?? false) || auth()->user()->hasRole('sales-staff') || auth()->user()->can('read-mobileshop-procurement'))
         <button type="button" onclick="openPaymentModal({{ $suppliers->first()->id ?? 0 }}, '{{ addslashes($suppliers->first()->name ?? 'Primary Supplier') }}')" class="btn btn-outline btn-sm">
@@ -82,17 +76,13 @@
             gap: 10px !important;
         }
         /* Mobile Bottom-sheet styling for inline modals */
-        #purchaseAddMobileModal,
         #purchaseBuybackModal,
-        #purchaseAddPartModal,
         #paymentModal,
         #editSupplierModal {
             align-items: flex-end !important;
             padding: 0 !important;
         }
-        #purchaseAddMobileModal .card,
         #purchaseBuybackModal .card,
-        #purchaseAddPartModal .card,
         #paymentModal .card,
         #editSupplierModal .card {
             max-width: 100% !important;
@@ -554,23 +544,15 @@
     <div class="mobile-fab-container">
         <div id="purchaseFabMenu" class="fab-dropup-menu" style="display: none;">
             @if(($isAdmin ?? false) || ($canAddPhones ?? false))
-            <button type="button" class="fab-menu-item" style="color: #5E6AD2;" onclick="closePurchaseFabMenu(); openPurchaseAddMobileModal();">
-                <i data-lucide="smartphone" style="width:16px;height:16px;"></i>
-                <span>Purchase New Phone</span>
-            </button>
             <a href="{{ route('mobileshop.purchase.create') }}" class="fab-menu-item" style="color: #4338CA; text-decoration:none;">
                 <i data-lucide="truck" style="width:16px;height:16px;"></i>
-                <span>Purchase New Phone (Bulk)</span>
+                <span>Purchase New Phone</span>
             </a>
             @endif
             @if(($isAdmin ?? false) || ($canAddAccessories ?? false) || ($canAddCovers ?? false))
-            <button type="button" class="fab-menu-item" style="color: #059669;" onclick="closePurchaseFabMenu(); openPurchaseAddPartModal();">
-                <i data-lucide="package" style="width:16px;height:16px;"></i>
-                <span>Purchase Accessories</span>
-            </button>
             <a href="{{ route('mobileshop.accessories.purchase') }}" class="fab-menu-item" style="color: #7C3AED; text-decoration:none;">
                 <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
-                <span>Purchase Back Cover, Tempered & Accessories</span>
+                <span>Purchase Accessories & Covers</span>
             </a>
             @endif
             @if(($isAdmin ?? false) || ($canAddSecondhand ?? false))
@@ -817,87 +799,6 @@
     </div>
 
     {{-- ══════════════════════════════════════════════════════════ --}}
-    {{-- PURCHASE-PAGE INLINE MODAL: Add Brand New Phone to Stock --}}
-    {{-- ══════════════════════════════════════════════════════════ --}}
-    <div id="purchaseAddMobileModal" style="display:none; position: fixed; inset: 0; z-index: 1300; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
-        <div class="card" style="max-width: 520px; width: 100%; max-height:90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
-            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
-                <div class="card-title" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
-                    <i data-lucide="smartphone" style="width:18px;height:18px;color:#2563EB;"></i>
-                    Add Brand New Mobile to Stock
-                </div>
-                <button type="button" onclick="closePurchaseAddMobileModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
-            </div>
-            <div class="card-body" style="padding:16px 18px;">
-                <form action="{{ route('mobileshop.new_mobiles.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="redirect_to" value="{{ route('mobileshop.purchase') }}">
-
-                    <div style="margin-bottom: 14px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:10px; padding:12px; text-align:center;">
-                        <div id="pAMPhotoPreviewBox" style="display:none; margin-bottom:8px;">
-                            <img id="pAMPreviewImg" src="" alt="Preview" style="max-height:120px; border-radius:8px; object-fit:contain; border:1px solid #E2E8F0;">
-                        </div>
-                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:6px 14px; border-radius:8px; border:1px solid #BFDBFE;">
-                            <i data-lucide="camera" style="width:14px;height:14px;"></i> Upload Phone / Box Photo
-                            <input type="file" name="photo" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'pAMPreviewImg', 'pAMPhotoPreviewBox')">
-                        </label>
-                        <div style="font-size:10px; color:#64748B; margin-top:4px;">JPG, PNG, WebP up to 5MB</div>
-                    </div>
-
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Brand *</label>
-                            <input type="text" name="brand" placeholder="e.g. Samsung / Apple" required class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Model *</label>
-                            <input type="text" name="model" placeholder="e.g. Galaxy S24 Ultra" required class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Color</label>
-                            <input type="text" name="color" placeholder="e.g. Titanium Black" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">RAM &amp; Storage</label>
-                            <input type="text" name="storage" placeholder="e.g. 12GB / 256GB" class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Primary IMEI *</label>
-                            <input type="text" name="imei_1" required placeholder="15-digit IMEI" inputmode="numeric" class="form-control" style="font-family:monospace; font-weight:700; font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">IMEI 2 (Optional)</label>
-                            <input type="text" name="imei_2" placeholder="Optional" inputmode="numeric" class="form-control" style="font-family:monospace; font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 14px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Purchase Cost (₹) *</label>
-                            <input type="number" step="0.01" name="purchase_cost" required placeholder="0.00" inputmode="decimal" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Selling Price (₹) *</label>
-                            <input type="number" step="0.01" name="selling_price" required placeholder="0.00" inputmode="decimal" class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
-                        <button type="button" onclick="closePurchaseAddMobileModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="font-size:12px;">Purchase New Phone</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    {{-- ══════════════════════════════════════════════════════════ --}}
     {{-- PURCHASE-PAGE INLINE MODAL: Customer Device Buyback --}}
     {{-- ══════════════════════════════════════════════════════════ --}}
     <div id="purchaseBuybackModal" style="display:none; position: fixed; inset: 0; z-index: 1300; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
@@ -998,79 +899,7 @@
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════════════════════ --}}
-    {{-- PURCHASE-PAGE INLINE MODAL: Add Part / Accessory --}}
-    {{-- ══════════════════════════════════════════════════════════ --}}
-    <div id="purchaseAddPartModal" style="display:none; position: fixed; inset: 0; z-index: 1300; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
-        <div class="card" style="max-width: 520px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
-            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
-                <div class="card-title" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
-                    <i data-lucide="package" style="width:18px;height:18px;color:#16A34A;"></i>
-                    Add Part or Accessory to Stock
-                </div>
-                <button type="button" onclick="closePurchaseAddPartModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
-            </div>
-            <div class="card-body" style="padding:16px 18px;">
-                <form action="{{ route('mobileshop.accessories.store') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="redirect_to" value="{{ route('mobileshop.purchase') }}">
 
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Category *</label>
-                            <select name="category" required class="form-control" style="font-size:13px;">
-                                <option value="">-- Choose Category --</option>
-                                @foreach($categories ?? [] as $cat)
-                                    <option value="{{ $cat->slug ?? $cat->name }}">{{ $cat->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Brand</label>
-                            <input type="text" name="brand" placeholder="e.g. Boat / Anker" class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Item Name *</label>
-                        <input type="text" name="name" placeholder="e.g. 65W Fast Charger / Type-C Cable" required class="form-control" style="font-size:13px;">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Compatible Model</label>
-                        <input type="text" name="compatible_model" placeholder="e.g. iPhone 15 / Universal" class="form-control" style="font-size:13px;">
-                    </div>
-
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Unit Cost (₹) *</label>
-                            <input type="number" step="0.01" name="unit_cost" placeholder="250.00" required inputmode="decimal" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Selling Price (₹) *</label>
-                            <input type="number" step="0.01" name="selling_price" placeholder="499.00" required inputmode="decimal" class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 14px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Initial Stock Qty *</label>
-                            <input type="number" name="stock_qty" value="10" required inputmode="numeric" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Low Stock Alert</label>
-                            <input type="number" name="min_stock_alert" value="3" inputmode="numeric" class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
-                        <button type="button" onclick="closePurchaseAddPartModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#16A34A; border-color:#16A34A; font-size:12px;">Purchase Accessories</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
 @endsection
 
@@ -1126,19 +955,6 @@
         }
     });
 
-    /* ── Purchase Page Inline Stock Modals ── */
-    function openPurchaseAddMobileModal() {
-        var modal = document.getElementById('purchaseAddMobileModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            if (window.refreshIcons) window.refreshIcons();
-        }
-    }
-    function closePurchaseAddMobileModal() {
-        var modal = document.getElementById('purchaseAddMobileModal');
-        if (modal) modal.style.display = 'none';
-    }
-
     function openPurchaseBuybackModal() {
         var modal = document.getElementById('purchaseBuybackModal');
         if (modal) {
@@ -1148,18 +964,6 @@
     }
     function closePurchaseBuybackModal() {
         var modal = document.getElementById('purchaseBuybackModal');
-        if (modal) modal.style.display = 'none';
-    }
-
-    function openPurchaseAddPartModal() {
-        var modal = document.getElementById('purchaseAddPartModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            if (window.refreshIcons) window.refreshIcons();
-        }
-    }
-    function closePurchaseAddPartModal() {
-        var modal = document.getElementById('purchaseAddPartModal');
         if (modal) modal.style.display = 'none';
     }
 
@@ -1177,7 +981,7 @@
     window.previewSelectedPhoto = window.previewSelectedPhoto || previewSelectedPhoto;
 
     // Close purchase inline modals on backdrop click
-    ['purchaseAddMobileModal','purchaseBuybackModal','purchaseAddPartModal'].forEach(function(id) {
+    ['purchaseBuybackModal'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) {
             el.addEventListener('click', function(e) {
@@ -1191,9 +995,7 @@
     // Close purchase inline modals and FAB menu on Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            closePurchaseAddMobileModal();
             closePurchaseBuybackModal();
-            closePurchaseAddPartModal();
             closeViewPurchaseModal();
             closePurchaseFabMenu();
         }
