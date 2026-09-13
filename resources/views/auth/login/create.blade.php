@@ -89,43 +89,41 @@
                 </div>
 
                 <div>
-                    <h2 class="font-display font-bold text-xl text-white leading-snug">
-                        Smart Retail POS & Management Terminal
+                    <h2 class="font-display font-semibold text-lg text-white leading-snug">
+                        Multi-Counter Staff Terminal & Management Portal
                     </h2>
-                    <p class="text-xs text-teal-100/75 mt-2 leading-relaxed">
-                        Role-isolated counter inventories, sequential GST billing, real-time IMEI tracking, and repair diagnostics.
+                    <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                        Role-based access terminal with isolated counter inventories, sequential GST billing, and live diagnostic tracking.
                     </p>
                 </div>
 
-                <!-- Core Capabilities -->
-                <div class="space-y-2.5 pt-2">
-                    <div class="glass-card px-3.5 py-2.5 rounded-xl flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-teal-400/20 flex items-center justify-center text-teal-300 shrink-0">
-                            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                <!-- 6 Counter Terminals Overview -->
+                <div class="space-y-2 pt-2">
+                    <span class="text-[10px] uppercase font-semibold text-teal-300 tracking-wider block">Authorized Stations:</span>
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <div class="glass-card px-2.5 py-2 rounded-lg flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-teal-300"></i>
+                            <span class="font-medium text-white">Store Admin</span>
                         </div>
-                        <div>
-                            <span class="font-semibold text-white text-xs block">High-Speed POS Checkout</span>
-                            <span class="text-[10px] text-teal-200/70">GST thermal receipts & quick barcodes</span>
+                        <div class="glass-card px-2.5 py-2 rounded-lg flex items-center gap-2">
+                            <i data-lucide="smartphone" class="w-3.5 h-3.5 text-teal-300"></i>
+                            <span class="font-medium text-white">New Phones POS</span>
                         </div>
-                    </div>
-
-                    <div class="glass-card px-3.5 py-2.5 rounded-xl flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-teal-400/20 flex items-center justify-center text-teal-300 shrink-0">
-                            <i data-lucide="scan-barcode" class="w-3.5 h-3.5"></i>
+                        <div class="glass-card px-2.5 py-2 rounded-lg flex items-center gap-2">
+                            <i data-lucide="repeat" class="w-3.5 h-3.5 text-teal-300"></i>
+                            <span class="font-medium text-white">Buyback Desk</span>
                         </div>
-                        <div>
-                            <span class="font-semibold text-white text-xs block">IMEI & Stock Control</span>
-                            <span class="text-[10px] text-teal-200/70">New & refurbished serial tracking</span>
+                        <div class="glass-card px-2.5 py-2 rounded-lg flex items-center gap-2">
+                            <i data-lucide="headphones" class="w-3.5 h-3.5 text-teal-300"></i>
+                            <span class="font-medium text-white">Accessories</span>
                         </div>
-                    </div>
-
-                    <div class="glass-card px-3.5 py-2.5 rounded-xl flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-teal-400/20 flex items-center justify-center text-teal-300 shrink-0">
-                            <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
+                        <div class="glass-card px-2.5 py-2 rounded-lg flex items-center gap-2">
+                            <i data-lucide="shield" class="w-3.5 h-3.5 text-teal-300"></i>
+                            <span class="font-medium text-white">Cover & Glass</span>
                         </div>
-                        <div>
-                            <span class="font-semibold text-white text-xs block">Service Tech & Khata</span>
-                            <span class="text-[10px] text-teal-200/70">Diagnostic jobs & customer ledger</span>
+                        <div class="glass-card px-2.5 py-2 rounded-lg flex items-center gap-2">
+                            <i data-lucide="wrench" class="w-3.5 h-3.5 text-teal-300"></i>
+                            <span class="font-medium text-white">Service Tech</span>
                         </div>
                     </div>
                 </div>
@@ -145,15 +143,19 @@
         <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center bg-white">
             <div class="max-w-md w-full mx-auto space-y-5">
 
+                @php
+                    $isRegisterTab = request('tab') === 'register' || request()->filled('token');
+                @endphp
+
                 <!-- Tab Switcher: Sign In vs Register with Invite Code -->
                 <div class="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
-                    <button type="button" id="tabSignInBtn" onclick="switchAuthTab('signin')"
-                            class="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-sm">
+                    <button type="button" id="tabSignInBtn" onclick="window.switchAuthTab('signin')"
+                            class="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 {{ $isRegisterTab ? 'text-slate-500 hover:text-slate-900' : 'bg-white text-slate-900 shadow-sm' }} cursor-pointer">
                         <i data-lucide="log-in" class="w-3.5 h-3.5 text-brand-600"></i>
                         <span>Staff Sign In</span>
                     </button>
-                    <button type="button" id="tabRegisterBtn" onclick="switchAuthTab('register')"
-                            class="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-900">
+                    <button type="button" id="tabRegisterBtn" onclick="window.switchAuthTab('register')"
+                            class="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 {{ $isRegisterTab ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900' }} cursor-pointer">
                         <i data-lucide="ticket" class="w-3.5 h-3.5 text-brand-600"></i>
                         <span>Register with Code</span>
                     </button>
@@ -161,8 +163,12 @@
 
                 <!-- ══════════════════════════════════════════════════
                      PANEL 1: STAFF SIGN IN
-                     ═════════════�                        <h1 class="font-display font-bold text-2xl text-slate-900 tracking-tight">Sign In to Terminal</h1>
-                        <p class="text-xs text-slate-500 mt-1">Enter your registered email or username to access your station.</p>
+                     ══════════════════════════════════════════════════ -->
+                <div id="panelSignIn" class="{{ $isRegisterTab ? 'hidden' : '' }} space-y-5" style="{{ $isRegisterTab ? 'display: none;' : '' }}">
+                    <!-- Header -->
+                    <div>
+                        <h1 class="font-display font-black text-2xl text-slate-900">Sign In to Terminal</h1>
+                        <p class="text-xs text-slate-500 mt-1">Select your staff station or enter your registered store email.</p>
                     </div>
 
                     <!-- Alert Messages -->
@@ -183,31 +189,76 @@
                         <span id="login-success-text">Authorized! Redirecting to station...</span>
                     </div>
 
-                    <!-- Hidden badge for script compatibility -->
-                    <span id="selectedBadge" class="hidden"></span>
+                    @php
+                        $showDemoStations = !app()->isProduction() && \Illuminate\Support\Facades\DB::table('users')->where('email', 'sales@mobitrack.local')->exists();
+                    @endphp
+
+                    @if ($showDemoStations)
+                    <!-- 1-Click Quick Station Fillers -->
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Quick Station Selection:</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            <button type="button" onclick="fillCreds('altmash', 'Password@12', 'Super Admin (Altmash)')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Super Admin</span>
+                                <span class="text-[10px] text-slate-400 font-mono">altmash</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('sales@mobitrack.local', 'password', 'New Phones POS')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">New Phones POS</span>
+                                <span class="text-[10px] text-slate-400 font-mono">sales@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('buyback@mobitrack.local', 'password', 'Buyback Specialist')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Buyback Desk</span>
+                                <span class="text-[10px] text-slate-400 font-mono">buyback@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('accessories@mobitrack.local', 'password', 'Accessories Staff')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Accessories</span>
+                                <span class="text-[10px] text-slate-400 font-mono">accessories@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('cover@mobitrack.local', 'password', 'Cover Staff')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Cover & Glass</span>
+                                <span class="text-[10px] text-slate-400 font-mono">cover@</span>
+                            </button>
+
+                            <button type="button" onclick="fillCreds('tech@mobitrack.local', 'password', 'Service Tech')"
+                                    class="quick-btn p-2.5 rounded-xl text-left border border-slate-200 hover:border-brand-600 hover:bg-brand-50/50 transition-all text-xs">
+                                <span class="block font-semibold text-slate-900 text-[11px]">Service Tech</span>
+                                <span class="text-[10px] text-slate-400 font-mono">tech@</span>
+                            </button>
+                        </div>
+                    </div>
+                    @endif
 
                     <!-- Login Form -->
                     <form id="loginForm" method="POST" action="{{ route('login.store') }}" class="space-y-4 pt-1">
                         @csrf
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Staff ID / Email Address</label>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Staff ID / Email Address</label>
                             <div class="relative">
-                                <input type="text" id="emailInput" name="email" value="{{ old('email') }}" required
-                                       placeholder="e.g. admin@store.com or staff_id"
-                                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-500/10 transition-all">
+                                <input type="text" id="emailInput" name="email" value="{{ old('email', 'altmash') }}" required
+                                       placeholder="altmash or name@mobitrack.local"
+                                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
                                 <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                             </div>
                         </div>
 
                         <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="text-xs font-semibold text-slate-700">Password</label>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-xs font-semibold text-slate-700">Terminal Access Password</label>
                                 <a href="{{ route('mobileshop.password.forgot') }}" class="text-[11px] font-semibold text-brand-600 hover:text-brand-700">Forgot?</a>
                             </div>
                             <div class="relative">
-                                <input type="password" id="passwordInput" name="password" required
+                                <input type="password" id="passwordInput" name="password" value="Password@12" required
                                        placeholder="••••••••"
-                                       class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white focus:ring-2 focus:ring-brand-500/10 transition-all">
+                                       class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:bg-white transition-all">
                                 <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                                 <button type="button" onclick="togglePassword('passwordInput', 'pwdToggleIcon')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                     <i data-lucide="eye" id="pwdToggleIcon" class="w-4 h-4"></i>
@@ -215,35 +266,36 @@
                             </div>
                         </div>
 
-                        <!-- Remember Station -->
-                        <div class="flex items-center justify-between text-xs pt-0.5">
+                        <!-- Remember Terminal Station -->
+                        <div class="flex items-center justify-between text-xs">
                             <label class="flex items-center gap-2 cursor-pointer select-none">
                                 <input type="checkbox" name="remember" value="1" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-600 border-slate-300">
                                 <span class="font-medium text-slate-600">Remember this station</span>
                             </label>
+                            <span id="selectedBadge" class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700">Store Admin</span>
                         </div>
 
                         <!-- Submit Button -->
                         <button type="submit" id="submitBtn"
-                                class="w-full py-3 rounded-xl btn-teal text-white font-semibold text-xs shadow-md shadow-brand-700/20 flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.99]">
+                                class="w-full py-3 rounded-xl btn-teal text-white font-semibold text-xs shadow-md shadow-brand-700/20 flex items-center justify-center gap-2 transition-colors">
                             <i data-lucide="log-in" class="w-4 h-4"></i>
-                            <span id="btnText">Sign In to Terminal</span>
+                            <span id="btnText">Unlock & Enter Terminal</span>
                         </button>
                     </form>
 
                     <!-- Switch to Register tab prompt -->
                     <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                         <span class="text-slate-500">New team member?</span>
-                        <button type="button" onclick="switchAuthTab('register')" class="font-bold text-brand-600 hover:text-brand-700 underline underline-offset-2">
+                        <a href="{{ route('login') }}?tab=register" onclick="window.switchAuthTab('register'); return false;" class="font-bold text-brand-600 hover:text-brand-700 underline underline-offset-2 cursor-pointer">
                             Have an Admin Invite Code? Sign Up &rarr;
-                        </button>
+                        </a>
                     </div>
                 </div>
 
                 <!-- ══════════════════════════════════════════════════
                      PANEL 2: REGISTER WITH INVITE CODE
                      ══════════════════════════════════════════════════ -->
-                <div id="panelRegister" class="hidden space-y-5">
+                <div id="panelRegister" class="{{ $isRegisterTab ? '' : 'hidden' }} space-y-5" style="{{ $isRegisterTab ? '' : 'display: none;' }}">
                     <!-- Header -->
                     <div>
                         <h1 class="font-display font-black text-2xl text-slate-900">Create Staff Account</h1>
@@ -369,15 +421,15 @@
                     <!-- Back to Login -->
                     <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                         <span class="text-slate-500">Already have an account?</span>
-                        <button type="button" onclick="switchAuthTab('signin')" class="font-bold text-brand-600 hover:text-brand-700 underline underline-offset-2">
+                        <a href="{{ route('login') }}" onclick="window.switchAuthTab('signin'); return false;" class="font-bold text-brand-600 hover:text-brand-700 underline underline-offset-2 cursor-pointer">
                             &larr; Switch to Sign In
-                        </button>
+                        </a>
                     </div>
                 </div>
 
                 <!-- Help note -->
                 <div class="pt-1 text-center text-xs text-slate-400">
-                    Need store access assistance? Contact your Store Administrator.
+                    Need store access assistance? Contact Store Administrator at <strong class="text-slate-600">+91 98765 43210</strong>
                 </div>
 
             </div>
@@ -387,23 +439,40 @@
 
     <!-- Interactive Script -->
     <script>
-        lucide.createIcons();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            try { window.lucide.createIcons(); } catch (e) {}
+        }
 
         // ══════════════════════════════════════════════════════════════
         // TAB SWITCHING: SIGN IN vs REGISTER WITH INVITE CODE
         // ══════════════════════════════════════════════════════════════
-        function switchAuthTab(tab) {
+        window.switchAuthTab = function(tab) {
             const panelSignIn = document.getElementById('panelSignIn');
             const panelRegister = document.getElementById('panelRegister');
             const tabSignInBtn = document.getElementById('tabSignInBtn');
             const tabRegisterBtn = document.getElementById('tabRegisterBtn');
 
+            if (!panelSignIn || !panelRegister) return;
+
             if (tab === 'register') {
                 panelSignIn.classList.add('hidden');
-                panelRegister.classList.remove('hidden');
+                panelSignIn.style.setProperty('display', 'none', 'important');
 
-                tabSignInBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-900';
-                tabRegisterBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-sm';
+                panelRegister.classList.remove('hidden');
+                panelRegister.style.setProperty('display', 'block', 'important');
+
+                if (tabSignInBtn) {
+                    tabSignInBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-900 cursor-pointer';
+                }
+                if (tabRegisterBtn) {
+                    tabRegisterBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-sm cursor-pointer';
+                }
+
+                try {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', 'register');
+                    window.history.replaceState({}, '', url.toString());
+                } catch (e) {}
 
                 // Focus on token input
                 setTimeout(() => {
@@ -412,13 +481,28 @@
                 }, 100);
             } else {
                 panelRegister.classList.add('hidden');
-                panelSignIn.classList.remove('hidden');
+                panelRegister.style.setProperty('display', 'none', 'important');
 
-                tabRegisterBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-900';
-                tabSignInBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-sm';
+                panelSignIn.classList.remove('hidden');
+                panelSignIn.style.setProperty('display', 'block', 'important');
+
+                if (tabRegisterBtn) {
+                    tabRegisterBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-900 cursor-pointer';
+                }
+                if (tabSignInBtn) {
+                    tabSignInBtn.className = 'flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-sm cursor-pointer';
+                }
+
+                try {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('tab');
+                    window.history.replaceState({}, '', url.toString());
+                } catch (e) {}
             }
-            if (window.lucide) lucide.createIcons();
-        }
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                try { window.lucide.createIcons(); } catch (e) {}
+            }
+        };
 
         // 1-Click Station Credential Setter
         function fillCreds(email, password, label) {
@@ -637,12 +721,28 @@
         // AUTO-OPEN REGISTER TAB IF URL CONTAINS TOKEN OR TAB=REGISTER
         // ══════════════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', function() {
+            // Explicit event listener bindings for reliability
+            const btnReg = document.getElementById('tabRegisterBtn');
+            if (btnReg) {
+                btnReg.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.switchAuthTab('register');
+                });
+            }
+            const btnSign = document.getElementById('tabSignInBtn');
+            if (btnSign) {
+                btnSign.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.switchAuthTab('signin');
+                });
+            }
+
             const params = new URLSearchParams(window.location.search);
             const tokenParam = params.get('token');
             const tabParam = params.get('tab');
 
             if (tokenParam || tabParam === 'register') {
-                switchAuthTab('register');
+                window.switchAuthTab('register');
                 if (tokenParam) {
                     const tokenInput = document.getElementById('regTokenInput');
                     if (tokenInput) {
@@ -651,7 +751,9 @@
                     }
                 }
             }
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                try { window.lucide.createIcons(); } catch (e) {}
+            }
         });
     </script>
 </body>
