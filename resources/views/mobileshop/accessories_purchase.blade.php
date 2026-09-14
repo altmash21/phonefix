@@ -168,7 +168,7 @@
             display: grid;
             grid-template-columns: 140px minmax(220px, 2fr) minmax(150px, 1.2fr) 96px 105px 105px 65px 105px 36px;
             gap: 8px;
-            align-items: center;
+            align-items: start;
         }
 
         .batch-table-header {
@@ -180,6 +180,7 @@
             color: #64748B;
             text-transform: uppercase;
             letter-spacing: 0.4px;
+            align-items: center !important;
         }
 
         .batch-item-row {
@@ -219,6 +220,7 @@
 
         .desktop-total-cell {
             text-align: right;
+            padding-top: 6px;
         }
         .desktop-total-amt {
             font-family: 'JetBrains Mono', monospace;
@@ -227,6 +229,154 @@
             color: #0F172A;
             line-height: 1.2;
         }
+        .desktop-action-cell {
+            padding-top: 4px;
+        }
+    }
+
+    .stock-badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    .stock-badge-pill.in-stock {
+        background: #ECFDF5;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
+    }
+    .stock-badge-pill.low-stock {
+        background: #FFFBEB;
+        color: #92400E;
+        border: 1px solid #FCD34D;
+    }
+    .stock-badge-pill.out-of-stock {
+        background: #FEF2F2;
+        color: #991B1B;
+        border: 1px solid #FECACA;
+    }
+    .stock-badge-pill.new-item {
+        background: #EEF2FF;
+        color: #4338CA;
+        border: 1px solid #C7D2FE;
+    }
+
+    /* ── Searchable Dropdown (Combobox) ── */
+    .combobox-wrapper {
+        position: relative;
+        width: 100%;
+    }
+    .search-combobox-input {
+        width: 100%;
+        padding-right: 28px !important;
+        background: #FFFFFF;
+        cursor: text;
+        font-size: 12px !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 6px !important;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-combobox-input:focus {
+        border-color: #4F46E5 !important;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
+        outline: none;
+    }
+    .combobox-clear-btn {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: #E2E8F0;
+        color: #475569;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 10px;
+        font-weight: 800;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+        padding: 0;
+        line-height: 1;
+        z-index: 2;
+    }
+    .combobox-clear-btn:hover {
+        background: #CBD5E1;
+        color: #0F172A;
+    }
+    .combobox-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        min-width: 320px;
+        max-width: 480px;
+        max-height: 310px;
+        overflow-y: auto;
+        background: #FFFFFF;
+        border: 1.5px solid #CBD5E1;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+        z-index: 9999;
+        padding: 5px;
+    }
+    .combobox-item {
+        padding: 7px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 11.5px;
+        transition: background 0.1s ease;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    .combobox-item:last-child {
+        border-bottom: none;
+    }
+    .combobox-item:hover, .combobox-item.active {
+        background: #EEF2FF;
+    }
+    .combobox-item-name {
+        font-weight: 700;
+        color: #0F172A;
+    }
+    .combobox-item-sub {
+        font-size: 10px;
+        color: #64748B;
+        margin-top: 1px;
+    }
+    .combobox-item-stock {
+        flex-shrink: 0;
+        text-align: right;
+    }
+    .combobox-new-option {
+        padding: 8px 11px;
+        background: #F5F3FF;
+        border: 1.5px dashed #A5B4FC;
+        border-radius: 6px;
+        color: #4338CA;
+        font-size: 11.5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 5px;
+        transition: all 0.12s ease;
+    }
+    .combobox-new-option:hover, .combobox-new-option.active {
+        background: #EEF2FF;
+        border-color: #6366F1;
+        box-shadow: 0 2px 5px rgba(99, 102, 241, 0.15);
     }
 
     /* ==========================================================================
@@ -450,7 +600,7 @@
         </div>
 
         <!-- ─── BATCH ITEMS CARD ─── -->
-        <div class="card" style="border-radius:8px; border:1px solid #E2E8F0; background:#FFFFFF; overflow:hidden; margin-bottom:12px;">
+        <div class="card" style="border-radius:8px; border:1px solid #E2E8F0; background:#FFFFFF; overflow:visible; margin-bottom:12px;">
             <!-- Header Toolbar -->
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border-bottom:1px solid #E2E8F0; padding:8px 14px; background:#FAFAFA;">
                 <div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#1E293B;">
@@ -473,7 +623,7 @@
             <!-- 1. DESKTOP ALIGNED TABLE HEADER -->
             <div class="batch-table-header batch-grid-row" id="batchTableHeader">
                 <div>Category <span style="color:#EF4444;">*</span></div>
-                <div>Item Name & Model <span style="color:#EF4444;">*</span></div>
+                <div>Item &amp; Current Stock <span style="color:#EF4444;">*</span></div>
                 <div>Description / Specs</div>
                 <div style="text-align:center;">Qty <span style="color:#EF4444;">*</span></div>
                 <div style="text-align:right;">Cost ₹ <span style="color:#EF4444;">*</span></div>
@@ -657,6 +807,490 @@
         return 'Universal';
     }
 
+    /* ── Focus and Start Typing Brand New Item ── */
+    function focusAndTypeNew(idx) {
+        const input = document.getElementById(`searchInput_${idx}`);
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+        if (menuEl) menuEl.style.display = 'none';
+        chooseAsNewItem(idx, '');
+    }
+    window.focusAndTypeNew = focusAndTypeNew;
+
+    /* ── Render Stock Badge Under Input ── */
+    function renderStockBadge(idx, stockQty, isNew = false) {
+        const badgeEl = document.getElementById(`stockBadge_${idx}`);
+        if (!badgeEl) return;
+
+        if (isNew) {
+            badgeEl.innerHTML = `<span class="stock-badge-pill new-item" title="First time in inventory - initial stock entry">✨ New Item (First time in stock)</span>`;
+            badgeEl.style.display = 'inline-flex';
+            return;
+        }
+
+        if (stockQty === null || stockQty === undefined) {
+            badgeEl.innerHTML = '';
+            badgeEl.style.display = 'none';
+            return;
+        }
+
+        const qty = parseInt(stockQty) || 0;
+        let badgeClass = 'in-stock';
+        let icon = '📦';
+        let text = `${qty} in stock`;
+
+        if (qty <= 0) {
+            badgeClass = 'out-of-stock';
+            icon = '❌';
+            text = `Out of stock (0 pcs)`;
+        } else if (qty <= 3) {
+            badgeClass = 'low-stock';
+            icon = '⚠️';
+            text = `Low stock: ${qty} pcs`;
+        }
+
+        badgeEl.innerHTML = `<span class="stock-badge-pill ${badgeClass}">${icon} <strong>${text}</strong></span>`;
+        badgeEl.style.display = 'inline-flex';
+    }
+
+    /* ── Searchable Combobox: Filter & Render Menu ── */
+    function renderComboboxMenu(idx, query = '') {
+        const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+        if (!menuEl) return;
+
+        const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
+        const catSelect = document.getElementById(`catSelect_${idx}`);
+        const currentCat = catSelect ? catSelect.value : '';
+        const canonicalCat = canonicalizeCategory(currentCat);
+
+        const q = (query || '').toLowerCase().trim();
+        const tokens = q ? q.split(/\s+/).filter(t => t.length > 0) : [];
+
+        let matches = parts.filter(p => {
+            if (!p || !p.name) return false;
+            const pName = (p.name || '').toLowerCase();
+            const pCat = (p.category || '').toLowerCase();
+            const pBrand = (p.brand || '').toLowerCase();
+            const pModel = (p.compatible_model || '').toLowerCase();
+            const combined = `${pName} ${pCat} ${pBrand} ${pModel}`;
+
+            if (tokens.length > 0) {
+                return tokens.every(tok => combined.includes(tok));
+            }
+
+            if (currentCat && currentCat !== 'general_accessory') {
+                return p.category === currentCat || canonicalizeCategory(p.category) === canonicalCat;
+            }
+
+            return true;
+        });
+
+        if (tokens.length === 0 && matches.length === 0) {
+            matches = parts;
+        }
+
+        const displayMatches = matches.slice(0, 30);
+        let html = '';
+
+        if (tokens.length > 0) {
+            // Prominent "Add as New Item" banner at the top
+            const newNameText = query.trim();
+            html += `
+                <div class="combobox-new-option" onmousedown="chooseAsNewItem(${idx}, '${escapeHtml(newNameText)}')">
+                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                        <span style="font-size:14px;">✨</span>
+                        <div style="min-width:0;">
+                            <div style="font-weight:700; color:#4338CA; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                Add as New Item: "<strong>${escapeHtml(newNameText)}</strong>"
+                            </div>
+                            <div style="font-size:10px; color:#6366F1; font-weight:500;">
+                                First time in inventory &bull; Starting stock: 0 pcs
+                            </div>
+                        </div>
+                    </div>
+                    <span style="background:#E0E7FF; color:#3730A3; font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; flex-shrink:0;">
+                        + ADD NEW
+                    </span>
+                </div>
+            `;
+
+            if (displayMatches.length > 0) {
+                html += `
+                    <div style="padding:5px 8px 3px; font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.4px; border-top:1px solid #F1F5F9; margin-top:2px;">
+                        Or Pick Existing Stock (${matches.length})
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div style="padding:10px 12px; text-align:center; font-size:11.5px; color:#64748B; background:#F8FAFC; border-radius:6px; margin-top:4px;">
+                        No existing inventory item matches "<strong>${escapeHtml(query)}</strong>".<br>
+                        <span style="font-size:10.5px; color:#6366F1; font-weight:600;">Click "+ ADD NEW" above or simply press Enter / Tab to add as first-time stock!</span>
+                    </div>
+                `;
+            }
+        } else {
+            // Query is empty: offer both options
+            html += `
+                <div class="combobox-new-option" onmousedown="focusAndTypeNew(${idx})">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:14px;">✨</span>
+                        <div>
+                            <div style="font-weight:700; color:#4338CA;">Type Brand New Item Name</div>
+                            <div style="font-size:10px; color:#6366F1; font-weight:500;">Add a new cover, glass, cable or part for the first time</div>
+                        </div>
+                    </div>
+                    <span style="background:#E0E7FF; color:#3730A3; font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px;">
+                        + NEW
+                    </span>
+                </div>
+                <div style="padding:5px 8px 3px; font-size:10px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.4px; border-top:1px solid #F1F5F9; margin-top:2px;">
+                    Or Pick Existing Inventory (${matches.length})
+                </div>
+            `;
+        }
+
+        if (displayMatches.length > 0) {
+            displayMatches.forEach((p, itemIdx) => {
+                const qty = parseInt(p.stock_qty || 0);
+                const badgeColor = qty <= 0 ? '#DC2626' : (qty <= (p.min_stock_alert || 3) ? '#D97706' : '#059669');
+                const badgeBg = qty <= 0 ? '#FEE2E2' : (qty <= (p.min_stock_alert || 3) ? '#FEF3C7' : '#DCFCE7');
+
+                html += `
+                    <div class="combobox-item" data-id="${p.id}" data-idx="${itemIdx}"
+                        onmousedown="selectExistingPart(${idx}, ${p.id})">
+                        <div style="min-width:0; flex:1;">
+                            <div class="combobox-item-name">${escapeHtml(p.name)}</div>
+                            <div class="combobox-item-sub">
+                                ${p.brand && p.brand !== 'Universal' ? `<span style="font-weight:700; color:#475569;">${escapeHtml(p.brand)}</span> &bull; ` : ''}
+                                ${escapeHtml(p.category || 'Accessory')} &bull; Cost: ₹${parseFloat(p.unit_cost || 0).toFixed(0)} &bull; Sell: ₹${parseFloat(p.selling_price || 0).toFixed(0)}
+                            </div>
+                        </div>
+                        <div class="combobox-item-stock">
+                            <span style="background:${badgeBg}; color:${badgeColor}; font-weight:800; font-size:10.5px; padding:2px 7px; border-radius:4px; display:inline-block;">
+                                ${qty} in stock
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        menuEl.innerHTML = html;
+    }
+
+    /* ── Open / Show Combobox ── */
+    function openCombobox(idx) {
+        document.querySelectorAll('.combobox-menu').forEach(m => {
+            if (m.id !== `comboboxMenu_${idx}`) m.style.display = 'none';
+        });
+
+        const input = document.getElementById(`searchInput_${idx}`);
+        const val = input ? input.value : '';
+        renderComboboxMenu(idx, val);
+
+        const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+        if (menuEl) menuEl.style.display = 'block';
+
+        const clearBtn = document.getElementById(`clearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = val ? 'flex' : 'none';
+    }
+    window.openCombobox = openCombobox;
+
+    /* ── On Combobox Blur (Auto-detect First Time vs Existing) ── */
+    function onComboboxBlur(idx) {
+        setTimeout(() => {
+            const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+            if (menuEl) menuEl.style.display = 'none';
+
+            const input = document.getElementById(`searchInput_${idx}`);
+            const typed = (input ? input.value : '').trim();
+            const partId = document.getElementById(`partId_${idx}`)?.value;
+
+            if (typed) {
+                if (!partId) {
+                    // Check if typed name exact-matches an existing inventory item
+                    const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
+                    const exact = parts.find(p => p && p.name && p.name.toLowerCase() === typed.toLowerCase());
+                    if (exact) {
+                        selectExistingPart(idx, exact.id);
+                    } else {
+                        chooseAsNewItem(idx, typed);
+                    }
+                }
+            } else {
+                document.getElementById(`name_${idx}`).value = '';
+                document.getElementById(`partId_${idx}`).value = '';
+                renderStockBadge(idx, null);
+                updateBulkRowTotal(idx);
+            }
+        }, 180);
+    }
+    window.onComboboxBlur = onComboboxBlur;
+
+    /* ── On Typing in Search Combobox ── */
+    function onComboboxInput(idx, val) {
+        const trimmed = (val || '').trim();
+        document.getElementById(`name_${idx}`).value = trimmed;
+
+        const clearBtn = document.getElementById(`clearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = val ? 'flex' : 'none';
+
+        const currentPartId = document.getElementById(`partId_${idx}`).value;
+        if (currentPartId) {
+            const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
+            const p = parts.find(item => item && String(item.id) === String(currentPartId));
+            if (p && p.name.toLowerCase() !== trimmed.toLowerCase()) {
+                document.getElementById(`partId_${idx}`).value = '';
+            }
+        }
+
+        const partIdAfter = document.getElementById(`partId_${idx}`).value;
+        if (!partIdAfter) {
+            if (trimmed) {
+                const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
+                const exact = parts.find(p => p && p.name && p.name.toLowerCase() === trimmed.toLowerCase());
+                if (exact) {
+                    renderStockBadge(idx, exact.stock_qty || 0, false);
+                } else {
+                    renderStockBadge(idx, 0, true);
+                }
+            } else {
+                renderStockBadge(idx, null);
+            }
+        }
+
+        const b = guessBrand(trimmed);
+        const bEl = document.getElementById(`brand_${idx}`);
+        if (bEl && b !== 'Universal') bEl.value = b;
+
+        if (trimmed.length >= 2) {
+            const autoCat = canonicalizeCategory('', trimmed);
+            const selectEl = document.getElementById(`catSelect_${idx}`);
+            if (selectEl && autoCat && autoCat !== 'general_accessory') {
+                for (let i = 0; i < selectEl.options.length; i++) {
+                    const optVal = selectEl.options[i].value;
+                    if (optVal === autoCat || canonicalizeCategory(optVal) === autoCat) {
+                        selectEl.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        renderComboboxMenu(idx, val);
+
+        const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+        if (menuEl) menuEl.style.display = 'block';
+
+        updateBulkRowTotal(idx);
+    }
+    window.onComboboxInput = onComboboxInput;
+
+    /* ── Clear Selected Item ── */
+    function clearComboboxItem(idx) {
+        const searchInput = document.getElementById(`searchInput_${idx}`);
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+        }
+        document.getElementById(`name_${idx}`).value = '';
+        document.getElementById(`partId_${idx}`).value = '';
+
+        const clearBtn = document.getElementById(`clearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = 'none';
+
+        renderStockBadge(idx, null);
+        updateBulkRowTotal(idx);
+        openCombobox(idx);
+    }
+    window.clearComboboxItem = clearComboboxItem;
+
+    /* ── Select Existing Part from Dropdown ── */
+    function selectExistingPart(idx, partId) {
+        const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
+        const p = parts.find(item => item && String(item.id) === String(partId));
+        if (!p) return;
+
+        const searchInput = document.getElementById(`searchInput_${idx}`);
+        if (searchInput) searchInput.value = p.name;
+        document.getElementById(`name_${idx}`).value = p.name;
+        document.getElementById(`partId_${idx}`).value = p.id;
+
+        const clearBtn = document.getElementById(`clearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = 'flex';
+
+        const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+        if (menuEl) menuEl.style.display = 'none';
+
+        if (p.category) {
+            const targetCat = canonicalizeCategory(p.category, p.name);
+            const catSelect = document.getElementById(`catSelect_${idx}`);
+            if (catSelect) {
+                for (let i = 0; i < catSelect.options.length; i++) {
+                    const optVal = catSelect.options[i].value;
+                    if (optVal === targetCat || canonicalizeCategory(optVal) === targetCat) {
+                        catSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+            const qualityToggle = document.getElementById(`qualityToggle_${idx}`);
+            if (qualityToggle) {
+                qualityToggle.classList.toggle('visible', targetCat === 'folder_display');
+            }
+        }
+
+        const detectedB = guessBrand(p.name);
+        document.getElementById(`brand_${idx}`).value = (p.brand && p.brand !== 'Universal') ? p.brand : (detectedB || 'Universal');
+        if (p.compatible_model) document.getElementById(`model_${idx}`).value = p.compatible_model;
+
+        if (p.display_type) {
+            document.getElementById(`displayTypeVal_${idx}`).value = p.display_type;
+            const qLbl = document.getElementById(`qualityLabel_${idx}`);
+            if (qLbl) qLbl.textContent = p.display_type === 'OG' ? 'OG ✨' : 'Normal';
+        }
+
+        if (p.description) document.getElementById(`desc_${idx}`).value = p.description;
+        if (p.min_stock_alert !== undefined && p.min_stock_alert !== null) document.getElementById(`alert_${idx}`).value = p.min_stock_alert;
+        if (p.unit_cost) document.getElementById(`cost_${idx}`).value = parseFloat(p.unit_cost).toFixed(2);
+        if (p.selling_price) document.getElementById(`price_${idx}`).value = parseFloat(p.selling_price).toFixed(2);
+
+        renderStockBadge(idx, p.stock_qty || 0, false);
+        updateBulkRowTotal(idx);
+    }
+    window.selectExistingPart = selectExistingPart;
+
+    /* ── Choose as New Product ── */
+    function chooseAsNewItem(idx, customName) {
+        const searchInput = document.getElementById(`searchInput_${idx}`);
+        const rawName = (customName !== undefined && customName !== null && customName.trim() !== '')
+            ? customName.trim()
+            : (searchInput?.value.trim() || 'New Item');
+
+        if (searchInput) searchInput.value = rawName;
+        document.getElementById(`name_${idx}`).value = rawName;
+        document.getElementById(`partId_${idx}`).value = '';
+
+        const clearBtn = document.getElementById(`clearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = rawName ? 'flex' : 'none';
+
+        const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+        if (menuEl) menuEl.style.display = 'none';
+
+        // Auto-detect brand & category if not already set
+        if (rawName && rawName !== 'New Item') {
+            const detectedB = guessBrand(rawName);
+            const brandEl = document.getElementById(`brand_${idx}`);
+            if (brandEl && detectedB !== 'Universal') brandEl.value = detectedB;
+
+            const autoCat = canonicalizeCategory('', rawName);
+            const selectEl = document.getElementById(`catSelect_${idx}`);
+            if (selectEl && autoCat && autoCat !== 'general_accessory') {
+                for (let i = 0; i < selectEl.options.length; i++) {
+                    const optVal = selectEl.options[i].value;
+                    if (optVal === autoCat || canonicalizeCategory(optVal) === autoCat) {
+                        selectEl.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        renderStockBadge(idx, 0, true);
+        updateBulkRowTotal(idx);
+    }
+    window.chooseAsNewItem = chooseAsNewItem;
+
+    /* ── Keyboard Navigation in Combobox Menu ── */
+    function onComboboxKeydown(idx, e) {
+        const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+        const isMenuOpen = menuEl && menuEl.style.display !== 'none';
+
+        if (e.key === 'ArrowDown') {
+            if (!isMenuOpen) {
+                openCombobox(idx);
+                e.preventDefault();
+                return;
+            }
+            const items = menuEl.querySelectorAll('.combobox-item, .combobox-new-option');
+            if (items.length === 0) return;
+            e.preventDefault();
+            let activeIdx = -1;
+            items.forEach((it, i) => {
+                if (it.classList.contains('active')) activeIdx = i;
+            });
+            if (activeIdx >= 0) items[activeIdx].classList.remove('active');
+            activeIdx = (activeIdx + 1) % items.length;
+            items[activeIdx].classList.add('active');
+            items[activeIdx].scrollIntoView({ block: 'nearest' });
+            return;
+        }
+
+        if (e.key === 'ArrowUp') {
+            if (!isMenuOpen) return;
+            const items = menuEl.querySelectorAll('.combobox-item, .combobox-new-option');
+            if (items.length === 0) return;
+            e.preventDefault();
+            let activeIdx = -1;
+            items.forEach((it, i) => {
+                if (it.classList.contains('active')) activeIdx = i;
+            });
+            if (activeIdx >= 0) items[activeIdx].classList.remove('active');
+            activeIdx = (activeIdx - 1 + items.length) % items.length;
+            items[activeIdx].classList.add('active');
+            items[activeIdx].scrollIntoView({ block: 'nearest' });
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent unintentional form submission!
+            if (isMenuOpen) {
+                const activeItem = menuEl.querySelector('.combobox-item.active, .combobox-new-option.active');
+                if (activeItem) {
+                    activeItem.click();
+                    return;
+                }
+            }
+            const input = document.getElementById(`searchInput_${idx}`);
+            const typed = (input ? input.value : '').trim();
+            if (typed) {
+                const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
+                const exact = parts.find(p => p && p.name && p.name.toLowerCase() === typed.toLowerCase());
+                if (exact) {
+                    selectExistingPart(idx, exact.id);
+                } else {
+                    chooseAsNewItem(idx, typed);
+                }
+            }
+            if (menuEl) menuEl.style.display = 'none';
+            const nextEl = document.getElementById(`desc_${idx}`) || document.getElementById(`qty_${idx}`);
+            if (nextEl) nextEl.focus();
+            return;
+        }
+
+        if (e.key === 'Tab') {
+            if (menuEl) menuEl.style.display = 'none';
+            return;
+        }
+
+        if (e.key === 'Escape') {
+            if (menuEl) menuEl.style.display = 'none';
+            return;
+        }
+    }
+    window.onComboboxKeydown = onComboboxKeydown;
+
+    /* Close combobox menus when clicking outside */
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.combobox-wrapper')) {
+            document.querySelectorAll('.combobox-menu').forEach(m => m.style.display = 'none');
+        }
+    });
+
+    /* ── Add New Row to Batch Intake Table ── */
     function addBulkRow(itemData = null) {
         try {
             bulkRowIndex++;
@@ -692,39 +1326,38 @@
                 }
             });
 
-            let partDatalist = '';
+            // Check if itemData matches an existing part in inventory
             const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
-            parts.forEach(p => {
-                if (!p) return;
-                const pName = p.name || '';
-                const pCat = p.category || '';
-                const pCost = p.unit_cost || 0;
-                const pPrice = p.selling_price || 0;
-                const pQty = p.stock_qty || 0;
-                partDatalist += `<option value="${escapeHtml(pName)}" data-id="${p.id || ''}" data-category="${escapeHtml(pCat)}" data-brand="${escapeHtml(p.brand || '')}" data-model="${escapeHtml(p.compatible_model || '')}" data-cost="${pCost}" data-price="${pPrice}">${escapeHtml(pName)} (Stock: ${pQty})</option>`;
-            });
+            let selectedPart = null;
 
-            const nameVal = escapeHtml(itemData?.name || '');
-            const brandVal = escapeHtml(itemData?.brand || '');
-            const modelVal = escapeHtml(itemData?.compatible_model || itemData?.model || '');
-            const folderType = (itemData?.display_type || 'Normal').toUpperCase() === 'OG' ? 'OG' : 'Normal';
-            const descVal = escapeHtml(itemData?.description || '');
-            const alertVal = itemData?.min_stock_alert !== undefined ? itemData.min_stock_alert : 3;
+            if (itemData) {
+                if (itemData.part_id) {
+                    selectedPart = parts.find(p => p && String(p.id) === String(itemData.part_id));
+                }
+                if (!selectedPart && itemData.name) {
+                    selectedPart = parts.find(p => p && p.name && p.name.toLowerCase() === itemData.name.toLowerCase().trim());
+                }
+            }
+
+            const nameVal = escapeHtml(itemData?.name || selectedPart?.name || '');
+            const brandVal = escapeHtml(itemData?.brand || selectedPart?.brand || '');
+            const modelVal = escapeHtml(itemData?.compatible_model || itemData?.model || selectedPart?.compatible_model || '');
+            const folderType = ((itemData?.display_type || selectedPart?.display_type || 'Normal').toUpperCase() === 'OG') ? 'OG' : 'Normal';
+            const descVal = escapeHtml(itemData?.description || selectedPart?.description || '');
+            const alertVal = itemData?.min_stock_alert !== undefined ? itemData.min_stock_alert : (selectedPart?.min_stock_alert ?? 3);
             const qtyVal = itemData?.qty || 1;
-            const costVal = itemData?.unit_cost ? parseFloat(itemData.unit_cost).toFixed(2) : '0.00';
-            const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2);
+            const costVal = itemData?.unit_cost ? parseFloat(itemData.unit_cost).toFixed(2) : (selectedPart?.unit_cost ? parseFloat(selectedPart.unit_cost).toFixed(2) : '0.00');
+            const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (selectedPart?.selling_price ? parseFloat(selectedPart.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2));
             const isGiftChecked = (itemData?.is_gift_eligible || targetCat === 'tempered_glass' || targetCat === 'back_cover' || targetCat === 'charger_cable' || targetCat === 'earphones_audio' || targetCat === 'general_accessory') ? 'checked' : '';
             const lineTotal = (qtyVal * parseFloat(costVal));
             const detectedBrand = guessBrand(nameVal || '') || brandVal;
             const isFolder = (targetCat === 'folder_display');
 
-            const matchedCatObj = cats.find(c => (c.slug === targetCat || canonicalizeCategory(c.slug) === targetCat));
-            const catDisplayName = matchedCatObj?.name || 'Category';
-
             row.innerHTML = `
                 <!-- Hidden form fields -->
-                <input type="hidden" name="items[${idx}][part_id]" id="partId_${idx}" value="${itemData?.part_id || ''}">
-                <input type="hidden" name="items[${idx}][brand]"   id="brand_${idx}" value="${escapeHtml(detectedBrand)}">
+                <input type="hidden" name="items[${idx}][part_id]" id="partId_${idx}" value="${selectedPart?.id || itemData?.part_id || ''}">
+                <input type="hidden" name="items[${idx}][name]"    id="name_${idx}"   value="${nameVal}">
+                <input type="hidden" name="items[${idx}][brand]"   id="brand_${idx}"  value="${escapeHtml(detectedBrand)}">
                 <input type="hidden" name="items[${idx}][compatible_model]" id="model_${idx}" value="${modelVal}">
                 <input type="hidden" name="items[${idx}][is_gift_eligible]" id="gift_${idx}" value="${isGiftChecked ? '1' : '0'}">
                 <input type="hidden" name="items[${idx}][display_type]" id="displayTypeVal_${idx}" value="${folderType}">
@@ -753,15 +1386,32 @@
                     </select>
                 </div>
 
-                <!-- 2. ITEM NAME & MODEL -->
-                <div>
-                    <label class="mobile-card-label">Item Name & Model</label>
-                    <input type="text" name="items[${idx}][name]" id="name_${idx}"
-                        value="${nameVal}" list="partList_${idx}"
-                        placeholder="e.g. 9D Glass iPhone 15 Pro / OLED Folder Galaxy A14"
-                        required class="restock-input"
-                        oninput="onBulkPartNameInput(${idx}, this.value)">
-                    <datalist id="partList_${idx}">${partDatalist}</datalist>
+                <!-- 2. SEARCHABLE DROPDOWN (COMBOBOX) -->
+                <div class="combobox-wrapper" id="comboboxWrap_${idx}">
+                    <label class="mobile-card-label">Item &amp; Current Stock</label>
+                    
+                    <div style="position:relative; display:flex; align-items:center;">
+                        <input type="text" id="searchInput_${idx}" class="restock-input search-combobox-input"
+                            value="${nameVal}" placeholder="🔍 Search stock or type new item..."
+                            autocomplete="off"
+                            onfocus="openCombobox(${idx})"
+                            onclick="openCombobox(${idx})"
+                            onblur="onComboboxBlur(${idx})"
+                            oninput="onComboboxInput(${idx}, this.value)"
+                            onkeydown="onComboboxKeydown(${idx}, event)">
+                        <button type="button" id="clearBtn_${idx}" class="combobox-clear-btn"
+                            onclick="clearComboboxItem(${idx})"
+                            style="${nameVal ? 'display:flex;' : 'display:none;'}"
+                            title="Clear selection">
+                            ✕
+                        </button>
+                    </div>
+
+                    <!-- Floating Dropdown Menu -->
+                    <div id="comboboxMenu_${idx}" class="combobox-menu" style="display:none;"></div>
+
+                    <!-- Stock Status Badge -->
+                    <div id="stockBadge_${idx}" style="margin-top:3px;"></div>
 
                     <!-- OG / Normal folder quality switch pill -->
                     <div class="quality-toggle-pill ${isFolder ? 'visible' : ''}" id="qualityToggle_${idx}" onclick="toggleFolderQuality(${idx})">
@@ -777,7 +1427,7 @@
                         class="restock-input">
                 </div>
 
-                <!-- 4. MOBILE METRIC GRID (Transforms to tabular columns on desktop) -->
+                <!-- 4. METRICS GRID -->
                 <div class="mobile-metric-grid" style="display:contents;">
                     <!-- Qty Stepper -->
                     <div>
@@ -790,6 +1440,8 @@
                                 oninput="updateBulkRowTotal(${idx})">
                             <button type="button" tabindex="-1" class="stepper-btn stepper-btn-plus" onclick="adjustBulkQty(${idx}, 1)">+</button>
                         </div>
+                        <!-- Live preview of updated stock total -->
+                        <div id="stockAfter_${idx}" style="font-size:10px; font-weight:700; text-align:center; margin-top:2px;"></div>
                     </div>
 
                     <!-- Cost ₹ -->
@@ -844,7 +1496,16 @@
 
             container.appendChild(row);
 
-            // Ensure select value is set explicitly to targetCat if provided
+            // Initialize stock badge and selection
+            if (selectedPart) {
+                selectExistingPart(idx, selectedPart.id);
+            } else if (itemData?.name) {
+                chooseAsNewItem(idx, itemData.name);
+            } else {
+                renderStockBadge(idx, null);
+            }
+
+            // Ensure category select matches targetCat
             const selectEl = document.getElementById(`catSelect_${idx}`);
             if (selectEl && targetCat) {
                 for (let i = 0; i < selectEl.options.length; i++) {
@@ -852,12 +1513,12 @@
                     const optText = selectEl.options[i].text;
                     if (optVal === targetCat || canonicalizeCategory(optVal) === targetCat || canonicalizeCategory(optText) === targetCat) {
                         selectEl.selectedIndex = i;
-                        onBulkCategoryChange(idx, selectEl.value);
                         break;
                     }
                 }
             }
 
+            updateBulkRowTotal(idx);
             updateBulkSummary();
 
             try {
@@ -909,17 +1570,11 @@
     function onBulkCategoryChange(idx, val) {
         const canonicalVal = canonicalizeCategory(val);
 
-        // Show/hide OG/Normal pill switch only for folder_display
         const qualityToggle = document.getElementById(`qualityToggle_${idx}`);
         if (qualityToggle) {
-            if (canonicalVal === 'folder_display' || val === 'display_folder') {
-                qualityToggle.classList.add('visible');
-            } else {
-                qualityToggle.classList.remove('visible');
-            }
+            qualityToggle.classList.toggle('visible', canonicalVal === 'folder_display' || val === 'display_folder');
         }
 
-        // Auto-set gift eligible hidden field based on category
         const giftEl = document.getElementById(`gift_${idx}`);
         if (giftEl) {
             const isGift = (
@@ -932,86 +1587,17 @@
             giftEl.value = isGift ? '1' : '0';
         }
 
-        // Update mobile category badge
         const catSelect = document.getElementById(`catSelect_${idx}`);
         const mobileBadge = document.getElementById(`mobileCardCatLabel_${idx}`);
         if (catSelect && mobileBadge && catSelect.selectedOptions[0]) {
             mobileBadge.textContent = catSelect.selectedOptions[0].text;
         }
 
-        // Filter part autocomplete
-        const dl = document.getElementById(`partList_${idx}`);
-        if (dl) {
-            const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
-            const filtered = val ? parts.filter(p => p && (p.category === val || canonicalizeCategory(p.category) === canonicalVal)) : parts;
-            let opts = '';
-            filtered.forEach(p => {
-                if (!p) return;
-                const pName = p.name || '';
-                const pCat = p.category || '';
-                const pCost = p.unit_cost || 0;
-                const pPrice = p.selling_price || 0;
-                const pQty = p.stock_qty || 0;
-                opts += `<option value="${escapeHtml(pName)}" data-id="${p.id || ''}" data-category="${escapeHtml(pCat)}" data-brand="${escapeHtml(p.brand || '')}" data-model="${escapeHtml(p.compatible_model || '')}" data-cost="${pCost}" data-price="${pPrice}">${escapeHtml(pName)} (Stock: ${pQty})</option>`;
-            });
-            dl.innerHTML = opts;
-        }
-    }
-
-    function onBulkPartNameInput(idx, val) {
-        const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
-        const match = parts.find(p => p && p.name && p.name.toLowerCase() === val.toLowerCase().trim());
-        if (match) {
-            document.getElementById(`partId_${idx}`).value = match.id;
-            if (match.category) {
-                const targetCat = canonicalizeCategory(match.category, match.name);
-                const selectEl = document.getElementById(`catSelect_${idx}`);
-                if (selectEl) {
-                    for (let i = 0; i < selectEl.options.length; i++) {
-                        const optVal = selectEl.options[i].value;
-                        if (optVal === targetCat || canonicalizeCategory(optVal) === targetCat) {
-                            selectEl.selectedIndex = i;
-                            break;
-                        }
-                    }
-                }
-                onBulkCategoryChange(idx, selectEl?.value || targetCat);
-            }
-            const detectedB = guessBrand(val);
-            if (match.brand) document.getElementById(`brand_${idx}`).value = match.brand;
-            else document.getElementById(`brand_${idx}`).value = detectedB;
-            if (match.compatible_model) document.getElementById(`model_${idx}`).value = match.compatible_model;
-            if (match.display_type) {
-                document.getElementById(`displayTypeVal_${idx}`).value = match.display_type;
-                const qLbl = document.getElementById(`qualityLabel_${idx}`);
-                if (qLbl) qLbl.textContent = match.display_type === 'OG' ? 'OG ✨' : 'Normal';
-            }
-            if (match.description) document.getElementById(`desc_${idx}`).value = match.description;
-            if (match.min_stock_alert !== undefined && match.min_stock_alert !== null) document.getElementById(`alert_${idx}`).value = match.min_stock_alert;
-            if (match.unit_cost) document.getElementById(`cost_${idx}`).value = parseFloat(match.unit_cost).toFixed(2);
-            if (match.selling_price) document.getElementById(`price_${idx}`).value = parseFloat(match.selling_price).toFixed(2);
-            updateBulkRowTotal(idx);
-        } else {
-            document.getElementById(`partId_${idx}`).value = '';
-            const b = guessBrand(val);
-            const bEl = document.getElementById(`brand_${idx}`);
-            if (bEl && b !== 'Universal') bEl.value = b;
-
-            // Auto-detect category from typed item name
-            if (val && val.length >= 2) {
-                const autoCat = canonicalizeCategory('', val);
-                const selectEl = document.getElementById(`catSelect_${idx}`);
-                if (selectEl && autoCat && autoCat !== 'general_accessory') {
-                    for (let i = 0; i < selectEl.options.length; i++) {
-                        const optVal = selectEl.options[i].value;
-                        if (optVal === autoCat || canonicalizeCategory(optVal) === autoCat) {
-                            selectEl.selectedIndex = i;
-                            onBulkCategoryChange(idx, selectEl.value);
-                            break;
-                        }
-                    }
-                }
-            }
+        // If combobox menu is open, re-render it with new category prioritization
+        const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+        if (menuEl && menuEl.style.display !== 'none') {
+            const searchInput = document.getElementById(`searchInput_${idx}`);
+            renderComboboxMenu(idx, searchInput ? searchInput.value : '');
         }
     }
 
@@ -1027,6 +1613,29 @@
         const mobileLineTotalEl = document.getElementById(`mobileLineTotal_${idx}`);
         if (mobileLineTotalEl) mobileLineTotalEl.textContent = formatCurrency(total);
 
+        // Live preview of updated stock total
+        const partId = document.getElementById(`partId_${idx}`)?.value;
+        const stockAfterEl = document.getElementById(`stockAfter_${idx}`);
+        if (stockAfterEl) {
+            if (partId) {
+                const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
+                const p = parts.find(item => item && String(item.id) === String(partId));
+                const currentStock = parseInt(p?.stock_qty || 0);
+                const newTotal = currentStock + qty;
+                stockAfterEl.innerHTML = `<span title="Current: ${currentStock} + Inward: ${qty}" style="color:#059669; font-weight:700;">Total: <strong>${newTotal}</strong> pcs</span>`;
+                stockAfterEl.style.display = 'block';
+            } else {
+                const name = document.getElementById(`name_${idx}`)?.value || '';
+                if (name.trim()) {
+                    stockAfterEl.innerHTML = `<span title="New item starting inventory" style="color:#6366F1; font-weight:700;">New: <strong>${qty}</strong> pcs</span>`;
+                    stockAfterEl.style.display = 'block';
+                } else {
+                    stockAfterEl.innerHTML = '';
+                    stockAfterEl.style.display = 'none';
+                }
+            }
+        }
+
         updateBulkSummary();
     }
 
@@ -1040,6 +1649,7 @@
         updateBulkRowTotal(idx);
     }
     window.adjustBulkQty = adjustBulkQty;
+
 
     function updateBulkSummary() {
         const rows = document.querySelectorAll('#bulkTableBody .batch-item-row');
