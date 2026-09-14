@@ -108,12 +108,39 @@ class MobileShopInvoiceHelper
     }
 
     /**
-     * Find existing customer by phone (cached 5 min) or create a new customer record
+     * Find existing customer by phone (cached 5 min) or create a new customer record.
+     * Supports both (companyId, Request) and (companyId, phone, name, storeState, gstin, address, stateCode)
      */
-    public static function findOrCreateCustomer(int $companyId, Request $request): object
-    {
-        $storeState = self::getStoreStateCode();
-        $phone = trim($request->customer_phone);
+    public static function findOrCreateCustomer(
+        int $companyId,
+        $requestOrPhone,
+        ?string $name = null,
+        ?string $storeState = null,
+        ?string $gstin = null,
+        ?string $address = null,
+        ?string $stateCode = null
+    ): object {
+        $defaultStoreState = self::getStoreStateCode();
+        if ($requestOrPhone instanceof Request) {
+            $phone = trim((string) ($requestOrPhone->customer_phone ?? ''));
+            $name = trim((string) ($requestOrPhone->customer_name ?? 'Walk-in Customer'));
+            $address = $requestOrPhone->customer_address ?? null;
+            $gstin = $requestOrPhone->customer_gstin ?? null;
+            $stateCode = $requestOrPhone->customer_state_code ?: $defaultStoreState;
+        } else {
+            $phone = trim((string) $requestOrPhone);
+            $name = trim((string) ($name ?: 'Walk-in Customer'));
+            $address = $address ?? null;
+            $gstin = $gstin ?? null;
+            $stateCode = $stateCode ?: ($storeState ?: $defaultStoreState);
+        }
+
+        if (empty($phone)) {
+            $phone = '0000000000';
+        }
+        if (empty($name)) {
+            $name = 'Walk-in Customer';
+        }
 
         $customer = Cache::remember("ms_cust_{$companyId}_{$phone}", 300, function () use ($companyId, $phone) {
             return DB::table('ms_customers')
@@ -124,24 +151,24 @@ class MobileShopInvoiceHelper
 
         if (!$customer) {
             $customerId = DB::table('ms_customers')->insertGetId([
-                'company_id' => $companyId,
-                'name' => trim($request->customer_name),
-                'phone' => $phone,
-                'address' => $request->customer_address,
-                'gstin' => $request->customer_gstin,
-                'state_code' => $request->customer_state_code ?: $storeState,
+                'company_id'     => $companyId,
+                'name'           => $name,
+                'phone'          => $phone,
+                'address'        => $address,
+                'gstin'          => $gstin,
+                'state_code'     => $stateCode,
                 'udhari_balance' => 0.00,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at'     => now(),
+                'updated_at'     => now(),
             ]);
             $customer = DB::table('ms_customers')->where('id', $customerId)->first();
             Cache::put("ms_cust_{$companyId}_{$phone}", $customer, 300);
-        } else if (!empty($request->customer_gstin) && empty($customer->gstin)) {
+        } else if (!empty($gstin) && empty($customer->gstin)) {
             DB::table('ms_customers')->where('id', $customer->id)->update([
-                'gstin' => $request->customer_gstin,
+                'gstin'      => $gstin,
                 'updated_at' => now(),
             ]);
-            $customer->gstin = $request->customer_gstin;
+            $customer->gstin = $gstin;
             Cache::put("ms_cust_{$companyId}_{$phone}", $customer, 300);
         }
         return $customer;

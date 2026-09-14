@@ -41,15 +41,7 @@ class AccessorySaleService
         }
 
         return DB::transaction(function () use ($request, $companyId, $storeState) {
-            $customer = MobileShopInvoiceHelper::findOrCreateCustomer(
-                $companyId,
-                $request->customer_phone,
-                $request->customer_name,
-                $storeState,
-                $request->customer_gstin,
-                $request->customer_address,
-                $request->customer_state_code
-            );
+            $customer = MobileShopInvoiceHelper::findOrCreateCustomer($companyId, $request);
 
             // Atomic Sequential Invoice Number
             $invoiceNumber = MobileShopInvoiceHelper::getNextInvoiceNumber($companyId, 'ACC');
