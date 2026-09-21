@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Customer Khata (Udhari) — Maurya Mobile')
+@section('title', 'Customer Khata (Udhari) — PhoneFix Azamgarh')
 @section('page-title', 'Customer Khata & Repayments')
 
 @section('page-actions')

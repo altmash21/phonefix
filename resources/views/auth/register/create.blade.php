@@ -9,7 +9,7 @@
                 <div class="w-8 h-8 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold">
                     <span class="material-icons text-white text-lg">smartphone</span>
                 </div>
-                <span class="font-bold text-xl text-gray-900 tracking-tight">Maurya Mobile</span>
+                <span class="font-bold text-xl text-gray-900 tracking-tight">PhoneFix Azamgarh</span>
             </div>
 
             <h1 class="text-lg my-3 font-semibold text-gray-800">

@@ -6,7 +6,7 @@
     <span class="material-icons text-black js-hamburger-menu">menu</span>
 
     <div class="flex items-center m-auto">
-        <img src="{{ asset('public/img/akaunting-logo-green.svg') }}" class="w-6 m-auto" alt="Maurya Mobile" />
+        <img src="{{ asset('public/img/akaunting-logo-green.svg') }}" class="w-6 m-auto" alt="PhoneFix Azamgarh" />
         <span class="ltr:ml-1 rtl:mr-1">{{ Str::limit(setting('company.name'), 18) }}</span>
     </div>
 
@@ -120,7 +120,7 @@
         <div class="relative mb-5 cursor-pointer">
             <button type="button" class="flex items-center" data-dropdown-toggle="dropdown-menu-company">
                 <div class="w-8 h-8 flex items-center justify-center">
-                    <img src="{{ asset('public/img/akaunting-logo-green.svg') }}" class="w-6 h-6" alt="Maurya Mobile" />
+                    <img src="{{ asset('public/img/akaunting-logo-green.svg') }}" class="w-6 h-6" alt="PhoneFix Azamgarh" />
                 </div>
 
                 <div class="flex ltr:ml-2 rtl:mr-2">

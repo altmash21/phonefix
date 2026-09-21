@@ -123,11 +123,11 @@ chmod 600 ~/.ssh/authorized_keys
 
 | Secret Name | Required? | Description | Example Value |
 |---|---|---|---|
-| `SSH_HOST` | **Required** | Server IP address or Hostname | `123.45.67.89` or `mauryamobilee.in` |
+| `SSH_HOST` | **Required** | Server IP address or Hostname | `123.45.67.89` or `phonefixazamgarh.com` |
 | `SSH_USER` | **Required** | SSH Username for hosting account | `u1234567` or `deployer` |
 | `SSH_PRIVATE_KEY`| **Required** | Entire contents of `deploy_mobitrack` (private key) | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
 | `SSH_PORT` | Optional | SSH Port (defaults to `22` if not set) | `22` (or hosting port like `2222`) |
-| `SSH_TARGET_DIR` | Optional | Root path where `public_html` & `app` reside | `domains/mauryamobilee.in` or `./` |
+| `SSH_TARGET_DIR` | Optional | Root path where `public_html` & `app` reside | `domains/phonefixazamgarh.com` or `./` |
 
 ---
 

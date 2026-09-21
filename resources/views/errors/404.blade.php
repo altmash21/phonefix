@@ -1,6 +1,6 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Page Not Found — Maurya Mobile')
+@section('title', 'Page Not Found — PhoneFix Azamgarh')
 @section('meta_description', 'The page you requested could not be found in our store catalog.')
 
 @section('subnav_title', 'Page Not Found')

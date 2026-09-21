@@ -509,7 +509,7 @@ if (! function_exists('store_pin')) {
     {
         return config('mobileshop.store_pin')
             ?: (env('STORE_PIN')
-            ?: (setting('company.pin') ?: ($default ?? '400050')));
+            ?: (setting('company.pin') ?: ($default ?? '276001')));
     }
 }
 
@@ -535,7 +535,7 @@ if (! function_exists('store_address')) {
             return $full;
         }
 
-        return setting('company.address') ?: ($default ?? 'Shop #14, Linking Road, Bandra West, Mumbai 400050');
+        return setting('company.address') ?: ($default ?? 'Court Road, Near Civil Lines, Azamgarh, Uttar Pradesh 276001');
     }
 }
 
@@ -546,7 +546,7 @@ if (! function_exists('store_address_short')) {
         if (!empty($addr)) {
             return $addr;
         }
-        return setting('company.address') ?: ($default ?? 'Linking Road, Bandra (W)');
+        return setting('company.address') ?: ($default ?? 'Court Road, Azamgarh');
     }
 }
 

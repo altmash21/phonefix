@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Statement of Account — ' . $customer->name . ' — Maurya Mobile')
+@section('title', 'Statement of Account — ' . $customer->name . ' — PhoneFix Azamgarh')
 @section('page-title', 'Statement of Account')
 
 @php

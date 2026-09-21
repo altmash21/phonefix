@@ -10,7 +10,7 @@
     $nicheTitle = $nicheTitles[$niche ?? 'admin'] ?? 'Store Dashboard';
 @endphp
 
-@section('title', $nicheTitle . ' — Maurya Mobile ERP')
+@section('title', $nicheTitle . ' — PhoneFix Azamgarh ERP')
 @section('page-title', $nicheTitle)
 
 @section('page-actions')

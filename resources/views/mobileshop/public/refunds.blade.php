@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Refunds, Returns & Replacements — Maurya Mobile Mumbai')
-@section('meta_description', 'Clear, customer-centric return and replacement policies for mobile accessories, chargers, spare parts, and express repair workbench warranties at Maurya Mobile Mumbai.')
+@section('title', 'Refunds, Returns & Replacements — PhoneFix Azamgarh')
+@section('meta_description', 'Clear, customer-centric return and replacement policies for mobile accessories, chargers, spare parts, and express repair workbench warranties at PhoneFix Azamgarh.')
 
 @section('subnav_title', 'Policy Guide')
 @section('subnav_links')

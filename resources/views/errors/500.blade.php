@@ -1,6 +1,6 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'System Notice — Maurya Mobile')
+@section('title', 'System Notice — PhoneFix Azamgarh')
 @section('meta_description', 'An unexpected condition occurred on the server.')
 
 @section('subnav_title', 'System Notice')

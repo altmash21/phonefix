@@ -8,7 +8,7 @@
     };
 @endphp
 
-@section('title', $purchasePageTitle . ' — Maurya Mobile ERP')
+@section('title', $purchasePageTitle . ' — PhoneFix Azamgarh ERP')
 @section('page-title', $purchasePageTitle)
 
 @section('page-actions')

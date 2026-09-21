@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Terminal Password — Maurya Mobile ERP</title>
+    <title>Reset Terminal Password — PhoneFix Azamgarh ERP</title>
     <meta name="description" content="Reset your staff terminal account password securely via email OTP verification.">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <base href="{{ config('app.url') . '/' }}">
@@ -79,7 +79,7 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-1.5">
-                            <span class="font-display font-bold text-2xl text-white tracking-tight">Maurya Mobile</span>
+                            <span class="font-display font-bold text-2xl text-white tracking-tight">PhoneFix Azamgarh</span>
                         </div>
                         <span class="text-[10px] text-teal-300 font-semibold uppercase tracking-wider">Enterprise Retail ERP</span>
                     </div>

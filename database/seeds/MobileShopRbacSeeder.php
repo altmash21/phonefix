@@ -19,7 +19,7 @@ class MobileShopRbacSeeder extends Seeder
         // ─────────────────────────────────────────────────────────────────────
         if (Company::count() === 0) {
             try {
-                Installer::createCompany('Maurya Mobile Store', 'admin@mobitrack.local', 'en-GB');
+                Installer::createCompany('PhoneFix Azamgarh', 'admin@mobitrack.local', 'en-GB');
             } catch (\Throwable $e) {
                 DB::table('companies')->insert([
                     'id'         => 1,
@@ -32,10 +32,37 @@ class MobileShopRbacSeeder extends Seeder
         }
 
         $company = Company::first();
-        $companyId = $company ? $company->id : 1;
-        if ($company && !$company->enabled) {
-            $company->enabled = 1;
+        if ($company) {
+            if (empty($company->name) || in_array($company->name, ['Maurya Mobile Store', 'Maurya Mobile', 'MobiTrack Store', 'My Company'])) {
+                $company->name = 'PhoneFix Azamgarh';
+            }
+            if (!$company->enabled) {
+                $company->enabled = 1;
+            }
             $company->save();
+        }
+        $companyId = $company ? $company->id : 1;
+
+        // Ensure company settings reflect PhoneFix Azamgarh
+        try {
+            DB::table('settings')->updateOrInsert(
+                ['key' => 'company.name', 'company_id' => $companyId],
+                ['value' => 'PhoneFix Azamgarh']
+            );
+            DB::table('settings')->updateOrInsert(
+                ['key' => 'company.city', 'company_id' => $companyId],
+                ['value' => 'Azamgarh']
+            );
+            DB::table('settings')->updateOrInsert(
+                ['key' => 'company.state', 'company_id' => $companyId],
+                ['value' => 'Uttar Pradesh']
+            );
+            DB::table('settings')->updateOrInsert(
+                ['key' => 'company.pin', 'company_id' => $companyId],
+                ['value' => '276001']
+            );
+        } catch (\Throwable $e) {
+            // Ignore if settings table not yet ready
         }
 
         // ─────────────────────────────────────────────────────────────────────

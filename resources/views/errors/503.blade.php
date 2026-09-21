@@ -1,6 +1,6 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Under Maintenance — Maurya Mobile')
+@section('title', 'Under Maintenance — PhoneFix Azamgarh')
 @section('meta_description', 'Storefront maintenance in progress.')
 
 @section('subnav_title', 'Maintenance')

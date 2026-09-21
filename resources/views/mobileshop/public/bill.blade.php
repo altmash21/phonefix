@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Official Bill #' . $invoice_number . ' — Maurya Mobile Store')
-@section('meta_description', 'View and download official tax invoice receipt from Maurya Mobile Store.')
+@section('title', 'Official Bill #' . $invoice_number . ' — PhoneFix Azamgarh')
+@section('meta_description', 'View and download official tax invoice receipt from PhoneFix Azamgarh.')
 
 @section('subnav_title', 'Digital Receipt')
 

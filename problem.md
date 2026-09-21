@@ -2,7 +2,7 @@
 
 **Document Version:** 1.1 (Updated with confirmed mandatory fields)  
 **Target Module:** Accessories & Spare Parts Bulk Restock — `accessories_purchase.blade.php`  
-**Context:** Maurya Mobile Store ERP  
+**Context:** PhoneFix Azamgarh ERP  
 
 ---
 

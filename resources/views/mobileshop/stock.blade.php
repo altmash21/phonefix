@@ -4,7 +4,7 @@
     $stockPageTitle = 'Accessories & Express Spare Parts Inventory';
 @endphp
 
-@section('title', $stockPageTitle . ' — Maurya Mobile ERP')
+@section('title', $stockPageTitle . ' — PhoneFix Azamgarh ERP')
 @section('page-title', $stockPageTitle)
 
 @section('page-actions')

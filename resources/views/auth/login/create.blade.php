@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Login — Maurya Mobile ERP</title>
-    <meta name="description" content="Secure terminal access for Maurya Mobile Mobile Shop ERP staff and store administration.">
+    <title>Staff Login — PhoneFix Azamgarh ERP</title>
+    <meta name="description" content="Secure terminal access for PhoneFix Azamgarh Mobile Shop ERP staff and store administration.">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <base href="{{ config('app.url') . '/' }}">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -89,7 +89,7 @@
             <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-700 to-teal-950 text-white shadow-lg shadow-teal-950/30 mb-2.5">
                 <i data-lucide="smartphone" class="w-6 h-6 text-teal-300"></i>
             </div>
-            <h1 class="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Maurya Mobile</h1>
+            <h1 class="font-display font-extrabold text-2xl text-slate-900 tracking-tight">PhoneFix Azamgarh</h1>
             <span class="text-[11px] text-teal-700 font-bold uppercase tracking-wider block mt-0.5">Enterprise Retail ERP</span>
         </div>
 

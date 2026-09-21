@@ -93,7 +93,7 @@
     $waInvoiceUrl = 'https://wa.me/' . $cleanPhone . '?text=' . rawurlencode($waMsg);
 @endphp
 
-@section('title', ($isGstBill ? 'Tax Invoice' : 'Estimate') . ' #' . $sale->invoice_number . ' — Maurya Mobile')
+@section('title', ($isGstBill ? 'Tax Invoice' : 'Estimate') . ' #' . $sale->invoice_number . ' — PhoneFix Azamgarh')
 @section('page-title', $isGstBill ? 'Tax Invoice & Receipt' : 'Estimate & Retail Bill')
 
 @section('page-actions')

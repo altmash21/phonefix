@@ -1,6 +1,6 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Access Restricted — Maurya Mobile')
+@section('title', 'Access Restricted — PhoneFix Azamgarh')
 @section('meta_description', 'Access to this resource is restricted.')
 
 @section('subnav_title', 'Access Restricted')

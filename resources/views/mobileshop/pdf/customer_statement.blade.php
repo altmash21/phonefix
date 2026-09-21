@@ -142,7 +142,7 @@
 
     <!-- 1. CENTERED STORE HEADER -->
     <div class="header-section">
-        <div class="company-name">{{ store_name('Maurya Mobile Store') }}</div>
+        <div class="company-name">{{ store_name('PhoneFix Azamgarh') }}</div>
         <div class="company-meta">{{ store_address() }}</div>
         <div class="company-meta">Phone: {{ store_phone() }} &middot; GSTIN: {{ store_gstin() }}</div>
     </div>
@@ -230,7 +230,7 @@
         <div>Computer-generated statement &bull; Report discrepancies within 7 business days</div>
 
         <div style="margin-top: 22px; font-weight: bold; color: #111827; font-size: 10.5px;">
-            For {{ setting('company.name', 'Maurya Mobile Store') }}
+            For {{ setting('company.name', 'PhoneFix Azamgarh') }}
         </div>
 
         <div class="sign-line"></div>

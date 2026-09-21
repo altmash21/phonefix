@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @package     Maurya Mobile
- * @copyright   Maurya Mobile. All rights reserved.
+ * @package     PhoneFix Azamgarh
+ * @copyright   PhoneFix Azamgarh. All rights reserved.
  */
 
 use Illuminate\Contracts\Http\Kernel;

@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Reports & Business Analytics — Maurya Mobile ERP')
+@section('title', 'Reports & Business Analytics — PhoneFix Azamgarh ERP')
 @section('page-title', 'Financial Analytics & Store Intelligence')
 
 @push('styles')

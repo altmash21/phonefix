@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Privacy & Data Zero-Loss Policy — Maurya Mobile Mumbai')
-@section('meta_description', 'Read Maurya Mobile’s Privacy Policy and our strict Data Zero-Loss and privacy protocols for accessories customers and express smartphone repair devices.')
+@section('title', 'Privacy & Data Zero-Loss Policy — PhoneFix Azamgarh')
+@section('meta_description', 'Read PhoneFix Azamgarh’s Privacy Policy and our strict Data Zero-Loss and privacy protocols for accessories customers and express smartphone repair devices.')
 
 @section('subnav_title', 'Legal & Trust')
 @section('subnav_links')
@@ -29,7 +29,7 @@
                 Privacy & Data Zero-Loss Guarantee.
             </h1>
             <p class="apple-lead-airy text-apple-muted-80 max-w-2xl mx-auto pt-2">
-                At Maurya Mobile, we hold customer privacy to the highest standard. Whether you purchase premium mobile accessories or entrust your smartphone for express diagnostic repair, your personal data remains strictly your own.
+                At PhoneFix Azamgarh, we hold customer privacy to the highest standard. Whether you purchase premium mobile accessories or entrust your smartphone for express diagnostic repair, your personal data remains strictly your own.
             </p>
             <div class="pt-2 flex items-center justify-center gap-4 text-xs text-apple-muted-48">
                 <span>Effective Date: 1 January {{ date('Y') }}</span>
@@ -91,7 +91,7 @@
                     </div>
                     
                     <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                        2. The Maurya Zero-Data-Loss Repair Guarantee
+                        2. The PhoneFix Zero-Data-Loss Repair Guarantee
                     </h2>
                     
                     <p class="text-sm text-slate-300 leading-relaxed max-w-2xl">
@@ -140,7 +140,7 @@
             <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[11px]">Section 04</span>
             <h2 class="apple-display-md text-apple-ink">4. How We Safeguard & Share Information</h2>
             <p class="apple-body text-apple-muted-80">
-                Maurya Mobile is a retail electronics company — we never monetize, sell, lease, or distribute our customer database to third-party telemarketers, insurance aggregators, or loan brokers.
+                PhoneFix Azamgarh is a retail electronics company — we never monetize, sell, lease, or distribute our customer database to third-party telemarketers, insurance aggregators, or loan brokers.
             </p>
             <p class="apple-body text-apple-muted-80">
                 We only transmit customer information under legitimate regulatory situations:
@@ -178,8 +178,8 @@
                     For questions regarding our privacy practices or data policies, contact our customer desk:
                 </p>
                 <div class="space-y-1 font-mono text-[11px] text-apple-ink">
-                    <div>Email: support@mauryamobile.in</div>
-                    <div>Showroom: Maurya Mobile, Malad West, Mumbai - 400064</div>
+                    <div>Email: support@phonefixazamgarh.com</div>
+                    <div>Showroom: PhoneFix Azamgarh, Malad West, Mumbai - 400064</div>
                     <div>Helpline: {{ store_phone() }} (10:00 AM – 8:30 PM IST)</div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', ($sale->bill_type === 'non_gst' ? 'Estimate' : 'Tax Invoice') . ' #' . $sale->invoice_number . ' — Maurya Mobile')
+@section('title', ($sale->bill_type === 'non_gst' ? 'Estimate' : 'Tax Invoice') . ' #' . $sale->invoice_number . ' — PhoneFix Azamgarh')
 @section('page-title', $sale->bill_type === 'non_gst' ? 'Estimate & Retail Bill' : 'Accessory Tax Invoice & Receipt')
 
 @php

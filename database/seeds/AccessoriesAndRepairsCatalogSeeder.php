@@ -125,7 +125,7 @@ class AccessoriesAndRepairsCatalogSeeder extends Seeder
             [
                 'name' => 'Liquid Silicone Soft Touch Case with Microfiber Lining',
                 'category' => 'back_cover',
-                'brand' => 'Maurya Premium',
+                'brand' => 'PhoneFix Premium',
                 'compatible_model' => 'iPhone 13 / 14 / 15 Series',
                 'display_type' => 'na',
                 'hsn_code' => '39269099',

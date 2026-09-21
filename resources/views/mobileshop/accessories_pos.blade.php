@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Counter POS Sale — Maurya Mobile')
+@section('title', 'Counter POS Sale — PhoneFix Azamgarh')
 @section('page-title', 'Counter POS Billing')
 
 @section('page-actions')

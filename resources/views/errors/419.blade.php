@@ -1,6 +1,6 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Page Expired — Maurya Mobile')
+@section('title', 'Page Expired — PhoneFix Azamgarh')
 @section('meta_description', 'Your session has expired. Please refresh the page and try again.')
 
 @section('subnav_title', 'Page Expired')

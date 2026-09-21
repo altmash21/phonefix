@@ -1,6 +1,6 @@
 @extends('mobileshop.layout')
 
-@section('title', 'Procurement & POs — Maurya Mobile')
+@section('title', 'Procurement & POs — PhoneFix Azamgarh')
 @section('page-title', 'Procurement & Supplier Ledgers')
 
 @section('page-actions')

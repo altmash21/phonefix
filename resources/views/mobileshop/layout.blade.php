@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#5E6AD2">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <base href="{{ config('app.url') . '/' }}">
-    <title>@yield('title', 'Maurya Mobile — Mobile Shop ERP')</title>
+    <title>@yield('title', 'PhoneFix Azamgarh — Mobile Shop ERP')</title>
 
     <script>
         window.mobiShopRoutes = {
@@ -344,7 +344,7 @@
                 <i data-lucide="smartphone" style="width:18px;height:18px;"></i>
             </div>
             <div>
-                <div class="topbar-logo-text">Maurya Mobile <span class="topbar-logo-dot"></span></div>
+                <div class="topbar-logo-text">PhoneFix Azamgarh <span class="topbar-logo-dot"></span></div>
                 <div class="topbar-logo-sub topbar-subtitle">Retail & Service Console</div>
             </div>
         </a>
@@ -408,7 +408,7 @@
                 <div class="topbar-logo-icon" style="width:28px;height:28px;">
                     <i data-lucide="smartphone" style="width:14px;height:14px;"></i>
                 </div>
-                <div class="topbar-logo-text" style="font-size:13px;">Maurya Mobile</div>
+                <div class="topbar-logo-text" style="font-size:13px;">PhoneFix Azamgarh</div>
             </div>
             <button type="button" class="mobile-sidebar-drawer-close" onclick="closeMobileSidebar()" aria-label="Close menu">×</button>
         </div>
@@ -571,7 +571,7 @@
                         <i data-lucide="arrow-left" style="width:16px;height:16px;"></i>
                     </a>
                 @endif
-                <h1 class="page-title">@yield('page-title', 'Maurya Mobile')</h1>
+                <h1 class="page-title">@yield('page-title', 'PhoneFix Azamgarh')</h1>
                 <div class="page-header-right">
                     @yield('page-actions')
                 </div>

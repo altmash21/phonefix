@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Warranty & Guarantee Policy — Maurya Mobile Mumbai')
-@section('meta_description', 'Detailed warranty guidelines for mobile accessories, fast chargers, spare parts, and express repair workbench coverage at Maurya Mobile Mumbai.')
+@section('title', 'Warranty & Guarantee Policy — PhoneFix Azamgarh')
+@section('meta_description', 'Detailed warranty guidelines for mobile accessories, fast chargers, spare parts, and express repair workbench coverage at PhoneFix Azamgarh.')
 
 @section('subnav_title', 'Warranty Terms')
 @section('subnav_links')

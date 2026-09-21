@@ -1,7 +1,7 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Terms & Conditions of Sale — Maurya Mobile Mumbai')
-@section('meta_description', 'Review the Terms & Conditions of sale, accessories standards, spare parts quality tiers, warranty terms, and repair service guidelines at Maurya Mobile Mumbai.')
+@section('title', 'Terms & Conditions of Sale — PhoneFix Azamgarh')
+@section('meta_description', 'Review the Terms & Conditions of sale, accessories standards, spare parts quality tiers, warranty terms, and repair service guidelines at PhoneFix Azamgarh.')
 
 @section('subnav_title', 'Legal Terms')
 @section('subnav_links')
@@ -29,7 +29,7 @@
                 Terms & Conditions of Sale.
             </h1>
             <p class="apple-lead-airy text-apple-muted-80 max-w-2xl mx-auto pt-2">
-                These terms govern all in-store showroom purchases, accessories orders, spare parts procurement, and workbench repairs executed by Maurya Mobile.
+                These terms govern all in-store showroom purchases, accessories orders, spare parts procurement, and workbench repairs executed by PhoneFix Azamgarh.
             </p>
             <div class="pt-2 flex items-center justify-center gap-4 text-xs text-apple-muted-48">
                 <span>Updated: September {{ date('Y') }}</span>
@@ -47,7 +47,7 @@
             <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[11px]">Clause 01</span>
             <h2 class="apple-display-md text-apple-ink">1. Retail Purchasing & Tax Invoicing</h2>
             <p class="apple-body text-apple-muted-80">
-                All mobile accessories, chargers, protective gear, and spare parts supplied or installed by Maurya Mobile are genuine, brand-tested, and accompanied by a detailed computer-generated GST tax invoice containing:
+                All mobile accessories, chargers, protective gear, and spare parts supplied or installed by PhoneFix Azamgarh are genuine, brand-tested, and accompanied by a detailed computer-generated GST tax invoice containing:
             </p>
             <ul class="space-y-2.5 apple-body text-apple-muted-80 list-disc list-inside">
                 <li>Exact product description, brand, model compatibility, and SKU identification.</li>
@@ -133,7 +133,7 @@
                     <strong class="text-apple-ink">Job Sheet Intake:</strong> Every service device received is cataloged with a unique ticket number (e.g. <span class="font-mono text-xs font-bold text-apple-ink">REP-2026-0001</span>), intake timestamp, and reported fault list. Pre-existing cosmetic damage is documented at intake.
                 </p>
                 <p>
-                    <strong class="text-apple-ink">60-Day Collection Window:</strong> Customers must retrieve their serviced device within 60 calendar days of receiving a job completion notification. After 60 days of uncollected storage and multiple unanswered notices, Maurya Mobile reserves the right to recycle the unclaimed hardware to recover bench lab costs.
+                    <strong class="text-apple-ink">60-Day Collection Window:</strong> Customers must retrieve their serviced device within 60 calendar days of receiving a job completion notification. After 60 days of uncollected storage and multiple unanswered notices, PhoneFix Azamgarh reserves the right to recycle the unclaimed hardware to recover bench lab costs.
                 </p>
                 <p>
                     <strong class="text-apple-ink">Water & Liquid Damage Disclaimer:</strong> Handsets submitted with prior water ingress or corrosive oxidation carry no warranty on secondary components, as microscopic corrosion may degrade unaffected traces over time.
@@ -148,7 +148,7 @@
             <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[11px]">Clause 05</span>
             <h2 class="apple-display-md text-apple-ink">5. Legal Jurisdiction</h2>
             <p class="apple-body text-apple-muted-80">
-                All agreements, commercial transactions, repair contracts, and dispute resolutions arising out of services rendered by Maurya Mobile shall be governed strictly by the laws of India and subject to the exclusive jurisdiction of the competent courts in Mumbai, Maharashtra.
+                All agreements, commercial transactions, repair contracts, and dispute resolutions arising out of services rendered by PhoneFix Azamgarh shall be governed strictly by the laws of India and subject to the exclusive jurisdiction of the competent courts in Azamgarh, Uttar Pradesh.
             </p>
         </section>
 
