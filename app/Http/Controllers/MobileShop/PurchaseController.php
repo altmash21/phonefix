@@ -269,7 +269,7 @@ class PurchaseController extends BaseMobileShopController
      */
     public function purchaseCreate()
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized access to purchase registration.');
+        abort_unless(auth()->check() && (auth()->user()->can('create-purchase-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff')), 403, 'Unauthorized access to purchase registration.');
 
         $companyId = $this->getCompanyId();
 
@@ -304,7 +304,7 @@ class PurchaseController extends BaseMobileShopController
      */
     public function storeBulkPurchase(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+        abort_unless(auth()->check() && (auth()->user()->can('create-purchase-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff')), 403, 'Unauthorized action.');
 
         $companyId = $this->getCompanyId();
         $result = $this->bulkPurchaseService->storeBulkPurchase($companyId, $request);
@@ -329,7 +329,7 @@ class PurchaseController extends BaseMobileShopController
      */
     public function recordSupplierPayment(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+        abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff')), 403, 'Unauthorized action.');
 
         $result = $this->supplierPaymentService->recordSupplierPayment($this->getCompanyId(), $request);
 
@@ -344,7 +344,7 @@ class PurchaseController extends BaseMobileShopController
      */
     public function updateSupplier(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('sales-staff')), 403, 'Unauthorized action.');
+        abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff')), 403, 'Unauthorized action.');
 
         $result = $this->supplierPaymentService->updateSupplier($this->getCompanyId(), $request);
 
@@ -360,12 +360,9 @@ class PurchaseController extends BaseMobileShopController
     public function scanPurchaseInvoice(Request $request)
     {
         abort_unless(auth()->check() && (
-            auth()->user()->can('create-purchase-phones') ||
             auth()->user()->can('create-purchase-accessories') ||
-            auth()->user()->can('create-purchase-covers') ||
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin') ||
-            auth()->user()->hasRole('sales-staff') ||
             auth()->user()->hasRole('accessories-staff')
         ), 403, 'Unauthorized action.');
 

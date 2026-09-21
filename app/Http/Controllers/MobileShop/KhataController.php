@@ -23,17 +23,14 @@ class KhataController extends BaseMobileShopController
             auth()->user()->can('read-mobileshop-repairs') ||
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin') ||
-            auth()->user()->hasRole('sales-staff') ||
             auth()->user()->hasRole('accessories-staff') ||
-            auth()->user()->hasRole('cover-staff') ||
             auth()->user()->hasRole('repair-technician')
         ), 403, 'Unauthorized access to customer khata.');
 
         $companyId = $this->getCompanyId();
         $user = auth()->user();
         $isAdmin = $user->hasRole('admin') || $user->hasRole('store-admin');
-        $isSalesStaff = $user->hasRole('sales-staff');
-        $isAccStaff = $user->hasRole('accessories-staff') || $user->hasRole('cover-staff');
+        $isAccStaff = $user->hasRole('accessories-staff');
         $isTech = $user->hasRole('repair-technician');
 
         $txQuery = DB::table('ms_customer_khata_transactions')
@@ -56,13 +53,6 @@ class KhataController extends BaseMobileShopController
                   ->orWhere('ms_customer_khata_transactions.remarks', 'LIKE', '%ACC-%')
                   ->orWhere('ms_customer_khata_transactions.remarks', 'LIKE', '%Cover%')
                   ->orWhere('ms_customer_khata_transactions.remarks', 'LIKE', '%Tempered%');
-            });
-        } elseif ($isSalesStaff) {
-            $txQuery->where(function ($q) use ($user) {
-                $q->where('ms_customer_khata_transactions.recorded_by', $user->id)
-                  ->orWhere('ms_customer_khata_transactions.remarks', 'LIKE', '%Mobile%')
-                  ->orWhere('ms_customer_khata_transactions.remarks', 'LIKE', '%MOB-%')
-                  ->orWhere('ms_customer_khata_transactions.remarks', 'LIKE', '%Phone%');
             });
         } elseif ($isTech) {
             $txQuery->where(function ($q) use ($user) {
@@ -124,9 +114,7 @@ class KhataController extends BaseMobileShopController
             auth()->user()->can('create-mobileshop-pos') ||
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin') ||
-            auth()->user()->hasRole('sales-staff') ||
             auth()->user()->hasRole('accessories-staff') ||
-            auth()->user()->hasRole('cover-staff') ||
             auth()->user()->hasRole('repair-technician')
         ), 403, 'Unauthorized action.');
 
@@ -181,7 +169,8 @@ class KhataController extends BaseMobileShopController
             auth()->user()->can('read-mobileshop-dashboard') ||
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin') ||
-            auth()->user()->hasRole('sales-staff')
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('repair-technician')
         ), 403, 'Unauthorized access to customer statement.');
 
         $companyId = $this->getCompanyId();
@@ -205,7 +194,8 @@ class KhataController extends BaseMobileShopController
             auth()->user()->can('read-mobileshop-sales') ||
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin') ||
-            auth()->user()->hasRole('sales-staff')
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('repair-technician')
         ), 403, 'Unauthorized access to customer statement PDF.');
 
         $companyId = $this->getCompanyId();

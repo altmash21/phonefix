@@ -1,38 +1,35 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Store — Flagship Smartphones & Certified Pre-Owned Catalog | Maurya Mobile')
-@section('meta_description', 'Explore brand new sealed smartphones and 50-point certified pre-owned devices in stock at Maurya Mobile Mumbai.')
-
-@section('subnav_title', 'Store')
-@section('subnav_links')
-    <a href="{{ route('public.store', ['tab' => 'new', 'q' => $query]) }}" class="{{ $tab === 'new' ? 'text-apple-ink font-bold' : 'hover:text-apple-ink transition-colors' }}">New Phones</a>
-    <a href="{{ route('public.store', ['tab' => 'second_hand', 'q' => $query]) }}" class="{{ $tab === 'second_hand' ? 'text-apple-ink font-bold' : 'hover:text-apple-ink transition-colors' }}">Second Hand</a>
-    <a href="{{ route('public.store', ['tab' => 'all', 'q' => $query]) }}" class="{{ $tab === 'all' ? 'text-apple-ink font-bold' : 'hover:text-apple-ink transition-colors' }}">Shop</a>
-    <a href="{{ route('public.track_repair') }}" class="hover:text-apple-ink transition-colors">Repair</a>
-@endsection
+@section('title', 'Accessories & Spares Catalog — Fast Chargers, Cases & OEM Parts | ' . store_name())
+@section('meta_description', 'Browse authentic mobile accessories, GaN fast chargers, 11D tempered glass, heavy-duty phone cases, and OEM spare parts in ' . store_city() . '.')
 
 @section('content')
 
-    <!-- ════ 1. STORE HERO HEADLINE & SEARCH PILL ════ -->
-    <div class="bg-apple-parchment border-b border-apple-hairline py-12 sm:py-16">
-        <div class="max-w-[1024px] mx-auto px-4">
+    <!-- ════ 1. CATALOG HEADER & FILTERS (White Canvas with Hairline Divider) ════ -->
+    <div class="bg-white border-b border-[#e5e7eb] py-12 sm:py-16">
+        <div class="max-w-[1200px] mx-auto px-4 sm:px-6">
+            
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 class="apple-display-lg text-apple-ink">
-                        Store. <span class="text-apple-muted-48 font-normal">The finest technology, verified.</span>
+                    <span class="text-xs font-semibold uppercase tracking-widest text-[#6b7280] block mb-2">
+                        {{ store_name() }} Tested Inventory
+                    </span>
+                    <h1 class="cal-display-lg text-[#111111]">
+                        Accessories & Spares.
                     </h1>
-                    <p class="apple-body text-apple-muted-48 mt-2">
-                        {{ store_name() }} &bull; {{ store_city() }} &bull; Live inventory available for instant counter inspection.
+                    <p class="text-[#374151] text-base mt-2 max-w-xl">
+                        In-stock fast GaN chargers, military-grade cases, 11D glass, and OEM batteries in {{ store_city() }}.
                     </p>
                 </div>
 
-                <!-- Apple Pill Search Input -->
+                <!-- Cal.com Styled Search Form (40px, 8px radius) -->
                 <form action="{{ route('public.store') }}" method="GET" class="w-full md:w-80">
-                    <input type="hidden" name="tab" value="{{ $tab }}">
+                    <input type="hidden" name="category" value="{{ $categorySlug }}">
+                    <input type="hidden" name="brand" value="{{ $brandFilter }}">
                     <div class="relative">
-                        <input type="text" name="q" value="{{ $query }}" placeholder="Search model, brand, color..." 
-                               class="apple-search-input w-full pl-10 pr-4 text-[15px]">
-                        <svg class="w-4 h-4 text-apple-muted-48 absolute left-3.5 top-1/2 -translate-y-1/2 stroke-current fill-none stroke-[2.2]" viewBox="0 0 24 24">
+                        <input type="text" name="q" value="{{ $query }}" placeholder="Search charger, cover, battery..." 
+                               class="w-full pl-10 pr-4 text-sm bg-white text-[#111111] placeholder:text-[#898989] border border-[#e5e7eb] rounded-[8px] h-[40px] focus:border-[#111111] focus:ring-1 focus:ring-[#111111] outline-none transition-all">
+                        <svg class="w-4 h-4 text-[#6b7280] absolute left-3.5 top-1/2 -translate-y-1/2 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
@@ -40,183 +37,192 @@
                 </form>
             </div>
 
-            <!-- Category Filter Chips (Pill grammar) -->
-            <div class="flex items-center gap-2 pt-8 overflow-x-auto no-scrollbar">
-                <a href="{{ route('public.store', ['tab' => 'all', 'q' => $query]) }}" 
-                   class="px-4 py-2 rounded-full text-[14px] transition-all shrink-0 {{ $tab === 'all' ? 'bg-apple-ink text-white font-medium' : 'bg-white text-apple-ink border border-apple-hairline hover:border-apple-ink' }}">
-                    All Smartphones ({{ $newPhones->count() + $secondHandPhones->count() }})
-                </a>
-                <a href="{{ route('public.store', ['tab' => 'new', 'q' => $query]) }}" 
-                   class="px-4 py-2 rounded-full text-[14px] transition-all shrink-0 {{ $tab === 'new' ? 'bg-apple-ink text-white font-medium' : 'bg-white text-apple-ink border border-apple-hairline hover:border-apple-ink' }}">
-                    Brand New Flagships ({{ $newPhones->count() }})
-                </a>
-                <a href="{{ route('public.store', ['tab' => 'second_hand', 'q' => $query]) }}" 
-                   class="px-4 py-2 rounded-full text-[14px] transition-all shrink-0 {{ $tab === 'second_hand' ? 'bg-apple-ink text-white font-medium' : 'bg-white text-apple-ink border border-apple-hairline hover:border-apple-ink' }}">
-                    Certified Pre-Owned ({{ $secondHandPhones->count() }})
-                </a>
+            <!-- Cal.com Nav Pill Group: Category Filter Tabs -->
+            <div class="pt-8 flex items-center">
+                <div class="cal-nav-pill-group max-w-full overflow-x-auto no-scrollbar">
+                    <a href="{{ route('public.store', ['brand' => $brandFilter, 'q' => $query]) }}" 
+                       class="cal-category-tab {{ $categorySlug === 'all' || empty($categorySlug) ? 'active' : '' }}">
+                        All Categories
+                    </a>
+
+                    @foreach($categories as $cat)
+                    <a href="{{ route('public.store', ['category' => $cat->slug, 'brand' => $brandFilter, 'q' => $query]) }}" 
+                       class="cal-category-tab {{ $categorySlug === $cat->slug ? 'active' : '' }}">
+                        {{ $cat->name }}
+                    </a>
+                    @endforeach
+                </div>
             </div>
+
+            <!-- Brand Filter Ribbon -->
+            @if(count($brands) > 0)
+            <div class="mt-4 pt-3 border-t border-[#f3f4f6] flex items-center gap-2 text-xs text-[#6b7280] overflow-x-auto no-scrollbar">
+                <span class="shrink-0 font-medium uppercase tracking-wider text-[11px] text-[#898989]">Brand:</span>
+                <a href="{{ route('public.store', ['category' => $categorySlug, 'brand' => 'all', 'q' => $query]) }}" 
+                   class="px-2.5 py-1 rounded-[6px] transition-colors {{ $brandFilter === 'all' ? 'bg-[#111111] text-white font-semibold' : 'text-[#6b7280] hover:text-[#111111]' }}">
+                    All Brands
+                </a>
+                @foreach($brands as $b)
+                <a href="{{ route('public.store', ['category' => $categorySlug, 'brand' => $b, 'q' => $query]) }}" 
+                   class="px-2.5 py-1 rounded-[6px] transition-colors shrink-0 {{ $brandFilter === $b ? 'bg-[#111111] text-white font-semibold' : 'text-[#6b7280] hover:text-[#111111]' }}">
+                    {{ $b }}
+                </a>
+                @endforeach
+            </div>
+            @endif
+
         </div>
     </div>
 
-    <!-- ════ 2. MAIN CATALOG PRODUCT GRID (Store Utility Cards, 18px Radius, Single Product Shadow) ════ -->
-    <div class="max-w-[1024px] mx-auto px-4 py-16">
-
-        @if(!empty($query))
-        <div class="mb-8 flex items-center justify-between">
-            <span class="apple-body text-apple-muted-48">
-                Search results for "<strong class="text-apple-ink">{{ $query }}</strong>"
-            </span>
-            <a href="{{ route('public.store', ['tab' => $tab]) }}" class="apple-text-link text-[14px]">Clear Search</a>
+    <!-- ════ 2. PRODUCTS CATALOG GRID (Cal.com Product Cards) ════ -->
+    <div class="max-w-[1200px] mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        
+        <!-- Active Filter Bar -->
+        @if(!empty($query) || $categorySlug !== 'all' || $brandFilter !== 'all')
+        <div class="mb-8 flex items-center justify-between bg-[#f8f9fa] p-3 rounded-[8px] border border-[#e5e7eb]">
+            <div class="text-xs text-[#374151] space-x-2">
+                <span class="font-medium text-[#898989] uppercase tracking-wider text-[10px]">Active Filters:</span>
+                @if(!empty($query))
+                    <span class="font-medium text-[#111111] bg-white px-2 py-0.5 rounded border border-[#e5e7eb]">Search: "{{ $query }}"</span>
+                @endif
+                @if($categorySlug !== 'all')
+                    <span class="font-medium text-[#111111] bg-white px-2 py-0.5 rounded border border-[#e5e7eb]">Category: {{ ucfirst(str_replace('_', ' ', $categorySlug)) }}</span>
+                @endif
+                @if($brandFilter !== 'all')
+                    <span class="font-medium text-[#111111] bg-white px-2 py-0.5 rounded border border-[#e5e7eb]">Brand: {{ $brandFilter }}</span>
+                @endif
+            </div>
+            <a href="{{ route('public.store') }}" class="text-xs text-[#111111] underline hover:text-[#3b82f6] font-semibold">Reset</a>
         </div>
         @endif
 
-        <!-- SECTION A: BRAND NEW SEALED (When tab is 'all' or 'new') -->
-        @if(($tab === 'all' || $tab === 'new') && $newPhones->count() > 0)
-        <div class="mb-16">
-            <div class="flex items-center justify-between pb-4 mb-6 border-b border-apple-hairline">
+        @if($items->count() > 0)
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            @foreach($items as $item)
+            <div class="cal-product-card flex flex-col justify-between group">
                 <div>
-                    <h2 class="apple-tagline text-apple-ink">Brand New Sealed Smartphones</h2>
-                    <p class="apple-caption text-apple-muted-48 mt-0.5">100% genuine factory sealed with brand warranty and GST invoice.</p>
-                </div>
-                <span class="apple-caption text-apple-muted-48">{{ $newPhones->count() }} In Stock</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($newPhones as $item)
-                <div class="apple-utility-card flex flex-col justify-between group">
-                    <div>
-                        <!-- 1:1 Product Image Pedestal -->
-                        <div class="w-full aspect-square bg-apple-parchment rounded-[8px] p-6 flex items-center justify-center relative overflow-hidden mb-4">
-                            <div class="absolute top-3 left-3">
-                                <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                    ● Sealed
-                                </span>
-                            </div>
-                            @php
-                                $itemPhoto = $item->photo_path ?? $item->box_photo_path ?? null;
-                            @endphp
-                            <img src="{{ $itemPhoto ? asset($itemPhoto) : asset('img/hero-smartphones.jpg') }}" 
-                                 alt="{{ $item->brand }} {{ $item->model }}" 
-                                 class="max-h-[160px] object-contain apple-product-shadow transition-transform duration-300 group-hover:scale-105">
-                        </div>
-
-                        <!-- Card Meta -->
-                        <div class="text-[12px] text-apple-muted-48 uppercase tracking-wider font-semibold">
-                            {{ $item->brand }}
-                        </div>
-                        <h3 class="apple-body-strong text-apple-ink group-hover:text-apple-primary transition-colors truncate mt-1">
-                            {{ $item->brand }} {{ $item->model }}
-                        </h3>
-                        <div class="apple-caption text-apple-muted-48 mt-0.5">
-                            {{ $item->storage ?? '128GB' }} · {{ $item->color ?? 'Original' }}
-                        </div>
+                    <!-- Badge Header with Binary Stock Status (NO numeric quantity) -->
+                    <div class="flex items-center justify-between text-xs mb-3">
+                        <span class="font-medium text-[11px] text-[#6b7280] bg-[#f5f5f5] px-2 py-0.5 rounded">
+                            {{ $item->brand ?? 'OEM Original' }}
+                        </span>
+                        @if($item->stock_qty > 0)
+                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-[#10b981]">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                                <span>In Stock</span>
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-[#ef4444]">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#ef4444]"></span>
+                                <span>Out of Stock</span>
+                            </span>
+                        @endif
                     </div>
 
-                    <!-- Price & Action Link -->
-                    <div class="mt-6 pt-4 border-t border-apple-hairline flex items-center justify-between">
-                        <div>
-                            <span class="text-[11px] text-apple-muted-48 block">Showroom Price</span>
-                            <div class="flex items-baseline gap-1">
-                                <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($item->selling_price, 0) }}</span>
-                            </div>
-                            <span class="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                                0% EMI Available
-                            </span>
-                        </div>
-                        <a href="{{ route('public.product.show', $item->id) }}" class="apple-btn-primary text-[13px] py-1.5 px-4">
-                            Buy Now
+                    @if(!empty($item->category_name))
+                    <span class="text-[10px] font-medium uppercase tracking-wider text-[#898989] block mb-1">
+                        {{ $item->category_name }}
+                    </span>
+                    @endif
+
+                    <!-- Product Name -->
+                    <h3 class="font-semibold text-[#111111] text-base group-hover:underline line-clamp-2">
+                        <a href="{{ route('public.product.show', $item->id) }}" class="text-[#111111]">
+                            {{ $item->name }}
+                        </a>
+                    </h3>
+
+                    @if(!empty($item->compatible_model))
+                    <div class="text-xs text-[#6b7280] mt-2 flex items-center gap-1.5 line-clamp-1">
+                        <svg class="w-3.5 h-3.5 shrink-0 stroke-current fill-none stroke-2 text-[#898989]" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect></svg>
+                        <span>Compatible: {{ $item->compatible_model }}</span>
+                    </div>
+                    @endif
+
+                    @if(!empty($item->display_type))
+                    <div class="mt-2">
+                        <span class="text-[11px] font-medium text-[#111111] bg-[#f5f5f5] px-2 py-0.5 rounded inline-block">
+                            {{ $item->display_type }}
+                        </span>
+                    </div>
+                    @endif
+
+                    @if(!empty($item->description))
+                    <p class="text-xs text-[#6b7280] mt-2 line-clamp-2 leading-relaxed">
+                        {{ $item->description }}
+                    </p>
+                    @endif
+                </div>
+
+                <!-- Price & Action CTA -->
+                <div class="mt-6 pt-4 border-t border-[#f3f4f6] flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] font-semibold text-[#898989] block uppercase">Price</span>
+                        <span class="font-bold text-[#111111] text-xl">₹{{ number_format($item->selling_price, 0) }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('public.product.show', $item->id) }}" class="cal-btn-secondary text-xs h-[36px] px-3.5" title="View Specs">
+                            Specs
+                        </a>
+                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', store_whatsapp()) }}?text={{ urlencode('Hi ' . store_name() . ', I want to order/inquire about ' . $item->name . ' (₹' . $item->selling_price . ')') }}" 
+                           target="_blank" 
+                           class="cal-btn-primary text-xs h-[36px] px-3.5" 
+                           title="Order on WhatsApp">
+                            Buy
                         </a>
                     </div>
                 </div>
-                @endforeach
             </div>
+            @endforeach
         </div>
-        @endif
 
-        <!-- SECTION B: CERTIFIED PRE-OWNED (When tab is 'all' or 'second_hand') -->
-        @if(($tab === 'all' || $tab === 'second_hand') && $secondHandPhones->count() > 0)
-        <div class="mb-16">
-            <div class="flex items-center justify-between pb-4 mb-6 border-b border-apple-hairline">
-                <div>
-                    <h2 class="apple-tagline text-apple-ink">Certified Pre-Owned</h2>
-                    <p class="apple-caption text-apple-muted-48 mt-0.5">50-point diagnostic seal, 85%+ battery health, and 30-day warranty.</p>
-                </div>
-                <span class="apple-caption text-apple-muted-48">{{ $secondHandPhones->count() }} In Stock</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($secondHandPhones as $cpo)
-                <div class="apple-utility-card flex flex-col justify-between group">
-                    <div>
-                        <!-- 1:1 Product Image Pedestal -->
-                        <div class="w-full aspect-square bg-apple-parchment rounded-[8px] p-6 flex items-center justify-center relative overflow-hidden mb-4">
-                            @php
-                                $gradeText = match($cpo->condition_grade ?? '') {
-                                    'like_new_A_plus' => 'A+ Like New',
-                                    'good_A'          => 'A Good',
-                                    'fair_B'          => 'B Fair',
-                                    default           => 'Certified A+'
-                                };
-                                $cpoPhoto = $cpo->photo_path ?? $cpo->box_photo_path ?? null;
-                            @endphp
-                            <div class="absolute top-3 left-3">
-                                <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                                    Grade {{ $gradeText }}
-                                </span>
-                            </div>
-                            <img src="{{ $cpoPhoto ? asset($cpoPhoto) : asset('img/hero-smartphones.jpg') }}" 
-                                 alt="{{ $cpo->brand }} {{ $cpo->model }}" 
-                                 class="max-h-[160px] object-contain apple-product-shadow transition-transform duration-300 group-hover:scale-105">
-                        </div>
-
-                        <!-- Card Meta -->
-                        <div class="text-[12px] text-apple-muted-48 uppercase tracking-wider font-semibold">
-                            {{ $cpo->brand }}
-                        </div>
-                        <h3 class="apple-body-strong text-apple-ink group-hover:text-apple-primary transition-colors truncate mt-1">
-                            {{ $cpo->brand }} {{ $cpo->model }}
-                        </h3>
-                        <div class="apple-caption text-apple-muted-48 mt-0.5">
-                            {{ $cpo->storage ?? '128GB' }} · {{ $cpo->color ?? 'Original' }}
-                        </div>
-                    </div>
-
-                    <!-- Price & Action Link -->
-                    <div class="mt-6 pt-4 border-t border-apple-hairline flex items-center justify-between">
-                        <div>
-                            <span class="text-[11px] text-apple-muted-48 block">Pre-Owned Value</span>
-                            <div class="flex items-baseline gap-1">
-                                <span class="apple-body-strong text-apple-ink text-[19px]">₹{{ number_format($cpo->selling_price, 0) }}</span>
-                            </div>
-                            <span class="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded inline-block mt-0.5">
-                                0% EMI Available
-                            </span>
-                        </div>
-                        <a href="{{ route('public.product.show', $cpo->id) }}" class="apple-btn-primary text-[13px] py-1.5 px-4">
-                            Buy Now
-                        </a>
-                    </div>
-                </div>
-                @endforeach
-            </div>
+        <!-- Pagination -->
+        <div class="mt-12">
+            {{ $items->links() }}
         </div>
-        @endif
 
+        @else
         <!-- Empty State -->
-        @if($newPhones->count() === 0 && $secondHandPhones->count() === 0)
-        <div class="text-center py-24 bg-apple-parchment rounded-[18px] border border-apple-hairline p-8 space-y-4">
-            <h3 class="apple-display-md text-apple-ink">No devices found.</h3>
-            <p class="apple-body text-apple-muted-48 max-w-md mx-auto">
-                We could not find any in-stock smartphones matching your criteria. Try searching for a broader term or contact our store desk.
+        <div class="text-center py-20 bg-[#f5f5f5] rounded-[12px] border border-[#e5e7eb] p-8">
+            <div class="w-12 h-12 rounded-full bg-white text-[#6b7280] border border-[#e5e7eb] flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <h3 class="cal-display-sm text-[#111111]">No items found</h3>
+            <p class="text-[#374151] text-sm mt-1 max-w-sm mx-auto">
+                We regularly restock components. Please check back or WhatsApp our parts desk to special-order any accessory or display.
             </p>
-            <div class="pt-2">
-                <a href="{{ route('public.store') }}" class="apple-btn-primary">
-                    View All Smartphones
+            <div class="mt-6 flex items-center justify-center gap-3">
+                <a href="{{ route('public.store') }}" class="cal-btn-primary text-xs">
+                    View All Accessories
+                </a>
+                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', store_whatsapp()) }}?text={{ urlencode('Hi ' . store_name() . ', I am looking for a spare part/accessory that is not listed on your website') }}" target="_blank" class="cal-btn-secondary text-xs">
+                    Special Order via WhatsApp
                 </a>
             </div>
         </div>
         @endif
 
     </div>
+
+    <!-- ════ 3. PRE-FOOTER CTA CARD (cta-band-light) ════ -->
+    <section class="py-12 bg-white border-t border-[#e5e7eb]">
+        <div class="max-w-[1200px] mx-auto px-4 sm:px-6">
+            <div class="bg-[#f5f5f5] rounded-[12px] p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 text-left">
+                <div>
+                    <h3 class="cal-display-sm text-[#111111]">Looking for express screen or battery replacement?</h3>
+                    <p class="text-[#374151] text-sm mt-1">We install all spare parts on our certified cleanroom bench while you wait in {{ store_city() }}.</p>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <a href="{{ route('public.landing') }}#repairs" class="cal-btn-primary text-xs">
+                        View Repair Services
+                    </a>
+                    <a href="{{ route('public.track_repair') }}" class="cal-btn-secondary text-xs">
+                        Track Ongoing Job
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 
 @endsection

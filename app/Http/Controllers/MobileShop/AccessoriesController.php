@@ -39,16 +39,12 @@ class AccessoriesController extends BaseMobileShopController
     public function counterPos(Request $request)
     {
         abort_unless(auth()->check() && (
-            auth()->user()->can('sell-mobileshop-accessories') || 
             auth()->user()->can('create-sale-accessories') || 
-            auth()->user()->can('create-mobileshop-accessories') || 
             auth()->user()->can('read-mobileshop-sales') || 
             auth()->user()->can('read-mobileshop-accessories') || 
             auth()->user()->hasRole('admin') || 
             auth()->user()->hasRole('store-admin') || 
-            auth()->user()->hasRole('accessories-staff') || 
-            auth()->user()->hasRole('accessories-manager') || 
-            auth()->user()->hasRole('cover-staff')
+            auth()->user()->hasRole('accessories-staff')
         ), 403, 'Unauthorized access to Counter POS.');
 
         $companyId = $this->getCompanyId();
@@ -68,7 +64,7 @@ class AccessoriesController extends BaseMobileShopController
             ->where('company_id', $companyId)
             ->where('stock_qty', '>', 0);
 
-        if ($niche === 'covers' || auth()->user()->hasRole('cover-staff')) {
+        if ($niche === 'covers') {
             $partsQuery->whereIn('category', $this->coverCategories);
         }
 

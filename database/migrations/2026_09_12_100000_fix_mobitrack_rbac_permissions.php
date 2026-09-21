@@ -193,9 +193,7 @@ return new class extends Migration
             }
             $u->save();
 
-            if (!$u->companies()->where('company_id', $companyId)->exists()) {
-                $u->companies()->attach($companyId);
-            }
+            $u->companies()->syncWithoutDetaching([$companyId]);
         }
 
         // Flush Laratrust & general cache

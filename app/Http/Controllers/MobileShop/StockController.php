@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\MobileShop;
 
 use App\Services\MobileShop\Stock\NewMobileStockService;
-use App\Services\MobileShop\Stock\SecondHandStockService;
 use App\Services\MobileShop\Stock\StockHistoryService;
 use App\Services\MobileShop\Stock\StockDeletionService;
 use App\Services\MobileShop\Common\MobileShopOtpService;
@@ -15,18 +14,15 @@ use Carbon\Carbon;
 class StockController extends BaseMobileShopController
 {
     protected NewMobileStockService $newMobileStockService;
-    protected SecondHandStockService $secondHandStockService;
     protected StockHistoryService $stockHistoryService;
     protected StockDeletionService $stockDeletionService;
 
     public function __construct(
         ?NewMobileStockService $newMobileStockService = null,
-        ?SecondHandStockService $secondHandStockService = null,
         ?StockHistoryService $stockHistoryService = null,
         ?StockDeletionService $stockDeletionService = null
     ) {
         $this->newMobileStockService = $newMobileStockService ?? new NewMobileStockService();
-        $this->secondHandStockService = $secondHandStockService ?? new SecondHandStockService();
         $this->stockHistoryService = $stockHistoryService ?? new StockHistoryService();
         $this->stockDeletionService = $stockDeletionService ?? new StockDeletionService();
     }
@@ -283,13 +279,7 @@ class StockController extends BaseMobileShopController
         $boxPhotoPath = $this->uploadMobilePhoto($request, 'sh_box', 'box_photo');
         $idProofPhotoPath = $this->uploadMobilePhoto($request, 'sh_kyc', 'id_proof_photo');
 
-        $result = $this->secondHandStockService->intake($request, $companyId, $photoPath, $boxPhotoPath, $idProofPhotoPath);
-
-        if (!$result['success']) {
-            return redirect()->back()->with('error', $result['error']);
-        }
-
-        return $this->safeRedirect($request, 'mobileshop.stock', ['tab' => 'second_hand'], 'success', "Second-hand mobile buyback registered (Invoice #{$result['po_number']})!");
+        return $this->safeRedirect($request, 'mobileshop.stock', [], 'info', "Second-hand device management is disabled.");
     }
 
     /**
@@ -297,31 +287,7 @@ class StockController extends BaseMobileShopController
      */
     public function sellSecondHand(Request $request)
     {
-        Gate::authorize('sale.create');
-
-        $request->validate([
-            'customer_phone' => 'required',
-            'customer_name' => 'required',
-            'device_id' => 'required|exists:ms_mobile_devices,id',
-            'sale_price' => 'required|numeric|min:1',
-            'amount_paid' => 'required|numeric|min:0',
-            'payment_mode' => 'required|in:cash,upi,card,credit_udhari,split',
-        ]);
-
-        $companyId = $this->getCompanyId();
-        $result = $this->secondHandStockService->sell($request, $companyId);
-
-        if (!$result['success']) {
-            return redirect()->back()->with('error', $result['error']);
-        }
-
-        if (!empty($result['idempotent'])) {
-            return redirect()->route('mobileshop.invoice', ['id' => $result['sale_id']])
-                ->with('success', "Pre-owned sale invoice #{$result['invoice_number']} already processed.");
-        }
-
-        return redirect()->route('mobileshop.invoice', ['id' => $result['sale_id']])
-            ->with('success', "Pre-owned sale #{$result['invoice_number']} successfully recorded!");
+        return redirect()->route('mobileshop.accessories.pos');
     }
 
     /**

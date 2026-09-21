@@ -51,9 +51,7 @@ return new class extends Migration
         $altmashUser->locale       = 'en-GB';
         $altmashUser->save();
 
-        if (! $altmashUser->companies()->where('company_id', $companyId)->exists()) {
-            $altmashUser->companies()->attach($companyId);
-        }
+        $altmashUser->companies()->syncWithoutDetaching([$companyId]);
         $altmashUser->syncRoles($roleIds);
 
         // 4. Create or update Default Store Admin Account (admin@mobitrack.local)
@@ -70,9 +68,7 @@ return new class extends Migration
         $adminUser->locale       = 'en-GB';
         $adminUser->save();
 
-        if (! $adminUser->companies()->where('company_id', $companyId)->exists()) {
-            $adminUser->companies()->attach($companyId);
-        }
+        $adminUser->companies()->syncWithoutDetaching([$companyId]);
         $adminUser->syncRoles($roleIds);
 
         // Flush permissions cache

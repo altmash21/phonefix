@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\MobileShop;
 
 use App\Services\MobileShop\Common\PendingJobService;
-use App\Services\MobileShop\Sales\EmiBillScannerService;
 use App\Services\MobileShop\Sales\PosSaleService;
 use App\Services\MobileShop\Sales\MultiSaleService;
 use App\Services\MobileShop\Sales\SaleVoidService;
@@ -15,27 +14,25 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class SalesController extends BaseMobileShopController
 {
-    protected EmiBillScannerService $emiScannerService;
     protected PosSaleService $posSaleService;
     protected MultiSaleService $multiSaleService;
     protected SaleVoidService $saleVoidService;
     protected WhatsAppReceiptService $whatsAppService;
 
     public function __construct(
-        ?EmiBillScannerService $emiScannerService = null,
         ?PosSaleService $posSaleService = null,
         ?MultiSaleService $multiSaleService = null,
         ?SaleVoidService $saleVoidService = null,
         ?WhatsAppReceiptService $whatsAppService = null
     ) {
-        $this->emiScannerService = $emiScannerService ?? new EmiBillScannerService();
         $this->posSaleService = $posSaleService ?? new PosSaleService();
         $this->multiSaleService = $multiSaleService ?? new MultiSaleService();
         $this->saleVoidService = $saleVoidService ?? new SaleVoidService();
         $this->whatsAppService = $whatsAppService ?? new WhatsAppReceiptService();
     }
+
     /**
-     * Sales Hub — Niche-scoped sales list.
+     * Sales Hub — Accessories & parts sales register.
      */
     public function salesHub(Request $request)
     {
@@ -43,91 +40,29 @@ class SalesController extends BaseMobileShopController
         $niche     = $this->getUserNiche();
         $user      = auth()->user();
 
-        // Determine what this role can create
-        $canCreatePhones    = $user->can('create-sale-phones');
-        $canCreateSecondhand = $user->can('create-sale-secondhand');
-        $canCreateAccessories = $user->can('create-sale-accessories') || $user->hasRole('accessories-manager') || $user->hasRole('accessories-staff');
-        $canCreateCovers    = $user->can('create-sale-covers') || $user->hasRole('accessories-manager') || $user->hasRole('accessories-staff');
+        $canCreateAccessories = $user->can('create-sale-accessories') || $user->hasRole('accessories-manager') || $user->hasRole('accessories-staff') || $user->hasRole('admin') || $user->hasRole('store-admin');
+        $canCreateCovers      = $user->can('create-sale-covers') || $canCreateAccessories;
 
-        // Build niche-scoped sales list
-        $mobileSales = collect();
-        $accSales    = collect();
+        // Fetch itemized accessory sales
+        $query = DB::table('ms_accessory_sales')
+            ->leftJoin('ms_customers', 'ms_accessory_sales.customer_id', '=', 'ms_customers.id')
+            ->select('ms_accessory_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
+            ->where('ms_accessory_sales.company_id', $companyId)
+            ->where('ms_accessory_sales.status', '!=', 'voided');
 
-        switch ($niche) {
-            case 'phones':
-                $mobileSales = DB::table('ms_mobile_sales')
-                    ->join('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
-                    ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
-                    ->select('ms_mobile_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone',
-                             'ms_mobile_devices.brand', 'ms_mobile_devices.model', 'ms_mobile_devices.imei_1',
-                             'ms_mobile_devices.storage', 'ms_mobile_devices.color', 'ms_mobile_devices.ram',
-                             DB::raw("'new' as device_type"), DB::raw("'phone' as sale_niche"))
-                    ->where('ms_mobile_sales.company_id', $companyId)
-                    ->where('ms_mobile_devices.type', 'new')
-                    ->where('ms_mobile_sales.status', '!=', 'voided')
-                    ->orderBy('ms_mobile_sales.id', 'desc')->limit(150)->get();
-                break;
-
-            case 'secondhand':
-                $mobileSales = DB::table('ms_mobile_sales')
-                    ->join('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
-                    ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
-                    ->select('ms_mobile_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone',
-                             'ms_mobile_devices.brand', 'ms_mobile_devices.model', 'ms_mobile_devices.imei_1',
-                             'ms_mobile_devices.storage', 'ms_mobile_devices.color', 'ms_mobile_devices.ram',
-                             DB::raw("'second_hand' as device_type"), DB::raw("'secondhand' as sale_niche"))
-                    ->where('ms_mobile_sales.company_id', $companyId)
-                    ->where('ms_mobile_devices.type', 'second_hand')
-                    ->where('ms_mobile_sales.status', '!=', 'voided')
-                    ->orderBy('ms_mobile_sales.id', 'desc')->limit(150)->get();
-                break;
-
-            case 'accessories':
-                $accSales = DB::table('ms_accessory_sales')
-                    ->leftJoin('ms_customers', 'ms_accessory_sales.customer_id', '=', 'ms_customers.id')
-                    ->select('ms_accessory_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone',
-                             DB::raw("'accessory' as sale_niche"))
-                    ->where('ms_accessory_sales.company_id', $companyId)
-                    ->where('ms_accessory_sales.status', '!=', 'voided')
-                    ->orderBy('ms_accessory_sales.id', 'desc')->limit(150)->get();
-                break;
-
-            case 'covers':
-                $coverCats = $this->coverCategories;
-                $accSales = DB::table('ms_accessory_sales')
-                    ->leftJoin('ms_customers', 'ms_accessory_sales.customer_id', '=', 'ms_customers.id')
-                    ->select('ms_accessory_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone',
-                             DB::raw("'cover' as sale_niche"))
-                    ->where('ms_accessory_sales.company_id', $companyId)
-                    ->where('ms_accessory_sales.status', '!=', 'voided')
-                    ->whereExists(function($q) use ($coverCats) {
-                        $q->from('ms_accessory_sale_items')
-                          ->whereColumn('ms_accessory_sale_items.accessory_sale_id', 'ms_accessory_sales.id')
-                          ->join('ms_parts_inventory', 'ms_accessory_sale_items.part_id', '=', 'ms_parts_inventory.id')
-                          ->whereIn('ms_parts_inventory.category', $coverCats);
-                    })
-                    ->orderBy('ms_accessory_sales.id', 'desc')->limit(150)->get();
-                break;
-
-            default: // admin — all sales
-                $mobileSales = DB::table('ms_mobile_sales')
-                    ->join('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
-                    ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
-                    ->select('ms_mobile_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone',
-                             'ms_mobile_devices.brand', 'ms_mobile_devices.model', 'ms_mobile_devices.imei_1', 'ms_mobile_devices.type as device_type',
-                             'ms_mobile_devices.storage', 'ms_mobile_devices.color', 'ms_mobile_devices.ram')
-                    ->where('ms_mobile_sales.company_id', $companyId)
-                    ->where('ms_mobile_sales.status', '!=', 'voided')
-                    ->orderBy('ms_mobile_sales.id', 'desc')->limit(150)->get();
-                $accSales = DB::table('ms_accessory_sales')
-                    ->leftJoin('ms_customers', 'ms_accessory_sales.customer_id', '=', 'ms_customers.id')
-                    ->select('ms_accessory_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
-                    ->where('ms_accessory_sales.company_id', $companyId)
-                    ->where('ms_accessory_sales.status', '!=', 'voided')
-                    ->orderBy('ms_accessory_sales.id', 'desc')->limit(150)->get();
+        if ($niche === 'covers') {
+            $coverCats = $this->coverCategories;
+            $query->whereExists(function($q) use ($coverCats) {
+                $q->from('ms_accessory_sale_items')
+                  ->whereColumn('ms_accessory_sale_items.accessory_sale_id', 'ms_accessory_sales.id')
+                  ->join('ms_parts_inventory', 'ms_accessory_sale_items.part_id', '=', 'ms_parts_inventory.id')
+                  ->whereIn('ms_parts_inventory.category', $coverCats);
+            });
         }
 
-        // Attach line items to accessory sales for interactive line-item partial return modal
+        $accSales = $query->orderBy('ms_accessory_sales.id', 'desc')->limit(200)->get();
+
+        // Attach line items to accessory sales for return modal & item details
         if ($accSales->isNotEmpty()) {
             $saleIds = $accSales->pluck('id')->toArray();
             $allItems = DB::table('ms_accessory_sale_items')
@@ -142,64 +77,43 @@ class SalesController extends BaseMobileShopController
             }
         }
 
-        // Aggregated KPIs for page header (Cached for 60s to avoid full-table scans on every page load)
-        $kpiData = \Illuminate\Support\Facades\Cache::remember("ms_sales_kpis_{$companyId}_{$niche}", 60, function () use ($companyId, $niche, $mobileSales, $accSales) {
+        // Aggregated KPIs (Cached for 60s)
+        $kpiData = \Illuminate\Support\Facades\Cache::remember("ms_sales_kpis_{$companyId}_{$niche}", 60, function () use ($companyId) {
             $todayStart = now()->startOfDay();
             $monthStart = now()->startOfMonth();
 
-            if ($niche === 'admin') {
-                $todaySalesTotal = (float) (
-                    DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('created_at', '>=', $todayStart)->where('status', '!=', 'voided')->sum('total_amount')
-                    + DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('created_at', '>=', $todayStart)->where('status', '!=', 'voided')->sum('total_amount')
-                );
-
-                $monthSalesTotal = (float) (
-                    DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('created_at', '>=', $monthStart)->where('status', '!=', 'voided')->sum('total_amount')
-                    + DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('created_at', '>=', $monthStart)->where('status', '!=', 'voided')->sum('total_amount')
-                );
-            } else {
-                $todaySalesTotal = (float) ($mobileSales->sum('total_amount') + $accSales->sum('total_amount'));
-                $monthSalesTotal = $todaySalesTotal;
-            }
-
-            $stockDeviceCounts = DB::table('ms_mobile_devices')
+            $todaySalesTotal = (float) DB::table('ms_accessory_sales')
                 ->where('company_id', $companyId)
-                ->where('status', 'in_stock')
-                ->select('type', DB::raw('count(*) as c'))
-                ->groupBy('type')
-                ->pluck('c', 'type');
+                ->where('created_at', '>=', $todayStart)
+                ->where('status', '!=', 'voided')
+                ->sum('total_amount');
 
-            $availableNewPhones  = in_array($niche, ['admin', 'phones']) ? ($stockDeviceCounts['new'] ?? 0) : 0;
-            $availableSecondHand = in_array($niche, ['admin', 'secondhand']) ? ($stockDeviceCounts['second_hand'] ?? 0) : 0;
-            $availableParts      = in_array($niche, ['admin', 'accessories', 'covers'])
-                ? DB::table('ms_parts_inventory')->where('company_id', $companyId)->where('stock_qty', '>', 0)->count()
-                : 0;
+            $monthSalesTotal = (float) DB::table('ms_accessory_sales')
+                ->where('company_id', $companyId)
+                ->where('created_at', '>=', $monthStart)
+                ->where('status', '!=', 'voided')
+                ->sum('total_amount');
 
-            return compact('todaySalesTotal', 'monthSalesTotal', 'availableNewPhones', 'availableSecondHand', 'availableParts');
+            $availableParts = DB::table('ms_parts_inventory')
+                ->where('company_id', $companyId)
+                ->where('stock_qty', '>', 0)
+                ->sum('stock_qty');
+
+            return compact('todaySalesTotal', 'monthSalesTotal', 'availableParts');
         });
 
         $todaySalesTotal     = $kpiData['todaySalesTotal'];
         $monthSalesTotal     = $kpiData['monthSalesTotal'];
-        $availableNewPhones  = $kpiData['availableNewPhones'];
-        $availableSecondHand = $kpiData['availableSecondHand'];
         $availableParts      = $kpiData['availableParts'];
-        $salesCount          = $mobileSales->count() + $accSales->count();
+        $salesCount          = $accSales->count();
 
-        // Optimized picker data: cached and selecting only required fields to avoid hydrating massive tables
+        // Cached customer picker
         $customers = \Illuminate\Support\Facades\Cache::remember("ms_customers_picker_v2_{$companyId}", 120, function () use ($companyId) {
             return DB::table('ms_customers')
                 ->where('company_id', $companyId)
                 ->select('id', 'name', 'phone', 'gstin', 'address', 'udhari_balance')
                 ->orderBy('name')
                 ->limit(300)
-                ->get();
-        });
-
-        $partsList = \Illuminate\Support\Facades\Cache::remember("ms_parts_picker_v2_{$companyId}", 60, function () use ($companyId) {
-            return DB::table('ms_parts_inventory')
-                ->where('company_id', $companyId)
-                ->where('stock_qty', '>', 0)
-                ->select('id', 'name', 'category', 'compatible_model', 'selling_price', 'stock_qty')
                 ->get();
         });
 
@@ -211,52 +125,22 @@ class SalesController extends BaseMobileShopController
                 ->get();
         });
 
-        $secondHandPhones = \Illuminate\Support\Facades\Cache::remember("ms_sh_picker_{$companyId}", 60, function () use ($companyId) {
-            return DB::table('ms_mobile_devices')
-                ->where('company_id', $companyId)
-                ->where('type', 'second_hand')
-                ->where('status', 'in_stock')
-                ->select('id', 'brand', 'model', 'imei_1', 'selling_price')
-                ->orderBy('brand')
-                ->orderBy('model')
-                ->get();
-        });
-
         $isOwner = $this->isOwner();
 
         return view('mobileshop.sales', compact(
-            'niche', 'mobileSales', 'accSales', 'isOwner',
-            'canCreatePhones', 'canCreateSecondhand', 'canCreateAccessories', 'canCreateCovers',
+            'niche', 'accSales', 'isOwner',
+            'canCreateAccessories', 'canCreateCovers',
             'todaySalesTotal', 'monthSalesTotal', 'salesCount',
-            'availableNewPhones', 'availableSecondHand', 'availableParts', 'customers', 'partsList', 'categories', 'secondHandPhones'
+            'availableParts', 'customers', 'categories'
         ));
     }
 
     /**
-     * Panel 1: New Phones POS Screen — Redirects to Unified Sales Registration
+     * Counter POS Screen — Redirects to Accessories POS
      */
     public function pos()
     {
-        return redirect()->route('mobileshop.sales.create');
-    }
-
-    /**
-     * AI-Powered OCR Scan for EMI Slips, Delivery Challans & Invoices (Gemini 1.5 Flash)
-     */
-    public function scanEmiBill(Request $request)
-    {
-        Gate::authorize('sale.viewAny');
-
-        $request->validate([
-            'bill_image' => 'required|file|mimes:jpeg,png,jpg,webp,pdf,heic|max:10240',
-        ]);
-
-        $companyId = $this->getCompanyId();
-        $result = $this->emiScannerService->scan($request, $companyId);
-        $statusCode = $result['status_code'] ?? 200;
-        unset($result['status_code']);
-
-        return response()->json($result, $statusCode);
+        return redirect()->route('mobileshop.accessories.pos');
     }
 
     /**
@@ -387,29 +271,11 @@ class SalesController extends BaseMobileShopController
     }
 
     /**
-     * Sale Registration Page — full page, multi-device selection
+     * Sale Registration Page — Redirects to Accessories POS
      */
     public function saleCreate()
     {
-        Gate::authorize('sale.create');
-
-        $companyId = $this->getCompanyId();
-        $inStockDevices = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('type', 'new')
-            ->where('status', 'in_stock')
-            ->orderBy('brand')->orderBy('model')
-            ->get();
-        $customers = DB::table('ms_customers')->where('company_id', $companyId)->orderBy('name')->get();
-        $emiProviders = DB::table('ms_emi_providers')->where('company_id', $companyId)->where('enabled', 1)->get();
-        $giftInventory = DB::table('ms_parts_inventory')
-            ->where('company_id', $companyId)
-            ->where('stock_qty', '>', 0)
-            ->select('id', 'name', 'category', 'brand', 'unit_cost', 'selling_price', 'stock_qty')
-            ->orderBy('name')
-            ->get();
-
-        return view('mobileshop.sales_create', compact('inStockDevices', 'customers', 'emiProviders', 'giftInventory'));
+        return redirect()->route('mobileshop.accessories.pos');
     }
 
     /**

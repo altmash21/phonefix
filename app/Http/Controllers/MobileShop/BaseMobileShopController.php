@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 abstract class BaseMobileShopController extends Controller
 {
     /**
-     * Cover-staff category filter — back covers + tempered glass only.
+     * Accessories categories filter — back covers + tempered glass.
      */
     protected $coverCategories = ['back_cover', 'back_panel', 'tempered_glass'];
 
@@ -236,17 +236,14 @@ abstract class BaseMobileShopController extends Controller
 
     /**
      * Resolve which niche a user belongs to.
-     * Returns: 'admin' | 'phones' | 'secondhand' | 'accessories' | 'covers' | 'repairs' | 'none'
+     * Returns: 'admin' | 'accessories' | 'repairs' | 'none'
      */
     protected function getUserNiche(): string
     {
         $user = auth()->user();
         if (!$user) return 'none';
         if ($user->hasRole('store-admin') || $user->hasRole('admin')) return 'admin';
-        if ($user->hasRole('sales-staff'))       return 'phones';
-        if ($user->hasRole('secondhand-staff'))  return 'secondhand';
         if ($user->hasRole('accessories-staff') || $user->hasRole('accessories-manager')) return 'accessories';
-        if ($user->hasRole('cover-staff'))       return 'covers';
         if ($user->hasRole('repair-technician')) return 'repairs';
         return 'none';
     }

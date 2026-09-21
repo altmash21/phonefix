@@ -2,11 +2,8 @@
 
 @php
     $purchasePageTitle = match($niche ?? 'admin') {
-        'phones'      => 'New Phones Purchase',
-        'secondhand'  => 'Buyback & Pre-Owned Intake',
         'accessories' => 'Accessories & Parts Restock',
-        'covers'      => 'Cover & Tempered Glass Restock',
-        'repairs'     => 'Parts Consumption',
+        'repairs'     => 'Parts Intake & Consumption',
         default       => 'Purchase & Stock Inflow Hub',
     };
 @endphp
@@ -16,28 +13,14 @@
 
 @section('page-actions')
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        @if($canAddPhones ?? false)
-        <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-primary btn-sm">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> Purchase New Phone
+        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-primary btn-sm" style="color: #fff; background: var(--color-primary); border-color: var(--color-primary);">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Restock Accessories &amp; Spare Parts
         </a>
-        @endif
-        @if($canAddSecondhand ?? false)
-        <button type="button" onclick="openPurchaseBuybackModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Purchase Second Hand Phone
-        </button>
-        @endif
-        @if(($canAddAccessories ?? false) || ($canAddCovers ?? false))
-        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-outline btn-sm" style="color: #7C3AED; border-color: #DDD6FE;">
-            <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Purchase Accessories & Covers
-        </a>
-        @endif
-        @if(($isAdmin ?? false) || ($canAddPhones ?? false) || auth()->user()->hasRole('sales-staff') || auth()->user()->can('read-mobileshop-procurement'))
+        @if(($isAdmin ?? false) || auth()->user()->hasRole('store-admin') || auth()->user()->can('read-mobileshop-procurement'))
         <button type="button" onclick="openPaymentModal({{ $suppliers->first()->id ?? 0 }}, '{{ addslashes($suppliers->first()->name ?? 'Primary Supplier') }}')" class="btn btn-outline btn-sm">
             <i data-lucide="wallet" style="width:14px;height:14px;"></i> Supplier Payment / Advance
         </button>
-        <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm" style="color:#2563EB; border-color:#BFDBFE;">
-            <i data-lucide="building-2" style="width:14px;height:14px;"></i> EMI Ledger
-        </a>
+
         @endif
     </div>
 @endsection
@@ -76,13 +59,11 @@
             gap: 10px !important;
         }
         /* Mobile Bottom-sheet styling for inline modals */
-        #purchaseBuybackModal,
         #paymentModal,
         #editSupplierModal {
             align-items: flex-end !important;
             padding: 0 !important;
         }
-        #purchaseBuybackModal .card,
         #paymentModal .card,
         #editSupplierModal .card {
             max-width: 100% !important;
@@ -275,36 +256,6 @@
         <div class="filter-bar purchase-filter-toolbar">
             <!-- Category & Date Rail -->
             <div class="pills-scroll-rail purchase-pills-rail">
-                <!-- Categories (Scoped to User Permissions & Niche) -->
-                @php
-                    $showPhonePill = $isAdmin || ($canAddPhones ?? false) || ($niche ?? '') === 'phones';
-                    $showPartsPill = $isAdmin || ($canAddAccessories ?? false) || ($canAddCovers ?? false) || in_array($niche ?? '', ['accessories', 'covers']);
-                    $showBuybackPill = $isAdmin || ($canAddSecondhand ?? false) || ($niche ?? '') === 'secondhand';
-                    $availablePillCount = ($showPhonePill ? 1 : 0) + ($showPartsPill ? 1 : 0) + ($showBuybackPill ? 1 : 0);
-                @endphp
-
-                @if($availablePillCount > 1)
-                    <button type="button" onclick="setPurchaseTypeFilter('all')" id="btnPoFilterAll" class="filter-pill purchase-pill active">
-                        All ({{ count($purchaseInvoices) }})
-                    </button>
-                    @if($showPhonePill)
-                    <button type="button" onclick="setPurchaseTypeFilter('phones')" id="btnPoFilterPhones" class="filter-pill purchase-pill">
-                        📱 Phones ({{ $purchaseInvoices->filter(fn($i) => str_contains($i->po_number, 'PHONES') || str_contains($i->po_number, 'PO-2026'))->count() }})
-                    </button>
-                    @endif
-                    @if($showPartsPill)
-                    <button type="button" onclick="setPurchaseTypeFilter('accessories')" id="btnPoFilterAccessories" class="filter-pill purchase-pill">
-                        📦 Parts ({{ $purchaseInvoices->filter(fn($i) => str_contains($i->po_number, 'INV-') || str_contains($i->po_number, 'RESTOCK'))->count() }})
-                    </button>
-                    @endif
-                    @if($showBuybackPill)
-                    <button type="button" onclick="setPurchaseTypeFilter('buyback')" id="btnPoFilterBuyback" class="filter-pill purchase-pill">
-                        🔄 Buybacks ({{ $purchaseInvoices->filter(fn($i) => str_contains($i->po_number, 'BUYBACK'))->count() }})
-                    </button>
-                    @endif
-                    <div style="width:1px; height:18px; background:var(--color-hairline); margin:0 4px; flex-shrink:0;"></div>
-                @endif
-
                 <!-- Date Presets -->
                 <button type="button" onclick="setPurchaseDatePreset('all')" id="purchaseDateBtn_all" class="filter-pill purchase-pill purchase-date-pill active">All Time</button>
                 <button type="button" onclick="setPurchaseDatePreset('today')" id="purchaseDateBtn_today" class="filter-pill purchase-pill purchase-date-pill">Today</button>
@@ -343,14 +294,12 @@
                         $poType = 'accessories';
                         $badgeLabel = 'Wholesale Parts';
                         $badgeClass = 'badge-blue';
-                        if (str_contains($inv->po_number, 'PHONES') || str_contains($inv->po_number, 'PO-2026')) {
-                            $poType = 'phones';
-                            $badgeLabel = '📱 Smartphones';
-                            $badgeClass = 'badge-green';
-                        } elseif (str_contains($inv->po_number, 'BUYBACK')) {
-                            $poType = 'buyback';
-                            $badgeLabel = '🔄 Buyback';
+                        if (str_contains($inv->po_number, 'PARTS') || str_contains($inv->po_number, 'SPARE')) {
+                            $badgeLabel = '🛠️ Spare Parts';
                             $badgeClass = 'badge-purple';
+                        } else {
+                            $badgeLabel = '📦 Accessories';
+                            $badgeClass = 'badge-green';
                         }
 
                         // Preview text of first 2 items
@@ -449,16 +398,14 @@
                         $badgeLabel = 'Parts';
                         $badgeBg = '#EFF6FF';
                         $badgeColor = '#1D4ED8';
-                        if (str_contains($inv->po_number, 'PHONES') || str_contains($inv->po_number, 'PO-2026')) {
-                            $poType = 'phones';
-                            $badgeLabel = 'Phones';
-                            $badgeBg = '#DCFCE7';
-                            $badgeColor = '#15803D';
-                        } elseif (str_contains($inv->po_number, 'BUYBACK')) {
-                            $poType = 'buyback';
-                            $badgeLabel = 'Buyback';
+                        if (str_contains($inv->po_number, 'PARTS') || str_contains($inv->po_number, 'SPARE')) {
+                            $badgeLabel = 'Spare Parts';
                             $badgeBg = '#F5F3FF';
                             $badgeColor = '#7C3AED';
+                        } else {
+                            $badgeLabel = 'Accessories';
+                            $badgeBg = '#DCFCE7';
+                            $badgeColor = '#15803D';
                         }
 
                         $itemPreviews = $inv->items->take(2)->map(function($i) {
@@ -543,24 +490,10 @@
     <!-- Mobile Floating Action Button (FAB) — Quick Stock Entry -->
     <div class="mobile-fab-container">
         <div id="purchaseFabMenu" class="fab-dropup-menu" style="display: none;">
-            @if(($isAdmin ?? false) || ($canAddPhones ?? false))
-            <a href="{{ route('mobileshop.purchase.create') }}" class="fab-menu-item" style="color: #4338CA; text-decoration:none;">
-                <i data-lucide="truck" style="width:16px;height:16px;"></i>
-                <span>Purchase New Phone</span>
+            <a href="{{ route('mobileshop.accessories.purchase') }}" class="fab-menu-item" style="color: var(--color-primary); text-decoration:none;">
+                <i data-lucide="plus" style="width:16px;height:16px;"></i>
+                <span>Restock Accessories &amp; Parts</span>
             </a>
-            @endif
-            @if(($isAdmin ?? false) || ($canAddAccessories ?? false) || ($canAddCovers ?? false))
-            <a href="{{ route('mobileshop.accessories.purchase') }}" class="fab-menu-item" style="color: #7C3AED; text-decoration:none;">
-                <i data-lucide="sparkles" style="width:16px;height:16px;"></i>
-                <span>Purchase Accessories & Covers</span>
-            </a>
-            @endif
-            @if(($isAdmin ?? false) || ($canAddSecondhand ?? false))
-            <button type="button" class="fab-menu-item" style="color: #EA580C;" onclick="closePurchaseFabMenu(); openPurchaseBuybackModal();">
-                <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
-                <span>Purchase Second Hand Phone</span>
-            </button>
-            @endif
         </div>
         <button type="button" class="btn-purchase-fab" onclick="togglePurchaseFabMenu(event)" title="Quick Actions">
             <i data-lucide="plus" id="purchaseFabIcon" style="width:22px;height:22px;transition:transform 0.2s ease;"></i>
@@ -798,106 +731,7 @@
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════════════════════ --}}
-    {{-- PURCHASE-PAGE INLINE MODAL: Customer Device Buyback --}}
-    {{-- ══════════════════════════════════════════════════════════ --}}
-    <div id="purchaseBuybackModal" style="display:none; position: fixed; inset: 0; z-index: 1300; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
-        <div class="card" style="max-width: 540px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
-            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
-                <div class="card-title" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
-                    <i data-lucide="refresh-cw" style="width:18px;height:18px;color:#EA580C;"></i>
-                    Customer Device Buyback Intake
-                </div>
-                <button type="button" onclick="closePurchaseBuybackModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
-            </div>
-            <div class="card-body" style="padding:16px 18px;">
-                <form action="{{ route('mobileshop.second_hand.buyback') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" name="redirect_to" value="{{ route('mobileshop.purchase') }}">
 
-                    <div style="margin-bottom: 14px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:10px; padding:12px; text-align:center;">
-                        <div id="pBBPhotoPreviewBox" style="display:none; margin-bottom:8px;">
-                            <img id="pBBPreviewImg" src="" alt="Preview" style="max-height:100px; border-radius:8px; object-fit:contain; border:1px solid #E2E8F0;">
-                        </div>
-                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; font-weight:700; color:#EA580C; background:#FFF7ED; padding:6px 14px; border-radius:8px; border:1px solid #FED7AA;">
-                            <i data-lucide="camera" style="width:14px;height:14px;"></i> Upload Device Photo
-                            <input type="file" name="photo" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'pBBPreviewImg', 'pBBPhotoPreviewBox')">
-                        </label>
-                    </div>
-
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Brand *</label>
-                            <input type="text" name="brand" placeholder="e.g. Apple" required class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Model *</label>
-                            <input type="text" name="model" placeholder="e.g. iPhone 13 Pro" required class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-row modal-form-grid-3" style="margin-bottom: 12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Color</label>
-                            <input type="text" name="color" placeholder="Blue" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Storage</label>
-                            <input type="text" name="storage" placeholder="128GB" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Battery %</label>
-                            <input type="number" name="battery_health" placeholder="88" inputmode="numeric" class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">IMEI 1 *</label>
-                        <input type="text" name="imei_1" placeholder="15-digit IMEI" required inputmode="numeric" class="form-control" style="font-family:monospace; font-weight:700; font-size:13px;">
-                    </div>
-
-                    <div class="form-row modal-form-grid-2" style="margin-bottom: 12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Buyback Cost (₹) *</label>
-                            <input type="number" step="0.01" name="purchase_cost" placeholder="42000" required inputmode="decimal" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Resale Price (₹) *</label>
-                            <input type="number" step="0.01" name="selling_price" placeholder="54999" required inputmode="decimal" class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Condition Grade *</label>
-                        <select name="condition_grade" class="form-control" style="font-size:13px;">
-                            <option value="like_new_A_plus">Grade A+ (Pristine / Like New)</option>
-                            <option value="good_A">Grade A (Minor Micro-Scratches)</option>
-                            <option value="fair_B">Grade B (Noticeable Wear / 100% Functional)</option>
-                        </select>
-                    </div>
-
-                    <div style="padding: 12px; background: #FFF7ED; border: 1px solid #FED7AA; border-radius:10px; margin-bottom: 12px;">
-                        <div style="font-size:11px; font-weight:800; color:#C2410C; margin-bottom: 8px; text-transform:uppercase;">Customer KYC / Seller Info</div>
-                        <div class="form-row modal-form-grid-2" style="margin-bottom: 8px;">
-                            <input type="text" name="customer_buyback_name" placeholder="Customer Name *" required class="form-control" style="font-size:12px;">
-                            <input type="text" name="customer_buyback_phone" placeholder="Customer Phone *" required inputmode="tel" class="form-control" style="font-size:12px;">
-                        </div>
-                        <input type="text" name="customer_buyback_id_proof" placeholder="Aadhaar / ID Details (Optional)" class="form-control" style="font-size:12px;">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:14px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Inspection Remarks</label>
-                        <textarea name="checklist_notes" rows="2" placeholder="e.g. Original display, FaceID verified" class="form-control" style="font-size:12px;"></textarea>
-                    </div>
-
-                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
-                        <button type="button" onclick="closePurchaseBuybackModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Purchase Second Hand Phone</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
 
 
@@ -918,7 +752,7 @@
 
     const companyId = {{ json_encode(company_id()) }};
     function openBulkRestockModal() {
-        window.location.href = "{{ route('mobileshop.purchase.create') }}";
+        window.location.href = "{{ route('mobileshop.accessories.purchase') }}";
     }
 
     function closeBulkRestockModal() {
@@ -955,47 +789,9 @@
         }
     });
 
-    function openPurchaseBuybackModal() {
-        var modal = document.getElementById('purchaseBuybackModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            if (window.refreshIcons) window.refreshIcons();
-        }
-    }
-    function closePurchaseBuybackModal() {
-        var modal = document.getElementById('purchaseBuybackModal');
-        if (modal) modal.style.display = 'none';
-    }
-
-    function previewSelectedPhoto(input, imgId, boxId) {
-        if (!input || !input.files || !input.files[0]) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            var img = document.getElementById(imgId);
-            var box = document.getElementById(boxId);
-            if (img) img.src = e.target.result;
-            if (box) box.style.display = 'block';
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-    window.previewSelectedPhoto = window.previewSelectedPhoto || previewSelectedPhoto;
-
-    // Close purchase inline modals on backdrop click
-    ['purchaseBuybackModal'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('click', function(e) {
-                if (e.target === el) {
-                    el.style.display = 'none';
-                }
-            });
-        }
-    });
-
     // Close purchase inline modals and FAB menu on Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            closePurchaseBuybackModal();
             closeViewPurchaseModal();
             closePurchaseFabMenu();
         }
@@ -1111,14 +907,10 @@
     function setPurchaseTypeFilter(type) {
         activePoTypeFilter = type;
         document.getElementById('btnPoFilterAll')?.classList.remove('active');
-        document.getElementById('btnPoFilterPhones')?.classList.remove('active');
         document.getElementById('btnPoFilterAccessories')?.classList.remove('active');
-        document.getElementById('btnPoFilterBuyback')?.classList.remove('active');
 
         if (type === 'all') document.getElementById('btnPoFilterAll')?.classList.add('active');
-        else if (type === 'phones') document.getElementById('btnPoFilterPhones')?.classList.add('active');
         else if (type === 'accessories') document.getElementById('btnPoFilterAccessories')?.classList.add('active');
-        else if (type === 'buyback') document.getElementById('btnPoFilterBuyback')?.classList.add('active');
 
         filterPurchaseTables();
     }

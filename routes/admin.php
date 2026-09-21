@@ -102,52 +102,39 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('otp/verify', 'MobileShop\MastersController@verifyOtpEndpoint')
         ->name('otp.verify');
 
-    // ── FULL-PAGE REGISTRATION (Sale / Purchase / EMI Ledger) ──
-    Route::get('purchase/create', 'MobileShop\PurchaseController@purchaseCreate')
-        ->middleware('permission:read-mobileshop-purchase')
+    // ── FULL-PAGE REGISTRATION (Sale / Purchase) ──
+    Route::get('purchase/create', fn() => redirect()->route('mobileshop.accessories.purchase'))
         ->name('purchase.create');
     Route::post('purchase/store-bulk', 'MobileShop\PurchaseController@storeBulkPurchase')
-        ->middleware('permission:create-purchase-phones|create-purchase-secondhand|create-purchase-accessories|create-purchase-covers')
+        ->middleware('permission:create-purchase-accessories|create-purchase-covers')
         ->name('purchase.store_bulk');
     Route::post('purchase/scan-invoice', 'MobileShop\PurchaseController@scanPurchaseInvoice')
-        ->middleware('permission:read-mobileshop-purchase|create-purchase-phones|create-purchase-secondhand|create-purchase-accessories|create-purchase-covers')
+        ->middleware('permission:read-mobileshop-purchase|create-purchase-accessories|create-purchase-covers')
         ->name('purchase.scan_invoice');
-    Route::get('sales/create', 'MobileShop\SalesController@saleCreate')
-        ->middleware('permission:read-mobileshop-sales')
+    Route::get('sales/create', fn() => redirect()->route('mobileshop.accessories.pos'))
         ->name('sales.create');
     Route::post('sales/store-multi', 'MobileShop\SalesController@storeMultiSale')
-        ->middleware('permission:create-sale-phones|create-sale-secondhand|create-sale-accessories|create-sale-covers')
+        ->middleware('permission:create-sale-accessories|create-sale-covers')
         ->name('sales.store_multi');
-    Route::get('emi-ledger', 'MobileShop\EmiController@emiLedger')
-        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
-        ->name('emi.ledger');
-    Route::post('emi-ledger/provider', 'MobileShop\EmiController@storeEmiProvider')
-        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
-        ->name('emi.provider.store');
-    Route::post('emi-ledger/deposit', 'MobileShop\EmiController@recordEmiDeposit')
-        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase')
-        ->name('emi.deposit');
-    Route::post('emi-ledger/provider/update', 'MobileShop\EmiController@updateEmiProvider')
-        ->middleware('permission:read-mobileshop-sales|read-mobileshop-purchase|read-mobileshop-masters|read-admin-panel')
-        ->name('emi.provider.update');
+
 
     // ── PURCHASE ACTIONS (niche-gated) ──
     Route::post('purchase/store', 'MobileShop\PurchaseController@storePurchase')
-        ->middleware('permission:create-purchase-phones|create-purchase-secondhand|create-purchase-accessories|create-purchase-covers')
+        ->middleware('permission:create-purchase-accessories|create-purchase-covers')
         ->name('purchase.store');
 
     // ── SALES ACTIONS (niche-gated) ──
     Route::post('sales/store', 'MobileShop\SalesController@storeSale')
-        ->middleware('permission:create-sale-phones|create-sale-secondhand|create-sale-accessories|create-sale-covers')
+        ->middleware('permission:create-sale-accessories|create-sale-covers')
         ->name('sales.store');
 
     // ── STOCK ACTIONS (niche-gated) ──
     Route::post('stock/store', 'MobileShop\StockController@storeStock')
-        ->middleware('permission:manage-stock-phones|manage-stock-secondhand|manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
+        ->middleware('permission:manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
         ->name('stock.store');
 
     Route::post('stock/{id}/update', 'MobileShop\StockController@updateStock')
-        ->middleware('permission:manage-stock-phones|manage-stock-secondhand|manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
+        ->middleware('permission:manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
         ->name('stock.update');
 
     Route::get('stock/history/{type}/{id}', 'MobileShop\StockController@getStockHistory')
@@ -155,10 +142,10 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->name('stock.history');
 
     Route::post('stock/delete', 'MobileShop\StockController@deleteStockItem')
-        ->middleware('permission:manage-stock-phones|manage-stock-secondhand|manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
+        ->middleware('permission:manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
         ->name('stock.delete');
     Route::post('stock/delete/request-otp', 'MobileShop\StockController@requestStockDeleteOtp')
-        ->middleware('permission:manage-stock-phones|manage-stock-secondhand|manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
+        ->middleware('permission:manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
         ->name('stock.delete.request_otp');
 
     // ── INVOICE / RECEIPT VIEWER & PDF EXPORT ──
@@ -196,34 +183,7 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:void-mobileshop-sales')
         ->name('sales.void');
 
-    // ── LEGACY PANEL ROUTES (kept for backward compat with existing views/links) ──
-    Route::get('pos', 'MobileShop\SalesController@pos')
-        ->middleware('permission:read-mobileshop-pos')
-        ->name('pos');
-    Route::post('pos/sale', 'MobileShop\SalesController@processSale')
-        ->middleware('permission:create-mobileshop-pos')
-        ->name('pos.sale');
-    Route::post('pos/scan-emi-bill', 'MobileShop\SalesController@scanEmiBill')
-        ->middleware('permission:read-mobileshop-pos|create-mobileshop-pos|create-sale-phones|read-mobileshop-sales')
-        ->name('pos.scan_emi_bill');
-    Route::get('new-mobiles', 'MobileShop\StockController@newMobiles')
-        ->middleware('permission:read-mobileshop-new')
-        ->name('new_mobiles');
-    Route::post('new-mobiles/store', 'MobileShop\StockController@storeNewMobile')
-        ->middleware('permission:create-mobileshop-pos|read-mobileshop-new')
-        ->name('new_mobiles.store');
-    Route::get('second-hand', 'MobileShop\StockController@secondHand')
-        ->middleware('permission:read-mobileshop-secondhand')
-        ->name('second_hand');
-    Route::get('second-hand/pos', 'MobileShop\StockController@secondHandPos')
-        ->middleware('permission:sell-mobileshop-secondhand|read-mobileshop-secondhand|read-mobileshop-sales|read-admin-panel')
-        ->name('second_hand.pos');
-    Route::post('second-hand/buyback', 'MobileShop\StockController@storeSecondHand')
-        ->middleware('permission:create-mobileshop-secondhand')
-        ->name('second_hand.buyback');
-    Route::post('second-hand/sale', 'MobileShop\StockController@sellSecondHand')
-        ->middleware('permission:sell-mobileshop-secondhand')
-        ->name('second_hand.sale');
+    // ── ACCESSORIES & SERVICES MODULES ──
 
     Route::get('accessories/pos', 'MobileShop\AccessoriesController@counterPos')
         ->middleware('permission:sell-mobileshop-accessories|create-sale-accessories|create-mobileshop-accessories|read-mobileshop-sales|read-mobileshop-accessories|read-admin-panel')

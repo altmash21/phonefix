@@ -3,14 +3,11 @@
 @php
     // Niche-aware page title and action button
     $nicheTitles = [
-        'admin'       => 'Store Dashboard — All Niches',
-        'phones'      => 'New Phones Dashboard',
-        'secondhand'  => 'Pre-Owned & Buyback Dashboard',
+        'admin'       => 'Store Dashboard — Accessories & Repairs',
         'accessories' => 'Accessories & Parts Dashboard',
-        'covers'      => 'Back Cover & Tempered Dashboard',
-        'repairs'     => 'Service Desk Dashboard',
+        'repairs'     => 'Service Desk & Repair Dashboard',
     ];
-    $nicheTitle = $nicheTitles[$niche ?? 'admin'] ?? 'Dashboard';
+    $nicheTitle = $nicheTitles[$niche ?? 'admin'] ?? 'Store Dashboard';
 @endphp
 
 @section('title', $nicheTitle . ' — Maurya Mobile ERP')
@@ -30,52 +27,19 @@
                 <i data-lucide="chevron-down" style="width:12px;height:12px; opacity:0.8;"></i>
             </button>
             <div id="new-action-menu">
-                @if(auth()->user()->can('create-sale-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.sales.create') }}" class="dropdown-item-link" style="font-weight:600; color:var(--color-primary);">
-                    <i data-lucide="plus-circle" style="width:15px;height:15px;color:var(--color-primary);"></i> Sell New Phone
+                @if(auth()->user()->can('create-sale-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff'))
+                <a href="{{ route('mobileshop.accessories.pos') }}" class="dropdown-item-link" style="font-weight:600; color:var(--color-primary);">
+                    <i data-lucide="zap" style="width:15px;height:15px;color:var(--color-primary);"></i> Accessories Counter POS
                 </a>
                 @endif
-                @if(auth()->user()->can('create-purchase-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.purchase.create') }}" class="dropdown-item-link" style="font-weight:600; color:#16A34A;">
-                    <i data-lucide="truck" style="width:15px;height:15px;color:#16A34A;"></i> Purchase New Phone
-                </a>
-                @endif
-                @if(auth()->user()->can('create-sale-accessories') || auth()->user()->can('create-sale-covers') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.sales') }}" class="dropdown-item-link">
-                    <i data-lucide="zap" style="width:15px;height:15px;"></i> Sell Accessories
-                </a>
-                @endif
-                @if(auth()->user()->can('create-sale-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.sales') }}" class="dropdown-item-link">
-                    <i data-lucide="repeat" style="width:15px;height:15px;"></i> Sell Second Hand Phone
-                </a>
-                @endif
-                @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.emi.ledger') }}" class="dropdown-item-link">
-                    <i data-lucide="building-2" style="width:15px;height:15px;color:#2563EB;"></i> EMI Finance Ledger
-                </a>
-                <a href="{{ route('mobileshop.purchase') }}" class="dropdown-item-link">
-                    <i data-lucide="file-text" style="width:15px;height:15px;"></i> Supplier Purchase & Ledger
-                </a>
-                @endif
-                @if(auth()->user()->can('create-purchase-phones') || auth()->user()->can('manage-stock-phones') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.purchase.create') }}" class="dropdown-item-link">
-                    <i data-lucide="smartphone" style="width:15px;height:15px;"></i> Purchase New Phone
-                </a>
-                @endif
-                @if(auth()->user()->can('create-purchase-secondhand') || auth()->user()->can('manage-stock-secondhand') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
-                <a href="{{ route('mobileshop.stock', ['tab' => 'second_hand']) }}" class="dropdown-item-link">
-                    <i data-lucide="repeat" style="width:15px;height:15px;"></i> Purchase Second Hand Phone
-                </a>
-                @endif
-                @if(auth()->user()->can('create-purchase-accessories') || auth()->user()->can('create-purchase-covers') || auth()->user()->can('manage-stock-accessories') || auth()->user()->can('manage-stock-covers') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                @if(auth()->user()->can('create-purchase-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff'))
                 <a href="{{ route('mobileshop.accessories.purchase') }}" class="dropdown-item-link">
-                    <i data-lucide="headphones" style="width:15px;height:15px;"></i> Purchase Accessories & Covers
+                    <i data-lucide="headphones" style="width:15px;height:15px;color:#16A34A;"></i> Restock Accessories & Parts
                 </a>
                 @endif
-                @if(auth()->user()->can('manage-stock-repairs') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))
+                @if(auth()->user()->can('manage-stock-repairs') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('repair-technician'))
                 <a href="{{ route('mobileshop.repairs') }}" class="dropdown-item-link" style="border-top:1px solid var(--color-card-border); margin-top:4px; padding-top:8px;">
-                    <i data-lucide="wrench" style="width:15px;height:15px;"></i> New Repair Job
+                    <i data-lucide="wrench" style="width:15px;height:15px;color:#2563EB;"></i> New Repair Job Sheet
                 </a>
                 @endif
             </div>
@@ -373,7 +337,7 @@
                 <div class="kpi-num">{{ number_format($statBuybackReturns ?? 0) }}</div>
             </div>
             <div>
-                <div class="kpi-label">Returns / Buybacks</div>
+                <div class="kpi-label">Customer Returns</div>
             </div>
         </div>
         <div class="kpi-card">
@@ -498,7 +462,7 @@
                     <i data-lucide="receipt" style="width:14px;height:14px;color:var(--color-primary);"></i>
                     <span>Recent Sales Invoices</span>
                 </div>
-                <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-xs">+ Sell New Phone</a>
+                <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-primary btn-xs">+ Sell Accessories</a>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
                 <table class="data-table" style="margin:0; border:none;">

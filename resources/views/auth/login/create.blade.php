@@ -139,6 +139,34 @@
                 <span id="login-success-text">Authorized! Redirecting to station...</span>
             </div>
 
+            <!-- 3-Station Quick Terminal Selector -->
+            <div class="space-y-1.5 pt-1">
+                <div class="flex items-center justify-between text-[11px] text-slate-500 font-semibold px-0.5">
+                    <span>Quick Select Terminal:</span>
+                    <span class="text-[10px] text-teal-700 font-bold">1-Click Auto Fill</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="fillCreds('admin@mobitrack.local', 'admin123', 'Store Admin')"
+                            class="p-2 text-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50 hover:border-teal-400 transition-all cursor-pointer">
+                        <div class="text-base">👑</div>
+                        <div class="text-[11px] font-bold text-slate-800">Store Admin</div>
+                        <div class="text-[9px] text-slate-400">Master</div>
+                    </button>
+                    <button type="button" onclick="fillCreds('accessories@mobitrack.local', 'acc123', 'Accessories')"
+                            class="p-2 text-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50 hover:border-teal-400 transition-all cursor-pointer">
+                        <div class="text-base">⚡</div>
+                        <div class="text-[11px] font-bold text-slate-800">Accessories</div>
+                        <div class="text-[9px] text-slate-400">POS & Stock</div>
+                    </button>
+                    <button type="button" onclick="fillCreds('repair@mobitrack.local', 'repair123', 'Repair Desk')"
+                            class="p-2 text-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50 hover:border-teal-400 transition-all cursor-pointer">
+                        <div class="text-base">🔧</div>
+                        <div class="text-[11px] font-bold text-slate-800">Repair Desk</div>
+                        <div class="text-[9px] text-slate-400">Job Sheets</div>
+                    </button>
+                </div>
+            </div>
+
             <!-- Login Form -->
             <form id="loginForm" method="POST" action="{{ route('login.store') }}" class="space-y-3.5 pt-1">
                 @csrf

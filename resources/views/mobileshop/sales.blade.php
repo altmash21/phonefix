@@ -2,11 +2,8 @@
 
 @php
     $salesPageTitle = match($niche ?? 'admin') {
-        'phones'      => 'New Phone Sales',
-        'secondhand'  => 'Pre-Owned Sales',
-        'accessories' => 'Accessories Sales',
-        'covers'      => 'Back Cover & Tempered Sales',
-        'repairs'     => 'Completed Repairs',
+        'accessories' => 'Accessories Sales Hub',
+        'repairs'     => 'Completed Repairs Hub',
         default       => 'Sales Hub & Invoice Register',
     };
 @endphp
@@ -16,29 +13,10 @@
 
 @section('page-actions')
     <div class="flex items-center gap-2 flex-wrap">
-        @if($canCreatePhones ?? false)
-        <a href="{{ route('mobileshop.sales.create') }}" class="btn btn-primary btn-sm">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell New Phone</span><span class="mobile-btn-label">Sell New Phone</span>
+        <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-primary btn-sm">
+            <i data-lucide="zap" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Accessories</span><span class="mobile-btn-label">Sell Accessories</span>
         </a>
-        @endif
-        @if($canCreateAccessories ?? false)
-        <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-outline btn-sm">
-            <i data-lucide="zap" style="width:13px;height:13px; color:#2563EB;"></i> <span class="desktop-btn-label">Sell Accessories</span><span class="mobile-btn-label">Sell Accessories</span>
-        </a>
-        @endif
-        @if(($canCreateCovers ?? false) && !($canCreateAccessories ?? false))
-        <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="btn btn-outline btn-sm">
-            <i data-lucide="package" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Back Cover & Tempered</span><span class="mobile-btn-label">Sell Back Cover & Tempered</span>
-        </a>
-        @endif
-        @if($canCreateSecondhand ?? false)
-        <a href="{{ route('mobileshop.second_hand.pos') }}" class="btn btn-outline btn-sm">
-            <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Second Hand Phone</span><span class="mobile-btn-label">Sell Second Hand Phone</span>
-        </a>
-        @endif
-        <a href="{{ route('mobileshop.emi.ledger') }}" class="btn btn-outline btn-sm">
-            <i data-lucide="building-2" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">EMI Ledger</span><span class="mobile-btn-label">EMI</span>
-        </a>
+
     </div>
 @endsection
 
@@ -236,7 +214,7 @@
         <div class="stat-divider"></div>
         <div class="stat-strip-item">
             <span class="stat-label">Stock</span>
-            <span class="stat-val">{{ $availableNewPhones + $availableSecondHand + $availableParts }}</span>
+            <span class="stat-val">{{ number_format($availableParts) }}</span>
         </div>
     </div>
 
@@ -277,7 +255,7 @@
                 <div class="kpi-label">Ready Stock</div>
                 <div class="kpi-icon-box"><i data-lucide="package"></i></div>
             </div>
-            <div class="kpi-num">{{ $availableNewPhones + $availableSecondHand + $availableParts }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
+            <div class="kpi-num">{{ number_format($availableParts) }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
         </div>
     </div>
 
@@ -300,7 +278,7 @@
             <div class="sales-search-wrapper relative">
                 <div class="search-bar">
                     <i data-lucide="search"></i>
-                    <input type="text" id="salesSearchInput" oninput="filterSalesTable()" placeholder="Search invoice, customer, IMEI..." class="sales-search-input">
+                    <input type="text" id="salesSearchInput" oninput="filterSalesTable()" placeholder="Search invoice, customer, item..." class="sales-search-input">
                     <button type="button" onclick="clearSalesSearch()" id="btnClearSearch" style="display:none; background: #e2e4e8; border: none; border-radius: 50%; width: 16px; height: 16px; color: #4f535b; cursor: pointer; font-size: 10px; line-height: 16px; text-align: center; padding: 0;">✕</button>
                     <button type="button" onclick="openDateFilterDrawer()" id="btnMobileDateFilter" class="mobile-filter-btn" title="Filter by Date Range" style="height: 22px; width: 22px; padding: 0; border-radius: 4px; background: #ffffff; border: 1px solid #e2e4e8; color: #5e6ad2; align-items: center; justify-content: center; cursor: pointer; position: relative;">
                         <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
@@ -314,27 +292,6 @@
         <div class="filter-bar sales-filter-toolbar">
             <!-- Left: Horizontal Scrollable Category & Date Preset Pills -->
             <div class="date-pills-scroll-rail">
-                @php
-                    $showSalesPhonePill = ($isAdmin ?? false) || ($canCreatePhones ?? false) || ($niche ?? '') === 'phones';
-                    $showSalesPartsPill = ($isAdmin ?? false) || ($canCreateAccessories ?? false) || ($canCreateCovers ?? false) || in_array($niche ?? '', ['accessories', 'covers']);
-                    $showSalesSecondhandPill = ($isAdmin ?? false) || ($canCreateSecondhand ?? false) || ($niche ?? '') === 'secondhand';
-                    $availableSalesPills = ($showSalesPhonePill ? 1 : 0) + ($showSalesPartsPill ? 1 : 0) + ($showSalesSecondhandPill ? 1 : 0);
-                @endphp
-
-                @if($availableSalesPills > 1)
-                    <button type="button" onclick="setSalesCategoryFilter('all', this)" class="filter-pill sales-cat-pill active">All ({{ count($mobileSales) + count($accSales) }})</button>
-                    @if($showSalesPhonePill)
-                    <button type="button" onclick="setSalesCategoryFilter('phone', this)" class="filter-pill sales-cat-pill">📱 Phones ({{ $mobileSales->where('device_type', '!=', 'second_hand')->count() }})</button>
-                    @endif
-                    @if($showSalesPartsPill)
-                    <button type="button" onclick="setSalesCategoryFilter('accessory', this)" class="filter-pill sales-cat-pill">📦 Parts ({{ count($accSales) }})</button>
-                    @endif
-                    @if($showSalesSecondhandPill)
-                    <button type="button" onclick="setSalesCategoryFilter('secondhand', this)" class="filter-pill sales-cat-pill">🔄 Pre-Owned ({{ $mobileSales->where('device_type', 'second_hand')->count() }})</button>
-                    @endif
-                    <div style="width:1px; height:18px; background:#CBD5E1; margin:0 4px; flex-shrink:0; display:inline-block; vertical-align:middle;"></div>
-                @endif
-
                 <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748B; margin-right: 4px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
                     <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
                 </span>
@@ -373,48 +330,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($mobileSales as $sale)
-                    <tr class="sales-row" data-type="{{ ($sale->device_type ?? '') === 'second_hand' ? 'secondhand' : 'phone' }}" data-date="{{ \Carbon\Carbon::parse($sale->created_at)->format('Y-m-d') }}">
-                        <td>
-                            <a href="{{ route('mobileshop.invoice', ['id' => $sale->id]) }}" style="font-family:monospace; font-weight:800; color:var(--brand-700); text-decoration:none;">
-                                {{ $sale->invoice_number }}
-                            </a>
-                        </td>
-                        <td>
-                            <div style="font-weight:700; color:#0F172A; font-size:13px;">{{ $sale->customer_name }}</div>
-                            <div style="font-size:11px; color:#64748B;">{{ !empty($isOwner) ? ($sale->customer_phone ?: '—') : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskPhone($sale->customer_phone) }}</div>
-                        </td>
-                        <td>
-                            <div style="font-weight:700; font-size:12px;">{{ $sale->brand }} {{ $sale->model }}</div>
-                            <div style="font-size:10px; color:#64748B; font-family:monospace;">IMEI: {{ !empty($isOwner) ? $sale->imei_1 : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskImei($sale->imei_1) }}</div>
-                        </td>
-                        <td>
-                            <span class="badge badge-blue" style="text-transform:uppercase; font-size:10px;">{{ $sale->payment_mode }}</span>
-                        </td>
-                        <td style="text-align:right; font-weight:900; color:#0F172A; font-size:14px;">
-                            ₹{{ number_format($sale->total_amount, 2) }}
-                        </td>
-                        <td style="text-align:center; white-space:nowrap;">
-                            <div style="display:inline-flex; gap:6px; align-items:center;">
-                                <a href="{{ route('mobileshop.invoice', ['id' => $sale->id]) }}" class="btn btn-outline btn-icon" title="View Bill & Print">
-                                    <i data-lucide="printer" style="width:14px;height:14px;"></i>
-                                </a>
-                                <a href="{{ route('mobileshop.sales.whatsapp', ['id' => $sale->id]) }}" target="_blank" class="btn btn-outline btn-icon" style="color:#16A34A; border-color:#BBF7D0; background:#F0FDF4;" title="Share Invoice on WhatsApp">
-                                    <svg style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                                </a>
-                                @if(($sale->status ?? '') !== 'voided')
-                                    <button type="button" onclick="handleReturnButtonClick(this, 'mobile', {{ $sale->id }}, '{{ $sale->invoice_number }}', '{{ number_format($sale->total_amount, 2) }}')" data-items="{{ json_encode($sale->items ?? []) }}" class="btn btn-outline btn-icon" style="color:#DC2626; border-color:#FECDD3; background:#FFF1F2; cursor:pointer;" title="Process Return & Restock">
-                                        <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i>
-                                    </button>
-                                @else
-                                    <span class="badge" style="background:#FEE2E2; color:#DC2626; font-size:10px; font-weight:700;">Returned</span>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    @endforelse
-
                     @forelse($accSales as $asale)
                     <tr class="sales-row" data-type="accessory" data-date="{{ \Carbon\Carbon::parse($asale->created_at)->format('Y-m-d') }}">
                         <td>
@@ -483,66 +398,6 @@
             <!-- MOBILE FLAT LIST VIEW (Displayed on mobile screens < 768px)-->
             <!-- ══════════════════════════════════════════════════════════ -->
             <div id="salesMobileCards" class="mobile-sales-cards">
-                @forelse($mobileSales as $sale)
-                    @php
-                        $pm = strtolower($sale->payment_mode ?? 'cash');
-                        if (str_contains($pm, 'cash')) {
-                            $badgeBg = '#DCFCE7'; $badgeColor = '#15803D';
-                        } elseif (str_contains($pm, 'upi')) {
-                            $badgeBg = '#EFF6FF'; $badgeColor = '#1D4ED8';
-                        } elseif (str_contains($pm, 'udhari') || str_contains($pm, 'credit')) {
-                            $badgeBg = '#FEF2F2'; $badgeColor = '#B91C1C';
-                        } elseif (str_contains($pm, 'card')) {
-                            $badgeBg = '#F5F3FF'; $badgeColor = '#7C3AED';
-                        } else {
-                            $badgeBg = '#F1F5F9'; $badgeColor = '#475569';
-                        }
-                    @endphp
-                    <div class="sales-flat-row sales-row" data-type="{{ ($sale->device_type ?? '') === 'second_hand' ? 'secondhand' : 'phone' }}" data-date="{{ \Carbon\Carbon::parse($sale->created_at)->format('Y-m-d') }}">
-                        <!-- Row 1: Invoice # + Payment Badge + Total Amount -->
-                        <div class="row-line1">
-                            <a href="{{ route('mobileshop.invoice', ['id' => $sale->id]) }}" class="inv-num">
-                                {{ $sale->invoice_number }}
-                            </a>
-                            <span class="pay-badge" style="background:{{ $badgeBg }}; color:{{ $badgeColor }};">
-                                {{ $sale->payment_mode }}
-                            </span>
-                            <div class="row-amount">₹{{ number_format($sale->total_amount, 2) }}</div>
-                        </div>
-
-                        <!-- Row 2: Customer Name + Phone -->
-                        <div class="row-line2">
-                            <div class="cust-name">{{ $sale->customer_name }}</div>
-                            <div class="cust-phone">{{ !empty($isOwner) ? ($sale->customer_phone ?: '—') : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskPhone($sale->customer_phone) }}</div>
-                        </div>
-
-                        <!-- Row 3: Items Summary + Compact Actions -->
-                        <div class="row-line3">
-                            <div class="items-summary">
-                                <strong>{{ $sale->brand }} {{ $sale->model }}</strong>
-                                @if(!empty($sale->ram))<span>({{ $sale->ram }}/{{ $sale->storage ?? '' }})</span>@endif
-                                • IMEI: {{ !empty($isOwner) ? $sale->imei_1 : \App\Http\Controllers\MobileShop\BaseMobileShopController::maskImei($sale->imei_1) }}
-                            </div>
-                            <div class="row-actions">
-                                <a href="{{ route('mobileshop.sales.whatsapp', ['id' => $sale->id]) }}" target="_blank" class="compact-action-btn mobile-whatsapp-btn" title="Share on WhatsApp">
-                                    <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                                </a>
-                                <a href="{{ route('mobileshop.invoice', ['id' => $sale->id]) }}" class="compact-action-btn mobile-print-btn" title="View Bill & Print">
-                                    <i data-lucide="printer" style="width:15px;height:15px;"></i>
-                                </a>
-                                @if(($sale->status ?? '') !== 'voided')
-                                    <button type="button" onclick="handleReturnButtonClick(this, 'mobile', {{ $sale->id }}, '{{ $sale->invoice_number }}', '{{ number_format($sale->total_amount, 2) }}')" data-items="{{ json_encode($sale->items ?? []) }}" class="compact-action-btn mobile-return-btn" title="Process Return & Restock">
-                                        <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i>
-                                    </button>
-                                @else
-                                    <span style="font-size:9.5px; font-weight:700; color:#DC2626; background:#FEE2E2; padding:3px 6px; border-radius:4px;">Void</span>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                @endforelse
-
                 @forelse($accSales as $asale)
                     @php
                         $apm = strtolower($asale->payment_mode ?? 'cash');
@@ -877,159 +732,20 @@
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- MODAL: Sell Pre-Owned Device at POS Counter                -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <div id="sellShModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
-        <div class="card" style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
-            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
-                <div class="card-title" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
-                    <i data-lucide="refresh-cw" style="width:18px;height:18px;color:#EA580C;"></i>
-                    Sell Second Hand Phone
-                </div>
-                <button type="button" onclick="closeSellShModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
-            </div>
-            <div class="card-body" style="padding:16px 18px;">
-                <form action="{{ route('mobileshop.second_hand.sale') }}" method="POST" id="sellShForm">
-                    @csrf
-                    <input type="hidden" name="redirect_to" value="{{ route('mobileshop.sales') }}">
-
-                    <div class="form-group" style="margin-bottom: 12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Select In-Stock Pre-Owned Phone *</label>
-                        <select name="device_id" id="shDeviceSelect" required class="form-control" onchange="onSelectUsedPhone(this)" style="font-size:13px;">
-                            <option value="">-- Choose Pre-Owned Phone --</option>
-                            @foreach($secondHandPhones ?? [] as $phone)
-                                <option value="{{ $phone->id }}" data-price="{{ $phone->selling_price }}">
-                                    {{ $phone->brand }} {{ $phone->model }} (IMEI: {{ $phone->imei_1 }}) — ₹{{ number_format($phone->selling_price, 2) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Customer Mobile *</label>
-                            <input type="text" name="customer_phone" id="shCustomerPhone" placeholder="10-digit number" required class="form-control" list="shCustomerList" style="font-size:13px;">
-                            <datalist id="shCustomerList">
-                                @foreach($customers ?? [] as $c)
-                                    <option value="{{ $c->phone }}" data-name="{{ $c->name }}">{{ $c->name }}</option>
-                                @endforeach
-                            </datalist>
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Customer Name *</label>
-                            <input type="text" name="customer_name" id="shCustomerName" placeholder="Full name" required class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Agreed Sale Price (₹) *</label>
-                            <input type="number" step="0.01" name="sale_price" id="shSalePrice" required class="form-control" oninput="updateShSummary()" style="font-size:13px; font-weight:700;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Payment Mode *</label>
-                            <select name="payment_mode" class="form-control" onchange="onShPaymentModeChange(this)" style="font-size:13px;">
-                                <option value="cash">💵 Cash</option>
-                                <option value="upi">📱 UPI / QR</option>
-                                <option value="card">💳 Card</option>
-                                <option value="credit_udhari">📒 Full Udhari (Khata)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row" style="margin-bottom: 14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Amount Paid Now (₹) *</label>
-                            <input type="number" step="0.01" name="amount_paid" id="shAmountPaid" required class="form-control" oninput="updateShSummary()" style="font-size:13px; font-weight:700; color:#16A34A;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Balance Due (₹)</label>
-                            <input type="text" id="shBalanceDueDisplay" readonly value="₹0.00" class="form-control" style="background:#F1F5F9; font-weight:700; color:#DC2626; font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
-                        <button type="button" onclick="closeSellShModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Sell Second Hand Phone</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- DATE FILTER BOTTOM SHEET / MODAL (Mobile Responsive)       -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <div id="dateFilterModal" style="display:none; position: fixed; inset: 0; z-index: 998; background: rgba(15,23,42,0.6); backdrop-filter: blur(3px); align-items: flex-end; justify-content: center;">
-        <div style="background: #FFFFFF; width: 100%; max-width: 480px; border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px 20px 32px 20px; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); animation: fabSlideUp 0.2s ease-out;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <div style="font-size: 16px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="calendar" style="width: 18px; height: 18px; color: #5E6AD2;"></i>
-                    Filter by Date Range
-                </div>
-                <button type="button" onclick="closeDateFilterDrawer()" style="background: #F1F5F9; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 14px; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px;">
-                <div>
-                    <label style="display: block; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">From Date</label>
-                    <input type="date" id="drawerFromDate" style="width: 100%; min-height: 44px; padding: 10px 14px; font-size: 14px; font-weight: 700; border: 1px solid #CBD5E1; border-radius: 10px; background: #F8FAFC; color: #0F172A; outline: none;">
-                </div>
-                <div>
-                    <label style="display: block; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px;">To Date</label>
-                    <input type="date" id="drawerToDate" style="width: 100%; min-height: 44px; padding: 10px 14px; font-size: 14px; font-weight: 700; border: 1px solid #CBD5E1; border-radius: 10px; background: #F8FAFC; color: #0F172A; outline: none;">
-                </div>
-            </div>
-
-            <!-- Quick Presets Inside Drawer -->
-            <div style="margin-bottom: 18px;">
-                <div style="font-size: 11px; font-weight: 800; color: #64748B; text-transform: uppercase; margin-bottom: 8px;">Quick Presets</div>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-                    <button type="button" onclick="setDrawerPreset('today')" style="min-height: 42px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #0F172A; cursor: pointer;">Today</button>
-                    <button type="button" onclick="setDrawerPreset('yesterday')" style="min-height: 42px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #0F172A; cursor: pointer;">Yesterday</button>
-                    <button type="button" onclick="setDrawerPreset('week')" style="min-height: 42px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #0F172A; cursor: pointer;">Last 7 Days</button>
-                    <button type="button" onclick="setDrawerPreset('month')" style="min-height: 42px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 12px; font-weight: 700; color: #0F172A; cursor: pointer;">This Month</button>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <button type="button" onclick="resetDrawerFilter()" style="flex: 1; min-height: 44px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 10px; font-size: 13px; font-weight: 800; color: #475569; cursor: pointer;">Reset</button>
-                <button type="button" onclick="applyDrawerFilter()" style="flex: 2; min-height: 44px; background: #5E6AD2; border: none; border-radius: 10px; font-size: 13px; font-weight: 800; color: #FFFFFF; cursor: pointer; box-shadow: 0 4px 12px rgba(94,106,210,0.3);">Apply Filter</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- FLOATING ACTION BUTTON (FAB) FOR MOBILE QUICK ENTRY        -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <div id="mobileSalesFabContainer" class="mobile-fab-container">
         <!-- FAB Dropup Menu -->
         <div id="fabDropupMenu" class="fab-dropup-menu" style="display:none;">
-            @if(($isAdmin ?? false) || ($canCreatePhones ?? false))
-                <a href="{{ route('mobileshop.sales.create') }}" class="fab-menu-item" style="color: #5E6AD2;">
-                    <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
-                    <span>Sell New Phone</span>
-                </a>
-            @endif
-            @if(($isAdmin ?? false) || ($canCreateAccessories ?? false))
-                <a href="{{ route('mobileshop.accessories.pos') }}" class="fab-menu-item" style="color: #16A34A;">
-                    <i data-lucide="zap" style="width:16px;height:16px;"></i>
-                    <span>Sell Accessories</span>
-                </a>
-            @endif
-            @if(($isAdmin ?? false) || ($canCreateCovers ?? false))
-                <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="fab-menu-item" style="color: #7C3AED;">
-                    <i data-lucide="package" style="width:16px;height:16px;"></i>
-                    <span>Sell Back Cover & Tempered</span>
-                </a>
-            @endif
-            @if(($isAdmin ?? false) || ($canCreateSecondhand ?? false))
-                <a href="{{ route('mobileshop.second_hand.pos') }}" class="fab-menu-item" style="color: #EA580C;">
-                    <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
-                    <span>Sell Second Hand Phone</span>
-                </a>
-            @endif
+            <a href="{{ route('mobileshop.accessories.pos') }}" class="fab-menu-item" style="color: #16A34A;">
+                <i data-lucide="zap" style="width:16px;height:16px;"></i>
+                <span>Sell Accessories & Parts</span>
+            </a>
+            <a href="{{ route('mobileshop.accessories.pos', ['category' => 'back_cover']) }}" class="fab-menu-item" style="color: #7C3AED;">
+                <i data-lucide="package" style="width:16px;height:16px;"></i>
+                <span>Back Covers & Tempered</span>
+            </a>
+            <a href="{{ route('mobileshop.accessories.purchase') }}" class="fab-menu-item" style="color: #5E6AD2;">
+                <i data-lucide="truck" style="width:16px;height:16px;"></i>
+                <span>Restock Inventory</span>
+            </a>
         </div>
 
         <!-- FAB Main Button -->

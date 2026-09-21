@@ -36,7 +36,7 @@ class MastersController extends BaseMobileShopController
         $companyId = $this->getCompanyId();
 
         $categories = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
-        $financiers = DB::table('ms_emi_providers')->where('company_id', $companyId)->get();
+
         $prefix = DB::getTablePrefix();
         $suppliers  = DB::table('ms_suppliers')
             ->leftJoin('ms_supplier_credit_wallets', function($join) use ($companyId) {
@@ -58,12 +58,9 @@ class MastersController extends BaseMobileShopController
             $q->where('companies.id', $companyId);
         })->get();
         $roles = Role::whereIn('name', [
-            'sales-staff',
-            'secondhand-staff',
-            'accessories-staff',
-            'cover-staff',
-            'repair-technician',
             'store-admin',
+            'accessories-staff',
+            'repair-technician',
         ])->get();
 
         $loginSessions = collect();
@@ -98,7 +95,7 @@ class MastersController extends BaseMobileShopController
                 return $inv;
             });
 
-        return view('mobileshop.masters', compact('categories', 'financiers', 'suppliers', 'staffUsers', 'roles', 'loginSessions', 'activeInvites'));
+        return view('mobileshop.masters', compact('categories', 'suppliers', 'staffUsers', 'roles', 'loginSessions', 'activeInvites'));
     }
 
     /**

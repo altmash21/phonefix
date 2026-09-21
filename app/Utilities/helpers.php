@@ -464,7 +464,7 @@ if (! function_exists('store_name')) {
     {
         return config('mobileshop.store_name')
             ?: (env('STORE_NAME')
-            ?: (setting('company.name') ?: ($default ?? 'Maurya Mobile Store')));
+            ?: (setting('company.name') ?: ($default ?? 'PhoneFix Azamgarh')));
     }
 }
 
@@ -491,7 +491,7 @@ if (! function_exists('store_city')) {
     {
         return config('mobileshop.store_city')
             ?: (env('STORE_CITY')
-            ?: (setting('company.city') ?: ($default ?? 'Mumbai')));
+            ?: (setting('company.city') ?: ($default ?? 'Azamgarh')));
     }
 }
 
@@ -500,7 +500,7 @@ if (! function_exists('store_state')) {
     {
         return config('mobileshop.store_state')
             ?: (env('STORE_STATE')
-            ?: (setting('company.state') ?: ($default ?? 'Maharashtra')));
+            ?: (setting('company.state') ?: ($default ?? 'Uttar Pradesh')));
     }
 }
 

@@ -1,13 +1,13 @@
 @extends('mobileshop.public.layout')
 
-@section('title', 'Privacy & Data Zero-Wipe Policy — Maurya Mobile Mumbai')
-@section('meta_description', 'Read Maurya Mobile’s Privacy Policy and our DoD-standard cryptographic Data Zero-Wipe guarantee for second-hand trade-ins and repair service devices.')
+@section('title', 'Privacy & Data Zero-Loss Policy — Maurya Mobile Mumbai')
+@section('meta_description', 'Read Maurya Mobile’s Privacy Policy and our strict Data Zero-Loss and privacy protocols for accessories customers and express smartphone repair devices.')
 
 @section('subnav_title', 'Legal & Trust')
 @section('subnav_links')
     <a href="#collection" class="hover:text-apple-ink">Information We Collect</a>
-    <a href="#zerowipe" class="hover:text-apple-ink">Device Data Zero-Wipe</a>
-    <a href="#repairs" class="hover:text-apple-ink">Repair Privacy</a>
+    <a href="#zerowipe" class="hover:text-apple-ink">Zero Data-Loss Protocol</a>
+    <a href="#repairs" class="hover:text-apple-ink">Repair Privacy Mandate</a>
     <a href="#sharing" class="hover:text-apple-ink">Data Security & GST</a>
     <a href="#rights" class="hover:text-apple-ink">Your Rights</a>
 @endsection
@@ -26,10 +26,10 @@
                 Customer Confidentiality & Device Integrity
             </span>
             <h1 class="apple-hero-display text-apple-ink max-w-3xl mx-auto">
-                Privacy & Data Zero-Wipe Guarantee.
+                Privacy & Data Zero-Loss Guarantee.
             </h1>
             <p class="apple-lead-airy text-apple-muted-80 max-w-2xl mx-auto pt-2">
-                At Maurya Mobile, we hold customer privacy to the highest standard. Whether you buy a smartphone, trade in a pre-owned device, or leave your phone for a lab repair, your personal data remains strictly your own.
+                At Maurya Mobile, we hold customer privacy to the highest standard. Whether you purchase premium mobile accessories or entrust your smartphone for express diagnostic repair, your personal data remains strictly your own.
             </p>
             <div class="pt-2 flex items-center justify-center gap-4 text-xs text-apple-muted-48">
                 <span>Effective Date: 1 January {{ date('Y') }}</span>
@@ -47,7 +47,7 @@
             <span class="apple-caption-strong text-apple-primary uppercase tracking-wider text-[11px]">Section 01</span>
             <h2 class="apple-display-md text-apple-ink">1. Information We Collect</h2>
             <p class="apple-body text-apple-muted-80">
-                When you interact with {{ store_name() }} in-store at our {{ store_city() }} showroom or online via our digital portal, we only collect information essential for transaction execution, legal compliance, and customer warranty support:
+                When you interact with {{ store_name() }} in-store at our {{ store_city() }} showroom or online via our digital portal, we only collect information essential for transaction execution, billing compliance, and customer warranty support:
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div class="p-5 rounded-2xl bg-apple-parchment border border-apple-hairline space-y-2">
@@ -57,21 +57,21 @@
                     </p>
                 </div>
                 <div class="p-5 rounded-2xl bg-apple-parchment border border-apple-hairline space-y-2">
-                    <h3 class="apple-caption-strong text-apple-ink text-sm">Hardware & IMEI Registry</h3>
+                    <h3 class="apple-caption-strong text-apple-ink text-sm">Hardware & Compatibility Registry</h3>
                     <p class="apple-caption text-apple-muted-80 text-xs">
-                        Device serial numbers, dual-IMEI identifiers, brand, model, and purchase timestamp to validate genuine OEM warranties and prevent stolen-device trafficking.
+                        Handset brand, model name, and compatible part numbers to ensure precision fitting and record genuine warranty serials.
                     </p>
                 </div>
                 <div class="p-5 rounded-2xl bg-apple-parchment border border-apple-hairline space-y-2">
                     <h3 class="apple-caption-strong text-apple-ink text-sm">Service & Repair Job Sheets</h3>
                     <p class="apple-caption text-apple-muted-80 text-xs">
-                        Reported handset hardware symptoms, passcodes/pattern lock temporary waivers for diagnostic testing, OTP-verified intake timestamps, and technician bench notes.
+                        Reported handset hardware symptoms, intake timestamps, passcodes/pattern lock temporary waivers for digitizer bench testing, and technician bench notes.
                     </p>
                 </div>
                 <div class="p-5 rounded-2xl bg-apple-parchment border border-apple-hairline space-y-2">
-                    <h3 class="apple-caption-strong text-apple-ink text-sm">Second-Hand Buyback Identity</h3>
+                    <h3 class="apple-caption-strong text-apple-ink text-sm">Warranty & Support Records</h3>
                     <p class="apple-caption text-apple-muted-80 text-xs">
-                        Valid Government photo ID (Aadhaar, Voter ID, or Passport copy) and written ownership declaration as mandated by Mumbai Police electronic asset verification regulations.
+                        Invoice dates, ticket history, and warranty periods to provide seamless over-the-counter replacements and complimentary follow-up adjustments.
                     </p>
                 </div>
             </div>
@@ -79,7 +79,7 @@
 
         <hr class="border-apple-hairline">
 
-        <!-- SECTION 2: DEVICE ZERO-WIPE GUARANTEE (CRITICAL PROMISE) -->
+        <!-- SECTION 2: ZERO-LOSS REPAIR GUARANTEE -->
         <section id="zerowipe" class="space-y-6 scroll-mt-24">
             <div class="p-8 rounded-3xl bg-slate-950 text-white border border-slate-800 relative overflow-hidden shadow-xl">
                 <div class="absolute -right-16 -top-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -87,29 +87,29 @@
                 <div class="relative z-10 space-y-4">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-400 text-xs font-bold uppercase tracking-wider">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Industry Gold Standard
+                        Zero-Data-Loss Standard
                     </div>
                     
                     <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                        2. The Maurya Device Zero-Wipe Guarantee
+                        2. The Maurya Zero-Data-Loss Repair Guarantee
                     </h2>
                     
                     <p class="text-sm text-slate-300 leading-relaxed max-w-2xl">
-                        Selling or exchanging your pre-owned smartphone shouldn't risk your digital identity. Every mobile device purchased or taken in trade by Maurya Mobile undergoes a strict, multi-stage cryptographic erasure before entering our display showcase.
+                        Repairing a broken screen, failing battery, or charging port should never mean losing your cherished photos or work documents. Our hardware workbench operates with a strict Zero-Data-Loss protocol.
                     </p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800 text-xs">
                         <div class="space-y-1">
-                            <span class="text-emerald-400 font-bold block text-sm">DoD 5220.22-M Standard</span>
-                            <span class="text-slate-400">Multi-pass cryptographic overwrite obliterates photos, WhatsApp logs, banking credentials, and private documents.</span>
+                            <span class="text-emerald-400 font-bold block text-sm">No Format / No Wipe</span>
+                            <span class="text-slate-400">We replace hardware components without flashing, wiping, or altering your device's internal storage partitions.</span>
                         </div>
                         <div class="space-y-1">
-                            <span class="text-emerald-400 font-bold block text-sm">iCloud & FRP Disassociation</span>
-                            <span class="text-slate-400">Apple Activation Lock and Google Factory Reset Protection are cleanly decoupled under customer supervision.</span>
+                            <span class="text-emerald-400 font-bold block text-sm">Maintenance Mode Friendly</span>
+                            <span class="text-slate-400">We encourage customers to enable Samsung Maintenance Mode or iOS Diagnostics Mode so private apps remain locked.</span>
                         </div>
                         <div class="space-y-1">
-                            <span class="text-emerald-400 font-bold block text-sm">Non-Recoverable Guarantee</span>
-                            <span class="text-slate-400">Deep NAND flash zero-filling prevents any forensic recovery tool from extracting residual data blocks.</span>
+                            <span class="text-emerald-400 font-bold block text-sm">Strict Zero-Access</span>
+                            <span class="text-slate-400">Technicians never access user photo galleries, WhatsApp chats, banking apps, or private files during or after service.</span>
                         </div>
                     </div>
                 </div>
@@ -129,7 +129,7 @@
                 <li><strong class="text-apple-ink">Zero Data Access Mandate:</strong> Our technicians are legally and contractually prohibited from browsing user photo galleries, social applications, message threads, or local files.</li>
                 <li><strong class="text-apple-ink">Maintenance Mode Encouraged:</strong> On compatible devices (Samsung Maintenance Mode / iOS Diagnostics Mode), we strongly advise activating diagnostic sandboxing prior to handoff.</li>
                 <li><strong class="text-apple-ink">Hardware Only Testing:</strong> Post-repair verification is confined strictly to hardware diagnostics (digitizer grid test, microphone recording test loop, charging ammeter rate verification).</li>
-                <li><strong class="text-apple-ink">Customer Backup Advisory:</strong> While hardware service rarely affects flash storage, customers are always advised to maintain an iCloud or Google Drive backup prior to lab handoff.</li>
+                <li><strong class="text-apple-ink">Customer Backup Advisory:</strong> While hardware service does not alter flash storage, customers are always encouraged to maintain an iCloud or Google Drive backup for complete safety.</li>
             </ul>
         </section>
 
@@ -143,7 +143,7 @@
                 Maurya Mobile is a retail electronics company — we never monetize, sell, lease, or distribute our customer database to third-party telemarketers, insurance aggregators, or loan brokers.
             </p>
             <p class="apple-body text-apple-muted-80">
-                We only transmit customer information under the following legitimate regulatory situations:
+                We only transmit customer information under legitimate regulatory situations:
             </p>
             <div class="space-y-3 pt-2 text-xs">
                 <div class="p-4 rounded-xl bg-apple-parchment border border-apple-hairline flex items-start gap-3">
@@ -156,15 +156,8 @@
                 <div class="p-4 rounded-xl bg-apple-parchment border border-apple-hairline flex items-start gap-3">
                     <span class="text-apple-primary text-base font-bold">&bull;</span>
                     <div>
-                        <strong class="text-apple-ink block text-sm">Financing & Paperless EMI Partners</strong>
-                        <span class="text-apple-muted-80">If you explicitly choose 0% EMI financing via Bajaj Finserv, IDFC First Bank, or HDFC Consumer Finance, your application data is transmitted directly into their secure encrypted lending APIs.</span>
-                    </div>
-                </div>
-                <div class="p-4 rounded-xl bg-apple-parchment border border-apple-hairline flex items-start gap-3">
-                    <span class="text-apple-primary text-base font-bold">&bull;</span>
-                    <div>
                         <strong class="text-apple-ink block text-sm">Statutory Law Enforcement Compliance</strong>
-                        <span class="text-apple-muted-80">IMEI logs and buyback customer identification records will be produced if officially demanded under a formal subpoena or warrant by Mumbai Police Cyber Cell.</span>
+                        <span class="text-apple-muted-80">Transaction invoice logs will only be produced if officially demanded under a formal subpoena or lawful notice by law enforcement authorities.</span>
                     </div>
                 </div>
             </div>
@@ -179,17 +172,15 @@
             <p class="apple-body text-apple-muted-80">
                 In compliance with the Digital Personal Data Protection Act, 2023, you have the right to request access to your recorded transaction history, update incorrect contact details, or request deletion of non-statutory marketing contacts.
             </p>
-
             <div class="p-6 rounded-2xl bg-apple-parchment border border-apple-hairline space-y-3 text-xs">
-                <h3 class="apple-caption-strong text-apple-ink text-sm">Grievance Officer & Data Controller</h3>
+                <h3 class="apple-caption-strong text-apple-ink text-sm">Grievance & Privacy Desk</h3>
                 <p class="text-apple-muted-80">
-                    For any questions, data modification requests, or privacy inquiries, contact our designated store compliance officer:
+                    For questions regarding our privacy practices or data policies, contact our customer desk:
                 </p>
-                <div class="space-y-1 font-mono text-apple-ink pt-1">
-                    <div><strong>Officer:</strong> Altmash (Store Administration Head)</div>
-                    <div><strong>Showroom:</strong> {{ store_name() }}, {{ store_address() }}</div>
-                    <div><strong>Email:</strong> <a href="mailto:privacy@mobitrack.local" class="text-apple-primary hover:underline">privacy@mobitrack.local</a></div>
-                    <div><strong>Helpline:</strong> {{ store_phone() }} (Mon–Sat, 10:30 AM to 8:30 PM)</div>
+                <div class="space-y-1 font-mono text-[11px] text-apple-ink">
+                    <div>Email: support@mauryamobile.in</div>
+                    <div>Showroom: Maurya Mobile, Malad West, Mumbai - 400064</div>
+                    <div>Helpline: {{ store_phone() }} (10:00 AM – 8:30 PM IST)</div>
                 </div>
             </div>
         </section>

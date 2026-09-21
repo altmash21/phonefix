@@ -1,14 +1,7 @@
 @extends('mobileshop.layout')
 
 @php
-    $stockPageTitle = match($niche ?? 'admin') {
-        'phones'      => 'New Phones Inventory',
-        'secondhand'  => 'Pre-Owned Stock Register',
-        'accessories' => 'Accessories & Parts Stock',
-        'covers'      => 'Back Cover & Tempered Inventory',
-        'repairs'     => 'Service Desk & Job Tracker',
-        default       => 'Unified Inventory & Stock Hub',
-    };
+    $stockPageTitle = 'Accessories & Express Spare Parts Inventory';
 @endphp
 
 @section('title', $stockPageTitle . ' — Maurya Mobile ERP')
@@ -16,45 +9,31 @@
 
 @section('page-actions')
     <div class="flex items-center gap-2 flex-wrap">
-        @if($canManagePhones ?? false)
-        <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-primary btn-sm">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> Purchase New Phone
+        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-primary btn-sm">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> Restock Accessories & Parts
         </a>
-        @endif
-        @if($canManageSecondhand ?? false)
-        <button type="button" onclick="openBuybackModal()" class="btn btn-outline btn-sm">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> Purchase Second Hand Phone
-        </button>
-        @endif
-        @if(($canManageAccessories ?? false) || ($canManageCovers ?? false))
-        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-outline btn-sm">
-            <i data-lucide="plus" style="width:13px;height:13px;"></i> Purchase Accessories & Covers
-        </a>
-        @endif
-        @if($canManageRepairs ?? false)
         <a href="{{ route('mobileshop.repairs') }}" class="btn btn-outline btn-sm">
-            <i data-lucide="wrench" style="width:13px;height:13px;"></i> New Job Sheet
+            <i data-lucide="wrench" style="width:13px;height:13px;"></i> Service Desk & Jobs
         </a>
-        @endif
     </div>
 @endsection
 
 
 @section('content')    <!-- Mobile Horizontal Stat Strip -->
     <div class="mobile-stat-strip">
-        <div class="stat-strip-item" onclick="switchStockTab('new_phones')">
-            <span class="stat-label">New Phones</span>
-            <span class="stat-val" style="color:#2563EB;">{{ $totalNewPhonesInStock }}</span>
+        <div class="stat-strip-item" onclick="switchStockTab('all')">
+            <span class="stat-label">Total Stock</span>
+            <span class="stat-val" style="color:#2563EB;">{{ number_format($totalPartsInStock) }}</span>
         </div>
         <div class="stat-divider"></div>
-        <div class="stat-strip-item" onclick="switchStockTab('second_hand')">
-            <span class="stat-label">Pre-Owned</span>
-            <span class="stat-val" style="color:#EA580C;">{{ $totalSecondHandInStock }}</span>
+        <div class="stat-strip-item" onclick="filterLowStockOnly()">
+            <span class="stat-label">Low Stock</span>
+            <span class="stat-val" style="color:#DC2626;">{{ $lowStockCount }}</span>
         </div>
         <div class="stat-divider"></div>
-        <div class="stat-strip-item" onclick="switchStockTab('parts')">
-            <span class="stat-label">Parts & Acc</span>
-            <span class="stat-val" style="color:#16A34A;">{{ number_format($totalPartsInStock) }}</span>
+        <div class="stat-strip-item" onclick="switchStockTab('all')">
+            <span class="stat-label">Active SKUs</span>
+            <span class="stat-val" style="color:#16A34A;">{{ count($parts) }}</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-strip-item" onclick="switchStockTab('all')">
@@ -65,26 +44,20 @@
 
     <!-- Top Stock KPI Cards (Desktop Only) -->
     <div id="stockDesktopKpiGrid" class="kpi-grid">
-        @if(($canManagePhones ?? false) || in_array($niche ?? '', ['admin', 'phones']))
-        <div class="kpi-card">
-            <div class="kpi-label">Brand New Phones in Stock</div>
-            <div class="kpi-num">{{ $totalNewPhonesInStock }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
-        </div>
-        @endif
-
-        @if(($canManageSecondhand ?? false) || in_array($niche ?? '', ['admin', 'secondhand']))
-        <div class="kpi-card">
-            <div class="kpi-label">Pre-Owned Phones in Stock</div>
-            <div class="kpi-num">{{ $totalSecondHandInStock }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
-        </div>
-        @endif
-
-        @if(($canManageAccessories ?? false) || ($canManageCovers ?? false) || in_array($niche ?? '', ['admin', 'accessories', 'covers']))
         <div class="kpi-card">
             <div class="kpi-label">Parts & Accessories Stock</div>
             <div class="kpi-num">{{ number_format($totalPartsInStock) }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
         </div>
-        @endif
+
+        <div class="kpi-card">
+            <div class="kpi-label">Active SKUs / Catalog Items</div>
+            <div class="kpi-num">{{ count($parts) }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Products</span></div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-label">Low Stock Alerts</div>
+            <div class="kpi-num" style="{{ $lowStockCount > 0 ? 'color:#DC2626;' : '' }}">{{ $lowStockCount }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Items</span></div>
+        </div>
 
         <div class="kpi-card">
             <div class="kpi-label">Total Stock Valuation</div>
@@ -96,23 +69,8 @@
     <div class="stock-top-toolbar">
         <div class="stock-tabs-rail">
             <button onclick="switchStockTab('all')" id="tabBtn_all" class="filter-pill-btn active">
-                All Stock
+                All Inventory ({{ count($parts) }})
             </button>
-            @if(($canManagePhones ?? false) || in_array($niche ?? '', ['admin', 'phones']))
-            <button onclick="switchStockTab('new_phones')" id="tabBtn_new_phones" class="filter-pill-btn">
-                Brand New ({{ $totalNewPhonesInStock }})
-            </button>
-            @endif
-            @if(($canManageSecondhand ?? false) || in_array($niche ?? '', ['admin', 'secondhand']))
-            <button onclick="switchStockTab('second_hand')" id="tabBtn_second_hand" class="filter-pill-btn">
-                Pre-Owned ({{ $totalSecondHandInStock }})
-            </button>
-            @endif
-            @if(($canManageAccessories ?? false) || ($canManageCovers ?? false) || in_array($niche ?? '', ['admin', 'accessories', 'covers']))
-            <button onclick="switchStockTab('parts')" id="tabBtn_parts" class="filter-pill-btn">
-                Parts & Acc ({{ count($parts) }})
-            </button>
-            @endif
             @if($lowStockCount > 0)
             <button onclick="filterLowStockOnly()" id="tabBtn_low" class="filter-pill-btn pill-low-stock">
                 <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i> Low Stock ({{ $lowStockCount }})
@@ -123,7 +81,7 @@
         <div class="stock-search-wrap">
             <div class="search-bar stock-search-input-box">
                 <i data-lucide="search" style="width:14px;height:14px;"></i>
-                <input type="text" id="stockLiveSearch" placeholder="Search brand, model, IMEI, SKU..." oninput="filterStockRows()">
+                <input type="text" id="stockLiveSearch" placeholder="Search part name, category, SKU, model..." oninput="filterStockRows()">
             </div>
             <button type="button" onclick="downloadLowStockCSV()" class="btn btn-outline btn-sm stock-csv-btn" id="btnDownloadLowStock" title="Download Low Stock CSV Report">
                 <i data-lucide="download" style="width:13px;height:13px;"></i>
@@ -176,252 +134,8 @@
     </div>
 
     <div id="stockDesktopTables">
-        @if(($canManagePhones ?? false) || in_array($niche ?? '', ['admin', 'phones']))
-        <!-- ════ TAB 1: BRAND NEW PHONES ════ -->
-        <div id="stockSection_new_phones" class="stock-section card" style="margin-bottom:12px;">
-            <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
-                <div>
-                    <div class="card-title" style="color:var(--color-text-primary);">Brand New Smartphones</div>
-                </div>
-            </div>
-            <div class="card-body" style="padding:0; overflow-x:auto;">
-                <table class="data-table" id="stockNewPhonesTable">
-                    <thead>
-                        <tr>
-                            <th style="width:55px; text-align:center;">Photo</th>
-                            <th>Brand & Model</th>
-                            <th>Variant (RAM/Storage/Color)</th>
-                            <th>IMEI 1</th>
-                            <th>IMEI 2</th>
-                            <th style="text-align:right;">Purchase Cost (₹)</th>
-                            <th style="text-align:right;">Selling Price (₹)</th>
-                            <th style="text-align:center;">Status</th>
-                            <th style="width:115px; text-align:center;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($newPhones as $phone)
-                        @php
-                            $photo = $phone->photo_path ?? $phone->box_photo_path ?? null;
-                            $boxPhoto = $phone->box_photo_path ?? null;
-                        @endphp
-                        <tr class="stock-row" id="stockRow_new_phone_{{ $phone->id }}" data-type="new_phone" data-low="0" data-date="{{ \Carbon\Carbon::parse($phone->created_at)->format('Y-m-d') }}">
-                            <td style="text-align:center; padding:6px;">
-                                @if($photo)
-                                <img src="{{ asset($photo) }}" 
-                                     alt="{{ $phone->model }}" 
-                                     style="width:38px; height:38px; object-fit:cover; border-radius:8px; border:1.5px solid #CBD5E1; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.08); transition:transform 0.15s; display:inline-block;" 
-                                     onmouseover="this.style.transform='scale(1.08)'" 
-                                     onmouseout="this.style.transform='scale(1)'"
-                                     onclick="openPhotoLightbox('{{ asset($photo) }}', '{{ addslashes($phone->brand . ' ' . $phone->model) }}', 'IMEI: {{ $phone->imei_1 }} • ₹{{ number_format($phone->selling_price, 2) }}', '{{ $boxPhoto ? asset($boxPhoto) : '' }}', '')" 
-                                     title="Click to view full photo">
-                                @else
-                                <button type="button" 
-                                        onclick="openUploadPhotoModal({{ $phone->id }}, '{{ addslashes($phone->brand . ' ' . $phone->model) }}', '{{ $phone->imei_1 }}', '')"
-                                        style="width:38px; height:38px; border-radius:8px; background:#EFF6FF; border:1px dashed #93C5FD; color:#2563EB; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" 
-                                        title="Click to upload photo">
-                                    <i data-lucide="camera" style="width:16px;height:16px;"></i>
-                                </button>
-                                @endif
-                            </td>
-                            <td style="font-weight:700; color:#0F172A;">{{ $phone->brand }} {{ $phone->model }}</td>
-                            <td>
-                                <span class="badge badge-gray" style="font-size:11px;">
-                                    {{ $phone->ram ?: '—' }}/{{ $phone->storage ?: '—' }} • {{ $phone->color ?: 'Standard' }}
-                                </span>
-                            </td>
-                            <td style="font-family:monospace; font-weight:600; color:var(--color-text-primary);">{{ $phone->imei_1 }}</td>
-                            <td style="font-family:monospace; color:#64748B;">{{ $phone->imei_2 ?: '—' }}</td>
-                            <td style="text-align:right; color:#64748B;">₹{{ number_format($phone->purchase_cost, 2) }}</td>
-                            <td style="text-align:right; font-weight:700; color:#0F172A;">₹{{ number_format($phone->selling_price, 2) }}</td>
-                            <td style="text-align:center;" id="phoneStatusCell_new_phone_{{ $phone->id }}">
-                                @if($phone->status === 'in_stock')
-                                    <span class="badge badge-green">In Stock</span>
-                                @elseif($phone->status === 'deleted')
-                                    <span class="badge badge-red">Deleted</span>
-                                @else
-                                    <span class="badge badge-gray">Sold Out</span>
-                                @endif
-                            </td>
-                            <td style="text-align:center; white-space:nowrap;">
-                                <button type="button" 
-                                        class="btn btn-outline btn-xs" 
-                                        title="View / Upload Photo" 
-                                        style="padding:3px 7px; margin-right:4px; color:#2563EB; border-color:#BFDBFE;"
-                                        onclick="openUploadPhotoModal({{ $phone->id }}, '{{ addslashes($phone->brand . ' ' . $phone->model) }}', '{{ $phone->imei_1 }}', '{{ $photo ? asset($photo) : '' }}', '{{ $boxPhoto ? asset($boxPhoto) : '' }}')">
-                                    <i data-lucide="camera" style="width:13px;height:13px;"></i>
-                                </button>
-                                <button type="button" 
-                                        class="btn btn-outline btn-xs" 
-                                        title="View Inventory History" 
-                                        style="padding:3px 7px; margin-right:4px;"
-                                        onclick="openStockHistoryModal({
-                                            type: 'new_phone',
-                                            id: {{ $phone->id }},
-                                            name: '{{ addslashes($phone->brand . ' ' . $phone->model) }}',
-                                            subtext: 'IMEI: {{ $phone->imei_1 }}'
-                                        })">
-                                    <i data-lucide="history" style="width:13px;height:13px;"></i>
-                                </button>
-                                @if($phone->status !== 'sold' && $phone->status !== 'deleted')
-                                <button type="button" 
-                                        class="btn btn-outline btn-xs" 
-                                        title="Delete from Stock" 
-                                        style="color:#DC2626; border-color:#FCA5A5; padding:3px 7px;"
-                                        onclick="openDeleteStockModal({
-                                            type: 'new_phone',
-                                            id: {{ $phone->id }},
-                                            name: '{{ addslashes($phone->brand . ' ' . $phone->model) }}',
-                                            subtext: 'IMEI: {{ $phone->imei_1 }}',
-                                            stock: {{ $phone->status === 'in_stock' ? 1 : 0 }},
-                                            is_phone: 1
-                                        })">
-                                    <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
-                                </button>
-                                @endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="9" style="text-align:center; padding:24px; color:#94A3B8;">No new mobile phones registered.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div id="stockNewPhonesPagination"></div>
-        </div>
-        @endif
-
-        @if(($canManageSecondhand ?? false) || in_array($niche ?? '', ['admin', 'secondhand']))
-        <!-- ════ TAB 2: SECOND HAND PHONES ════ -->
-        <div id="stockSection_second_hand" class="stock-section card" style="margin-bottom:12px;">
-            <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
-                <div>
-                    <div class="card-title" style="color:var(--color-text-primary);">Pre-Owned & Second Hand Hub</div>
-                </div>
-            </div>
-            <div class="card-body" style="padding:0; overflow-x:auto;">
-                <table class="data-table" id="stockSecondHandTable">
-                    <thead>
-                        <tr>
-                            <th style="width:55px; text-align:center;">Photo</th>
-                            <th>Brand & Model</th>
-                            <th>Grade</th>
-                            <th>Battery Health</th>
-                            <th>IMEI Serial</th>
-                            <th style="text-align:right;">Buyback Cost (₹)</th>
-                            <th style="text-align:right;">Selling Price (₹)</th>
-                            <th style="text-align:center;">Status</th>
-                            <th style="width:115px; text-align:center;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($secondHandPhones as $sh)
-                        @php
-                            $photo = $sh->photo_path ?? $sh->box_photo_path ?? null;
-                            $boxPhoto = $sh->box_photo_path ?? null;
-                            $idProof = $sh->customer_buyback_id_proof ?? null;
-                            $idProofIsImage = $idProof && (str_contains($idProof, '.jpg') || str_contains($idProof, '.png') || str_contains($idProof, '.webp') || str_contains($idProof, 'uploads/'));
-                        @endphp
-                        <tr class="stock-row" id="stockRow_second_hand_{{ $sh->id }}" data-type="second_hand" data-low="0" data-date="{{ \Carbon\Carbon::parse($sh->created_at)->format('Y-m-d') }}">
-                            <td style="text-align:center; padding:6px;">
-                                @if($photo)
-                                <img src="{{ asset($photo) }}" 
-                                     alt="{{ $sh->model }}" 
-                                     style="width:38px; height:38px; object-fit:cover; border-radius:8px; border:1.5px solid #FED7AA; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.08); transition:transform 0.15s; display:inline-block;" 
-                                     onmouseover="this.style.transform='scale(1.08)'" 
-                                     onmouseout="this.style.transform='scale(1)'"
-                                     onclick="openPhotoLightbox('{{ asset($photo) }}', '{{ addslashes($sh->brand . ' ' . $sh->model) }} (Pre-Owned)', 'IMEI: {{ $sh->imei_1 }} • Grade: {{ str_replace('_', ' ', $sh->condition_grade) }} • ₹{{ number_format($sh->selling_price, 2) }}', '{{ $boxPhoto ? asset($boxPhoto) : '' }}', '{{ $idProofIsImage ? asset($idProof) : '' }}')" 
-                                     title="Click to view full photo">
-                                @else
-                                <button type="button" 
-                                        onclick="openUploadPhotoModal({{ $sh->id }}, '{{ addslashes($sh->brand . ' ' . $sh->model) }}', '{{ $sh->imei_1 }}', '')"
-                                        style="width:38px; height:38px; border-radius:8px; background:#FFF7ED; border:1px dashed #FDBA74; color:#EA580C; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" 
-                                        title="Click to upload photo">
-                                    <i data-lucide="camera" style="width:16px;height:16px;"></i>
-                                </button>
-                                @endif
-                            </td>
-                            <td style="font-weight:700; color:#0F172A;">{{ $sh->brand }} {{ $sh->model }}</td>
-                            <td>
-                                <span class="badge badge-orange" style="text-transform:capitalize; font-size:10px;">
-                                    {{ str_replace('_', ' ', $sh->condition_grade) }}
-                                </span>
-                            </td>
-                            <td style="font-weight:600; color:#15803D;">{{ $sh->battery_health ? $sh->battery_health . '%' : '—' }}</td>
-                            <td style="font-family:monospace; font-weight:600; color:var(--color-text-primary);">{{ $sh->imei_1 }}</td>
-                            <td style="text-align:right; color:#64748B;">₹{{ number_format($sh->purchase_cost, 2) }}</td>
-                            <td style="text-align:right; font-weight:700; color:#0F172A;">₹{{ number_format($sh->selling_price, 2) }}</td>
-                            <td style="text-align:center;" id="phoneStatusCell_second_hand_{{ $sh->id }}">
-                                @if($sh->status === 'in_stock')
-                                    <span class="badge badge-green">In Stock</span>
-                                @elseif($sh->status === 'deleted')
-                                    <span class="badge badge-red">Deleted</span>
-                                @else
-                                    <span class="badge badge-gray">Sold Out</span>
-                                @endif
-                            </td>
-                            <td style="text-align:center; white-space:nowrap;">
-                                @if($sh->status === 'in_stock')
-                                <a href="{{ route('mobileshop.second_hand.pos', ['device_id' => $sh->id]) }}" 
-                                   class="btn btn-outline btn-xs" 
-                                   title="Sell at POS" 
-                                   style="padding:3px 7px; margin-right:4px; color:#7C3AED; border-color:#DDD6FE; background:#F5F3FF; display:inline-flex; align-items:center;">
-                                    <i data-lucide="shopping-bag" style="width:13px;height:13px;"></i>
-                                </a>
-                                @endif
-                                <button type="button" 
-                                        class="btn btn-outline btn-xs" 
-                                        title="View / Upload Photo" 
-                                        style="padding:3px 7px; margin-right:4px; color:#EA580C; border-color:#FED7AA;"
-                                        onclick="openUploadPhotoModal({{ $sh->id }}, '{{ addslashes($sh->brand . ' ' . $sh->model) }}', '{{ $sh->imei_1 }}', '{{ $photo ? asset($photo) : '' }}', '{{ $boxPhoto ? asset($boxPhoto) : '' }}')">
-                                    <i data-lucide="camera" style="width:13px;height:13px;"></i>
-                                </button>
-                                <button type="button" 
-                                        class="btn btn-outline btn-xs" 
-                                        title="View Inventory History" 
-                                        style="padding:3px 7px; margin-right:4px;"
-                                        onclick="openStockHistoryModal({
-                                            type: 'second_hand',
-                                            id: {{ $sh->id }},
-                                            name: '{{ addslashes($sh->brand . ' ' . $sh->model) }}',
-                                            subtext: 'IMEI: {{ $sh->imei_1 }}'
-                                        })">
-                                    <i data-lucide="history" style="width:13px;height:13px;"></i>
-                                </button>
-                                @if($sh->status !== 'sold' && $sh->status !== 'deleted')
-                                <button type="button" 
-                                        class="btn btn-outline btn-xs" 
-                                        title="Delete from Stock" 
-                                        style="color:#DC2626; border-color:#FCA5A5; padding:3px 7px;"
-                                        onclick="openDeleteStockModal({
-                                            type: 'second_hand',
-                                            id: {{ $sh->id }},
-                                            name: '{{ addslashes($sh->brand . ' ' . $sh->model) }}',
-                                            subtext: 'IMEI: {{ $sh->imei_1 }}',
-                                            stock: {{ $sh->status === 'in_stock' ? 1 : 0 }},
-                                            is_phone: 1
-                                        })">
-                                    <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
-                                </button>
-                                @endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="9" style="text-align:center; padding:24px; color:#94A3B8;">No pre-owned phones in stock.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div id="stockSecondHandPagination"></div>
-        </div>
-        @endif
-
         @if(($canManageAccessories ?? false) || ($canManageCovers ?? false) || in_array($niche ?? '', ['admin', 'accessories', 'covers']))
-        <!-- ════ TAB 3: SPARE PARTS & ACCESSORIES ════ -->
+        <!-- ════ SPARE PARTS & ACCESSORIES ════ -->
         <div id="stockSection_parts" class="stock-section card">
             <div class="card-header" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0;">
                 <div>
@@ -528,114 +242,6 @@
 
     <!-- Mobile Zero-Depth Flat Cards Container -->
     <div id="stockMobileCards" style="display:none; flex-direction:column; gap:8px;">
-        @if(($canManagePhones ?? false) || in_array($niche ?? '', ['admin', 'phones']))
-            @foreach($newPhones as $phone)
-            @php
-                $mPhoto = $phone->photo_path ?? $phone->box_photo_path ?? null;
-                $mBoxPhoto = $phone->box_photo_path ?? null;
-            @endphp
-            <div class="app-flat-row stock-card" id="stockCard_new_phone_{{ $phone->id }}" data-type="new_phone" data-low="0" data-date="{{ \Carbon\Carbon::parse($phone->created_at)->format('Y-m-d') }}" data-search="{{ strtolower(($phone->brand ?? '') . ' ' . ($phone->model ?? '') . ' ' . ($phone->imei_1 ?? '') . ' ' . ($phone->color ?? '')) }}">
-                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                        @if($mPhoto)
-                        <img src="{{ asset($mPhoto) }}" 
-                             alt="{{ $phone->model }}" 
-                             style="width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid #CBD5E1; flex-shrink:0; cursor:pointer;" 
-                             onclick="openPhotoLightbox('{{ asset($mPhoto) }}', '{{ addslashes($phone->brand . ' ' . $phone->model) }}', 'IMEI: {{ $phone->imei_1 }} • ₹{{ number_format($phone->selling_price, 2) }}', '{{ $mBoxPhoto ? asset($mBoxPhoto) : '' }}', '')">
-                        @else
-                        <div style="width:36px; height:36px; border-radius:8px; background:#EFF6FF; color:#2563EB; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                            <i data-lucide="smartphone" style="width:18px;height:18px;"></i>
-                        </div>
-                        @endif
-                        <div style="min-width:0;">
-                            <div style="font-weight:800; font-size:13px; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $phone->brand }} {{ $phone->model }}</div>
-                            <div style="font-size:10px; color:#64748B;">IMEI: <span style="font-family:monospace; font-weight:700;">{{ $phone->imei_1 }}</span> • {{ $phone->ram ?: '' }}/{{ $phone->storage ?: '' }}</div>
-                        </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                        <div style="text-align:right;">
-                            <div style="font-weight:900; font-size:14px; color:#0F172A;">₹{{ number_format($phone->selling_price, 0) }}</div>
-                            <span class="badge {{ $phone->status === 'in_stock' ? 'badge-green' : ($phone->status === 'deleted' ? 'badge-red' : 'badge-gray') }}" style="font-size:10px; padding:1px 6px;">
-                                {{ $phone->status === 'in_stock' ? 'In Stock' : ($phone->status === 'deleted' ? 'Deleted' : 'Sold Out') }}
-                            </span>
-                        </div>
-                        <button type="button" 
-                                class="stock-action-trigger-btn" 
-                                title="Stock options" 
-                                onclick="openStockActionMenu(event, {
-                                    type: 'new_phone',
-                                    id: {{ $phone->id }},
-                                    name: '{{ addslashes($phone->brand . ' ' . $phone->model) }}',
-                                    subtext: 'IMEI: {{ $phone->imei_1 }}',
-                                    stock: {{ $phone->status === 'in_stock' ? 1 : 0 }},
-                                    is_sold: {{ $phone->status === 'sold' ? 1 : 0 }},
-                                    is_phone: 1,
-                                    photo: '{{ $mPhoto ? asset($mPhoto) : '' }}',
-                                    box_photo: '{{ $mBoxPhoto ? asset($mBoxPhoto) : '' }}'
-                                })">
-                            <i data-lucide="more-vertical" style="width:16px;height:16px;"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-        @endif
-
-        @if(($canManageSecondhand ?? false) || in_array($niche ?? '', ['admin', 'secondhand']))
-            @foreach($secondHandPhones as $sh)
-            @php
-                $mShPhoto = $sh->photo_path ?? $sh->box_photo_path ?? null;
-                $mShBoxPhoto = $sh->box_photo_path ?? null;
-                $mShIdProof = $sh->customer_buyback_id_proof ?? null;
-                $mShIdIsImage = $mShIdProof && (str_contains($mShIdProof, '.jpg') || str_contains($mShIdProof, '.png') || str_contains($mShIdProof, '.webp') || str_contains($mShIdProof, 'uploads/'));
-            @endphp
-            <div class="app-flat-row stock-card" id="stockCard_second_hand_{{ $sh->id }}" data-type="second_hand" data-low="0" data-date="{{ \Carbon\Carbon::parse($sh->created_at)->format('Y-m-d') }}" data-search="{{ strtolower(($sh->brand ?? '') . ' ' . ($sh->model ?? '') . ' ' . ($sh->imei_1 ?? '')) }}">
-                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                        @if($mShPhoto)
-                        <img src="{{ asset($mShPhoto) }}" 
-                             alt="{{ $sh->model }}" 
-                             style="width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid #FED7AA; flex-shrink:0; cursor:pointer;" 
-                             onclick="openPhotoLightbox('{{ asset($mShPhoto) }}', '{{ addslashes($sh->brand . ' ' . $sh->model) }} (Pre-Owned)', 'IMEI: {{ $sh->imei_1 }} • Grade: {{ str_replace('_', ' ', $sh->condition_grade) }} • ₹{{ number_format($sh->selling_price, 2) }}', '{{ $mShBoxPhoto ? asset($mShBoxPhoto) : '' }}', '{{ $mShIdIsImage ? asset($mShIdProof) : '' }}')">
-                        @else
-                        <div style="width:36px; height:36px; border-radius:8px; background:#FFF7ED; color:#EA580C; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                            <i data-lucide="refresh-cw" style="width:18px;height:18px;"></i>
-                        </div>
-                        @endif
-                        <div style="min-width:0;">
-                            <div style="font-weight:800; font-size:13px; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $sh->brand }} {{ $sh->model }}</div>
-                            <div style="font-size:10px; color:#64748B;">IMEI: <span style="font-family:monospace; font-weight:700;">{{ $sh->imei_1 }}</span> @if($sh->battery_health) • 🔋{{ $sh->battery_health }}% @endif</div>
-                        </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                        <div style="text-align:right;">
-                            <div style="font-weight:900; font-size:14px; color:#0F172A;">₹{{ number_format($sh->selling_price, 0) }}</div>
-                            <span class="badge badge-orange" style="font-size:10px; padding:1px 6px;">
-                                {{ str_replace('_', ' ', $sh->condition_grade) }}
-                            </span>
-                        </div>
-                        <button type="button" 
-                                class="stock-action-trigger-btn" 
-                                title="Stock options" 
-                                onclick="openStockActionMenu(event, {
-                                    type: 'second_hand',
-                                    id: {{ $sh->id }},
-                                    name: '{{ addslashes($sh->brand . ' ' . $sh->model) }}',
-                                    subtext: 'IMEI: {{ $sh->imei_1 }}',
-                                    stock: {{ $sh->status === 'in_stock' ? 1 : 0 }},
-                                    is_sold: {{ $sh->status === 'sold' ? 1 : 0 }},
-                                    is_phone: 1,
-                                    photo: '{{ $mShPhoto ? asset($mShPhoto) : '' }}',
-                                    box_photo: '{{ $mShBoxPhoto ? asset($mShBoxPhoto) : '' }}'
-                                })">
-                            <i data-lucide="more-vertical" style="width:16px;height:16px;"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-        @endif
-
         @if(($canManageAccessories ?? false) || ($canManageCovers ?? false) || in_array($niche ?? '', ['admin', 'accessories', 'covers']))
             @foreach($parts as $part)
             @php $isLow = $part->stock_qty <= ($part->min_stock_alert ?? 3); @endphp
@@ -895,148 +501,6 @@
         </div>
     </div>
 
-    <!-- Mobile Floating Action Button -->
-    <div class="mobile-fab-container">
-        <button type="button" onclick="openStockQuickAddDrawer()" class="btn-app-fab" title="Add Stock Item" style="background:#2563EB; border:none; cursor:pointer;">
-            <i data-lucide="plus" style="width:20px;height:20px;"></i>
-            <span>Add Stock</span>
-        </button>
-    </div>
-
-
-    <!-- MODAL: Intake / Register Pre-Owned Buyback -->
-    <div id="buybackModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
-        <div class="card" style="max-width: 540px; width: 100%; max-height: 90vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
-            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
-                <div class="card-title" style="font-weight:700; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
-                    <i data-lucide="refresh-cw" style="width:18px;height:18px;color:#EA580C;"></i>
-                    Customer Device Buyback Intake
-                </div>
-                <button type="button" onclick="closeBuybackModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
-            </div>
-            <div class="card-body" style="padding:16px 18px;">
-                <form action="{{ route('mobileshop.second_hand.buyback') }}" method="POST" enctype="multipart/form-data" id="buybackForm">
-                    @csrf
-                    <input type="hidden" name="redirect_to" value="{{ route('mobileshop.stock', ['tab' => 'second_hand']) }}">
-
-                    <!-- Dual Photo Upload Field with Live Previews -->
-                    <div style="margin-bottom: 14px; background:#FFF7ED; border:1px solid #FED7AA; border-radius:12px; padding:12px;">
-                        <div style="font-size:11px; font-weight:800; color:#C2410C; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-                            <i data-lucide="camera" style="width:13px;height:13px;color:#EA580C;"></i> Device & Packaging Condition Photos
-                        </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                            <!-- 1. Pre-Owned Phone Condition Photo -->
-                            <div style="background:#fff; border:1px dashed #FDBA74; border-radius:10px; padding:10px; text-align:center;">
-                                <div id="shPhotoPreviewBox" style="display:none; margin-bottom:6px;">
-                                    <img id="shPreviewImg" src="" alt="Condition Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #FED7AA;">
-                                </div>
-                                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#EA580C; background:#FFF7ED; padding:5px 10px; border-radius:6px; border:1px solid #FED7AA; width:100%; justify-content:center;">
-                                    <i data-lucide="smartphone" style="width:13px;height:13px;"></i> Device Condition
-                                    <input type="file" name="photo" id="shPhonePhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shPreviewImg', 'shPhotoPreviewBox')">
-                                </label>
-                                <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Body / Screen Condition</div>
-                            </div>
-
-                            <!-- 2. Box / Invoice Photo -->
-                            <div style="background:#fff; border:1px dashed #CBD5E1; border-radius:10px; padding:10px; text-align:center;">
-                                <div id="shBoxPreviewBox" style="display:none; margin-bottom:6px;">
-                                    <img id="shBoxPreviewImg" src="" alt="Box Preview" style="max-height:90px; border-radius:6px; object-fit:contain; border:1px solid #E2E8F0;">
-                                </div>
-                                <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-size:11.5px; font-weight:700; color:#475569; background:#F1F5F9; padding:5px 10px; border-radius:6px; border:1px solid #CBD5E1; width:100%; justify-content:center;">
-                                    <i data-lucide="package" style="width:13px;height:13px;"></i> Box / Bill (Opt)
-                                    <input type="file" name="box_photo" id="shBoxPhotoInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shBoxPreviewImg', 'shBoxPreviewBox')">
-                                </label>
-                                <div style="font-size:9.5px; color:#64748B; margin-top:4px;">Original Box / Bill</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Brand *</label>
-                            <input type="text" name="brand" placeholder="e.g. Apple" required class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Model Name *</label>
-                            <input type="text" name="model" placeholder="e.g. iPhone 13 Pro" required class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Color</label>
-                            <input type="text" name="color" placeholder="e.g. Blue" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Storage</label>
-                            <input type="text" name="storage" placeholder="e.g. 128GB" class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Battery %</label>
-                            <input type="number" name="battery_health" placeholder="88" class="form-control" style="font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">IMEI 1 Number *</label>
-                        <input type="text" name="imei_1" placeholder="15-digit IMEI" required class="form-control" style="font-family:monospace; font-weight:700; font-size:13px;">
-                    </div>
-
-                    <div class="form-row" style="margin-bottom: 12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Buyback Cost (₹) *</label>
-                            <input type="number" step="0.01" name="purchase_cost" placeholder="42000" required class="form-control" style="font-size:13px;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Target Resale Price (₹) *</label>
-                            <input type="number" step="0.01" name="selling_price" placeholder="54999" required class="form-control" style="font-weight:700; color:#16A34A; font-size:13px;">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Condition Grade *</label>
-                        <select name="condition_grade" class="form-control" style="font-size:13px;">
-                            <option value="like_new_A_plus">Grade A+ (Pristine / Like New)</option>
-                            <option value="good_A">Grade A (Minor Micro-Scratches)</option>
-                            <option value="fair_B">Grade B (Noticeable Wear / 100% Functional)</option>
-                        </select>
-                    </div>
-
-                    <div style="padding: 12px; background: #FFF7ED; border: 1px solid #FED7AA; border-radius:10px; margin-bottom: 12px;">
-                        <div style="font-size:11px; font-weight:800; color:#C2410C; margin-bottom: 8px; text-transform:uppercase;">Customer KYC / Seller Info</div>
-                        <div class="form-row" style="margin-bottom: 8px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                            <input type="text" name="customer_buyback_name" placeholder="Customer Name *" required class="form-control" style="font-size:12px;">
-                            <input type="text" name="customer_buyback_phone" placeholder="Customer Phone *" required class="form-control" style="font-size:12px;">
-                        </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:start;">
-                            <input type="text" name="customer_buyback_id_proof" placeholder="Aadhaar / ID Number (Optional)" class="form-control" style="font-size:12px;">
-                            <div>
-                                <label style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px; font-weight:700; color:#C2410C; background:#fff; padding:7px 10px; border-radius:6px; border:1px dashed #FED7AA; justify-content:center;">
-                                    <i data-lucide="file-text" style="width:13px;height:13px;"></i> Upload ID Card Photo
-                                    <input type="file" name="id_proof_photo" id="shIdProofInput" accept="image/*" style="display:none;" onchange="previewSelectedPhoto(this, 'shIdProofPreviewImg', 'shIdProofPreviewBox')">
-                                </label>
-                            </div>
-                        </div>
-                        <div id="shIdProofPreviewBox" style="display:none; margin-top:8px; text-align:center;">
-                            <img id="shIdProofPreviewImg" src="" alt="ID Preview" style="max-height:80px; border-radius:6px; object-fit:contain; border:1px solid #FED7AA;">
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:14px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Inspection Remarks</label>
-                        <textarea name="checklist_notes" rows="2" placeholder="e.g. Original display, FaceID verified" class="form-control" style="font-size:12px;"></textarea>
-                    </div>
-
-                    <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
-                        <button type="button" onclick="closeBuybackModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#EA580C; border-color:#EA580C; font-size:12px;">Purchase Second Hand Phone</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-
     <!-- Mobile Quick-Add Drawer -->
     <div id="stockQuickAddDrawer" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:flex-end; justify-content:center;" onclick="closeStockQuickAddDrawer()">
         <div style="width: 100%; max-width: 500px; background: #fff; border-radius: 16px 16px 0 0; padding: 20px; box-shadow: 0 -10px 25px rgba(0,0,0,0.1);" onclick="event.stopPropagation()">
@@ -1044,40 +508,24 @@
                 <div style="font-weight:800; font-size:15px; color:#0F172A;">Add Stock Inflow</div>
                 <button type="button" onclick="closeStockQuickAddDrawer()" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
             </div>
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                @if($canManagePhones ?? false)
-                <a href="{{ route('mobileshop.purchase.create') }}" class="btn btn-outline" style="display:flex; align-items:center; gap:10px; justify-content:flex-start; padding:12px 14px; text-align:left; border-radius:8px; text-decoration:none;">
-                    <div style="width:32px; height:32px; border-radius:8px; background:#EFF6FF; color:#2563EB; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                        <i data-lucide="truck" style="width:16px;height:16px;"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Purchase New Phone</div>
-                        <div style="font-size:11px; color:#64748B;">Supplier invoice and stock purchase entry</div>
-                    </div>
-                </a>
-                @endif
-                @if($canManageSecondhand ?? false)
-                <button type="button" onclick="closeStockQuickAddDrawer(); openBuybackModal();" class="btn btn-outline" style="display:flex; align-items:center; gap:10px; justify-content:flex-start; padding:12px 14px; text-align:left; border-radius:8px;">
-                    <div style="width:32px; height:32px; border-radius:8px; background:#FFF7ED; color:#EA580C; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                        <i data-lucide="refresh-cw" style="width:16px;height:16px;"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Purchase Second Hand Phone</div>
-                        <div style="font-size:11px; color:#64748B;">Customer buyback intake & diagnostic grading</div>
-                    </div>
-                </button>
-                @endif
-                @if(($canManageAccessories ?? false) || ($canManageCovers ?? false))
                 <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-outline" style="display:flex; align-items:center; gap:10px; justify-content:flex-start; padding:12px 14px; text-align:left; border-radius:8px; text-decoration:none;">
                     <div style="width:32px; height:32px; border-radius:8px; background:#F0FDF4; color:#16A34A; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                         <i data-lucide="package" style="width:16px;height:16px;"></i>
                     </div>
                     <div>
-                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Purchase Accessories & Covers</div>
-                        <div style="font-size:11px; color:#64748B;">Covers, tempered glass, cables, chargers, spares</div>
+                        <div style="font-weight:700; font-size:13px; color:#0F172A;">Restock Accessories & Spares</div>
+                        <div style="font-size:11px; color:#64748B;">Displays, batteries, covers, tempered glass, cables, chargers</div>
                     </div>
                 </a>
-                @endif
+                <a href="{{ route('mobileshop.repairs') }}" class="btn btn-outline" style="display:flex; align-items:center; gap:10px; justify-content:flex-start; padding:12px 14px; text-align:left; border-radius:8px; text-decoration:none;">
+                    <div style="width:32px; height:32px; border-radius:8px; background:#EFF6FF; color:#2563EB; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i data-lucide="wrench" style="width:16px;height:16px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700; font-size:13px; color:#0F172A;">New Repair Job</div>
+                        <div style="font-size:11px; color:#64748B;">Intake device for express repair and diagnostics</div>
+                    </div>
+                </a>
             </div>
         </div>
     </div>
@@ -1579,27 +1027,8 @@
         const activeBtn = document.getElementById(`tabBtn_${tab}`);
         if (activeBtn) activeBtn.classList.add('active');
 
-        const secNew = document.getElementById('stockSection_new_phones');
-        const secSh = document.getElementById('stockSection_second_hand');
         const secParts = document.getElementById('stockSection_parts');
-
-        if (tab === 'all') {
-            if (secNew) secNew.style.display = 'block';
-            if (secSh) secSh.style.display = 'block';
-            if (secParts) secParts.style.display = 'block';
-        } else if (tab === 'new_phones') {
-            if (secNew) secNew.style.display = 'block';
-            if (secSh) secSh.style.display = 'none';
-            if (secParts) secParts.style.display = 'none';
-        } else if (tab === 'second_hand') {
-            if (secNew) secNew.style.display = 'none';
-            if (secSh) secSh.style.display = 'block';
-            if (secParts) secParts.style.display = 'none';
-        } else if (tab === 'parts') {
-            if (secNew) secNew.style.display = 'none';
-            if (secSh) secSh.style.display = 'none';
-            if (secParts) secParts.style.display = 'block';
-        }
+        if (secParts) secParts.style.display = 'block';
 
         filterStockRows();
     }
@@ -1610,12 +1039,7 @@
         const btnLow = document.getElementById('tabBtn_low');
         if (btnLow) btnLow.classList.add('active');
 
-        const secNew = document.getElementById('stockSection_new_phones');
-        const secSh = document.getElementById('stockSection_second_hand');
         const secParts = document.getElementById('stockSection_parts');
-
-        if (secNew) secNew.style.display = 'none';
-        if (secSh) secSh.style.display = 'none';
         if (secParts) secParts.style.display = 'block';
 
         filterStockRows();
@@ -1726,41 +1150,18 @@
             if (toDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate <= toDate);
 
             let matchesTab = true;
-            if (currentStockTab === 'new_phones') matchesTab = (cardType === 'new_phone');
-            else if (currentStockTab === 'second_hand') matchesTab = (cardType === 'second_hand');
-            else if (currentStockTab === 'parts') matchesTab = (cardType === 'part');
-            else if (currentStockTab === 'low') matchesTab = isLow;
+            if (currentStockTab === 'low') matchesTab = isLow;
 
             const isCardVisible = matchesText && matchesDate && matchesTab;
             card.dataset.mobiHidden = isCardVisible ? '0' : '1';
             card.style.display = isCardVisible ? '' : 'none';
         });
 
-        if (window.stockNewPager && typeof window.stockNewPager.refresh === 'function') window.stockNewPager.refresh();
-        if (window.stockShPager && typeof window.stockShPager.refresh === 'function') window.stockShPager.refresh();
         if (window.stockPartsPager && typeof window.stockPartsPager.refresh === 'function') window.stockPartsPager.refresh();
     }
 
     function initStockPage() {
         if (window.setupMobiTablePagination) {
-            if (document.getElementById('stockNewPhonesTable') && document.getElementById('stockNewPhonesPagination')) {
-                window.stockNewPager = window.setupMobiTablePagination({
-                    tableId: 'stockNewPhonesTable',
-                    paginationContainerId: 'stockNewPhonesPagination',
-                    rowSelector: 'tbody tr.stock-row',
-                    pageSize: 25,
-                    itemName: 'new phones'
-                });
-            }
-            if (document.getElementById('stockSecondHandTable') && document.getElementById('stockSecondHandPagination')) {
-                window.stockShPager = window.setupMobiTablePagination({
-                    tableId: 'stockSecondHandTable',
-                    paginationContainerId: 'stockSecondHandPagination',
-                    rowSelector: 'tbody tr.stock-row',
-                    pageSize: 25,
-                    itemName: 'pre-owned phones'
-                });
-            }
             if (document.getElementById('stockPartsTable') && document.getElementById('stockPartsPagination')) {
                 window.stockPartsPager = window.setupMobiTablePagination({
                     tableId: 'stockPartsTable',
@@ -1776,7 +1177,7 @@
         // Auto-switch tab if ?tab= is passed in URL (e.g. from redirect)
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
-        if (tabParam && ['new_phones', 'second_hand', 'parts', 'low'].includes(tabParam)) {
+        if (tabParam && ['parts', 'low'].includes(tabParam)) {
             switchStockTab(tabParam);
         }
 
@@ -2112,15 +1513,7 @@
         if (modal) modal.style.display = 'none';
     }
 
-    // ── BUYBACK MODAL HANDLERS ──
-    function openBuybackModal() {
-        const modal = document.getElementById('buybackModal');
-        if (modal) { modal.style.display = 'flex'; if (window.lucide) window.lucide.createIcons(); }
-    }
-    function closeBuybackModal() {
-        const modal = document.getElementById('buybackModal');
-        if (modal) modal.style.display = 'none';
-    }
+
 
     function openStockQuickAddDrawer() {
         const drawer = document.getElementById('stockQuickAddDrawer');
@@ -2398,24 +1791,6 @@
                     } else {
                         mBadge.innerHTML = `<span class="badge badge-green" style="font-size:10px; padding:1px 6px;">${newStock} in stock</span>`;
                     }
-                }
-            } else {
-                // Phone deleted
-                const rowId = (type === 'new_phone') ? `stockRow_new_phone_${id}` : `stockRow_second_hand_${id}`;
-                const cardId = (type === 'new_phone') ? `stockCard_new_phone_${id}` : `stockCard_second_hand_${id}`;
-
-                const row = document.getElementById(rowId);
-                if (row) {
-                    row.style.transition = 'all 0.3s ease';
-                    row.style.opacity = '0';
-                    setTimeout(() => row.remove(), 300);
-                }
-
-                const card = document.getElementById(cardId);
-                if (card) {
-                    card.style.transition = 'all 0.3s ease';
-                    card.style.opacity = '0';
-                    setTimeout(() => card.remove(), 300);
                 }
             }
 

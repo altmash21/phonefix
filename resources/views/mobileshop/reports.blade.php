@@ -924,7 +924,7 @@
                     <button type="button" class="sub-filter-pill active ledger-pay-pill" onclick="setLedgerPayFilter('all', this)">All</button>
                     <button type="button" class="sub-filter-pill ledger-pay-pill" onclick="setLedgerPayFilter('cash', this)">Cash</button>
                     <button type="button" class="sub-filter-pill ledger-pay-pill" onclick="setLedgerPayFilter('upi', this)">UPI</button>
-                    <button type="button" class="sub-filter-pill ledger-pay-pill" onclick="setLedgerPayFilter('emi', this)">EMI</button>
+
                     <button type="button" class="sub-filter-pill ledger-pay-pill" onclick="setLedgerPayFilter('card', this)">Card</button>
                 </div>
 
@@ -1245,14 +1245,13 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(payCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Cash', 'UPI / QR', 'Debit/Credit Card', 'EMI / Finance', 'Khata Credit'],
+                labels: ['Cash', 'UPI / QR', 'Debit/Credit Card', 'Khata Credit'],
                 datasets: [{
-                    data: [payData.cash, payData.upi, payData.card, payData.emi, payData.udhari],
+                    data: [payData.cash, payData.upi, payData.card, payData.udhari],
                     backgroundColor: [
                         '#10B981', // Cash green
                         '#6366F1', // UPI indigo
                         '#3B82F6', // Card blue
-                        '#8B5CF6', // EMI purple
                         '#EF4444'  // Khata red
                     ],
                     borderWidth: 2,

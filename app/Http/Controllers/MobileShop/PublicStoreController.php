@@ -9,129 +9,214 @@ use Illuminate\Support\Facades\Log;
 class PublicStoreController extends BaseMobileShopController
 {
     /**
-     * Public Website — Landing Homepage
+     * Public Website — Landing Homepage (Accessories & Express Repair Center)
      */
     public function publicLanding()
     {
         $companyId = company_id() ?? session('company_id') ?? 1;
 
-        $featuredNew = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('type', 'new')
-            ->where('status', 'in_stock')
-            ->orderBy('id', 'desc')
-            ->limit(6)
+        $p = DB::getTablePrefix();
+        // Categories with part count
+        $categories = DB::table('ms_part_categories')
+            ->where('ms_part_categories.company_id', $companyId)
+            ->leftJoin('ms_parts_inventory', function($join) use ($companyId) {
+                $join->on('ms_parts_inventory.category_id', '=', 'ms_part_categories.id')
+                     ->where('ms_parts_inventory.company_id', '=', $companyId);
+            })
+            ->select(
+                'ms_part_categories.id',
+                'ms_part_categories.name',
+                'ms_part_categories.slug',
+                DB::raw("COUNT({$p}ms_parts_inventory.id) as items_count")
+            )
+            ->groupBy('ms_part_categories.id', 'ms_part_categories.name', 'ms_part_categories.slug')
+            ->orderBy('items_count', 'desc')
             ->get();
 
-        $featuredSecondHand = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('type', 'second_hand')
-            ->where('status', 'in_stock')
-            ->orderBy('id', 'desc')
-            ->limit(6)
+        // Featured accessories for homepage
+        $featuredAccessories = DB::table('ms_parts_inventory')
+            ->leftJoin('ms_part_categories', 'ms_parts_inventory.category_id', '=', 'ms_part_categories.id')
+            ->where('ms_parts_inventory.company_id', $companyId)
+            ->select(
+                'ms_parts_inventory.*',
+                'ms_part_categories.name as category_name',
+                'ms_part_categories.slug as category_slug'
+            )
+            ->orderBy('ms_parts_inventory.stock_qty', 'desc')
+            ->limit(8)
             ->get();
 
-        $newCount = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', 'in_stock')->count();
-        $secondHandCount = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->count();
+        // High-demand Fast Chargers & Cables
+        $chargerEssentials = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->whereIn('category', ['charger', 'cable', 'power_bank'])
+            ->orderBy('id', 'asc')
+            ->limit(4)
+            ->get();
 
-        return view('mobileshop.public.home', compact('featuredNew', 'featuredSecondHand', 'newCount', 'secondHandCount'));
+        // Premium Cases & Protection
+        $protectionEssentials = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->whereIn('category', ['back_cover', 'tempered_glass'])
+            ->orderBy('id', 'asc')
+            ->limit(4)
+            ->get();
+
+        // Live stats for social proof
+        $activeRepairsCount = DB::table('ms_repair_tickets')
+            ->where('company_id', $companyId)
+            ->whereIn('status', ['received', 'diagnosing', 'in_progress', 'repairing', 'parts_awaited', 'testing', 'ready_for_pickup'])
+            ->count();
+
+        $completedRepairsCount = DB::table('ms_repair_tickets')
+            ->where('company_id', $companyId)
+            ->whereIn('status', ['completed', 'delivered'])
+            ->count();
+
+        $totalAccessoriesInStock = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->sum('stock_qty');
+
+        return view('mobileshop.public.home', compact(
+            'categories',
+            'featuredAccessories',
+            'chargerEssentials',
+            'protectionEssentials',
+            'activeRepairsCount',
+            'completedRepairsCount',
+            'totalAccessoriesInStock'
+        ));
     }
 
     /**
-     * Public Website — Explore Shop Catalog
+     * Public Website — Explore Accessories & Parts Catalog
      */
     public function publicStore(Request $request)
     {
         $companyId = company_id() ?? session('company_id') ?? 1;
-        $tab       = $request->query('tab', 'all');
-        $query     = trim($request->query('q', ''));
+        $categorySlug = $request->query('category', 'all');
+        $brandFilter = $request->query('brand', 'all');
+        $query = trim($request->query('q', ''));
 
-        // Query New Phones
-        $newPhonesQuery = DB::table('ms_mobile_devices')
+        $p = DB::getTablePrefix();
+        // Fetch all categories for pill tabs
+        $categories = DB::table('ms_part_categories')
+            ->where('ms_part_categories.company_id', $companyId)
+            ->leftJoin('ms_parts_inventory', function($join) use ($companyId) {
+                $join->on('ms_parts_inventory.category_id', '=', 'ms_part_categories.id')
+                     ->where('ms_parts_inventory.company_id', '=', $companyId);
+            })
+            ->select(
+                'ms_part_categories.id',
+                'ms_part_categories.name',
+                'ms_part_categories.slug',
+                DB::raw("COUNT({$p}ms_parts_inventory.id) as items_count")
+            )
+            ->groupBy('ms_part_categories.id', 'ms_part_categories.name', 'ms_part_categories.slug')
+            ->orderBy('ms_part_categories.name', 'asc')
+            ->get();
+
+        // Fetch distinct brands for filter
+        $brands = DB::table('ms_parts_inventory')
             ->where('company_id', $companyId)
-            ->where('type', 'new')
-            ->where('status', 'in_stock');
+            ->whereNotNull('brand')
+            ->where('brand', '!=', '')
+            ->distinct()
+            ->pluck('brand');
 
-        if (!empty($query)) {
-            $newPhonesQuery->where(function($q) use ($query) {
-                $q->where('brand', 'like', "%{$query}%")
-                  ->orWhere('model', 'like', "%{$query}%");
+        // Query accessories/parts
+        $itemsQuery = DB::table('ms_parts_inventory')
+            ->leftJoin('ms_part_categories', 'ms_parts_inventory.category_id', '=', 'ms_part_categories.id')
+            ->where('ms_parts_inventory.company_id', $companyId)
+            ->select(
+                'ms_parts_inventory.*',
+                'ms_part_categories.name as category_name',
+                'ms_part_categories.slug as category_slug'
+            );
+
+        if ($categorySlug !== 'all' && !empty($categorySlug)) {
+            $itemsQuery->where(function($q) use ($categorySlug) {
+                $q->where('ms_part_categories.slug', $categorySlug)
+                  ->orWhere('ms_parts_inventory.category', $categorySlug);
             });
         }
-        $newPhones = $newPhonesQuery->orderBy('id', 'desc')->get();
 
-        // Query Second Hand Phones
-        $secondHandQuery = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('type', 'second_hand')
-            ->where('status', 'in_stock');
+        if ($brandFilter !== 'all' && !empty($brandFilter)) {
+            $itemsQuery->where('ms_parts_inventory.brand', $brandFilter);
+        }
 
         if (!empty($query)) {
-            $secondHandQuery->where(function($q) use ($query) {
-                $q->where('brand', 'like', "%{$query}%")
-                  ->orWhere('model', 'like', "%{$query}%");
+            $itemsQuery->where(function($q) use ($query) {
+                $q->where('ms_parts_inventory.name', 'like', "%{$query}%")
+                  ->orWhere('ms_parts_inventory.brand', 'like', "%{$query}%")
+                  ->orWhere('ms_parts_inventory.compatible_model', 'like', "%{$query}%")
+                  ->orWhere('ms_parts_inventory.description', 'like', "%{$query}%");
             });
         }
-        $secondHandPhones = $secondHandQuery->orderBy('id', 'desc')->get();
 
-        return view('mobileshop.public.shop', compact('newPhones', 'secondHandPhones', 'tab', 'query'));
+        $items = $itemsQuery->orderBy('ms_parts_inventory.id', 'desc')->paginate(16)->withQueryString();
+
+        return view('mobileshop.public.shop', compact(
+            'items',
+            'categories',
+            'brands',
+            'categorySlug',
+            'brandFilter',
+            'query'
+        ));
     }
 
     /**
-     * Public Website — Single Product Detail Page
+     * Public Website — Single Accessory / Part Detail Page
      */
     public function publicProductDetail($id)
     {
         $companyId = company_id() ?? session('company_id') ?? 1;
 
-        $device = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('id', $id)
+        $product = DB::table('ms_parts_inventory')
+            ->leftJoin('ms_part_categories', 'ms_parts_inventory.category_id', '=', 'ms_part_categories.id')
+            ->where('ms_parts_inventory.company_id', $companyId)
+            ->where('ms_parts_inventory.id', $id)
+            ->select(
+                'ms_parts_inventory.*',
+                'ms_part_categories.name as category_name',
+                'ms_part_categories.slug as category_slug'
+            )
             ->first();
 
-        if (!$device) {
-            abort(404, 'The requested mobile device was not found in our catalog.');
+        if (!$product) {
+            abort(404, 'The requested mobile accessory or spare part was not found in our catalog.');
         }
 
-        // Related in-stock devices (same brand or same type, excluding current)
-        $relatedDevices = DB::table('ms_mobile_devices')
-            ->where('company_id', $companyId)
-            ->where('id', '!=', $id)
-            ->where('status', 'in_stock')
-            ->where(function($q) use ($device) {
-                $q->where('brand', $device->brand)
-                  ->orWhere('type', $device->type);
+        // Related items in the same category or brand
+        $relatedProducts = DB::table('ms_parts_inventory')
+            ->leftJoin('ms_part_categories', 'ms_parts_inventory.category_id', '=', 'ms_part_categories.id')
+            ->where('ms_parts_inventory.company_id', $companyId)
+            ->where('ms_parts_inventory.id', '!=', $id)
+            ->where(function($q) use ($product) {
+                if ($product->category_id) {
+                    $q->where('ms_parts_inventory.category_id', $product->category_id);
+                } else {
+                    $q->where('ms_parts_inventory.category', $product->category);
+                }
+                if ($product->brand) {
+                    $q->orWhere('ms_parts_inventory.brand', $product->brand);
+                }
             })
-            ->orderBy('id', 'desc')
+            ->select(
+                'ms_parts_inventory.*',
+                'ms_part_categories.name as category_name',
+                'ms_part_categories.slug as category_slug'
+            )
+            ->orderBy('ms_parts_inventory.id', 'desc')
             ->limit(4)
             ->get();
 
-        if ($relatedDevices->count() < 4) {
-            $excludeIds = $relatedDevices->pluck('id')->push($id)->toArray();
-            $moreDevices = DB::table('ms_mobile_devices')
-                ->where('company_id', $companyId)
-                ->whereNotIn('id', $excludeIds)
-                ->where('status', 'in_stock')
-                ->orderBy('id', 'desc')
-                ->limit(4 - $relatedDevices->count())
-                ->get();
-            $relatedDevices = $relatedDevices->merge($moreDevices);
-        }
-
-        // Calculate approximate EMI plans
-        $price = (float) $device->selling_price;
-        $emiPlans = [
-            ['months' => 3, 'monthly' => round($price / 3), 'down_payment' => 0, 'bank' => 'Bajaj Finserv'],
-            ['months' => 6, 'monthly' => round(($price * 1.04) / 6), 'down_payment' => 0, 'bank' => 'HDFC / ICICI'],
-            ['months' => 9, 'monthly' => round(($price * 1.06) / 9), 'down_payment' => 0, 'bank' => 'IDFC First'],
-            ['months' => 12, 'monthly' => round(($price * 1.08) / 12), 'down_payment' => 0, 'bank' => 'Credit Card EMI'],
-        ];
-
-        return view('mobileshop.public.product', compact('device', 'relatedDevices', 'emiPlans'));
+        return view('mobileshop.public.product', compact('product', 'relatedProducts'));
     }
 
     /**
-     * Public Website — About Us Page
+     * Public Website — About Us & Lab Page
      */
     public function publicAbout()
     {
@@ -162,21 +247,25 @@ class PublicStoreController extends BaseMobileShopController
         Log::info('Public customer contact inquiry received:', $validated);
 
         $sName = store_name();
-        return redirect()->route('public.contact')->with('success', "Thank you, {$validated['name']}! Your message has been received by our {$sName} store counter. We will call you shortly on {$validated['phone']}.");
+        return redirect()->route('public.contact')->with('success', "Thank you, {$validated['name']}! Your inquiry has been received by our {$sName} service desk. Our technician will call you shortly on {$validated['phone']}.");
     }
 
     /**
-     * Public Website — Real-Time Repair Job Sheet Tracker
+     * Public Website — Real-Time Express Repair Tracker
      */
     public function publicTrackRepair(Request $request)
     {
         $ticketNo = trim($request->query('ticket_number') ?? '');
         $ticket = null;
+        $activeStep = 1;
+        $progressPct = 20;
+
         if (!empty($ticketNo)) {
             $companyId = company_id() ?? session('company_id') ?? 1;
             $ticket = DB::table('ms_repair_tickets')
                 ->join('ms_customers', 'ms_repair_tickets.customer_id', '=', 'ms_customers.id')
                 ->select(
+                    'ms_repair_tickets.id',
                     'ms_repair_tickets.ticket_number',
                     'ms_repair_tickets.status',
                     'ms_repair_tickets.brand',
@@ -197,9 +286,52 @@ class PublicStoreController extends BaseMobileShopController
                       ->orWhere('ms_repair_tickets.ticket_number', 'like', "%{$ticketNo}%");
                 })
                 ->first();
+
+            if ($ticket) {
+                // Determine 5-step status
+                // Steps: 1: Received, 2: Diagnosing, 3: In Repair, 4: QC Testing, 5: Ready for Pickup / Delivered
+                switch ($ticket->status) {
+                    case 'received':
+                    case 'pending':
+                        $activeStep = 1;
+                        $progressPct = 20;
+                        break;
+                    case 'diagnosing':
+                        $activeStep = 2;
+                        $progressPct = 40;
+                        break;
+                    case 'in_progress':
+                    case 'repairing':
+                    case 'parts_awaited':
+                        $activeStep = 3;
+                        $progressPct = 65;
+                        break;
+                    case 'testing':
+                    case 'qc':
+                        $activeStep = 4;
+                        $progressPct = 85;
+                        break;
+                    case 'ready_for_pickup':
+                    case 'completed':
+                    case 'delivered':
+                        $activeStep = 5;
+                        $progressPct = 100;
+                        break;
+                    default:
+                        $activeStep = 2;
+                        $progressPct = 35;
+                }
+            }
         }
 
-        return view('mobileshop.public.track_repair', compact('ticket'));
+        // Demo tickets available for quick click testing
+        $sampleTickets = DB::table('ms_repair_tickets')
+            ->select('ticket_number', 'brand', 'model', 'status')
+            ->orderBy('id', 'desc')
+            ->limit(3)
+            ->get();
+
+        return view('mobileshop.public.track_repair', compact('ticket', 'activeStep', 'progressPct', 'sampleTickets'));
     }
 
     /**

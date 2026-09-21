@@ -356,16 +356,10 @@
                 if ($u) {
                     if ($u->hasRole('admin') || $u->hasRole('store-admin')) {
                         $roleLabel = 'Store Admin';
-                    } elseif ($u->hasRole('sales-staff')) {
-                        $roleLabel = 'New Phones POS';
-                    } elseif ($u->hasRole('secondhand-staff')) {
-                        $roleLabel = 'Buyback Specialist';
                     } elseif ($u->hasRole('accessories-staff')) {
                         $roleLabel = 'Accessories Staff';
-                    } elseif ($u->hasRole('cover-staff')) {
-                        $roleLabel = 'Cover & Tempered';
                     } elseif ($u->hasRole('repair-technician')) {
-                        $roleLabel = 'Service Technician';
+                        $roleLabel = 'Repair Technician';
                     }
                 }
             @endphp
@@ -426,39 +420,23 @@
                 <i data-lucide="layout-dashboard"></i> Dashboard
             </a>
             @endcan
-            @can('read-mobileshop-purchase')
-            <a href="{{ route('mobileshop.purchase') }}"
-               class="nav-link {{ request()->routeIs('mobileshop.purchase*') ? 'active' : '' }}"
+
+            @canany(['sell-mobileshop-accessories', 'create-sale-accessories', 'read-mobileshop-accessories', 'read-mobileshop-sales'])
+            <a href="{{ route('mobileshop.accessories.pos') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.accessories.pos') ? 'active' : '' }}"
                onclick="closeMobileSidebar()">
-                <i data-lucide="truck"></i> Purchase
+                <i data-lucide="zap"></i> Accessories POS
             </a>
-            @endcan
-            @can('read-mobileshop-sales')
-            <a href="{{ route('mobileshop.sales') }}"
-               class="nav-link {{ request()->routeIs('mobileshop.sales*') ? 'active' : '' }}"
-               onclick="closeMobileSidebar()">
-                <i data-lucide="trending-up"></i> Sales
-            </a>
-            @endcan
+            @endcanany
+
             @can('read-mobileshop-stock')
             <a href="{{ route('mobileshop.stock') }}"
                class="nav-link {{ request()->routeIs('mobileshop.stock*') ? 'active' : '' }}"
                onclick="closeMobileSidebar()">
-                <i data-lucide="package"></i> Stock
+                <i data-lucide="package"></i> Stock & Parts
             </a>
             @endcan
-            <a href="{{ route('mobileshop.khata') }}"
-               class="nav-link {{ request()->routeIs('mobileshop.khata*') ? 'active' : '' }}"
-               onclick="closeMobileSidebar()">
-                <i data-lucide="book-open"></i> Customer Khata
-            </a>
-            @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('sales-staff')))
-            <a href="{{ route('mobileshop.emi.ledger') }}"
-               class="nav-link {{ request()->routeIs('mobileshop.emi*') ? 'active' : '' }}"
-               onclick="closeMobileSidebar()">
-                <i data-lucide="building-2"></i> EMI Ledger
-            </a>
-            @endif
+
             @can('read-mobileshop-repairs')
             <a href="{{ route('mobileshop.repairs') }}"
                class="nav-link {{ request()->routeIs('mobileshop.repairs*') ? 'active' : '' }}"
@@ -466,6 +444,15 @@
                 <i data-lucide="wrench"></i> Repairs Desk
             </a>
             @endcan
+
+            @can('read-mobileshop-khata')
+            <a href="{{ route('mobileshop.khata') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.khata*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="book-open"></i> Customer Khata
+            </a>
+            @endcan
+
             @canany(['read-mobileshop-reports', 'read-reports-financial', 'read-reports-khata'])
             <a href="{{ route('mobileshop.reports') }}"
                class="nav-link {{ request()->routeIs('mobileshop.reports*') ? 'active' : '' }}"
@@ -473,6 +460,7 @@
                 <i data-lucide="bar-chart-3"></i> Reports
             </a>
             @endcanany
+
             @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin')))
             <a href="{{ route('mobileshop.masters') }}"
                class="nav-link {{ request()->routeIs('mobileshop.masters*') ? 'active' : '' }}"
@@ -500,7 +488,6 @@
     <div class="app-wrapper">
         <aside class="sidebar no-print">
             <nav class="sidebar-nav">
-                    {{-- ════ UNIFIED SIDEBAR — Same 5 items for all roles, @can gated ════ --}}
                 @can('read-mobileshop-dashboard')
                 <a href="{{ route('mobileshop.dashboard') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.dashboard') ? 'active' : '' }}">
@@ -509,49 +496,35 @@
                 </a>
                 @endcan
 
-                @can('read-mobileshop-purchase')
-                <a href="{{ route('mobileshop.purchase') }}"
-                   class="nav-link {{ request()->routeIs('mobileshop.purchase*') ? 'active' : '' }}">
-                    <i data-lucide="truck"></i>
-                    Purchase
+                @canany(['sell-mobileshop-accessories', 'create-sale-accessories', 'read-mobileshop-accessories', 'read-mobileshop-sales'])
+                <a href="{{ route('mobileshop.accessories.pos') }}"
+                   class="nav-link {{ request()->routeIs('mobileshop.accessories.pos') ? 'active' : '' }}">
+                    <i data-lucide="zap"></i>
+                    Accessories POS
                 </a>
-                @endcan
-
-                @can('read-mobileshop-sales')
-                <a href="{{ route('mobileshop.sales') }}"
-                   class="nav-link {{ request()->routeIs('mobileshop.sales*') ? 'active' : '' }}">
-                    <i data-lucide="trending-up"></i>
-                    Sales
-                </a>
-                @endcan
+                @endcanany
 
                 @can('read-mobileshop-stock')
                 <a href="{{ route('mobileshop.stock') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.stock*') ? 'active' : '' }}">
                     <i data-lucide="package"></i>
-                    Stock
+                    Stock & Parts
                 </a>
                 @endcan
-
-                <a href="{{ route('mobileshop.khata') }}"
-                   class="nav-link {{ request()->routeIs('mobileshop.khata*') ? 'active' : '' }}">
-                    <i data-lucide="book-open"></i>
-                    Customer Khata
-                </a>
-
-                @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('sales-staff')))
-                <a href="{{ route('mobileshop.emi.ledger') }}"
-                   class="nav-link {{ request()->routeIs('mobileshop.emi*') ? 'active' : '' }}">
-                    <i data-lucide="building-2"></i>
-                    EMI Ledger
-                </a>
-                @endif
 
                 @can('read-mobileshop-repairs')
                 <a href="{{ route('mobileshop.repairs') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.repairs*') ? 'active' : '' }}">
                     <i data-lucide="wrench"></i>
                     Repairs Desk
+                </a>
+                @endcan
+
+                @can('read-mobileshop-khata')
+                <a href="{{ route('mobileshop.khata') }}"
+                   class="nav-link {{ request()->routeIs('mobileshop.khata*') ? 'active' : '' }}">
+                    <i data-lucide="book-open"></i>
+                    Customer Khata
                 </a>
                 @endcan
 

@@ -19,12 +19,10 @@ class StaffOnboardingController extends Controller
     public static function resolveRoleName(string $roleName): string
     {
         return match ($roleName) {
-            'staff-phones', 'phones'                => 'sales-staff',
-            'staff-secondhand', 'secondhand'        => 'secondhand-staff',
-            'staff-accessories', 'accessories'      => 'accessories-staff',
-            'staff-covers', 'covers'                => 'cover-staff',
-            'staff-repairs', 'repairs'              => 'repair-technician',
-            default                                 => $roleName,
+            'staff-accessories', 'accessories', 'staff-covers', 'covers', 'staff-phones', 'phones', 'staff-secondhand', 'secondhand' => 'accessories-staff',
+            'staff-repairs', 'repairs', 'tech'                                                                                         => 'repair-technician',
+            'store-admin', 'admin'                                                                                                     => 'store-admin',
+            default                                                                                                                    => $roleName,
         };
     }
 
@@ -36,10 +34,7 @@ class StaffOnboardingController extends Controller
         $normalized = self::resolveRoleName($roleName);
 
         return match ($normalized) {
-            'sales-staff'          => '📱 Brand New Mobiles POS',
-            'secondhand-staff'     => '🔄 Pre-Owned & Buyback Evaluation',
             'accessories-staff'    => '⚡ Accessories & Spare Parts Counter',
-            'cover-staff'          => '🖼️ Back Cover & Tempered Glass',
             'repair-technician'    => '🔧 Service Desk & Repair Lab',
             'store-admin', 'admin' => '👑 Store Administrator / Manager',
             default                => ucwords(str_replace(['-', '_'], ' ', $roleName)),

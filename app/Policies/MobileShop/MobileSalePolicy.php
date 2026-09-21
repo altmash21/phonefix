@@ -24,9 +24,8 @@ class MobileSalePolicy
         return $user->can('read-mobileshop-sales')
             || $user->can('create-mobileshop-sales')
             || $user->can('read-mobileshop-pos')
-            || $user->can('read-mobileshop-secondhand')
-            || $user->hasRole('sales-staff')
-            || $user->hasRole('secondhand-staff');
+            || $user->hasRole('accessories-staff')
+            || $user->hasRole('repair-technician');
     }
 
     public function create(User $user): bool
@@ -36,13 +35,9 @@ class MobileSalePolicy
         }
 
         return $user->can('create-mobileshop-sales')
-            || $user->can('create-sale-phones')
             || $user->can('create-mobileshop-pos')
-            || $user->can('create-sale-mobiles')
-            || $user->can('create-mobileshop-secondhand')
-            || $user->can('sell-mobileshop-secondhand')
-            || $user->hasRole('sales-staff')
-            || $user->hasRole('secondhand-staff');
+            || $user->hasRole('accessories-staff')
+            || $user->hasRole('repair-technician');
     }
 
     public function void(User $user): bool
@@ -53,8 +48,7 @@ class MobileSalePolicy
 
         return $user->can('void-mobileshop-sales')
             || $user->can('read-mobileshop-sales')
-            || $user->can('create-mobileshop-pos')
-            || $user->can('create-sale-phones');
+            || $user->can('create-mobileshop-pos');
     }
 
     public function printInvoice(User $user): bool
@@ -66,8 +60,7 @@ class MobileSalePolicy
         return $user->can('read-mobileshop-sales')
             || $user->can('create-mobileshop-sales')
             || $user->can('read-mobileshop-pos')
-            || $user->can('read-mobileshop-secondhand')
-            || $user->hasRole('sales-staff')
-            || $user->hasRole('secondhand-staff');
+            || $user->hasRole('accessories-staff')
+            || $user->hasRole('repair-technician');
     }
 }

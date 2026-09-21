@@ -56,6 +56,10 @@ Route::get('bill/{invoice_number}/pdf', 'MobileShop\PublicBillController@pdf')->
 
 // Compatibility & Clean Short Aliases
 Route::get('home', function() { return redirect()->route('public.landing'); });
+Route::get('staff', function() { return redirect()->route('login'); })->name('staff');
+Route::get('staff-portal', function() { return redirect()->route('login'); });
+Route::get('staff/login', function() { return redirect()->route('login'); });
+Route::get('login', function() { return redirect()->route('login'); });
 Route::get('privacy', function() { return redirect()->route('public.privacy'); });
 Route::get('terms', function() { return redirect()->route('public.terms'); });
 Route::get('refunds', function() { return redirect()->route('public.refunds'); });

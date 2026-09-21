@@ -104,7 +104,7 @@ class MobileShopRbacSeeder extends Seeder
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        // ROLE 1: Store Admin — Full access to everything
+        // ROLE 1: Store Admin — Full access to everything in the system
         // ─────────────────────────────────────────────────────────────────────
         $adminRole = Role::firstOrCreate(['name' => 'store-admin'], [
             'display_name' => 'Store Owner / Admin',
@@ -119,92 +119,17 @@ class MobileShopRbacSeeder extends Seeder
             ->get());
 
         // ─────────────────────────────────────────────────────────────────────
-        // ROLE 2: Sales Staff — Brand New Mobiles niche ONLY
-        // ─────────────────────────────────────────────────────────────────────
-        $salesRole = Role::firstOrCreate(['name' => 'sales-staff'], [
-            'display_name' => 'New Phones Sales Staff',
-            'description'  => 'Brand new phone billing, IMEI tracking, and customer Khata — isolated to new phones niche',
-        ]);
-        $salesRole->syncPermissions(Permission::whereIn('name', [
-            'read-admin-panel',
-            'read-mobileshop-dashboard',
-            'read-mobileshop-purchase',
-            'create-purchase-phones',
-            'read-mobileshop-sales',
-            'create-sale-phones',
-            'read-mobileshop-stock',
-            'manage-stock-phones',
-            'read-mobileshop-reports',
-            'read-reports-khata',
-            // legacy
-            'read-mobileshop-pos',
-            'create-mobileshop-pos',
-            'read-mobileshop-new',
-            'read-mobileshop-khata',
-            'create-mobileshop-khata',
-            'read-mobileshop-procurement',
-            'create-mobileshop-procurement',
-        ])->get());
-
-        // ─────────────────────────────────────────────────────────────────────
-        // ROLE 3: Second Hand / Buyback Staff — Pre-Owned niche ONLY
-        // ─────────────────────────────────────────────────────────────────────
-        $secondHandRole = Role::firstOrCreate(['name' => 'secondhand-staff'], [
-            'display_name' => 'Second Hand & Buyback Specialist',
-            'description'  => 'Pre-owned mobile intake, grading, buyback purchase, and pre-owned sales — isolated to second hand niche',
-        ]);
-        $secondHandRole->syncPermissions(Permission::whereIn('name', [
-            'read-admin-panel',
-            'read-mobileshop-dashboard',
-            'read-mobileshop-purchase',
-            'create-purchase-secondhand',
-            'read-mobileshop-sales',
-            'create-sale-secondhand',
-            'read-mobileshop-stock',
-            'manage-stock-secondhand',
-            'read-mobileshop-reports',
-            // legacy
-            'read-mobileshop-secondhand',
-            'create-mobileshop-secondhand',
-            'sell-mobileshop-secondhand',
-        ])->get());
-
-        // ─────────────────────────────────────────────────────────────────────
-        // ROLE 4: Accessories Staff — ALL accessories (incl. covers/tempered)
+        // ROLE 2: Accessories Staff — Accessories, covers, tempered glass, & parts
         // ─────────────────────────────────────────────────────────────────────
         $accessoriesRole = Role::firstOrCreate(['name' => 'accessories-staff'], [
-            'display_name' => 'Accessories & Parts Staff',
-            'description'  => 'Full accessories catalog management including displays, ICs, charging pins, batteries, back covers & tempered glass',
+            'display_name' => 'Accessories Staff',
+            'description'  => 'Full accessories and spare parts catalog management, POS sales, and inventory restock',
         ]);
         $accessoriesRole->syncPermissions(Permission::whereIn('name', [
             'read-admin-panel',
             'read-mobileshop-dashboard',
             'read-mobileshop-purchase',
             'create-purchase-accessories',
-            'create-purchase-covers',         // accessories staff manages covers too
-            'read-mobileshop-sales',
-            'create-sale-accessories',
-            'create-sale-covers',             // accessories staff can sell covers too
-            'read-mobileshop-stock',
-            'manage-stock-accessories',
-            'manage-stock-covers',            // accessories staff manages covers too
-            'read-mobileshop-reports',
-            // legacy
-            'read-mobileshop-accessories',
-            'create-mobileshop-accessories',
-            'sell-mobileshop-accessories',
-        ])->get());
-
-        // ROLE 4B: Accessories Manager — Full oversight over all accessories, covers, tempered glass, & parts
-        $accessoriesManagerRole = Role::firstOrCreate(['name' => 'accessories-manager'], [
-            'display_name' => 'Accessories Manager',
-            'description'  => 'Manager for all accessories, back covers, tempered glass, and spare parts catalog and sales',
-        ]);
-        $accessoriesManagerRole->syncPermissions(Permission::whereIn('name', [
-            'read-admin-panel',
-            'read-mobileshop-dashboard',
-            'read-mobileshop-purchase',
-            'create-purchase-accessories',
             'create-purchase-covers',
             'read-mobileshop-sales',
             'create-sale-accessories',
@@ -219,30 +144,11 @@ class MobileShopRbacSeeder extends Seeder
         ])->get());
 
         // ─────────────────────────────────────────────────────────────────────
-        // ROLE 5: Cover Staff — Back Covers & Tempered Glass ONLY (separate shop)
-        // ─────────────────────────────────────────────────────────────────────
-        $coverRole = Role::firstOrCreate(['name' => 'cover-staff'], [
-            'display_name' => 'Back Cover & Tempered Glass Staff',
-            'description'  => 'Back covers and tempered glass management from a separate shop — strictly scoped to cover/tempered niche only',
-        ]);
-        $coverRole->syncPermissions(Permission::whereIn('name', [
-            'read-admin-panel',
-            'read-mobileshop-dashboard',
-            'read-mobileshop-purchase',
-            'create-purchase-covers',
-            'read-mobileshop-sales',
-            'create-sale-covers',
-            'read-mobileshop-stock',
-            'manage-stock-covers',
-            'read-mobileshop-reports',
-        ])->get());
-
-        // ─────────────────────────────────────────────────────────────────────
-        // ROLE 6: Repair Technician — Service Desk ONLY (no purchase / no sale)
+        // ROLE 3: Repair Technician — Service Desk & Parts Usage ONLY
         // ─────────────────────────────────────────────────────────────────────
         $techRole = Role::firstOrCreate(['name' => 'repair-technician'], [
             'display_name' => 'Repair Technician',
-            'description'  => 'Job sheet execution, repair status updates, parts consumption — no purchase or sales access',
+            'description'  => 'Job sheet execution, repair status updates, parts consumption',
         ]);
         $techRole->syncPermissions(Permission::whereIn('name', [
             'read-admin-panel',
@@ -250,27 +156,61 @@ class MobileShopRbacSeeder extends Seeder
             'read-mobileshop-stock',
             'manage-stock-repairs',
             'read-mobileshop-reports',
-            // legacy
             'read-mobileshop-repairs',
             'update-mobileshop-repairs',
-            'read-mobileshop-accessories',    // legacy: allowed to view parts for repair consumption
+            'read-mobileshop-accessories',
         ])->get());
 
+        // Clean up legacy roles if present
+        Role::whereIn('name', ['sales-staff', 'secondhand-staff', 'cover-staff', 'accessories-manager'])->delete();
+
         // ─────────────────────────────────────────────────────────────────────
-        // Default Developer & Admin accounts (always present for login)
+        // 3 CORE ACTIVE ACCOUNTS (+ developer / store admin aliases)
         // ─────────────────────────────────────────────────────────────────────
         $accounts = [
             [
-                'name'     => 'altmash',
-                'email'    => 'altmash@mobitrack.local',
-                'password' => 'Password@12',
+                'name'         => 'altmash',
+                'email'        => 'altmash@mobitrack.local',
+                'password'     => 'Password@12',
+                'landing_page' => 'dashboard',
+                'role'         => $adminRole,
             ],
             [
-                'name'     => 'Store Admin',
-                'email'    => 'admin@mobitrack.local',
-                'password' => 'Password@12',
+                'name'         => 'Store Admin',
+                'email'        => 'admin@mobitrack.local',
+                'password'     => 'admin123',
+                'landing_page' => 'dashboard',
+                'role'         => $adminRole,
+            ],
+            [
+                'name'         => 'Accessories Staff',
+                'email'        => 'accessories@mobitrack.local',
+                'password'     => 'acc123',
+                'landing_page' => 'mobileshop.accessories.pos',
+                'role'         => $accessoriesRole,
+            ],
+            [
+                'name'         => 'Repair Technician',
+                'email'        => 'repair@mobitrack.local',
+                'password'     => 'repair123',
+                'landing_page' => 'mobileshop.repairs',
+                'role'         => $techRole,
+            ],
+            [
+                'name'         => 'Repair Tech (Alias)',
+                'email'        => 'tech@mobitrack.local',
+                'password'     => 'tech123',
+                'landing_page' => 'mobileshop.repairs',
+                'role'         => $techRole,
             ],
         ];
+
+        // Clean up old staff accounts that are no longer part of the 3 logins
+        User::whereIn('email', [
+            'sales@mobitrack.local',
+            'buyback@mobitrack.local',
+            'cover@mobitrack.local',
+        ])->delete();
 
         foreach ($accounts as $acc) {
             $user = User::where('email', $acc['email'])->orWhere('name', $acc['name'])->first();
@@ -279,7 +219,7 @@ class MobileShopRbacSeeder extends Seeder
                     'name'         => $acc['name'],
                     'email'        => $acc['email'],
                     'password'     => $acc['password'],
-                    'landing_page' => 'dashboard',
+                    'landing_page' => $acc['landing_page'],
                     'locale'       => 'en-GB',
                     'enabled'      => 1,
                 ]);
@@ -287,81 +227,12 @@ class MobileShopRbacSeeder extends Seeder
                 $user->name         = $acc['name'];
                 $user->password     = $acc['password'];
                 $user->enabled      = 1;
-                $user->landing_page = 'dashboard';
+                $user->landing_page = $acc['landing_page'];
                 $user->save();
             }
 
-            if (!$user->companies()->where('company_id', $companyId)->exists()) {
-                $user->companies()->attach($companyId);
-            }
-            $user->syncRoles([$adminRole->id]);
-        }
-
-        // ─────────────────────────────────────────────────────────────────────
-        // DEMO STAFF ACCOUNTS — ONLY IN NON-PRODUCTION WITH EXPLICIT FLAG
-        // In production, only the Store Admin is seeded. All employee accounts
-        // are created via the Invite Token onboarding system.
-        // ─────────────────────────────────────────────────────────────────────
-        $shouldSeedDemoStaff = !app()->isProduction() && env('SEED_DEMO_STAFF', false);
-
-        if ($shouldSeedDemoStaff) {
-            $staffUsers = [
-                [
-                    'name'     => 'Vikram (New Phones Sales)',
-                    'email'    => 'sales@mobitrack.local',
-                    'password' => 'password',
-                    'role'     => $salesRole,
-                ],
-                [
-                    'name'     => 'Anil (Second Hand Buyback)',
-                    'email'    => 'buyback@mobitrack.local',
-                    'password' => 'password',
-                    'role'     => $secondHandRole,
-                ],
-                [
-                    'name'     => 'Aman (Accessories Counter)',
-                    'email'    => 'accessories@mobitrack.local',
-                    'password' => 'password',
-                    'role'     => $accessoriesRole,
-                ],
-                [
-                    'name'     => 'Ravi (Back Cover & Tempered)',
-                    'email'    => 'cover@mobitrack.local',
-                    'password' => 'password',
-                    'role'     => $coverRole,
-                ],
-                [
-                    'name'     => 'Sameer (Repair Technician)',
-                    'email'    => 'tech@mobitrack.local',
-                    'password' => 'password',
-                    'role'     => $techRole,
-                ],
-            ];
-
-            foreach ($staffUsers as $su) {
-                $user = User::where('email', $su['email'])->first();
-                if (!$user) {
-                    $user = User::create([
-                        'name'         => $su['name'],
-                        'email'        => $su['email'],
-                        'password'     => $su['password'],
-                        'landing_page' => 'mobileshop.dashboard',
-                        'locale'       => 'en-GB',
-                        'enabled'      => 1,
-                    ]);
-                } else {
-                    $user->name         = $su['name'];
-                    $user->password     = $su['password'];
-                    $user->enabled      = 1;
-                    $user->landing_page = 'mobileshop.dashboard';
-                    $user->save();
-                }
-
-                if (!$user->companies()->where('company_id', $companyId)->exists()) {
-                    $user->companies()->attach($companyId);
-                }
-                $user->syncRoles([$su['role']->id]);
-            }
+            $user->companies()->syncWithoutDetaching([$companyId]);
+            $user->syncRoles([$acc['role']->id]);
         }
     }
 }

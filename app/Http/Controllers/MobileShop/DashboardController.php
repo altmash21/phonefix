@@ -38,22 +38,6 @@ class DashboardController extends BaseMobileShopController
             $totalEmiBalance      = 0.0;
 
             switch ($niche) {
-                case 'phones':
-                    $statPurchaseInvoices = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->count();
-                    $statSaleInvoices     = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
-                    $statPendingUdhari    = DB::table('ms_customers')->where('company_id', $companyId)->where('udhari_balance', '>', 0)->count();
-                    $totalNewPhones       = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', 'in_stock')->count();
-                    $totalUdhariDue       = (float) DB::table('ms_customers')->where('company_id', $companyId)->sum('udhari_balance');
-                    break;
-
-                case 'secondhand':
-                    $statPurchaseInvoices = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->count();
-                    $statBuybackReturns   = $statPurchaseInvoices;
-                    $statSaleInvoices     = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')
-                        ->whereExists(function($q) { $q->from('ms_mobile_devices')->whereColumn('ms_mobile_devices.id','ms_mobile_sales.device_id')->where('ms_mobile_devices.type','second_hand'); })->count();
-                    $totalSecondHand      = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->count();
-                    break;
-
                 case 'accessories':
                     $statPurchaseInvoices = DB::table('ms_parts_inventory_history')->where('type', 'addition')
                         ->whereExists(function($q) use ($companyId) { $q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id','ms_parts_inventory_history.part_id')->where('ms_parts_inventory.company_id',$companyId); })->count();
@@ -61,39 +45,17 @@ class DashboardController extends BaseMobileShopController
                     $totalSupplierCredit  = (float) DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->sum('credit_balance');
                     break;
 
-                case 'covers':
-                    $coverCats = $this->coverCategories;
-                    $statPurchaseInvoices = DB::table('ms_parts_inventory_history')->where('type', 'addition')
-                        ->whereExists(function($q) use ($companyId, $coverCats) {
-                            $q->from('ms_parts_inventory')->whereColumn('ms_parts_inventory.id','ms_parts_inventory_history.part_id')
-                              ->where('ms_parts_inventory.company_id',$companyId)->whereIn('ms_parts_inventory.category',$coverCats);
-                        })->count();
-                    $statSaleInvoices     = DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')
-                        ->whereExists(function($q) use ($companyId, $coverCats) {
-                            $q->from('ms_accessory_sale_items')->whereColumn('ms_accessory_sale_items.accessory_sale_id','ms_accessory_sales.id')
-                              ->join('ms_parts_inventory','ms_accessory_sale_items.part_id','=','ms_parts_inventory.id')
-                              ->whereIn('ms_parts_inventory.category',$coverCats);
-                        })->count();
-                    break;
-
                 case 'repairs':
                     $statSaleInvoices     = DB::table('ms_repair_tickets')->where('company_id', $companyId)->where('status', 'delivered')->count();
                     $totalRepairsOpen     = DB::table('ms_repair_tickets')->where('company_id', $companyId)->whereNotIn('status', ['delivered', 'cancelled'])->count();
                     break;
 
-                default: // admin — all data
-                    $totalNewPhones      = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->where('status', 'in_stock')->count();
-                    $totalSecondHand     = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->where('status', 'in_stock')->count();
+                default: // admin — accessories and repair service business
                     $totalRepairsOpen    = DB::table('ms_repair_tickets')->where('company_id', $companyId)->whereNotIn('status', ['delivered', 'cancelled'])->count();
                     $totalUdhariDue      = (float) DB::table('ms_customers')->where('company_id', $companyId)->sum('udhari_balance');
                     $totalSupplierCredit = (float) DB::table('ms_supplier_credit_wallets')->where('company_id', $companyId)->sum('credit_balance');
-                    $totalEmiBalance     = (float) DB::table('ms_emi_providers')->where('company_id', $companyId)->sum('advance_balance');
-                    $statPurchaseInvoices = DB::table('ms_purchase_orders')->where('company_id', $companyId)->count()
-                        + DB::table('ms_parts_inventory_history')->where('type', 'addition')->count()
-                        + max(1, $totalNewPhones);
-                    $statBuybackReturns  = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->count();
-                    $statSaleInvoices    = DB::table('ms_mobile_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count()
-                        + DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
+                    $statPurchaseInvoices = DB::table('ms_parts_inventory_history')->where('type', 'addition')->count();
+                    $statSaleInvoices    = DB::table('ms_accessory_sales')->where('company_id', $companyId)->where('status', '!=', 'voided')->count();
                     $statPendingUdhari   = DB::table('ms_customers')->where('company_id', $companyId)->where('udhari_balance', '>', 0)->count();
                     break;
             }

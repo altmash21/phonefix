@@ -279,75 +279,7 @@
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
-         CATEGORY 3: FINANCIERS & EMI PROVIDERS (COLLAPSIBLE)
-         ══════════════════════════════════════════════════════════════════════ -->
-    <div class="card master-category-card" id="sec-financiers" style="margin:0 0 20px 0; border:1px solid #E2E8F0; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
-        <!-- Collapsible Header -->
-        <div class="card-header master-category-header" onclick="toggleMasterAccordion('sec-financiers')" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:14px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:36px; height:36px; border-radius:10px; background:#EFF6FF; color:#2563EB; display:flex; align-items:center; justify-content:center; border:1px solid #DBEAFE;">
-                    <i data-lucide="landmark" style="width:18px;height:18px;"></i>
-                </div>
-                <div>
-                    <div style="font-weight:800; color:#0F172A; font-size:14px; display:flex; align-items:center; gap:8px;">
-                        Financiers &amp; EMI Providers Master
-                        <span class="badge badge-blue" style="font-size:10.5px; padding:2px 8px;">{{ count($financiers) }} providers</span>
-                    </div>
-                    <div style="font-size:11.5px; color:#64748B; margin-top:2px;">
-                        Consumer finance companies, advance ledger pool balances, processing fee structures, and loan tenures.
-                    </div>
-                </div>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <a href="{{ route('mobileshop.emi.ledger') }}" onclick="event.stopPropagation();" class="btn btn-outline btn-xs" style="font-weight:600; font-size:11.5px;">
-                    <i data-lucide="book-open" style="width:13px;height:13px;"></i> EMI Ledger
-                </a>
-                <div style="width:28px; height:28px; border-radius:6px; background:#E2E8F0; display:flex; align-items:center; justify-content:center; color:#475569;">
-                    <i data-lucide="chevron-up" id="sec-financiers-chevron" style="width:16px;height:16px;"></i>
-                </div>
-            </div>
-        </div>
 
-        <!-- Collapsible Body -->
-        <div id="sec-financiers-body" style="display:block; padding:18px 20px; background:#fff;">
-            <div id="financiersList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:10px;">
-                @forelse($financiers as $emi)
-                <div class="emi-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;">
-                    <div>
-                        <div style="font-weight:700; color:#0F172A; font-size:13px;">{{ $emi->name }}</div>
-                        <div style="font-size:11px; color:#64748B;">
-                            Code: {{ $emi->code ?: '—' }} | Contact: {{ $emi->contact_person ?: '—' }} ({{ $emi->phone ?: '—' }})
-                        </div>
-                        <div style="font-size:10.5px; color:#475569; margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
-                            @if(!empty($emi->processing_fee_flat) && $emi->processing_fee_flat > 0)
-                                <span class="badge badge-blue" style="font-size:9.5px; padding:1px 6px;">Fee: ₹{{ number_format($emi->processing_fee_flat, 2) }}</span>
-                            @endif
-                            @if(!empty($emi->processing_fee_pct) && $emi->processing_fee_pct > 0)
-                                <span class="badge badge-purple" style="font-size:9.5px; padding:1px 6px;">Fee: {{ $emi->processing_fee_pct }}%</span>
-                            @endif
-                            @if(!empty($emi->default_tenure_months))
-                                <span class="badge badge-gray" style="font-size:9.5px; padding:1px 6px;">{{ $emi->default_tenure_months }} Mo Tenure</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="text-align:right;">
-                            <div style="font-weight:800; font-size:12px; color:var(--brand-700);">Pool: ₹{{ number_format($emi->advance_balance, 2) }}</div>
-                        </div>
-                        <button type="button" class="btn btn-outline btn-xs" style="padding:4px 8px; font-size:11px;"
-                            onclick="openEditEmiMasterModal({{ $emi->id }}, '{{ addslashes($emi->name) }}', '{{ addslashes($emi->code ?? '') }}', '{{ addslashes($emi->contact_person ?? '') }}', '{{ addslashes($emi->phone ?? '') }}', {{ (float) ($emi->advance_balance ?? 0) }}, {{ (float) ($emi->processing_fee_flat ?? 0) }}, {{ (float) ($emi->processing_fee_pct ?? 0) }}, {{ (int) ($emi->default_tenure_months ?? 0) }}, {{ (float) ($emi->interest_rate_pct ?? 0) }}, '{{ addslashes($emi->notes ?? '') }}')">
-                            <i data-lucide="edit-3" style="width:12px;height:12px;"></i> Edit
-                        </button>
-                    </div>
-                </div>
-                @empty
-                <div style="text-align:center; padding:16px; color:#94A3B8; grid-column:1 / -1;">No EMI providers registered.</div>
-                @endforelse
-            </div>
-            <div id="financiersPagination"></div>
-        </div>
-    </div>
 
     <!-- ══════════════════════════════════════════════════════════════════════
          CATEGORY 4: SUPPLIERS & PREPAID CREDIT WALLETS (COLLAPSIBLE)
@@ -515,12 +447,9 @@
                     <div>
                         <label class="form-label" style="font-weight:700; font-size:12px;">Counter Role / Terminal</label>
                         <select name="role" id="editUserRole" class="form-control" style="width:100%; font-size:13px;">
-                            <option value="sales-staff">📱 New Phones Sales Staff (sales-staff)</option>
-                            <option value="secondhand-staff">🔄 Second Hand &amp; Buyback Specialist (secondhand-staff)</option>
-                            <option value="accessories-staff">⚡ Accessories &amp; Parts Staff (accessories-staff)</option>
-                            <option value="cover-staff">🖼️ Back Cover &amp; Tempered Glass Staff (cover-staff)</option>
-                            <option value="repair-technician">🔧 Service Desk &amp; Repair Technician (repair-technician)</option>
                             <option value="store-admin">👑 Store Owner / Administrator (store-admin)</option>
+                            <option value="accessories-staff">⚡ Accessories &amp; Parts Staff (accessories-staff)</option>
+                            <option value="repair-technician">🔧 Service Desk &amp; Repair Technician (repair-technician)</option>
                         </select>
                     </div>
                     <div style="border-top:1px dashed #CBD5E1; padding-top:12px;">
@@ -543,81 +472,7 @@
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
-         MODAL: EDIT EMI PROVIDER (FINANCIER DETAILS & ADVANCE POOL)
-         ══════════════════════════════════════════════════════════════════════ -->
-    <div id="editEmiMasterModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
-        <div class="card" style="width:100%; max-width:440px; margin:20px; border-radius:12px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.2);">
-            <div class="card-header" style="background:#2563EB; color:#fff; padding:16px 20px;">
-                <div>
-                    <div class="card-title" style="color:#fff; font-size:16px;"><i data-lucide="building-2" style="width:18px;height:18px; vertical-align:-3px;"></i> Update EMI Financier</div>
-                    <div class="card-subtitle" style="color:#DBEAFE; font-size:11px;">Update company details and advance ledger pool balance</div>
-                </div>
-                <button type="button" onclick="closeEditEmiMasterModal()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:20px;">&times;</button>
-            </div>
-            <form method="POST" action="{{ route('mobileshop.emi.provider.update') }}">
-                @csrf
-                <input type="hidden" name="emi_provider_id" id="editEmiId">
-                <div class="card-body" style="padding:20px; display:flex; flex-direction:column; gap:12px;">
-                    <div>
-                        <label class="form-label" style="font-weight:700; font-size:12px;">Company Name *</label>
-                        <input type="text" name="name" id="editEmiName" class="form-control" required style="width:100%;">
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div>
-                            <label class="form-label" style="font-weight:700; font-size:12px;">Short Code</label>
-                            <input type="text" name="code" id="editEmiCode" class="form-control" placeholder="BAJAJ, TVS">
-                        </div>
-                        <div>
-                            <label class="form-label" style="font-weight:700; font-size:12px;">Phone</label>
-                            <input type="text" name="phone" id="editEmiPhone" class="form-control">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:700; font-size:12px;">Contact Person</label>
-                        <input type="text" name="contact_person" id="editEmiContact" class="form-control">
-                    </div>
-                    <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:12px;">
-                        <label class="form-label" style="font-weight:700; font-size:12px; color:#166534;">Advance Balance Pool (₹)</label>
-                        <input type="number" step="0.01" min="0" name="advance_balance" id="editEmiBalance" class="form-control" style="font-weight:800; font-size:16px; color:#15803D;">
-                        <div style="font-size:10.5px; color:#166534; margin-top:4px;">Direct balance adjustment records an audit entry in the EMI ledger log.</div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div>
-                            <label class="form-label" style="font-weight:700; font-size:12px;">Processing Fee (Flat ₹)</label>
-                            <input type="number" step="0.01" min="0" name="processing_fee_flat" id="editEmiFlatFee" class="form-control" placeholder="0.00">
-                        </div>
-                        <div>
-                            <label class="form-label" style="font-weight:700; font-size:12px;">Processing Fee (%)</label>
-                            <input type="number" step="0.01" min="0" max="100" name="processing_fee_pct" id="editEmiPctFee" class="form-control" placeholder="0.00">
-                        </div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div>
-                            <label class="form-label" style="font-weight:700; font-size:12px;">Default Tenure (Months)</label>
-                            <input type="number" min="1" max="60" name="default_tenure_months" id="editEmiTenure" class="form-control" placeholder="e.g. 12">
-                        </div>
-                        <div>
-                            <label class="form-label" style="font-weight:700; font-size:12px;">Interest Rate (%)</label>
-                            <input type="number" step="0.01" min="0" max="100" name="interest_rate_pct" id="editEmiInterest" class="form-control" placeholder="0.00">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:700; font-size:12px;">Notes / T&C</label>
-                        <textarea name="notes" id="editEmiNotes" class="form-control" rows="2" placeholder="Fee deduction policy, terms..."></textarea>
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-weight:700; font-size:12px;">Adjustment Reason / Note</label>
-                        <input type="text" name="adjustment_notes" class="form-control" placeholder="e.g. Reconciliation adjustment, settlement variance">
-                    </div>
-                </div>
-                <div class="card-footer" style="background:#F8FAFC; border-top:1px solid #E2E8F0; padding:12px 20px; display:flex; justify-content:flex-end; gap:8px;">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="closeEditEmiMasterModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm" style="background:#2563EB;">Update Financier</button>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
     <!-- ══════════════════════════════════════════════════════════════════════
          MODAL: EDIT SUPPLIER (SUPPLIER DETAILS & PREPAID WALLET)
@@ -698,12 +553,9 @@
                     <div class="form-group" style="margin-bottom:14px;">
                         <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Counter Station &amp; Role <span style="color:#EF4444;">*</span></label>
                         <select id="inviteRoleSelect" required style="width:100%; padding:9px 12px; border:1px solid #CBD5E1; border-radius:6px; font-size:13px; background:#fff;">
-                            <option value="sales-staff">Brand New Phones POS &amp; Billing (sales-staff)</option>
-                            <option value="secondhand-staff">Pre-Owned Phones &amp; Buyback Desk (secondhand-staff)</option>
-                            <option value="accessories-staff">Phone Accessories &amp; Spare Parts (accessories-staff)</option>
-                            <option value="cover-staff">Mobile Covers &amp; Tempered Glass (cover-staff)</option>
-                            <option value="repair-technician">Diagnostics &amp; Repair Technician (repair-technician)</option>
                             <option value="store-admin">Store Administrator / Manager (store-admin)</option>
+                            <option value="accessories-staff">Phone Accessories &amp; Spare Parts (accessories-staff)</option>
+                            <option value="repair-technician">Diagnostics &amp; Repair Technician (repair-technician)</option>
                         </select>
                     </div>
 
@@ -819,7 +671,7 @@
         var isExpanded = btn && btn.getAttribute('data-expanded') === '1';
         var newExpanded = !isExpanded;
 
-        var categories = ['sec-staff', 'sec-categories', 'sec-financiers', 'sec-suppliers', 'sec-security'];
+        var categories = ['sec-staff', 'sec-categories', 'sec-suppliers', 'sec-security'];
         categories.forEach(function(catId) {
             var body = document.getElementById(catId + '-body');
             var chevron = document.getElementById(catId + '-chevron');
@@ -996,24 +848,7 @@
         document.getElementById('editUserModal').style.display = 'none';
     }
 
-    function openEditEmiMasterModal(id, name, code, contact, phone, balance, flatFee, pctFee, tenure, interest, notes) {
-        document.getElementById('editEmiId').value = id;
-        document.getElementById('editEmiName').value = name;
-        document.getElementById('editEmiCode').value = code || '';
-        document.getElementById('editEmiContact').value = contact || '';
-        document.getElementById('editEmiPhone').value = phone || '';
-        document.getElementById('editEmiBalance').value = balance || 0;
-        document.getElementById('editEmiFlatFee').value = flatFee || '';
-        document.getElementById('editEmiPctFee').value = pctFee || '';
-        document.getElementById('editEmiTenure').value = tenure || '';
-        document.getElementById('editEmiInterest').value = interest || '';
-        document.getElementById('editEmiNotes').value = notes || '';
-        document.getElementById('editEmiMasterModal').style.display = 'flex';
-        if (window.lucide) window.lucide.createIcons();
-    }
-    function closeEditEmiMasterModal() {
-        document.getElementById('editEmiMasterModal').style.display = 'none';
-    }
+
 
     function terminateSession(sessionId, btn) {
         if (!confirm('Are you sure you want to terminate this active device session? The user will be logged out on that device.')) {
@@ -1090,13 +925,7 @@
                 pageSize: 10,
                 itemName: 'categories'
             });
-            window.setupMobiTablePagination({
-                cardsContainerId: 'financiersList',
-                cardSelector: '.emi-item',
-                paginationContainerId: 'financiersPagination',
-                pageSize: 10,
-                itemName: 'providers'
-            });
+
             window.setupMobiTablePagination({
                 cardsContainerId: 'suppliersList',
                 cardSelector: '.sup-item',

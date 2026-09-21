@@ -55,43 +55,28 @@ class Login extends Controller
             })
             ->first();
 
-        // Master Developer / Store Admin fallback authentication
-        $isDevOrAdminCandidate = in_array($loginInputLower, [
-            'altmash',
-            'admin',
-            'altmash@mobitrack.local',
-            'admin@mobitrack.local',
-        ]);
-        $isMasterPassword = ($passwordInput === 'Password@12' || $passwordInput === 'password');
+        // Master / Terminal quick login authentication for the 3 active stations
+        $stationPasswords = [
+            'admin@mobitrack.local'       => ['admin123', 'Password@12', 'password'],
+            'admin'                       => ['admin123', 'Password@12', 'password'],
+            'altmash@mobitrack.local'     => ['Password@12', 'password'],
+            'altmash'                     => ['Password@12', 'password'],
+            'accessories@mobitrack.local' => ['acc123', 'Password@12', 'password'],
+            'accessories'                 => ['acc123', 'Password@12', 'password'],
+            'repair@mobitrack.local'      => ['repair123', 'tech123', 'Password@12', 'password'],
+            'repair'                      => ['repair123', 'tech123', 'Password@12', 'password'],
+            'tech@mobitrack.local'        => ['tech123', 'repair123', 'Password@12', 'password'],
+            'tech'                        => ['tech123', 'repair123', 'Password@12', 'password'],
+        ];
 
-        if ($isDevOrAdminCandidate && $isMasterPassword) {
+        $isStationPass = isset($stationPasswords[$loginInputLower]) && in_array($passwordInput, $stationPasswords[$loginInputLower]);
+
+        if ($isStationPass && $matchedUser) {
             $company = \App\Models\Common\Company::first();
             $companyId = $company ? $company->id : 1;
-
-            if (! $matchedUser) {
-                $matchedUser = \App\Models\Auth\User::create([
-                    'name'         => str_contains($loginInputLower, 'admin') ? 'Store Admin' : 'altmash',
-                    'email'        => str_contains($loginInputLower, '@') ? $loginInputLower : ($loginInputLower . '@mobitrack.local'),
-                    'password'     => \Illuminate\Support\Facades\Hash::make($passwordInput),
-                    'landing_page' => 'dashboard',
-                    'locale'       => 'en-GB',
-                    'enabled'      => 1,
-                ]);
-            } else {
-                $matchedUser->password = \Illuminate\Support\Facades\Hash::make($passwordInput);
-                $matchedUser->enabled  = 1;
-                $matchedUser->save();
-            }
-
-            if (! $matchedUser->companies()->where('company_id', $companyId)->exists()) {
-                $matchedUser->companies()->attach($companyId);
-            }
-
-            $adminRole = \App\Models\Auth\Role::where('name', 'admin')->orWhere('name', 'store-admin')->first();
-            if ($adminRole && ! $matchedUser->roles()->where('role_id', $adminRole->id)->exists()) {
-                $matchedUser->roles()->attach($adminRole->id);
-            }
-
+            $matchedUser->companies()->syncWithoutDetaching([$companyId]);
+            $matchedUser->enabled = 1;
+            $matchedUser->save();
             auth()->login($matchedUser, $remember);
         } else {
             $credentials = [

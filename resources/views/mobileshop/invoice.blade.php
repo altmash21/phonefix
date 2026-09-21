@@ -13,7 +13,7 @@
         $cleanPhone = '91' . $cleanPhone;
     }
 
-    // Determine GST status: Any new phone sale or gst bill type is a GST Tax Invoice
+    // Determine GST status: GST Tax Invoice
     $isGstBill = ($sale->bill_type === 'gst' || ($sale->device_type ?? 'new') === 'new' || ($sale->cgst_amount + $sale->sgst_amount + $sale->igst_amount) > 0);
     $taxRate = (float) ($sale->tax_rate ?: 18.00);
     $gstRate = $taxRate;
