@@ -5,8 +5,8 @@ on:
     branches: [ master, main ]
   workflow_dispatch:
     inputs:
-      seed_rbac:
-        description: 'Run RBAC seeder (default: false)'
+      seed_catalog:
+        description: 'Seed Accessories & Repairs Catalog (default: false)'
         required: false
         default: false
         type: boolean
@@ -111,44 +111,162 @@ jobs:
             tar -czf - -C deploy . | ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "mkdir -p $TARGET_DIR && tar -xzf - -C $TARGET_DIR"
           fi
 
-      - name: Post-Deploy Incremental Update on Server
+      - name: Post-Deploy Incremental Update on Server (Migrations & Admin Seeding)
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
-          RUN_SEED: ${{ github.event.inputs.seed_rbac || 'false' }}
+          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || 'domains/mauryamobilee.in' }}
+          RUN_CATALOG_SEED: ${{ github.event.inputs.seed_catalog || 'false' }}
         run: |
-          ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" << EOF
-            APP_DIR="\$HOME/domains/mauryamobilee.in/app"
-            if [ ! -d "\$APP_DIR" ]; then
-              APP_DIR="\$HOME/app"
+          ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$TARGET_DIR" "$RUN_CATALOG_SEED" << 'EOF'
+            set -e
+
+            TARGET_DIR="$1"
+            RUN_CATALOG_SEED="${2:-false}"
+
+            echo "=========================================================="
+            echo "🚀 Starting Post-Deploy Remote Server Updates"
+            echo "=========================================================="
+            echo "SSH User: $(whoami)"
+            echo "Target Directory configured: ${TARGET_DIR:-domains/mauryamobilee.in}"
+
+            # Locate the application directory containing artisan
+            POSSIBLE_DIRS=()
+            if [ -n "$TARGET_DIR" ]; then
+              POSSIBLE_DIRS+=("$TARGET_DIR/app")
+              POSSIBLE_DIRS+=("$HOME/$TARGET_DIR/app")
+              POSSIBLE_DIRS+=("$TARGET_DIR")
+              POSSIBLE_DIRS+=("$HOME/$TARGET_DIR")
             fi
+            POSSIBLE_DIRS+=(
+              "$HOME/domains/mauryamobilee.in/app"
+              "$HOME/app"
+              "$PWD/app"
+              "$PWD"
+            )
 
-            if [ -f "\$APP_DIR/artisan" ]; then
-              echo "Running incremental updates in \$APP_DIR..."
-              cd "\$APP_DIR"
-              chmod -R 775 storage bootstrap/cache || true
-
-              # Run only pending new migrations (no reset)
-              php artisan migrate --force
-
-              # Initialize / sync developer and admin accounts
-              php artisan mobileshop:setup-admin || true
-
-              # Only seed if explicitly requested via workflow_dispatch
-              if [ "$RUN_SEED" = "true" ]; then
-                echo "Running RBAC Seeder..."
-                php artisan db:seed --class="Database\\Seeds\\MobileShopRbacSeeder" --force
+            APP_DIR=""
+            for dir in "${POSSIBLE_DIRS[@]}"; do
+              if [ -n "$dir" ] && [ -f "$dir/artisan" ]; then
+                APP_DIR="$dir"
+                break
               fi
+            done
 
-              # Clear and regenerate production caches
-              php artisan optimize:clear || true
-              php artisan config:cache || true
-              php artisan route:cache || true
-              php artisan view:cache || true
-              php artisan event:cache || true
-              echo "Deployment incremental update completed successfully!"
-            else
-              echo "Notice: artisan not found at \$APP_DIR yet, skipping artisan commands."
+            # Fallback search if not in expected paths
+            if [ -z "$APP_DIR" ]; then
+              echo "Searching for artisan file in $HOME..."
+              FOUND_ARTISAN=$(find "$HOME" -maxdepth 4 -name "artisan" 2>/dev/null | head -n 1)
+              if [ -n "$FOUND_ARTISAN" ]; then
+                APP_DIR="$(dirname "$FOUND_ARTISAN")"
+              fi
             fi
-          EOF
+
+            if [ -z "$APP_DIR" ] || [ ! -f "$APP_DIR/artisan" ]; then
+              echo "❌ ERROR: artisan file could not be found!"
+              echo "Checked locations:"
+              for dir in "${POSSIBLE_DIRS[@]}"; do
+                echo "  - $dir"
+              done
+              exit 1
+            fi
+
+            echo "✅ Target application directory located: $APP_DIR"
+            cd "$APP_DIR"
+
+            # Auto-detect PHP 8.2+ CLI executable
+            PHP_BIN=""
+            CANDIDATE_PHPS=(
+              "/usr/local/bin/ea-php82"
+              "/usr/local/bin/ea-php83"
+              "/usr/bin/php8.2"
+              "/usr/bin/php8.3"
+              "/opt/cpanel/ea-php82/root/usr/bin/php"
+              "/opt/cpanel/ea-php83/root/usr/bin/php"
+              "/usr/local/php82/bin/php"
+              "/usr/local/php8.2/bin/php"
+              "$(which php8.2 2>/dev/null)"
+              "$(which php82 2>/dev/null)"
+              "$(which php 2>/dev/null)"
+            )
+
+            for php_candidate in "${CANDIDATE_PHPS[@]}"; do
+              if [ -n "$php_candidate" ] && [ -x "$php_candidate" ]; then
+                PHP_MAJOR=$("$php_candidate" -r 'echo PHP_MAJOR_VERSION;' 2>/dev/null || echo 0)
+                PHP_MINOR=$("$php_candidate" -r 'echo PHP_MINOR_VERSION;' 2>/dev/null || echo 0)
+                if [ "$PHP_MAJOR" -gt 8 ] || { [ "$PHP_MAJOR" -eq 8 ] && [ "$PHP_MINOR" -ge 2 ]; }; then
+                  PHP_BIN="$php_candidate"
+                  PHP_VER=$("$php_candidate" -r 'echo PHP_VERSION;' 2>/dev/null || echo "unknown")
+                  echo "✅ Using PHP: $PHP_BIN (version $PHP_VER)"
+                  break
+                fi
+              fi
+            done
+
+            if [ -z "$PHP_BIN" ]; then
+              PHP_BIN="php"
+              echo "⚠️ Using default system PHP binary: $(which php) ($($PHP_BIN -v 2>/dev/null | head -n 1))"
+            fi
+
+            # Check .env existence
+            if [ ! -f ".env" ]; then
+              echo "⚠️ Warning: .env file not found in $APP_DIR!"
+              if [ -f "../.env" ]; then
+                echo "Found .env in parent directory, copying to $APP_DIR/.env..."
+                cp "../.env" .env
+              elif [ -f ".env.production.example" ]; then
+                echo "Creating .env from .env.production.example..."
+                cp .env.production.example .env
+                $PHP_BIN artisan key:generate --force
+              elif [ -f ".env.example" ]; then
+                echo "Creating .env from .env.example..."
+                cp .env.example .env
+                $PHP_BIN artisan key:generate --force
+              fi
+            fi
+
+            # Set directory permissions
+            echo "==> Setting writable permissions on storage & bootstrap/cache..."
+            chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+
+            # 1. DATABASE MIGRATIONS (Runs all pending migrations)
+            echo "=========================================================="
+            echo "📦 [1/4] Running Database Migrations (php artisan migrate --force)..."
+            echo "=========================================================="
+            $PHP_BIN artisan migrate --force
+
+            # 2. ADMIN & RBAC DATA SEEDING (Always executed on deployment)
+            echo "=========================================================="
+            echo "🌱 [2/4] Running Admin & RBAC Data Seeding..."
+            echo "=========================================================="
+            # MobileShopRbacSeeder sets up Company, Roles (store-admin, staff), Permissions & Admin accounts
+            $PHP_BIN artisan db:seed --class="Database\\Seeds\\MobileShopRbacSeeder" --force
+
+            # Ensure Developer and Store Admin credentials are configured and attached
+            $PHP_BIN artisan mobileshop:setup-admin || true
+
+            # Optional catalog seeding (accessories, parts, categories)
+            if [ "$RUN_CATALOG_SEED" = "true" ]; then
+              echo "==> Seeding Accessories & Repairs Catalog..."
+              $PHP_BIN artisan db:seed --class="Database\\Seeds\\AccessoriesAndRepairsCatalogSeeder" --force
+            fi
+
+            # 3. CACHING & OPTIMIZATIONS
+            echo "=========================================================="
+            echo "⚡ [3/4] Optimizing and Caching Application..."
+            echo "=========================================================="
+            $PHP_BIN artisan optimize:clear || true
+            $PHP_BIN artisan config:cache || true
+            $PHP_BIN artisan route:cache || true
+            $PHP_BIN artisan view:cache || true
+            $PHP_BIN artisan event:cache || true
+
+            # 4. FINAL VERIFICATION
+            echo "=========================================================="
+            echo "🎉 [4/4] Verifying Deployment Status..."
+            echo "=========================================================="
+            $PHP_BIN artisan --version
+            echo "✅ Deployment incremental update, migrations & admin data seeding completed successfully!"
+EOF

@@ -150,16 +150,18 @@ flowchart TD
     G --> H[Sync files via Incremental rsync to server]
     H --> I[Post-Deploy on Remote Server]
     I --> J[php artisan migrate --force]
-    I --> K[php artisan mobileshop:setup-admin]
-    I --> L[php artisan optimize:clear && config:cache && route:cache && view:cache]
-    L --> M[Deployment Complete & Zero-Downtime Live!]
+    I --> K[php artisan db:seed --class=MobileShopRbacSeeder]
+    I --> L[php artisan mobileshop:setup-admin]
+    I --> M[php artisan optimize:clear && config:cache && route:cache && view:cache]
+    M --> N[Deployment Complete & Zero-Downtime Live!]
 ```
 
-#### Manual Run / RBAC Seeding via GitHub:
-You can also trigger a deployment manually with optional role/permission seeding:
-1. Navigate to **Actions** &rarr; **Deploy to Shared Hosting via SSH** on GitHub.
-2. Click **Run workflow**.
-3. Toggle `seed_rbac` checkbox to `true` if you want to re-sync roles and permissions.
+#### Automatic Execution & Manual Workflow Triggers:
+- **Every Git Push / Deploy**: Automatically runs `php artisan migrate --force`, seeds core RBAC & Admin accounts (`MobileShopRbacSeeder`), configures admin credentials (`mobileshop:setup-admin`), and warms production caches.
+- **Manual Workflow Trigger**:
+  1. Navigate to **Actions** &rarr; **Deploy to Shared Hosting via SSH** on GitHub.
+  2. Click **Run workflow**.
+  3. Optionally toggle `seed_catalog` to `true` to seed the curated parts, displays, batteries & accessories catalog.
 
 ---
 
