@@ -93,8 +93,23 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
-          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || 'domains/phonefixazamgarh.com' }}
+          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || 'domains/mauryamobilee.in' }}
         run: |
+          # Auto-detect actual hosting domain folder if not explicitly provided
+          if [ -z "${{ secrets.SSH_TARGET_DIR }}" ]; then
+            DETECTED_DIR=$(ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" '
+              if [ -d "domains/mauryamobilee.in" ]; then
+                echo "domains/mauryamobilee.in"
+              elif [ -d "domains/phonefixazamgarh.com" ]; then
+                echo "domains/phonefixazamgarh.com"
+              fi
+            ' 2>/dev/null || true)
+            if [ -n "$DETECTED_DIR" ]; then
+              TARGET_DIR="$DETECTED_DIR"
+            fi
+          fi
+          echo "Target sync directory: $TARGET_DIR"
+
           # Use incremental rsync if available on remote host to avoid re-uploading unchanged files
           if ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "which rsync" >/dev/null 2>&1; then
             echo "Fast incremental rsync detected on server. Syncing changed files only..."
@@ -116,7 +131,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
-          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || 'domains/phonefixazamgarh.com' }}
+          TARGET_DIR: ${{ secrets.SSH_TARGET_DIR || 'domains/mauryamobilee.in' }}
           RUN_CATALOG_SEED: ${{ github.event.inputs.seed_catalog || 'false' }}
         run: |
           ssh -p "$SSH_PORT" -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
@@ -130,7 +145,7 @@ jobs:
             echo "🚀 Starting Post-Deploy Remote Server Updates"
             echo "=========================================================="
             echo "SSH User: $(whoami)"
-            echo "Target Directory configured: ${TARGET_DIR:-domains/phonefixazamgarh.com}"
+            echo "Target Directory configured: ${TARGET_DIR:-domains/mauryamobilee.in}"
 
             # Locate the application directory containing artisan
             POSSIBLE_DIRS=()
@@ -141,6 +156,7 @@ jobs:
               POSSIBLE_DIRS+=("$HOME/$TARGET_DIR")
             fi
             POSSIBLE_DIRS+=(
+              "$HOME/domains/mauryamobilee.in/app"
               "$HOME/domains/phonefixazamgarh.com/app"
               "$HOME/app"
               "$PWD/app"
