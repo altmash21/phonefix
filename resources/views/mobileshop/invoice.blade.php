@@ -104,8 +104,8 @@
         <button type="button" onclick="switchFormat('thermal')" id="btnThermal" class="btn btn-outline btn-sm" style="font-weight:700;">
             80mm POS Thermal
         </button>
-        <button type="button" onclick="window.print()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0F172A; border-color:#94A3B8;">
-            <i data-lucide="printer" style="width:13px;height:13px;"></i> Print / Save as PDF
+        <button type="button" onclick="triggerPrint()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0F172A; border-color:#94A3B8;">
+            <i data-lucide="printer" style="width:13px;height:13px;pointer-events:none;"></i> Print / Save as PDF
         </button>
         <a href="{{ route('mobileshop.invoice.pdf', ['company_id' => company_id(), 'id' => $sale->id]) }}" class="btn btn-primary btn-sm" style="font-weight:700; background:#5E6AD2;">
             <i data-lucide="download" style="width:13px;height:13px;"></i> Download PDF
@@ -126,8 +126,8 @@
     <!-- ─── MOBILE PROMINENT ACTION TOOLBAR (Always shown on small screens) ─── -->
     <div class="invoice-mobile-toolbar no-print" style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
         <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <button type="button" onclick="window.print()" class="btn btn-primary btn-sm" style="font-weight: 800; font-size: 12px; padding: 7px 14px; border-radius: 7px; display: inline-flex; align-items: center; gap: 6px; background:#5E6AD2; color:#fff; border:none; box-shadow:0 2px 6px rgba(94,106,210,0.3);">
-                <i data-lucide="printer" style="width: 14px; height: 14px;"></i> Print / PDF
+            <button type="button" onclick="triggerPrint()" class="btn btn-primary btn-sm" style="font-weight: 800; font-size: 12px; padding: 7px 14px; border-radius: 7px; display: inline-flex; align-items: center; gap: 6px; background:#5E6AD2; color:#fff; border:none; box-shadow:0 2px 6px rgba(94,106,210,0.3);">
+                <i data-lucide="printer" style="width: 14px; height: 14px;pointer-events:none;"></i> Print / PDF
             </button>
             <button type="button" onclick="switchFormat('a4')" id="mobBtnA4" class="btn btn-sm" style="font-weight: 700; font-size: 11.5px; padding: 6px 10px; border-radius: 7px; border:1px solid #5E6AD2; background:#EEF2FF; color:#4F46E5;">
                 A4
@@ -777,5 +777,23 @@
         }
         window.open(waUrl, '_blank');
     }
+
+    function triggerPrint() {
+        window.focus();
+        setTimeout(function() {
+            window.print();
+        }, 150);
+    }
+
+    // Auto-trigger print dialog if requested from sales page or action link
+    (function () {
+        if (new URLSearchParams(window.location.search).get('print') === '1') {
+            window.addEventListener('load', function () {
+                setTimeout(function () {
+                    triggerPrint();
+                }, 350);
+            });
+        }
+    })();
 </script>
 @endpush

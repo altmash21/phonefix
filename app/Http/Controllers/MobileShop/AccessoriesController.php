@@ -294,9 +294,22 @@ class AccessoriesController extends BaseMobileShopController
     {
         abort_unless(auth()->check() && (
             auth()->user()->can('read-mobileshop-accessories') || 
+            auth()->user()->can('read-mobileshop-sales') || 
+            auth()->user()->can('read-mobileshop-pos') || 
+            auth()->user()->can('sell-mobileshop-accessories') || 
+            auth()->user()->can('create-sale-accessories') || 
+            auth()->user()->can('create-sale-covers') || 
+            auth()->user()->isOwner() || 
             auth()->user()->hasRole('admin') || 
             auth()->user()->hasRole('store-admin') || 
-            auth()->user()->hasRole('accessories-staff')
+            auth()->user()->hasRole('owner') || 
+            auth()->user()->hasRole('sales-staff') || 
+            auth()->user()->hasRole('accountant') || 
+            auth()->user()->hasRole('accessories-staff') || 
+            auth()->user()->hasRole('accessories-manager') || 
+            auth()->user()->hasRole('cover-staff') || 
+            auth()->user()->hasRole('secondhand-staff') || 
+            auth()->user()->hasRole('repair-technician')
         ), 403, 'Unauthorized access to invoice.');
 
         $data = $this->resolveAccessorySaleDetails($this->getCompanyId(), (int) $id);
@@ -310,9 +323,22 @@ class AccessoriesController extends BaseMobileShopController
     {
         abort_unless(auth()->check() && (
             auth()->user()->can('read-mobileshop-accessories') || 
+            auth()->user()->can('read-mobileshop-sales') || 
+            auth()->user()->can('read-mobileshop-pos') || 
+            auth()->user()->can('sell-mobileshop-accessories') || 
+            auth()->user()->can('create-sale-accessories') || 
+            auth()->user()->can('create-sale-covers') || 
+            auth()->user()->isOwner() || 
             auth()->user()->hasRole('admin') || 
             auth()->user()->hasRole('store-admin') || 
-            auth()->user()->hasRole('accessories-staff')
+            auth()->user()->hasRole('owner') || 
+            auth()->user()->hasRole('sales-staff') || 
+            auth()->user()->hasRole('accountant') || 
+            auth()->user()->hasRole('accessories-staff') || 
+            auth()->user()->hasRole('accessories-manager') || 
+            auth()->user()->hasRole('cover-staff') || 
+            auth()->user()->hasRole('secondhand-staff') || 
+            auth()->user()->hasRole('repair-technician')
         ), 403, 'Unauthorized access to invoice PDF.');
 
         $data = $this->resolveAccessorySaleDetails($this->getCompanyId(), (int) $id);

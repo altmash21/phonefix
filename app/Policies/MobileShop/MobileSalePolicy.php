@@ -60,7 +60,17 @@ class MobileSalePolicy
         return $user->can('read-mobileshop-sales')
             || $user->can('create-mobileshop-sales')
             || $user->can('read-mobileshop-pos')
+            || $user->can('read-mobileshop-secondhand')
+            || $user->can('read-mobileshop-accessories')
+            || $user->hasRole('admin')
+            || $user->hasRole('store-admin')
+            || $user->hasRole('owner')
+            || $user->hasRole('sales-staff')
+            || $user->hasRole('accountant')
+            || $user->hasRole('secondhand-staff')
             || $user->hasRole('accessories-staff')
+            || $user->hasRole('accessories-manager')
+            || $user->hasRole('cover-staff')
             || $user->hasRole('repair-technician');
     }
 }

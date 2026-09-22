@@ -629,6 +629,20 @@
     (function () {
         var progressBar = document.getElementById('instant-page-progress');
 
+        function resetPageTransitions() {
+            if (progressBar) {
+                progressBar.style.opacity = '0';
+                progressBar.style.width = '0%';
+            }
+        }
+
+        // Always reset loading progress on bfcache restore or history back/forward navigation
+        window.addEventListener('pageshow', function () {
+            resetPageTransitions();
+            if (window.refreshIcons) window.refreshIcons();
+            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        });
+
         // Show instant progress bar when clicking internal navigation links
         document.addEventListener('click', function (e) {
             var a = e.target.closest('a');
@@ -640,6 +654,7 @@
                         progressBar.style.opacity = '1';
                         progressBar.style.width = '75%';
                     }
+                    setTimeout(resetPageTransitions, 2500);
                 }
             } catch (err) {}
         });

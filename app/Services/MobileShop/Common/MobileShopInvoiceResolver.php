@@ -171,8 +171,8 @@ class MobileShopInvoiceResolver
     public static function resolvePhoneSaleDetails(int $companyId, int $id): array
     {
         $sale = DB::table('ms_mobile_sales')
-            ->join('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
-            ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
+            ->leftJoin('ms_customers', 'ms_mobile_sales.customer_id', '=', 'ms_customers.id')
+            ->leftJoin('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
             ->select('ms_mobile_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone', 'ms_customers.gstin as customer_gstin', 'ms_customers.address as customer_address', 'ms_customers.udhari_balance as current_udhari_balance', 'ms_mobile_devices.brand', 'ms_mobile_devices.model', 'ms_mobile_devices.color', 'ms_mobile_devices.ram', 'ms_mobile_devices.storage', 'ms_mobile_devices.imei_1', 'ms_mobile_devices.imei_2', 'ms_mobile_devices.hsn_code', 'ms_mobile_devices.type as device_type', 'ms_mobile_devices.condition_grade')
             ->where('ms_mobile_sales.company_id', $companyId)
             ->where('ms_mobile_sales.id', $id)
