@@ -36,9 +36,7 @@
             <button type="button" onclick="focusMasterCategory('sec-categories')" class="btn btn-outline btn-xs" style="border-radius:20px; font-weight:600; font-size:11.5px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;">
                 <i data-lucide="package" style="width:13px;height:13px; color:#D97706;"></i> Categories ({{ count($categories) }})
             </button>
-            <button type="button" onclick="focusMasterCategory('sec-financiers')" class="btn btn-outline btn-xs" style="border-radius:20px; font-weight:600; font-size:11.5px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;">
-                <i data-lucide="landmark" style="width:13px;height:13px; color:#2563EB;"></i> EMI Providers ({{ count($financiers) }})
-            </button>
+
             <button type="button" onclick="focusMasterCategory('sec-suppliers')" class="btn btn-outline btn-xs" style="border-radius:20px; font-weight:600; font-size:11.5px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;">
                 <i data-lucide="truck" style="width:13px;height:13px; color:#7C3AED;"></i> Suppliers ({{ count($suppliers) }})
             </button>

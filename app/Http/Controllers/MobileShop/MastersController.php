@@ -35,33 +35,54 @@ class MastersController extends BaseMobileShopController
 
         $companyId = $this->getCompanyId();
 
-        $categories = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
+        $categories = collect();
+        try {
+            $categories = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Could not fetch categories in Masters: ' . $e->getMessage());
+        }
 
-        $prefix = DB::getTablePrefix();
-        $suppliers  = DB::table('ms_suppliers')
-            ->leftJoin('ms_supplier_credit_wallets', function($join) use ($companyId) {
-                $join->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
-                     ->where('ms_supplier_credit_wallets.company_id', '=', $companyId);
-            })
-            ->select(
-                'ms_suppliers.id as supplier_id',
-                'ms_suppliers.name as supplier_name',
-                'ms_suppliers.phone as supplier_phone',
-                'ms_suppliers.gstin as supplier_gstin',
-                DB::raw("COALESCE({$prefix}ms_supplier_credit_wallets.credit_balance, 0) as credit_balance")
-            )
-            ->where('ms_suppliers.company_id', $companyId)
-            ->orderBy('ms_suppliers.name', 'asc')
-            ->get();
+        $suppliers = collect();
+        try {
+            $prefix = DB::getTablePrefix();
+            $suppliers  = DB::table('ms_suppliers')
+                ->leftJoin('ms_supplier_credit_wallets', function($join) use ($companyId) {
+                    $join->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
+                         ->where('ms_supplier_credit_wallets.company_id', '=', $companyId);
+                })
+                ->select(
+                    'ms_suppliers.id as supplier_id',
+                    'ms_suppliers.name as supplier_name',
+                    'ms_suppliers.phone as supplier_phone',
+                    'ms_suppliers.gstin as supplier_gstin',
+                    DB::raw("COALESCE({$prefix}ms_supplier_credit_wallets.credit_balance, 0) as credit_balance")
+                )
+                ->where('ms_suppliers.company_id', $companyId)
+                ->orderBy('ms_suppliers.name', 'asc')
+                ->get();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Could not fetch suppliers in Masters: ' . $e->getMessage());
+        }
 
-        $staffUsers = User::with('roles')->whereHas('companies', function($q) use ($companyId) {
-            $q->where('companies.id', $companyId);
-        })->get();
-        $roles = Role::whereIn('name', [
-            'store-admin',
-            'accessories-staff',
-            'repair-technician',
-        ])->get();
+        $staffUsers = collect();
+        try {
+            $staffUsers = User::with('roles')->whereHas('companies', function($q) use ($companyId) {
+                $q->where('companies.id', $companyId);
+            })->get();
+        } catch (\Throwable $e) {
+            $staffUsers = User::with('roles')->get();
+        }
+
+        $roles = collect();
+        try {
+            $roles = Role::whereIn('name', [
+                'store-admin',
+                'accessories-staff',
+                'repair-technician',
+            ])->get();
+        } catch (\Throwable $e) {
+            //
+        }
 
         $loginSessions = collect();
         try {
@@ -82,20 +103,33 @@ class MastersController extends BaseMobileShopController
             \Illuminate\Support\Facades\Log::warning('Could not fetch login sessions in Masters: ' . $e->getMessage());
         }
 
-        $activeInvites = DB::table('ms_employee_invites')
-            ->where('company_id', $companyId)
-            ->orderByDesc('id')
-            ->get()
-            ->map(function ($inv) {
-                $roleModel = Role::where('name', $inv->role_name)->first();
-                $inv->role_label = $roleModel?->display_name ?? $inv->role_name;
-                $inv->notes = $inv->recipient_name;
-                $expiresAt = $inv->expires_at ? Carbon::parse($inv->expires_at) : null;
-                $inv->expires_diff = $expiresAt ? $expiresAt->diffForHumans() : 'No expiry';
-                return $inv;
-            });
+        $activeInvites = collect();
+        try {
+            $activeInvites = DB::table('ms_employee_invites')
+                ->where('company_id', $companyId)
+                ->orderByDesc('id')
+                ->get()
+                ->map(function ($inv) {
+                    $roleModel = Role::where('name', $inv->role_name)->first();
+                    $inv->role_label = $roleModel?->display_name ?? $inv->role_name;
+                    $inv->notes = $inv->recipient_name;
+                    $expiresAt = $inv->expires_at ? Carbon::parse($inv->expires_at) : null;
+                    $inv->expires_diff = $expiresAt ? $expiresAt->diffForHumans() : 'No expiry';
+                    return $inv;
+                });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Could not fetch active invites in Masters: ' . $e->getMessage());
+        }
 
-        return view('mobileshop.masters', compact('categories', 'suppliers', 'staffUsers', 'roles', 'loginSessions', 'activeInvites'));
+        return view('mobileshop.masters', [
+            'categories'    => $categories,
+            'suppliers'     => $suppliers,
+            'staffUsers'    => $staffUsers,
+            'roles'         => $roles,
+            'loginSessions' => $loginSessions,
+            'activeInvites' => $activeInvites,
+            'financiers'    => collect(),
+        ]);
     }
 
     /**
