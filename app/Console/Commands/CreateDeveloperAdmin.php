@@ -55,34 +55,49 @@ class CreateDeveloperAdmin extends Command
 
         // Ensure company is linked (Akaunting requires user_companies association to allow login)
         $company = Company::first();
+        if (! $company) {
+            try {
+                $company = Company::create([
+                    'name'    => 'PhoneFix Azamgarh',
+                    'domain'  => '',
+                    'enabled' => 1,
+                ]);
+                $this->info("Created primary company: PhoneFix Azamgarh");
+            } catch (\Throwable $e) {
+                $company = null;
+            }
+        }
+
         if ($company) {
             $companyLinked = $user->companies()->where('company_id', $company->id)->exists();
             if (! $companyLinked) {
                 $user->companies()->attach($company->id);
                 $this->info("Linked user to company: {$company->name} (ID: {$company->id})");
             }
-        } else {
-            $this->warn("Warning: No company found in database. Create a company first.");
         }
 
         // Attach admin & store-admin roles
         $rolesToAttach = ['admin', 'store-admin'];
         foreach ($rolesToAttach as $roleName) {
-            $role = Role::where('name', $roleName)->first();
+            $role = Role::firstOrCreate(['name' => $roleName], [
+                'display_name' => ucwords(str_replace('-', ' ', $roleName)),
+                'description'  => 'Full store administration',
+            ]);
             if ($role && ! $user->roles()->where('role_id', $role->id)->exists()) {
                 $user->roles()->attach($role->id);
                 $this->info("Attached role: {$roleName}");
             }
         }
 
-        // Also ensure admin@mobitrack.local exists and is ready
-        if ($email !== 'admin@mobitrack.local') {
-            $adminUser = User::withoutEvents(function () use ($password) {
+        // Also ensure admin accounts exist and are ready for both domains
+        $adminEmails = ['admin@phonefixazamgarh.com', 'admin@mobitrack.local'];
+        foreach ($adminEmails as $aEmail) {
+            $adminUser = User::withoutEvents(function () use ($aEmail, $password) {
                 return User::updateOrCreate(
-                    ['email' => 'admin@mobitrack.local'],
+                    ['email' => $aEmail],
                     [
                         'name'         => 'Store Admin',
-                        'password'     => Hash::make($password),
+                        'password'     => $password,
                         'enabled'      => 1,
                         'landing_page' => 'dashboard',
                         'locale'       => 'en-GB',
@@ -100,7 +115,7 @@ class CreateDeveloperAdmin extends Command
                     $adminUser->roles()->attach($role->id);
                 }
             }
-            $this->info("Also verified default 'admin@mobitrack.local' account.");
+            $this->info("Verified admin account: {$aEmail}");
         }
 
         $this->newLine();

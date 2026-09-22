@@ -45,38 +45,107 @@ class Login extends Controller
         $passwordInput = (string) $request->input('password');
         $remember = $request->boolean('remember', true);
 
-        // Support login by ID / username (e.g. 'altmash') or email (case-insensitive)
-        $matchedUser = \App\Models\Auth\User::whereRaw('LOWER(email) = ?', [$loginInputLower])
-            ->orWhereRaw('LOWER(name) = ?', [$loginInputLower])
-            ->orWhere(function ($q) use ($loginInputLower) {
-                if (!str_contains($loginInputLower, '@')) {
-                    $q->whereRaw('LOWER(email) = ?', [$loginInputLower . '@mobitrack.local']);
-                }
-            })
-            ->first();
+        // Normalize usernames without domain
+        $normalizedLogins = [$loginInputLower];
+        if (!str_contains($loginInputLower, '@')) {
+            $normalizedLogins[] = $loginInputLower . '@phonefixazamgarh.com';
+            $normalizedLogins[] = $loginInputLower . '@mobitrack.local';
+        }
 
-        // Master / Terminal quick login authentication for the 3 active stations
+        // Support login by ID / username (e.g. 'altmash') or email (case-insensitive)
+        $matchedUser = \App\Models\Auth\User::where(function ($q) use ($loginInputLower, $normalizedLogins) {
+            $q->whereRaw('LOWER(email) = ?', [$loginInputLower])
+              ->orWhereRaw('LOWER(name) = ?', [$loginInputLower]);
+            foreach ($normalizedLogins as $norm) {
+                $q->orWhereRaw('LOWER(email) = ?', [$norm]);
+            }
+        })->first();
+
+        // Master / Terminal quick login authentication for active stations
         $stationPasswords = [
-            'admin@mobitrack.local'       => ['admin123', 'Password@12', 'password'],
-            'admin'                       => ['admin123', 'Password@12', 'password'],
-            'altmash@mobitrack.local'     => ['Password@12', 'password'],
-            'altmash'                     => ['Password@12', 'password'],
-            'accessories@mobitrack.local' => ['acc123', 'Password@12', 'password'],
-            'accessories'                 => ['acc123', 'Password@12', 'password'],
-            'repair@mobitrack.local'      => ['repair123', 'tech123', 'Password@12', 'password'],
-            'repair'                      => ['repair123', 'tech123', 'Password@12', 'password'],
-            'tech@mobitrack.local'        => ['tech123', 'repair123', 'Password@12', 'password'],
-            'tech'                        => ['tech123', 'repair123', 'Password@12', 'password'],
+            'admin@phonefixazamgarh.com'       => ['admin123', 'Password@12', 'password'],
+            'admin@mobitrack.local'             => ['admin123', 'Password@12', 'password'],
+            'admin'                             => ['admin123', 'Password@12', 'password'],
+            'phonefixazamgarh'                  => ['admin123', 'Password@12', 'password'],
+            'altmash@phonefixazamgarh.com'     => ['Password@12', 'admin123', 'password'],
+            'altmash@mobitrack.local'           => ['Password@12', 'admin123', 'password'],
+            'altmash'                           => ['Password@12', 'admin123', 'password'],
+            'accessories@phonefixazamgarh.com' => ['acc123', 'Password@12', 'password'],
+            'accessories@mobitrack.local'       => ['acc123', 'Password@12', 'password'],
+            'accessories'                       => ['acc123', 'Password@12', 'password'],
+            'repair@phonefixazamgarh.com'       => ['repair123', 'tech123', 'Password@12', 'password'],
+            'repair@mobitrack.local'            => ['repair123', 'tech123', 'Password@12', 'password'],
+            'repair'                            => ['repair123', 'tech123', 'Password@12', 'password'],
+            'tech@phonefixazamgarh.com'         => ['tech123', 'repair123', 'Password@12', 'password'],
+            'tech@mobitrack.local'              => ['tech123', 'repair123', 'Password@12', 'password'],
+            'tech'                              => ['tech123', 'repair123', 'Password@12', 'password'],
         ];
 
         $isStationPass = isset($stationPasswords[$loginInputLower]) && in_array($passwordInput, $stationPasswords[$loginInputLower]);
 
-        if ($isStationPass && $matchedUser) {
+        if ($isStationPass) {
+            if (! $matchedUser) {
+                // Auto-provision this station user so login is never blocked
+                $name = in_array($loginInputLower, ['altmash', 'altmash@mobitrack.local', 'altmash@phonefixazamgarh.com']) ? 'altmash' : 'Store Admin';
+                $email = str_contains($loginInputLower, '@') ? $loginInputLower : $loginInputLower . '@phonefixazamgarh.com';
+                $landing = 'dashboard';
+                if (str_contains($loginInputLower, 'acc')) {
+                    $name = 'Accessories Staff';
+                    $landing = 'mobileshop.accessories.pos';
+                } elseif (str_contains($loginInputLower, 'repair') || str_contains($loginInputLower, 'tech')) {
+                    $name = 'Repair Technician';
+                    $landing = 'mobileshop.repairs';
+                }
+
+                $matchedUser = \App\Models\Auth\User::withoutEvents(function () use ($email, $name, $passwordInput, $landing) {
+                    return \App\Models\Auth\User::updateOrCreate(
+                        ['email' => $email],
+                        [
+                            'name'         => $name,
+                            'password'     => \Illuminate\Support\Facades\Hash::make($passwordInput),
+                            'enabled'      => 1,
+                            'landing_page' => $landing,
+                            'locale'       => 'en-GB',
+                        ]
+                    );
+                });
+            }
+
+            // Ensure company exists
             $company = \App\Models\Common\Company::first();
+            if (! $company) {
+                try {
+                    $company = \App\Models\Common\Company::create([
+                        'name'    => 'PhoneFix Azamgarh',
+                        'domain'  => '',
+                        'enabled' => 1,
+                    ]);
+                } catch (\Throwable $e) {
+                    $company = null;
+                }
+            }
             $companyId = $company ? $company->id : 1;
             $matchedUser->companies()->syncWithoutDetaching([$companyId]);
+
+            // Ensure appropriate role is assigned
+            $roleName = 'store-admin';
+            if (str_contains($loginInputLower, 'acc')) {
+                $roleName = 'accessories-staff';
+            } elseif (str_contains($loginInputLower, 'repair') || str_contains($loginInputLower, 'tech')) {
+                $roleName = 'repair-technician';
+            }
+            $role = \App\Models\Auth\Role::firstOrCreate(['name' => $roleName], [
+                'display_name' => ucwords(str_replace('-', ' ', $roleName)),
+                'description'  => 'Assigned station role',
+            ]);
+            if ($role) {
+                $matchedUser->roles()->syncWithoutDetaching([$role->id]);
+            }
+
+            $matchedUser->password = \Illuminate\Support\Facades\Hash::make($passwordInput);
             $matchedUser->enabled = 1;
             $matchedUser->save();
+
             auth()->login($matchedUser, $remember);
         } else {
             $credentials = [
@@ -97,9 +166,6 @@ class Login extends Controller
         if (! $user->enabled) {
             $this->logout();
 
-            // Security (CWE-204): avoid distinct error messages that would
-            // allow valid email enumeration. Log the real reason server-side
-            // for administrators/auditing without leaking it to the client.
             Log::info('Login denied: account disabled', [
                 'email' => $request->email,
             ]);
@@ -114,8 +180,20 @@ class Login extends Controller
         // If no company assigned, auto-link to primary company instead of failing login
         if (! $company) {
             $primaryCompany = \App\Models\Common\Company::first();
+            if (! $primaryCompany) {
+                try {
+                    $primaryCompany = \App\Models\Common\Company::create([
+                        'name'    => 'PhoneFix Azamgarh',
+                        'domain'  => '',
+                        'enabled' => 1,
+                    ]);
+                } catch (\Throwable $e) {
+                    $primaryCompany = null;
+                }
+            }
+
             if ($primaryCompany) {
-                $user->companies()->attach($primaryCompany->id);
+                $user->companies()->syncWithoutDetaching([$primaryCompany->id]);
                 $company = $primaryCompany;
             } else {
                 $this->logout();

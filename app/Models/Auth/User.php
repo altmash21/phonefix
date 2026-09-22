@@ -163,11 +163,15 @@ class User extends Authenticatable implements HasLocalePreference
     }
 
     /**
-     * Always hash the password when we save it to the database
+     * Always hash the password when we save it to the database, preventing double-hashing
      */
     public function setPasswordAttribute($value)
     {
-        $this->attributes['password'] = bcrypt($value);
+        if (is_string($value) && strlen($value) === 60 && preg_match('/^\$2[ayb]\$.{56}$/', $value)) {
+            $this->attributes['password'] = $value;
+        } else {
+            $this->attributes['password'] = bcrypt($value);
+        }
     }
 
     /**
