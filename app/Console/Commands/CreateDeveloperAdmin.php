@@ -16,9 +16,9 @@ class CreateDeveloperAdmin extends Command
      * @var string
      */
     protected $signature = 'mobileshop:setup-admin 
-                            {--email=altmash@mobitrack.local : Email address for the admin account}
-                            {--password=Password@12 : Password for the admin account}
-                            {--name=Altmash : Display name}';
+                            {--email=admin@phonefixazamgarh.com : Email address for the admin account}
+                            {--password=Password@123 : Password for the admin account}
+                            {--name=Store Admin : Display name}';
 
     /**
      * The console command description.

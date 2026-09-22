@@ -146,19 +146,19 @@
                     <span class="text-[10px] text-teal-700 font-bold">1-Click Auto Fill</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
-                    <button type="button" onclick="fillCreds('admin@phonefixazamgarh.com', 'admin123', 'Store Admin')"
+                    <button type="button" onclick="fillCreds('admin@phonefixazamgarh.com', 'Password@123', 'Store Admin')"
                             class="p-2 text-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50 hover:border-teal-400 transition-all cursor-pointer">
                         <div class="text-base">👑</div>
                         <div class="text-[11px] font-bold text-slate-800">Store Admin</div>
                         <div class="text-[9px] text-slate-400">Master</div>
                     </button>
-                    <button type="button" onclick="fillCreds('accessories@phonefixazamgarh.com', 'acc123', 'Accessories')"
+                    <button type="button" onclick="fillCreds('accessories@phonefixazamgarh.com', 'Password@123', 'Accessories')"
                             class="p-2 text-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50 hover:border-teal-400 transition-all cursor-pointer">
                         <div class="text-base">⚡</div>
                         <div class="text-[11px] font-bold text-slate-800">Accessories</div>
                         <div class="text-[9px] text-slate-400">POS & Stock</div>
                     </button>
-                    <button type="button" onclick="fillCreds('repair@phonefixazamgarh.com', 'repair123', 'Repair Desk')"
+                    <button type="button" onclick="fillCreds('repair@phonefixazamgarh.com', 'Password@123', 'Repair Desk')"
                             class="p-2 text-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50 hover:border-teal-400 transition-all cursor-pointer">
                         <div class="text-base">🔧</div>
                         <div class="text-[11px] font-bold text-slate-800">Repair Desk</div>

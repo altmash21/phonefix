@@ -192,71 +192,77 @@ class MobileShopRbacSeeder extends Seeder
         Role::whereIn('name', ['sales-staff', 'secondhand-staff', 'cover-staff', 'accessories-manager'])->delete();
 
         // ─────────────────────────────────────────────────────────────────────
-        // 3 CORE ACTIVE ACCOUNTS (+ developer / store admin aliases)
+        // CLEAN PhoneFix Azamgarh ACCOUNTS & CREDENTIALS
         // ─────────────────────────────────────────────────────────────────────
+        // Delete legacy/old accounts
+        User::whereIn('email', [
+            'sales@mobitrack.local',
+            'buyback@mobitrack.local',
+            'cover@mobitrack.local',
+            'tech@mobitrack.local',
+        ])->delete();
+
+        $cleanPassword = 'Password@123';
+
         $accounts = [
             [
-                'name'         => 'altmash',
-                'email'        => 'altmash@mobitrack.local',
-                'password'     => 'Password@12',
+                'name'         => 'Store Admin',
+                'email'        => 'admin@phonefixazamgarh.com',
+                'password'     => $cleanPassword,
                 'landing_page' => 'dashboard',
                 'role'         => $adminRole,
             ],
             [
-                'name'         => 'Store Admin',
-                'email'        => 'admin@mobitrack.local',
-                'password'     => 'admin123',
+                'name'         => 'altmash',
+                'email'        => 'altmash@phonefixazamgarh.com',
+                'password'     => $cleanPassword,
                 'landing_page' => 'dashboard',
                 'role'         => $adminRole,
             ],
             [
                 'name'         => 'Accessories Staff',
-                'email'        => 'accessories@mobitrack.local',
-                'password'     => 'acc123',
+                'email'        => 'accessories@phonefixazamgarh.com',
+                'password'     => $cleanPassword,
                 'landing_page' => 'mobileshop.accessories.pos',
                 'role'         => $accessoriesRole,
             ],
             [
                 'name'         => 'Repair Technician',
-                'email'        => 'repair@mobitrack.local',
-                'password'     => 'repair123',
+                'email'        => 'repair@phonefixazamgarh.com',
+                'password'     => $cleanPassword,
                 'landing_page' => 'mobileshop.repairs',
                 'role'         => $techRole,
             ],
+            // Backward-compatibility aliases
             [
-                'name'         => 'Repair Tech (Alias)',
-                'email'        => 'tech@mobitrack.local',
-                'password'     => 'tech123',
-                'landing_page' => 'mobileshop.repairs',
-                'role'         => $techRole,
+                'name'         => 'Store Admin',
+                'email'        => 'admin@mobitrack.local',
+                'password'     => $cleanPassword,
+                'landing_page' => 'dashboard',
+                'role'         => $adminRole,
+            ],
+            [
+                'name'         => 'altmash',
+                'email'        => 'altmash@mobitrack.local',
+                'password'     => $cleanPassword,
+                'landing_page' => 'dashboard',
+                'role'         => $adminRole,
             ],
         ];
 
-        // Clean up old staff accounts that are no longer part of the 3 logins
-        User::whereIn('email', [
-            'sales@mobitrack.local',
-            'buyback@mobitrack.local',
-            'cover@mobitrack.local',
-        ])->delete();
-
         foreach ($accounts as $acc) {
-            $user = User::where('email', $acc['email'])->orWhere('name', $acc['name'])->first();
+            $user = User::where('email', $acc['email'])->first();
             if (!$user) {
-                $user = User::create([
-                    'name'         => $acc['name'],
-                    'email'        => $acc['email'],
-                    'password'     => $acc['password'],
-                    'landing_page' => $acc['landing_page'],
-                    'locale'       => 'en-GB',
-                    'enabled'      => 1,
-                ]);
-            } else {
-                $user->name         = $acc['name'];
-                $user->password     = $acc['password'];
-                $user->enabled      = 1;
-                $user->landing_page = $acc['landing_page'];
-                $user->save();
+                $user = new User();
+                $user->email = $acc['email'];
             }
+
+            $user->name         = $acc['name'];
+            $user->password     = $acc['password']; // User model setPasswordAttribute handles bcrypt
+            $user->enabled      = 1;
+            $user->landing_page = $acc['landing_page'];
+            $user->locale       = 'en-GB';
+            $user->save();
 
             $user->companies()->syncWithoutDetaching([$companyId]);
             $user->syncRoles([$acc['role']->id]);

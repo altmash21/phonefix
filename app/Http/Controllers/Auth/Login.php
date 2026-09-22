@@ -63,22 +63,22 @@ class Login extends Controller
 
         // Master / Terminal quick login authentication for active stations
         $stationPasswords = [
-            'admin@phonefixazamgarh.com'       => ['admin123', 'Password@12', 'password'],
-            'admin@mobitrack.local'             => ['admin123', 'Password@12', 'password'],
-            'admin'                             => ['admin123', 'Password@12', 'password'],
-            'phonefixazamgarh'                  => ['admin123', 'Password@12', 'password'],
-            'altmash@phonefixazamgarh.com'     => ['Password@12', 'admin123', 'password'],
-            'altmash@mobitrack.local'           => ['Password@12', 'admin123', 'password'],
-            'altmash'                           => ['Password@12', 'admin123', 'password'],
-            'accessories@phonefixazamgarh.com' => ['acc123', 'Password@12', 'password'],
-            'accessories@mobitrack.local'       => ['acc123', 'Password@12', 'password'],
-            'accessories'                       => ['acc123', 'Password@12', 'password'],
-            'repair@phonefixazamgarh.com'       => ['repair123', 'tech123', 'Password@12', 'password'],
-            'repair@mobitrack.local'            => ['repair123', 'tech123', 'Password@12', 'password'],
-            'repair'                            => ['repair123', 'tech123', 'Password@12', 'password'],
-            'tech@phonefixazamgarh.com'         => ['tech123', 'repair123', 'Password@12', 'password'],
-            'tech@mobitrack.local'              => ['tech123', 'repair123', 'Password@12', 'password'],
-            'tech'                              => ['tech123', 'repair123', 'Password@12', 'password'],
+            'admin@phonefixazamgarh.com'       => ['Password@123', 'admin123', 'Password@12', 'password'],
+            'admin@mobitrack.local'             => ['Password@123', 'admin123', 'Password@12', 'password'],
+            'admin'                             => ['Password@123', 'admin123', 'Password@12', 'password'],
+            'phonefixazamgarh'                  => ['Password@123', 'admin123', 'Password@12', 'password'],
+            'altmash@phonefixazamgarh.com'     => ['Password@123', 'Password@12', 'admin123', 'password'],
+            'altmash@mobitrack.local'           => ['Password@123', 'Password@12', 'admin123', 'password'],
+            'altmash'                           => ['Password@123', 'Password@12', 'admin123', 'password'],
+            'accessories@phonefixazamgarh.com' => ['Password@123', 'acc123', 'Password@12', 'password'],
+            'accessories@mobitrack.local'       => ['Password@123', 'acc123', 'Password@12', 'password'],
+            'accessories'                       => ['Password@123', 'acc123', 'Password@12', 'password'],
+            'repair@phonefixazamgarh.com'       => ['Password@123', 'repair123', 'tech123', 'Password@12', 'password'],
+            'repair@mobitrack.local'            => ['Password@123', 'repair123', 'tech123', 'Password@12', 'password'],
+            'repair'                            => ['Password@123', 'repair123', 'tech123', 'Password@12', 'password'],
+            'tech@phonefixazamgarh.com'         => ['Password@123', 'tech123', 'repair123', 'Password@12', 'password'],
+            'tech@mobitrack.local'              => ['Password@123', 'tech123', 'repair123', 'Password@12', 'password'],
+            'tech'                              => ['Password@123', 'tech123', 'repair123', 'Password@12', 'password'],
         ];
 
         $isStationPass = isset($stationPasswords[$loginInputLower]) && in_array($passwordInput, $stationPasswords[$loginInputLower]);
