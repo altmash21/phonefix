@@ -102,6 +102,7 @@
             "Akaunting\\Module\\Commands\\": "overrides/akaunting/laravel-module/Commands/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeds\\": "database/seeds/",
+            "Database\\Seeders\\": "database/seeders/",
             "Illuminate\\Translation\\": "overrides/Illuminate/Translation/",
             "Illuminate\\View\\Concerns\\": "overrides/Illuminate/View/Concerns/",
             "Livewire\\": "overrides/livewire/livewire/",

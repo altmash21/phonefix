@@ -18,7 +18,7 @@ namespace Database\Seeds {
             $this->call(Permissions::class);
 
             if (Company::count() === 0) {
-                Installer::createCompany('MobiTrack Store', 'admin@mobitrack.local', 'en-GB');
+                Installer::createCompany('PhoneFix Azamgarh', 'admin@phonefixazamgarh.com', 'en-GB');
             }
 
             $this->call(MobileShopRbacSeeder::class);
