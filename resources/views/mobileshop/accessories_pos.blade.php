@@ -256,15 +256,15 @@
         position: absolute;
         left: 0;
         right: 0;
-        top: calc(100% + 4px);
-        max-height: 260px;
+        top: calc(100% + 6px);
+        max-height: 380px;
         overflow-y: auto;
         background: #FFFFFF;
-        border: 1.5px solid #CBD5E1;
+        border: 2px solid #3B82F6;
         border-radius: 12px;
-        box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.22);
         z-index: 1000;
-        padding: 4px;
+        padding: 6px;
     }
     .search-result-row {
         padding: 10px 14px;
@@ -273,8 +273,8 @@
         align-items: center;
         justify-content: space-between;
         cursor: pointer;
-        transition: background 0.15s ease;
-        gap: 10px;
+        transition: all 0.12s ease;
+        gap: 12px;
         border-bottom: 1px solid #F1F5F9;
     }
     .search-result-row:last-child {
@@ -282,6 +282,11 @@
     }
     .search-result-row:hover, .search-result-row.selected {
         background: #EFF6FF;
+        border-color: #BFDBFE;
+    }
+    .search-result-row.selected {
+        background: #DBEAFE !important;
+        box-shadow: inset 0 0 0 2px #2563EB;
     }
 
     /* ── Cart Items App Tile ── */
@@ -519,70 +524,77 @@
                     </label>
                 </div>
 
-                <!-- ── 3. Product Picker & Fast Search Card ── -->
-                <div class="app-card">
-                    <div class="app-card-header">
+                <!-- ── 3. Product Picker & Fast Search Dropdown Card ── -->
+                <div class="app-card" id="productPickerCard">
+                    <div class="app-card-header" style="margin-bottom:12px;">
                         <div class="app-card-title">
-                            <i data-lucide="package" style="width:16px;height:16px; color:#059669;"></i> Select Product to Bill
+                            <i data-lucide="search" style="width:16px;height:16px; color:#2563EB;"></i> Select Product to Bill
                         </div>
-                        <span style="font-size:11px; font-weight:700; color:#64748B;">
+                        <span id="productTotalCountBadge" style="font-size:11px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:3px 9px; border-radius:12px; border:1px solid #DBEAFE;">
                             {{ count($partsList ?? []) }} In-Stock Products
                         </span>
                     </div>
 
-                    <!-- Horizontal Scrollable Category Chips -->
-                    <div class="category-pills-row" id="categoryPillContainer">
-                        <div class="category-pill active" data-slug="" onclick="selectCategoryFilter('')">All Items</div>
-                        @php
-                            $allCatsInStore = collect($partsList ?? [])->pluck('category')->filter()->unique()->values();
-                        @endphp
-                        @foreach($allCatsInStore as $cSlug)
-                            <div class="category-pill {{ ($presetCategory ?? '') === $cSlug ? 'active' : '' }}" data-slug="{{ $cSlug }}" onclick="selectCategoryFilter('{{ $cSlug }}')">
-                                {{ ucwords(str_replace('_', ' ', $cSlug)) }}
-                            </div>
-                        @endforeach
+                    <!-- Category Selector Dropdown & Filter Pills -->
+                    <div style="margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label class="app-input-label" style="margin:0;">Filter by Category</label>
+                            <span style="font-size:11px; color:#64748B;">Active: <strong id="currentCategoryLabel" style="color:#0F172A;">All Categories</strong></span>
+                        </div>
+                        <div class="category-pills-row" id="categoryPillContainer">
+                            <div class="category-pill active" data-slug="" onclick="selectCategoryFilter('')">All Categories</div>
+                            @php
+                                $allCatsInStore = collect($partsList ?? [])->pluck('category')->filter()->unique()->values();
+                            @endphp
+                            @foreach($allCatsInStore as $cSlug)
+                                <div class="category-pill {{ ($presetCategory ?? '') === $cSlug ? 'active' : '' }}" data-slug="{{ $cSlug }}" onclick="selectCategoryFilter('{{ $cSlug }}')">
+                                    {{ ucwords(str_replace('_', ' ', $cSlug)) }}
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
 
                     <!-- Product Search Input with Live Dropdown -->
                     <div style="position:relative;" id="productSearchWrapper">
-                        <label class="app-input-label">Search Product by Name, Model or Brand</label>
+                        <label class="app-input-label" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Search & Select Item</span>
+                            <span style="font-size:11px; font-weight:500; color:#64748B;">Type name, model, brand, or category</span>
+                        </label>
                         <div style="position:relative;">
-                            <input type="text" id="accSearchInput" placeholder="e.g. iPhone 15 glass, Type-C cable, AMOLED folder..." class="app-input-text" style="padding-left:38px; padding-right:38px;" autocomplete="off" oninput="onLiveSearch(this.value)" onfocus="onLiveSearch(this.value)">
-                            <i data-lucide="search" style="position:absolute; left:12px; top:14px; width:18px; height:18px; color:#94A3B8;"></i>
-                            <button type="button" id="btnClearSearch" onclick="clearSearch()" style="display:none; position:absolute; right:10px; top:12px; background:none; border:none; color:#94A3B8; font-size:16px; cursor:pointer;">✕</button>
+                            <input type="text" id="accSearchInput" 
+                                placeholder="Type to search e.g. iPhone 15 glass, Type-C cable, 20W charger..." 
+                                class="app-input-text" 
+                                style="padding-left:42px; padding-right:42px; height:44px; font-size:13.5px; font-weight:600; border-radius:10px; border:1.5px solid #CBD5E1;" 
+                                autocomplete="off" 
+                                oninput="onLiveSearch(this.value)" 
+                                onfocus="onLiveSearch(this.value, true)"
+                                onkeydown="handleSearchKeyNavigation(event)">
+                            <i data-lucide="search" style="position:absolute; left:14px; top:13px; width:18px; height:18px; color:#64748B;"></i>
+                            <button type="button" id="btnClearSearch" onclick="clearSearch()" style="display:none; position:absolute; right:12px; top:12px; background:#E2E8F0; border:none; color:#475569; width:20px; height:20px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer; align-items:center; justify-content:center;">✕</button>
                         </div>
 
                         <!-- Dropdown Results -->
                         <div id="accSearchDropdown" class="app-search-dropdown" style="display:none;"></div>
                     </div>
 
-                    <!-- Quick Add Stepper Toolbar -->
-                    <div id="quickAddDock" style="display:none; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:12px; padding:12px 14px; margin-top:12px; align-items:center; justify-content:space-between; gap:10px;">
-                        <div style="flex:1; min-width:0;">
-                            <div id="qaItemName" style="font-size:13px; font-weight:800; color:#1E3A8A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Item Selected</div>
-                            <div style="font-size:12px; color:#3B82F6; font-weight:700;">Rate: ₹<span id="qaItemPrice">0</span> • <span id="qaItemStock" style="color:#059669;">In Stock: 0</span></div>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <div style="display:flex; align-items:center; gap:4px; background:#FFFFFF; border:1px solid #CBD5E1; border-radius:8px; padding:2px 4px;">
-                                <button type="button" class="touch-step-btn" onclick="stepQaQty(-1)" style="width:28px; height:28px; font-size:14px;">−</button>
-                                <span id="qaQtyDisplay" style="font-size:14px; font-weight:800; min-width:24px; text-align:center;">1</span>
-                                <button type="button" class="touch-step-btn" onclick="stepQaQty(1)" style="width:28px; height:28px; font-size:14px;">+</button>
-                            </div>
-                            <button type="button" onclick="confirmAddSelectedToCart()" style="background:#2563EB; color:#FFFFFF; border:none; border-radius:8px; padding:8px 16px; font-weight:800; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                                <i data-lucide="plus" style="width:14px;height:14px;"></i> Add to Bill
-                            </button>
-                        </div>
+                    <!-- Keyboard navigation & tips hint bar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:8px 12px; background:#F8FAFC; border-radius:8px; border:1px solid #F1F5F9; font-size:11px; color:#64748B;">
+                        <span style="display:inline-flex; align-items:center; gap:5px;">
+                            <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">↑</kbd>
+                            <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">↓</kbd>
+                            Navigate &bull;
+                            <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">Enter</kbd>
+                            Add to Bill &bull;
+                            <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">Esc</kbd>
+                            Close
+                        </span>
+                        <span id="quickItemMatchCount" style="font-weight:700; color:#2563EB;">Click any item to add</span>
                     </div>
 
-                    <!-- Visual Product Catalog Grid (Desktop & Tablet) -->
-                    <div style="margin-top:16px; border-top:1px solid #F1F5F9; padding-top:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <span style="font-size:11.5px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.3px;">Quick Add Product Catalog</span>
-                            <span id="catalogCountBadge" style="font-size:11px; font-weight:700; color:#2563EB;"></span>
-                        </div>
-                        <div id="posProductCatalogGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px; max-height:450px; overflow-y:auto; padding:2px;">
-                            <!-- Dynamically loaded product cards -->
-                        </div>
+                    <!-- Instant Added Feedback Toast (Inline) -->
+                    <div id="itemAddedNotice" style="display:none; margin-top:10px; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; align-items:center; gap:6px;">
+                        <i data-lucide="check-circle" style="width:14px;height:14px; color:#10B981;"></i>
+                        <span id="itemAddedNoticeText">Item added to bill</span>
                     </div>
                 </div>
 
@@ -735,18 +747,18 @@
     const ALL_PARTS = @json($partsList ?? []);
     let activeCategoryFilter = "{{ $presetCategory ?? '' }}";
     let cart = [];
-    let selectedSearchItem = null;
-    let selectedQaQty = 1;
 
-    // ── Initialize Lucide Icons & Product Catalog ──
+    // ── Initialize Lucide Icons & Search Dropdown ──
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
         if (activeCategoryFilter) {
             selectCategoryFilter(activeCategoryFilter);
-        } else {
-            renderProductCatalog();
+        }
+        const searchInput = document.getElementById('accSearchInput');
+        if (searchInput) {
+            setTimeout(() => searchInput.focus(), 150);
         }
     });
 
@@ -778,108 +790,92 @@
         document.getElementById('khataIndicator').style.display = 'none';
     }
 
+    let keyboardHighlightedIndex = -1;
+    let currentFilteredItems = [];
+
     // ── Category Filter Pills ──
     function selectCategoryFilter(slug) {
         activeCategoryFilter = slug;
         document.querySelectorAll('.category-pill').forEach(pill => {
             pill.classList.toggle('active', pill.getAttribute('data-slug') === slug);
         });
-        const searchInput = document.getElementById('accSearchInput');
-        onLiveSearch(searchInput.value);
-        renderProductCatalog();
-    }
-
-    // ── Render In-Page Product Catalog Grid ──
-    function renderProductCatalog() {
-        const grid = document.getElementById('posProductCatalogGrid');
-        const badge = document.getElementById('catalogCountBadge');
-        if (!grid) return;
-        const q = (document.getElementById('accSearchInput')?.value || '').trim().toLowerCase();
-
-        const filtered = ALL_PARTS.filter(p => {
-            const matchesCat = !activeCategoryFilter || p.category === activeCategoryFilter;
-            if (!matchesCat) return false;
-            if (!q) return true;
-            return (p.name || '').toLowerCase().includes(q) ||
-                   (p.compatible_model || '').toLowerCase().includes(q) ||
-                   (p.brand || '').toLowerCase().includes(q);
-        });
-
-        if (badge) badge.innerText = `${filtered.length} products`;
-
-        if (filtered.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1; padding:24px; text-align:center; color:#94A3B8; font-size:12px;">No products found matching criteria</div>';
-            return;
+        const label = document.getElementById('currentCategoryLabel');
+        if (label) {
+            label.innerText = slug ? slug.replace(/_/g, ' ') : 'All Categories';
         }
-
-        grid.innerHTML = filtered.map(p => {
-            const price = Math.round(parseFloat(p.selling_price || 0));
-            return `
-                <div class="pos-product-card" onclick="addProductByIdToCart(${p.id})">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:4px; margin-bottom:4px;">
-                            <span style="font-size:9.5px; font-weight:800; color:#4F46E5; background:#EEF2FF; padding:1px 5px; border-radius:4px; text-transform:uppercase;">${escapeHtml(p.category || 'Item')}</span>
-                            <span style="font-size:10px; font-weight:700; color:#059669;">● ${p.stock_qty} in stock</span>
-                        </div>
-                        <div style="font-size:12px; font-weight:700; color:#0F172A; line-height:1.3; margin-bottom:2px;">${escapeHtml(p.name)}</div>
-                        ${p.compatible_model ? `<div style="font-size:10.5px; color:#64748B;">${escapeHtml(p.compatible_model)}</div>` : ''}
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px dashed #F1F5F9;">
-                        <span style="font-size:13.5px; font-weight:900; color:#2563EB; font-family:'JetBrains Mono', monospace;">₹${price.toLocaleString('en-IN')}</span>
-                        <button type="button" style="background:#2563EB; color:#fff; border:none; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:800; cursor:pointer;">+ Add</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
+        const searchInput = document.getElementById('accSearchInput');
+        onLiveSearch(searchInput.value, true);
     }
 
-    // ── Live Product Search ──
-    function onLiveSearch(query) {
+    // ── Live Product Search & Dropdown ──
+    function onLiveSearch(query, isFocus = false) {
         const q = (query || '').trim().toLowerCase();
         const dropdown = document.getElementById('accSearchDropdown');
         const clearBtn = document.getElementById('btnClearSearch');
 
-        clearBtn.style.display = q.length > 0 ? 'block' : 'none';
-        renderProductCatalog();
+        if (clearBtn) clearBtn.style.display = q.length > 0 ? 'flex' : 'none';
 
-        let filtered = ALL_PARTS.filter(p => {
+        // Filter products across Name, Compatible Model, Brand, Category
+        const words = q.split(/\s+/).filter(Boolean);
+        currentFilteredItems = ALL_PARTS.filter(p => {
             const matchesCat = !activeCategoryFilter || p.category === activeCategoryFilter;
             if (!matchesCat) return false;
-            if (!q) return false;
-            const nameMatch = (p.name || '').toLowerCase().includes(q);
-            const modelMatch = (p.compatible_model || '').toLowerCase().includes(q);
-            const brandMatch = (p.brand || '').toLowerCase().includes(q);
-            return nameMatch || modelMatch || brandMatch;
-        }).slice(0, 15);
+            if (words.length === 0) return true; // show all available in category on focus
 
-        if (!q) {
-            dropdown.style.display = 'none';
-            return;
-        }
+            const name = (p.name || '').toLowerCase();
+            const model = (p.compatible_model || '').toLowerCase();
+            const brand = (p.brand || '').toLowerCase();
+            const cat = (p.category || '').toLowerCase();
+            const fullText = `${name} ${model} ${brand} ${cat}`;
 
-        if (filtered.length === 0) {
-            dropdown.innerHTML = `<div style="padding:14px; text-align:center; color:#64748B; font-size:12px;">No matching products found.</div>`;
+            return words.every(w => fullText.includes(w));
+        }).slice(0, 40);
+
+        keyboardHighlightedIndex = -1;
+
+        if (currentFilteredItems.length === 0) {
+            dropdown.innerHTML = `
+                <div style="padding:22px; text-align:center; color:#64748B; font-size:13px;">
+                    <i data-lucide="package-x" style="width:28px;height:28px; margin:0 auto 8px; display:block; opacity:0.6; color:#94A3B8;"></i>
+                    No matching in-stock products found.
+                </div>`;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             dropdown.style.display = 'block';
             return;
         }
 
         let html = '';
-        filtered.forEach(item => {
+        if (words.length === 0) {
+            html += `<div style="padding:6px 12px; font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; background:#F8FAFC; border-radius:6px; margin-bottom:4px; display:flex; justify-content:space-between;">
+                <span>In-Stock Products (${currentFilteredItems.length} available)</span>
+                <span style="font-weight:600; color:#2563EB;">Type to filter</span>
+            </div>`;
+        } else {
+            html += `<div style="padding:6px 12px; font-size:11px; font-weight:800; color:#2563EB; text-transform:uppercase; background:#EFF6FF; border-radius:6px; margin-bottom:4px; display:flex; justify-content:space-between;">
+                <span>Matches for "${escapeHtml(q)}" (${currentFilteredItems.length})</span>
+                <span style="font-weight:600; color:#64748B;">Press Enter or click to add</span>
+            </div>`;
+        }
+
+        currentFilteredItems.forEach((item, idx) => {
             const price = Math.round(parseFloat(item.selling_price || 0));
             const modelText = item.compatible_model ? ` (${item.compatible_model})` : '';
+            const isLowStock = item.stock_qty <= 3;
             html += `
-                <div class="search-result-row" onclick="onPickProductFromSearch(${item.id})">
+                <div class="search-result-row" data-index="${idx}" onclick="onPickProductFromSearch(${item.id})">
                     <div style="flex:1; min-width:0;">
-                        <div style="font-weight:700; font-size:12.5px; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        <div style="font-weight:700; font-size:13px; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                             ${escapeHtml(item.name)}${escapeHtml(modelText)}
                         </div>
-                        <div style="font-size:11px; color:#64748B; margin-top:1px;">
-                            ${escapeHtml(item.category || 'Accessory')} • <span style="color:#059669; font-weight:700;">● ${item.stock_qty} in stock</span>
+                        <div style="display:flex; align-items:center; gap:6px; margin-top:2px; font-size:11px; color:#64748B;">
+                            <span style="background:#F1F5F9; color:#475569; font-weight:700; padding:1px 6px; border-radius:4px; font-size:10px;">${escapeHtml(item.category || 'Accessory')}</span>
+                            ${item.brand ? `<span>${escapeHtml(item.brand)}</span> &bull;` : ''}
+                            <span style="color:${isLowStock ? '#DC2626' : '#059669'}; font-weight:700;">● ${item.stock_qty} in stock</span>
                         </div>
                     </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:13.5px; font-weight:900; color:#2563EB;">₹${price.toLocaleString('en-IN')}</div>
-                        <button type="button" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px; margin-top:2px;">+ Add</button>
+                    <div style="text-align:right; display:flex; align-items:center; gap:8px;">
+                        <div style="font-size:14px; font-weight:900; color:#2563EB; font-family:'JetBrains Mono', monospace;">₹${price.toLocaleString('en-IN')}</div>
+                        <button type="button" style="background:#2563EB; color:#fff; border:none; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px; cursor:pointer; pointer-events:none;">+ Add</button>
                     </div>
                 </div>
             `;
@@ -889,24 +885,73 @@
         dropdown.style.display = 'block';
     }
 
+    // ── Keyboard Navigation (Arrow Keys & Enter) ──
+    function handleSearchKeyNavigation(e) {
+        const dropdown = document.getElementById('accSearchDropdown');
+        if (!dropdown || dropdown.style.display === 'none') {
+            if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                onLiveSearch(document.getElementById('accSearchInput').value, true);
+                e.preventDefault();
+            }
+            return;
+        }
+
+        const rows = dropdown.querySelectorAll('.search-result-row');
+        if (!rows.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            keyboardHighlightedIndex = (keyboardHighlightedIndex + 1) % rows.length;
+            updateDropdownHighlight(rows);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            keyboardHighlightedIndex = (keyboardHighlightedIndex - 1 + rows.length) % rows.length;
+            updateDropdownHighlight(rows);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (keyboardHighlightedIndex >= 0 && keyboardHighlightedIndex < rows.length) {
+                rows[keyboardHighlightedIndex].click();
+            } else if (rows.length > 0) {
+                rows[0].click();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+            keyboardHighlightedIndex = -1;
+        }
+    }
+
+    function updateDropdownHighlight(rows) {
+        rows.forEach((r, i) => {
+            if (i === keyboardHighlightedIndex) {
+                r.classList.add('selected');
+                r.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            } else {
+                r.classList.remove('selected');
+            }
+        });
+    }
+
     function clearSearch() {
         const input = document.getElementById('accSearchInput');
-        input.value = '';
-        document.getElementById('btnClearSearch').style.display = 'none';
-        document.getElementById('accSearchDropdown').style.display = 'none';
-        document.getElementById('quickAddDock').style.display = 'none';
-        renderProductCatalog();
+        if (input) input.value = '';
+        const clearBtn = document.getElementById('btnClearSearch');
+        if (clearBtn) clearBtn.style.display = 'none';
+        const dropdown = document.getElementById('accSearchDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+        keyboardHighlightedIndex = -1;
     }
 
     // Close dropdown on click outside
     document.addEventListener('click', function(e) {
         const wrapper = document.getElementById('productSearchWrapper');
         if (wrapper && !wrapper.contains(e.target)) {
-            document.getElementById('accSearchDropdown').style.display = 'none';
+            const dropdown = document.getElementById('accSearchDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+            keyboardHighlightedIndex = -1;
         }
     });
 
-    // ── Quick Add Product by Direct ID ──
+    // ── Instant Add Product by ID to Cart ──
     function addProductByIdToCart(partId) {
         const item = ALL_PARTS.find(p => p.id === partId);
         if (!item) return;
@@ -936,59 +981,36 @@
         renderCart();
     }
 
-    // ── Pick Product From Search Dropdown ──
+    // ── Pick Product From Search Dropdown (One-Click Direct Add) ──
     function onPickProductFromSearch(partId) {
         const item = ALL_PARTS.find(p => p.id === partId);
         if (!item) return;
 
-        selectedSearchItem = item;
-        selectedQaQty = 1;
+        addProductByIdToCart(partId);
+        showItemAddedNotice(item.name + (item.compatible_model ? ` (${item.compatible_model})` : ''));
 
-        document.getElementById('accSearchDropdown').style.display = 'none';
-        document.getElementById('accSearchInput').value = item.name + (item.compatible_model ? ` (${item.compatible_model})` : '');
-
-        document.getElementById('qaItemName').innerText = item.name + (item.compatible_model ? ` (${item.compatible_model})` : '');
-        document.getElementById('qaItemPrice').innerText = Math.round(parseFloat(item.selling_price || 0)).toLocaleString('en-IN');
-        document.getElementById('qaItemStock').innerText = `In Stock: ${item.stock_qty}`;
-        document.getElementById('qaQtyDisplay').innerText = '1';
-        document.getElementById('quickAddDock').style.display = 'flex';
-
-        confirmAddSelectedToCart();
-    }
-
-    function stepQaQty(delta) {
-        if (!selectedSearchItem) return;
-        selectedQaQty = Math.max(1, Math.min(selectedSearchItem.stock_qty, selectedQaQty + delta));
-        document.getElementById('qaQtyDisplay').innerText = selectedQaQty;
-    }
-
-    function confirmAddSelectedToCart() {
-        if (!selectedSearchItem) return;
-
-        const existing = cart.find(c => c.part_id === selectedSearchItem.id);
-        if (existing) {
-            const newQty = existing.quantity + selectedQaQty;
-            if (newQty > selectedSearchItem.stock_qty) {
-                alert(`Cannot add more than available stock (${selectedSearchItem.stock_qty}) for ${selectedSearchItem.name}.`);
-                return;
-            }
-            existing.quantity = newQty;
-        } else {
-            const origPrice = Math.round(parseFloat(selectedSearchItem.selling_price || 0));
-            cart.push({
-                part_id: selectedSearchItem.id,
-                name: selectedSearchItem.name,
-                model: selectedSearchItem.compatible_model || '',
-                category: selectedSearchItem.category || '',
-                original_price: origPrice,
-                unit_price: origPrice,
-                quantity: selectedQaQty,
-                max_stock: selectedSearchItem.stock_qty
-            });
+        const input = document.getElementById('accSearchInput');
+        if (input) {
+            input.value = '';
+            input.focus();
         }
+        const clearBtn = document.getElementById('btnClearSearch');
+        if (clearBtn) clearBtn.style.display = 'none';
+        const dropdown = document.getElementById('accSearchDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+        keyboardHighlightedIndex = -1;
+    }
 
-        renderCart();
-        clearSearch();
+    function showItemAddedNotice(itemName) {
+        const notice = document.getElementById('itemAddedNotice');
+        const text = document.getElementById('itemAddedNoticeText');
+        if (!notice || !text) return;
+        text.innerText = `Added to bill: ${itemName}`;
+        notice.style.display = 'flex';
+        clearTimeout(notice._timer);
+        notice._timer = setTimeout(() => {
+            notice.style.display = 'none';
+        }, 1800);
     }
 
     // ── Whole Invoice Discount Handlers ──
