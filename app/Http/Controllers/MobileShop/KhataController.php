@@ -157,6 +157,106 @@ class KhataController extends BaseMobileShopController
     }
 
     /**
+     * Add Old Udhar / Khata Directly to Database
+     */
+    public function addOldUdhar(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-mobileshop-khata') ||
+            auth()->user()->can('read-reports-khata') ||
+            auth()->user()->can('read-mobileshop-reports') ||
+            auth()->user()->can('read-mobileshop-sales') ||
+            auth()->user()->can('create-sale-accessories') ||
+            auth()->user()->can('create-mobileshop-pos') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('repair-technician')
+        ), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'customer_id'    => 'nullable|exists:ms_customers,id',
+            'customer_name'  => 'required_without:customer_id|nullable|string|max:191',
+            'customer_phone' => 'required_without:customer_id|nullable|string|max:50',
+            'amount'         => 'required|numeric|min:0.01',
+            'date'           => 'nullable|date',
+            'reference_no'   => 'nullable|string|max:191',
+            'remarks'        => 'nullable|string|max:191',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        return DB::transaction(function () use ($request, $companyId) {
+            $customer = null;
+
+            if ($request->filled('customer_id')) {
+                $customer = DB::table('ms_customers')
+                    ->where('company_id', $companyId)
+                    ->where('id', $request->customer_id)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (!$customer && $request->filled('customer_phone')) {
+                $cleanPhone = trim($request->customer_phone);
+                $customer = DB::table('ms_customers')
+                    ->where('company_id', $companyId)
+                    ->where('phone', $cleanPhone)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$customer) {
+                    $newCustId = DB::table('ms_customers')->insertGetId([
+                        'company_id'     => $companyId,
+                        'name'           => trim($request->customer_name ?: 'Customer ' . $cleanPhone),
+                        'phone'          => $cleanPhone,
+                        'udhari_balance' => 0.00,
+                        'credit_limit'   => 10000.00,
+                        'state_code'     => '09',
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ]);
+
+                    $customer = DB::table('ms_customers')->where('id', $newCustId)->first();
+                }
+            }
+
+            if (!$customer) {
+                return redirect()->back()->with('error', 'Please select or enter customer details.');
+            }
+
+            $amount = (float) $request->amount;
+            $newBalance = (float) $customer->udhari_balance + $amount;
+
+            DB::table('ms_customers')->where('id', $customer->id)->update([
+                'udhari_balance' => $newBalance,
+                'updated_at'     => now(),
+            ]);
+
+            $txDate = $request->filled('date') ? \Carbon\Carbon::parse($request->date) : now();
+
+            DB::table('ms_customer_khata_transactions')->insert([
+                'company_id'    => $companyId,
+                'customer_id'   => $customer->id,
+                'type'          => 'opening_balance',
+                'amount'        => $amount,
+                'balance_after' => $newBalance,
+                'payment_mode'  => null,
+                'reference_no'  => $request->reference_no ?: 'OLD-KHATA',
+                'remarks'       => $request->remarks ?: 'Old Udhar / Opening Balance',
+                'recorded_by'   => auth()->id(),
+                'created_at'    => $txDate,
+            ]);
+
+            // Clear customers cache
+            \Illuminate\Support\Facades\Cache::forget("ms_customers_picker_v2_{$companyId}");
+
+            return redirect()->route('mobileshop.khata')
+                ->with('success', "Old Udhar of ₹" . number_format($amount, 2) . " added directly to {$customer->name}'s Khata! Total Due: ₹" . number_format($newBalance, 2));
+        });
+    }
+
+    /**
      * Customer Account Statement / Tally Ledger View (A4 Printable)
      */
     public function customerStatement($id)

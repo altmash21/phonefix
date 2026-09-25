@@ -22,7 +22,7 @@ class AccessorySaleService
             'items.*.quantity'   => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'amount_paid'        => 'required|numeric|min:0',
-            'payment_mode'       => 'required|in:cash,upi,card,credit_udhari,split',
+            'payment_mode'       => 'required|in:cash,upi,card,credit_udhari,split,udhari,cash+upi,cash+udhari,upi+udhari',
         ]);
 
         // Idempotency check

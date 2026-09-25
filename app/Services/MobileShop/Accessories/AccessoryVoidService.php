@@ -109,8 +109,30 @@ class AccessoryVoidService
                             'type'          => 'deduction',
                             'quantity'      => $returnQty,
                             'balance_after' => $part->stock_qty,
-                            'reference'     => "DEFECTIVE RETURN (Quarantined/Scrap): {$returnQty}x {$item->part_name} from Sale #{$sale->invoice_number} ({$auditReason}) by " . auth()->user()->name,
+                            'reference'     => "DEFECTIVE RETURN (Quarantined/Scrap): {$returnQty}x {$item->part_name} from Sale #{$sale->invoice_number} ({$auditReason}) by " . (auth()->user()?->name ?? 'System'),
                             'user_id'       => auth()->id(),
+                            'created_at'    => now(),
+                            'updated_at'    => now(),
+                        ]);
+
+                        // Record in Defective Items registry
+                        DB::table('ms_defective_items')->insert([
+                            'company_id'    => $companyId,
+                            'part_id'       => $part->id,
+                            'item_name'     => $item->part_name,
+                            'source_type'   => 'sale_return',
+                            'source_id'     => $sale->id,
+                            'source_ref'    => $sale->invoice_number,
+                            'supplier_id'   => null,
+                            'supplier_name' => null,
+                            'customer_name' => $sale->customer_name ?? null,
+                            'qty'           => $returnQty,
+                            'unit_cost'     => (float) ($part->unit_cost ?? 0),
+                            'total_cost'    => round(((float) ($part->unit_cost ?? 0)) * $returnQty, 2),
+                            'defect_reason' => $auditReason,
+                            'status'        => 'pending_supplier_return',
+                            'notes'         => "Returned by customer on sale return #{$sale->invoice_number}",
+                            'created_by'    => auth()->id(),
                             'created_at'    => now(),
                             'updated_at'    => now(),
                         ]);

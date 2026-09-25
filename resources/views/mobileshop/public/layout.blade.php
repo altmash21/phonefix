@@ -338,8 +338,24 @@
                 <a href="{{ route('public.contact') }}" class="px-3.5 py-1.5 rounded-md transition-colors {{ request()->routeIs('public.contact') ? 'text-[#111111] font-semibold bg-[#f8f9fa]' : 'hover:text-[#111111] hover:bg-[#f8f9fa]' }}">Contact</a>
             </div>
 
-            <!-- Right: Track Repair Button ONLY (Flush to right end) -->
-            <div class="flex items-center gap-3 shrink-0">
+            <!-- Right: Login & Track Repair Buttons (Flush to right end) -->
+            <div class="flex items-center gap-2.5 shrink-0">
+                @auth
+                    <a href="{{ route('mobileshop.dashboard', ['company_id' => auth()->user()?->company_id ?? session('company_id') ?? 1]) }}" class="cal-btn-secondary text-[13px] font-semibold h-10 px-3.5 sm:px-4 rounded-lg inline-flex items-center gap-2 border border-[#e5e7eb] text-[#111111] hover:bg-[#f8f9fa] transition-colors" title="Console Dashboard">
+                        <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>Dashboard</span>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="cal-btn-secondary text-[13px] font-semibold h-10 px-3.5 sm:px-4 rounded-lg inline-flex items-center gap-2 border border-[#e5e7eb] text-[#111111] hover:bg-[#f8f9fa] transition-colors" title="Login">
+                        <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10 17 15 12 10 7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                        <span>Login</span>
+                    </a>
+                @endauth
+
                 <a href="{{ route('public.track_repair') }}" class="cal-btn-primary text-[13px] font-semibold h-10 px-4 sm:px-5 rounded-lg inline-flex items-center gap-2 shadow-xs hover:shadow transition-all group">
                     <span class="w-2 h-2 rounded-full bg-badge-emerald animate-pulse"></span>
                     <span>Track Repair</span>
@@ -363,7 +379,22 @@
             <a href="{{ route('public.landing') }}#repairs" class="block px-3 py-2 rounded-md hover:bg-[#f8f9fa] transition-colors">Express Repairs</a>
             <a href="{{ route('public.about') }}" class="block px-3 py-2 rounded-md hover:bg-[#f8f9fa] transition-colors {{ request()->routeIs('public.about') ? 'font-semibold bg-[#f8f9fa]' : '' }}">About Lab</a>
             <a href="{{ route('public.contact') }}" class="block px-3 py-2 rounded-md hover:bg-[#f8f9fa] transition-colors {{ request()->routeIs('public.contact') ? 'font-semibold bg-[#f8f9fa]' : '' }}">Contact Desk</a>
-            <div class="pt-3 border-t border-[#f3f4f6]">
+            <div class="pt-3 border-t border-[#f3f4f6] flex flex-col gap-2">
+                @auth
+                    <a href="{{ route('mobileshop.dashboard', ['company_id' => auth()->user()?->company_id ?? session('company_id') ?? 1]) }}" class="cal-btn-secondary w-full text-center flex items-center justify-center gap-2 h-10 rounded-lg border border-[#e5e7eb] text-[#111111] hover:bg-[#f8f9fa]">
+                        <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        <span>Console Dashboard</span>
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="cal-btn-secondary w-full text-center flex items-center justify-center gap-2 h-10 rounded-lg border border-[#e5e7eb] text-[#111111] hover:bg-[#f8f9fa]">
+                        <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10 17 15 12 10 7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                        <span>Login</span>
+                    </a>
+                @endauth
                 <a href="{{ route('public.track_repair') }}" class="cal-btn-primary w-full text-center flex items-center justify-center gap-2 h-10 rounded-lg">
                     <span class="w-2 h-2 rounded-full bg-badge-emerald"></span>
                     <span>Track Repair</span>

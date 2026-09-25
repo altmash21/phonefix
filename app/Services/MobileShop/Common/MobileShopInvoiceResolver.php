@@ -105,25 +105,28 @@ class MobileShopInvoiceResolver
             )
             ->get();
 
-        // 3. Khata Repayments & Adjustments
-        $repayments = DB::table('ms_customer_khata_transactions')
+        // 3. Khata Repayments, Old Udhar / Opening Balances & Adjustments
+        $khataTxs = DB::table('ms_customer_khata_transactions')
             ->where('company_id', $companyId)
             ->where('customer_id', $customerId)
             ->where('type', '!=', 'udhari_sale')
-            ->select(
-                'id',
-                'created_at',
-                DB::raw("COALESCE(reference_no, CONCAT('KHATA-', id)) as ref_no"),
-                DB::raw("COALESCE(remarks, 'Payment / Settlement Received') as particulars"),
-                DB::raw("0.00 as billed_amount"),
-                'amount as paid_amount',
-                DB::raw("0.00 as due_amount"),
-                'type as entry_type'
-            )
-            ->get();
+            ->get()
+            ->map(function ($tx) {
+                $isDebit = in_array($tx->type, ['opening_balance', 'old_udhar', 'debit_adjustment']);
+                return (object) [
+                    'id'            => $tx->id,
+                    'created_at'    => $tx->created_at,
+                    'ref_no'        => $tx->reference_no ?: ('KHATA-' . $tx->id),
+                    'particulars'   => $tx->remarks ?: ($isDebit ? 'Old Udhar / Opening Balance' : 'Payment / Settlement Received'),
+                    'billed_amount' => $isDebit ? (float) $tx->amount : 0.00,
+                    'paid_amount'   => $isDebit ? 0.00 : (float) $tx->amount,
+                    'due_amount'    => $isDebit ? (float) $tx->amount : 0.00,
+                    'entry_type'    => $tx->type,
+                ];
+            });
 
         // Merge and sort chronologically
-        $allEntries = $mobileSales->concat($accSales)->concat($repayments)->sortBy('created_at')->values();
+        $allEntries = $mobileSales->concat($accSales)->concat($khataTxs)->sortBy('created_at')->values();
 
         $runningBalance = 0.00;
         $totalBilled = 0.00;
@@ -136,7 +139,7 @@ class MobileShopInvoiceResolver
             $totalBilled += $billed;
             $totalPaid += $paid;
 
-            if ($entry->entry_type === 'adjustment') {
+            if ($entry->entry_type === 'adjustment' || $entry->entry_type === 'payment_received' || $entry->entry_type === 'refund_credit') {
                 $runningBalance = max(0.00, $runningBalance - $paid);
             } else {
                 $runningBalance = max(0.00, $runningBalance + ($billed - $paid));

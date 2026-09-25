@@ -198,11 +198,18 @@ class PurchaseController extends BaseMobileShopController
             ->sort()
             ->values();
 
+        $defectiveItems = DB::table('ms_defective_items')
+            ->where('company_id', $companyId)
+            ->orderBy('id', 'desc')
+            ->get();
+        $totalDefectiveQty = (int) $defectiveItems->where('status', 'pending_supplier_return')->sum('qty');
+
         return view('mobileshop.purchase', compact(
             'niche', 'isAdmin', 'purchaseInvoices', 'purchaseOrders', 'newPhonePurchases', 'buybacks', 'batchRestocks',
             'canAddPhones', 'canAddSecondhand', 'canAddAccessories', 'canAddCovers',
             'totalPOValue', 'totalPODue', 'totalInvoicesCount', 'totalUnitsPurchased',
-            'suppliers', 'wallets', 'categories', 'parts', 'knownBrands', 'knownModels'
+            'suppliers', 'wallets', 'categories', 'parts', 'knownBrands', 'knownModels',
+            'defectiveItems', 'totalDefectiveQty'
         ));
     }
 
@@ -378,4 +385,217 @@ class PurchaseController extends BaseMobileShopController
 
         return response()->json($result, $result['success'] ? 200 : 422);
     }
+
+    /**
+     * Record Defective Item from Purchase Order Return
+     */
+    public function recordPurchaseDefect(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-purchase-accessories') ||
+            auth()->user()->can('create-purchase-covers') ||
+            auth()->user()->can('manage-stock-accessories') ||
+            auth()->user()->can('manage-stock-covers') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('accessories-staff')
+        ), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'purchase_order_id' => 'required|integer',
+            'po_item_id'        => 'required|integer',
+            'defect_qty'        => 'required|integer|min:1',
+            'defect_reason'     => 'required|string',
+            'notes'             => 'nullable|string',
+        ]);
+
+        $companyId = $this->getCompanyId();
+        $poId = (int) $request->input('purchase_order_id');
+        $poItemId = (int) $request->input('po_item_id');
+        $defectQty = (int) $request->input('defect_qty');
+        $defectReason = $request->input('defect_reason');
+        $notes = $request->input('notes');
+        $deductStock = $request->has('deduct_stock') ? (bool) $request->input('deduct_stock') : true;
+
+        $po = DB::table('ms_purchase_orders')
+            ->where('company_id', $companyId)
+            ->where('id', $poId)
+            ->first();
+
+        if (!$po) {
+            return redirect()->back()->with('error', 'Purchase invoice not found.');
+        }
+
+        $poItem = DB::table('ms_purchase_order_items')
+            ->where('purchase_order_id', $po->id)
+            ->where('id', $poItemId)
+            ->first();
+
+        if (!$poItem) {
+            return redirect()->back()->with('error', 'Item not found in this purchase invoice.');
+        }
+
+        if ($defectQty > $poItem->qty) {
+            return redirect()->back()->with('error', "Defect quantity ({$defectQty}) cannot exceed purchased quantity ({$poItem->qty}).");
+        }
+
+        $supplier = DB::table('ms_suppliers')->where('id', $po->supplier_id)->first();
+        $supplierName = $supplier ? $supplier->name : 'Supplier';
+        $itemTitle = trim("{$poItem->brand} {$poItem->model}" . ($poItem->variant && $poItem->variant !== 'Standard' ? " {$poItem->variant}" : ''));
+
+        // Look for matching inventory item to deduct from current sellable stock
+        $part = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->where(function ($q) use ($poItem, $itemTitle) {
+                $q->where('name', $itemTitle)
+                  ->orWhere('name', 'like', "%{$poItem->model}%")
+                  ->orWhere(function ($sub) use ($poItem) {
+                      $sub->where('brand', $poItem->brand)
+                          ->where('compatible_model', $poItem->model);
+                  });
+            })
+            ->first();
+
+        return DB::transaction(function () use ($companyId, $po, $poItem, $part, $itemTitle, $defectQty, $defectReason, $notes, $deductStock, $supplier, $supplierName, $request) {
+            if ($deductStock && $part) {
+                $newStock = max(0, (int) $part->stock_qty - $defectQty);
+                DB::table('ms_parts_inventory')->where('id', $part->id)->update([
+                    'stock_qty'  => $newStock,
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('ms_parts_inventory_history')->insert([
+                    'part_id'       => $part->id,
+                    'type'          => 'deduction',
+                    'quantity'      => $defectQty,
+                    'balance_after' => $newStock,
+                    'reference'     => "DEFECTIVE PURCHASE RETURN: {$defectQty}x {$itemTitle} from PO #{$po->po_number} ({$defectReason}) by " . (auth()->user()?->name ?? 'Staff'),
+                    'user_id'       => auth()->id(),
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+            }
+
+            $unitCost = (float) ($poItem->unit_cost ?? ($part ? $part->unit_cost : 0));
+            $totalCost = round($unitCost * $defectQty, 2);
+
+            DB::table('ms_defective_items')->insert([
+                'company_id'    => $companyId,
+                'part_id'       => $part ? $part->id : null,
+                'item_name'     => $itemTitle,
+                'source_type'   => 'purchase_return',
+                'source_id'     => $po->id,
+                'source_ref'    => $po->po_number,
+                'supplier_id'   => $po->supplier_id,
+                'supplier_name' => $supplierName,
+                'customer_name' => null,
+                'qty'           => $defectQty,
+                'unit_cost'     => $unitCost,
+                'total_cost'    => $totalCost,
+                'defect_reason' => $defectReason,
+                'status'        => 'pending_supplier_return',
+                'notes'         => $notes,
+                'created_by'    => auth()->id(),
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ]);
+
+            $successMsg = "Successfully recorded {$defectQty}x {$itemTitle} as defective from PO #{$po->po_number}. Added to Defective Items registry.";
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMsg,
+                ]);
+            }
+
+            return redirect()->back()->with('success', $successMsg);
+        });
+    }
+
+    /**
+     * Update Defective Item Status (e.g. Returned to Supplier, Replaced, Scrap)
+     */
+    public function updateDefectiveStatus(Request $request, $id)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-purchase-accessories') ||
+            auth()->user()->can('create-purchase-covers') ||
+            auth()->user()->can('manage-stock-accessories') ||
+            auth()->user()->can('manage-stock-covers') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('accessories-staff')
+        ), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'status' => 'required|string|in:pending_supplier_return,returned_to_supplier,replaced_by_supplier,scrap_written_off',
+            'notes'  => 'nullable|string',
+        ]);
+
+        $companyId = $this->getCompanyId();
+        $defective = DB::table('ms_defective_items')
+            ->where('company_id', $companyId)
+            ->where('id', $id)
+            ->first();
+
+        if (!$defective) {
+            return redirect()->back()->with('error', 'Defective item record not found.');
+        }
+
+        $newStatus = $request->input('status');
+        $notes = $request->input('notes');
+        $restockReplacement = $request->boolean('restock_replacement', false);
+
+        DB::transaction(function () use ($defective, $newStatus, $notes, $restockReplacement, $companyId) {
+            // If replacement received from supplier and restock requested
+            if ($newStatus === 'replaced_by_supplier' && $restockReplacement && $defective->part_id) {
+                $part = DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->where('id', $defective->part_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($part) {
+                    $newStock = $part->stock_qty + $defective->qty;
+                    DB::table('ms_parts_inventory')->where('id', $part->id)->update([
+                        'stock_qty'  => $newStock,
+                        'updated_at' => now(),
+                    ]);
+
+                    DB::table('ms_parts_inventory_history')->insert([
+                        'part_id'       => $part->id,
+                        'type'          => 'addition',
+                        'quantity'      => $defective->qty,
+                        'balance_after' => $newStock,
+                        'reference'     => "SUPPLIER REPLACEMENT RESTOCK: {$defective->qty}x {$defective->item_name} replaced by " . ($defective->supplier_name ?: 'Supplier') . " by " . (auth()->user()?->name ?? 'Staff'),
+                        'user_id'       => auth()->id(),
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }
+            }
+
+            $updateData = [
+                'status'     => $newStatus,
+                'updated_at' => now(),
+            ];
+            if ($notes) {
+                $updateData['notes'] = ($defective->notes ? $defective->notes . "\n" : '') . "[" . date('d M Y') . "] " . $notes;
+            }
+
+            DB::table('ms_defective_items')->where('id', $defective->id)->update($updateData);
+        });
+
+        $statusLabels = [
+            'pending_supplier_return' => 'Pending Supplier Return',
+            'returned_to_supplier'    => 'Marked Returned to Supplier',
+            'replaced_by_supplier'    => 'Marked Replaced by Supplier',
+            'scrap_written_off'       => 'Written off as Scrap',
+        ];
+
+        $label = $statusLabels[$newStatus] ?? $newStatus;
+        return redirect()->back()->with('success', "Defective item #{$id} updated to '{$label}'.");
+    }
 }
+

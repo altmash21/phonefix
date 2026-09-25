@@ -7,6 +7,9 @@
     <button type="button" onclick="openDebtorsModal()" class="btn btn-outline" style="font-weight:700; color:#854D0E; border-color:#FEF08A; background:#FEFCE8; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="View all debtors and send WhatsApp payment reminders">
         <i data-lucide="bell" style="width:16px;height:16px; color:#CA8A04;"></i> Active Debtors ({{ $customers->where('udhari_balance', '>', 0)->count() }})
     </button>
+    <button type="button" onclick="openAddOldUdharModal()" class="btn btn-primary" style="background:#4F46E5; color:#fff; font-weight:800; border:none; display:inline-flex; align-items:center; gap:6px;">
+        <i data-lucide="book-plus" style="width:16px;height:16px;"></i> + Add Old Udhar / Khata
+    </button>
     <button onclick="openRepayModal()" class="btn btn-primary" style="background:#16A34A; color:#fff; font-weight:800; border:none; display:inline-flex; align-items:center; gap:6px;">
         <i data-lucide="plus-circle" style="width:16px;height:16px;"></i> Record Customer Repayment
     </button>
@@ -75,6 +78,9 @@
         </button>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" onclick="openAddOldUdharModal()" class="btn btn-primary btn-sm" style="background:#4F46E5; color:#fff; font-weight:800; border:none; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px;">
+            <i data-lucide="book-plus" style="width:14px;height:14px;"></i> + Add Old Udhar
+        </button>
         <button type="button" onclick="openRepayModal()" class="btn btn-primary btn-sm" style="background:#16A34A; color:#fff; font-weight:800; border:none; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px;">
             <i data-lucide="plus-circle" style="width:14px;height:14px;"></i> Record Repayment
         </button>
@@ -230,6 +236,9 @@
                                         </a>
                                     @endif
                                 @endif
+                                <button type="button" onclick="openAddOldUdharForCustomer({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ $c->phone }}', {{ $c->udhari_balance }})" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; color:#4F46E5; border-color:#C7D2FE; background:#EEF2FF; display:inline-flex; align-items:center; gap:3px;" title="Add Old Udhar / Opening Balance to this customer">
+                                    <i data-lucide="plus" style="width:12px;height:12px;"></i> Udhar
+                                </button>
                                 <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; text-decoration:none; color:#0F172A;" title="View Statement">
                                     <i data-lucide="file-text" style="width:13px;height:13px;"></i> Statement
                                 </a>
@@ -303,6 +312,9 @@
                             </a>
                         @endif
                     @endif
+                    <button type="button" onclick="openAddOldUdharForCustomer({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ $c->phone }}', {{ $c->udhari_balance }})" class="btn btn-outline btn-sm" style="font-size:11px; padding:4px 8px; color:#4F46E5; border-color:#C7D2FE; background:#EEF2FF; font-weight:700;">
+                        + Udhar
+                    </button>
                     <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" class="btn btn-outline btn-sm" style="font-size:11px; padding:4px 8px; text-decoration:none; color:#0F172A;">
                         Statement
                     </a>
@@ -358,6 +370,9 @@
             </button>
             <button type="button" onclick="setKhataFilterType('payment_received')" id="btnFilterPayment" class="filter-pill khata-type-pill">
                 🟢 Repayments ({{ $transactions->where('type', 'payment_received')->count() }})
+            </button>
+            <button type="button" onclick="setKhataFilterType('opening_balance')" id="btnFilterOldUdhar" class="filter-pill khata-type-pill">
+                📜 Old Udhar ({{ $transactions->whereIn('type', ['opening_balance', 'old_udhar'])->count() }})
             </button>
             <button type="button" onclick="setKhataFilterType('adjustment')" id="btnFilterAdjustment" class="filter-pill khata-type-pill">
                 🔵 Adjustments ({{ $transactions->where('type', 'adjustment')->count() }})
@@ -446,12 +461,14 @@
                                 <span class="badge" style="background:#DCFCE7; color:#15803D; font-weight:700; font-size:10px;">CREDIT / REPAYMENT</span>
                             @elseif($t->type === 'udhari_sale')
                                 <span class="badge" style="background:#FEE2E2; color:#B91C1C; font-weight:700; font-size:10px;">DEBIT / UDHARI SALE</span>
+                            @elseif($t->type === 'opening_balance' || $t->type === 'old_udhar')
+                                <span class="badge" style="background:#FEF3C7; color:#B45309; font-weight:800; font-size:10px;">📜 OLD UDHAR / OPENING</span>
                             @else
                                 <span class="badge" style="background:#E0F2FE; color:#0369A1; font-weight:700; font-size:10px;">ADJUSTMENT / REVERSAL</span>
                             @endif
                         </td>
                         <td style="color:#475569; text-transform:uppercase; font-size:11px; font-weight:600; white-space:nowrap;">
-                            {{ $t->payment_mode ?: 'Khata Credit' }}
+                            {{ $t->payment_mode ?: ($t->type === 'opening_balance' || $t->type === 'old_udhar' ? 'Opening Balance' : 'Khata Credit') }}
                         </td>
                         <td style="text-align:right; font-weight:800; font-size:13px; color: {{ $t->type === 'payment_received' ? '#16A34A' : '#DC2626' }}; white-space:nowrap;">
                             {{ $t->type === 'payment_received' ? '-' : '+' }}₹{{ number_format($t->amount, 2) }}
@@ -511,8 +528,8 @@
         <div class="app-flat-row khata-card" data-type="{{ $t->type }}" data-customer-id="{{ $t->customer_id }}" data-date="{{ date('Y-m-d', strtotime($t->created_at)) }}" data-search="{{ strtolower(($t->customer_name ?? '') . ' ' . ($t->customer_phone ?? '') . ' ' . ($t->reference_no ?? '') . ' ' . ($t->remarks ?? '')) }}">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <div style="width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:{{ $t->type === 'payment_received' ? '#DCFCE7' : '#FEE2E2' }}; color:{{ $t->type === 'payment_received' ? '#15803D' : '#DC2626' }}; flex-shrink:0;">
-                        <i data-lucide="{{ $t->type === 'payment_received' ? 'arrow-down-left' : 'arrow-up-right' }}" style="width:16px;height:16px;"></i>
+                    <div style="width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:{{ $t->type === 'payment_received' ? '#DCFCE7' : ($t->type === 'opening_balance' || $t->type === 'old_udhar' ? '#FEF3C7' : '#FEE2E2') }}; color:{{ $t->type === 'payment_received' ? '#15803D' : ($t->type === 'opening_balance' || $t->type === 'old_udhar' ? '#B45309' : '#DC2626') }}; flex-shrink:0;">
+                        <i data-lucide="{{ $t->type === 'payment_received' ? 'arrow-down-left' : ($t->type === 'opening_balance' || $t->type === 'old_udhar' ? 'book-plus' : 'arrow-up-right') }}" style="width:16px;height:16px;"></i>
                     </div>
                     <div>
                         <div style="font-weight:800; font-size:13px; color:#0F172A;">{{ $t->customer_name }}</div>
@@ -551,7 +568,11 @@
 </div> <!-- End #viewKhataLedger -->
 
 <!-- Mobile Floating Action Button -->
-<div class="mobile-fab-container">
+<div class="mobile-fab-container" style="display:flex; gap:8px;">
+    <button type="button" class="btn-app-fab" onclick="openAddOldUdharModal()" title="Add Old Udhar / Khata" style="background:#4F46E5;">
+        <i data-lucide="book-plus" style="width:18px;height:18px;"></i>
+        <span>+ Old Udhar</span>
+    </button>
     <button type="button" class="btn-app-fab" onclick="openRepayModal()" title="Record Customer Repayment" style="background:#16A34A;">
         <i data-lucide="plus" style="width:20px;height:20px;"></i>
         <span>Repayment</span>
@@ -613,6 +634,137 @@
                     <button type="button" onclick="closeRepayModal()" class="btn btn-outline" style="border:1px solid #CBD5E1; color:#475569; font-weight:700; padding:8px 18px; border-radius:8px; cursor:pointer;">Cancel</button>
                     <button type="submit" class="btn btn-primary" style="background:#16A34A; color:#FFFFFF; font-weight:800; padding:9px 22px; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
                         <i data-lucide="check-circle" style="width:16px;height:16px;"></i> Record Repayment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- ADD OLD UDHAR / KHATA OPENING BALANCE MODAL                -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="addOldUdharModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+    <div class="card" style="max-width: 520px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; border:none; background:#fff; overflow:hidden;">
+        <!-- Header -->
+        <div style="background:#0F172A; color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px;">
+                <div style="width:28px; height:28px; border-radius:6px; background:#EEF2FF; color:#4F46E5; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <i data-lucide="book-plus" style="width:16px;height:16px;"></i>
+                </div>
+                <div>
+                    <div>Add Old Udhar / Khata Balance</div>
+                    <div style="font-size:11px; color:#94A3B8; font-weight:400;">Directly record past notebook or opening credit to database</div>
+                </div>
+            </div>
+            <button type="button" onclick="closeAddOldUdharModal()" style="background:rgba(255,255,255,0.1); border:none; color:#FFFFFF; font-size:16px; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+        </div>
+
+        <div class="card-body" style="padding:20px;">
+            <form action="{{ route('mobileshop.khata.old_udhar', ['company_id' => session('company_id', 1)]) }}" method="POST" id="formAddOldUdhar" onsubmit="return onAddOldUdharSubmit(event)">
+                @csrf
+
+                <!-- Customer Type Toggle: Existing vs New -->
+                <div style="display:flex; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:8px; padding:3px; gap:4px; margin-bottom:14px;">
+                    <button type="button" id="btnToggleOldUdharExisting" onclick="setOldUdharCustomerMode('existing')" style="flex:1; border:none; border-radius:6px; padding:6px 12px; font-size:12px; font-weight:800; background:#4F46E5; color:#fff; cursor:pointer; transition:all 0.15s ease;">
+                        👤 Existing Customer
+                    </button>
+                    <button type="button" id="btnToggleOldUdharNew" onclick="setOldUdharCustomerMode('new')" style="flex:1; border:none; border-radius:6px; padding:6px 12px; font-size:12px; font-weight:700; background:transparent; color:#64748B; cursor:pointer; transition:all 0.15s ease;">
+                        ➕ New Customer
+                    </button>
+                </div>
+
+                <!-- Existing Customer Picker with Quick Search -->
+                <div id="oldUdharExistingCustomerBox" class="form-group" style="margin-bottom:14px; position:relative;">
+                    <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:12px;">Select Customer</label>
+                    <div style="position: relative; margin-bottom: 6px;">
+                        <input type="text"
+                               id="oldUdharCustomerSearchInput"
+                               placeholder="Type customer name or phone to search..."
+                               class="form-control"
+                               autocomplete="off"
+                               oninput="onOldUdharCustomerSearch(this)"
+                               style="font-size:12px; font-weight:600; color:#0F172A; border-color:#CBD5E1; padding-right: 28px;">
+                        <button type="button"
+                                id="btnClearOldUdharCustSearch"
+                                onclick="clearOldUdharCustSearch()"
+                                style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; line-height: 18px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                    </div>
+                    <div id="oldUdharCustomerDropdown" style="display:none; position:absolute; left:0; right:0; z-index:1250; background:#fff; border:1px solid #cbd5e1; border-radius:8px; max-height:190px; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.15); margin-top:-2px;">
+                    </div>
+                    <select name="customer_id" id="oldUdharCustomerSelect" class="form-control" onchange="onOldUdharCustomerChange(this)" style="font-weight:700; color:#0F172A; border-color:#CBD5E1; font-size:12px;">
+                        <option value="">-- Or Choose From List --</option>
+                        @foreach($customers as $c)
+                            <option value="{{ $c->id }}" data-due="{{ $c->udhari_balance }}" data-phone="{{ $c->phone }}" data-name="{{ $c->name }}">
+                                {{ $c->name }} ({{ $c->phone }}) — Due: ₹{{ number_format($c->udhari_balance, 2) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- New Customer Fields (shown when "New Customer" selected) -->
+                <div id="oldUdharNewCustomerBox" style="display:none; margin-bottom:14px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:11.5px;">Customer Name</label>
+                            <input type="text" name="customer_name" id="oldUdharNewName" placeholder="e.g. Ramesh Kumar" class="form-control" style="font-size:13px; font-weight:600; color:#0F172A; border-color:#CBD5E1;">
+                        </div>
+                        <div>
+                            <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:11.5px;">Mobile Number</label>
+                            <input type="tel" name="customer_phone" id="oldUdharNewPhone" placeholder="10-digit mobile" class="form-control" style="font-size:13px; font-weight:600; color:#0F172A; border-color:#CBD5E1;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Old Udhar Amount Field -->
+                <div class="form-group" style="margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:12px; margin-bottom:0;">Old Udhar / Khata Amount (₹)</label>
+                        <div style="display:flex; gap:4px;">
+                            <button type="button" onclick="setOldUdharPreset(500)" style="font-size:10.5px; padding:2px 7px; border-radius:4px; font-weight:700; color:#4F46E5; border:1px solid #C7D2FE; background:#EEF2FF; cursor:pointer;">+500</button>
+                            <button type="button" onclick="setOldUdharPreset(1000)" style="font-size:10.5px; padding:2px 7px; border-radius:4px; font-weight:700; color:#4F46E5; border:1px solid #C7D2FE; background:#EEF2FF; cursor:pointer;">+1,000</button>
+                            <button type="button" onclick="setOldUdharPreset(2000)" style="font-size:10.5px; padding:2px 7px; border-radius:4px; font-weight:700; color:#4F46E5; border:1px solid #C7D2FE; background:#EEF2FF; cursor:pointer;">+2,000</button>
+                            <button type="button" onclick="setOldUdharPreset(5000)" style="font-size:10.5px; padding:2px 7px; border-radius:4px; font-weight:700; color:#4F46E5; border:1px solid #C7D2FE; background:#EEF2FF; cursor:pointer;">+5,000</button>
+                        </div>
+                    </div>
+                    <input type="number" step="0.01" name="amount" id="oldUdharAmount" required placeholder="0.00" oninput="recalcOldUdharPreview()" class="form-control" style="font-size:18px; font-weight:900; color:#DC2626; border-color:#CBD5E1;">
+                </div>
+
+                <!-- Date & Reference No Row -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label class="form-label" style="font-weight:700; color:#475569; font-size:11.5px;">Udhar / Entry Date</label>
+                        <input type="date" name="date" id="oldUdharDate" value="{{ date('Y-m-d') }}" class="form-control" style="font-weight:600; color:#0F172A; border-color:#CBD5E1; font-size:12px;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:700; color:#475569; font-size:11.5px;">Notebook / Ref Page No.</label>
+                        <input type="text" name="reference_no" id="oldUdharRef" placeholder="e.g. Diary Pg 24 / Bill 88" class="form-control" style="font-weight:600; color:#0F172A; border-color:#CBD5E1; font-size:12px;">
+                    </div>
+                </div>
+
+                <!-- Remarks / Notes -->
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label" style="font-weight:700; color:#475569; font-size:11.5px;">Remarks / Reason (Optional)</label>
+                    <input type="text" name="remarks" id="oldUdharRemarks" placeholder="e.g. Previous shop udhari, old balance before app" class="form-control" style="font-weight:500; color:#0F172A; border-color:#CBD5E1; font-size:12px;">
+                </div>
+
+                <!-- Live Balance Preview Box -->
+                <div id="oldUdharPreviewBox" style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:10px 14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:10.5px; font-weight:700; color:#92400E; text-transform:uppercase;">Balance Impact</div>
+                        <div style="font-size:12px; color:#78350F; font-weight:600;" id="oldUdharCalcText">Current Due: ₹0.00 + Udhar: ₹0.00</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:10.5px; font-weight:700; color:#92400E;">New Total Due:</span>
+                        <div style="font-size:15px; font-weight:900; color:#DC2626;" id="oldUdharNewDueText">₹0.00</div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
+                    <button type="button" onclick="closeAddOldUdharModal()" class="btn btn-outline" style="border:1px solid #CBD5E1; color:#475569; font-weight:700; padding:8px 18px; border-radius:8px; cursor:pointer;">Cancel</button>
+                    <button type="submit" id="btnSubmitOldUdhar" class="btn btn-primary" style="background:#4F46E5; color:#FFFFFF; font-weight:800; padding:9px 22px; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="check-circle" style="width:16px;height:16px;"></i> Save to Khata Database
                     </button>
                 </div>
             </form>
@@ -752,6 +904,8 @@
         document.getElementById('btnFilterUdhari').classList.remove('active');
         document.getElementById('btnFilterPayment').classList.remove('active');
         document.getElementById('btnFilterAdjustment').classList.remove('active');
+        const btnOld = document.getElementById('btnFilterOldUdhar');
+        if (btnOld) btnOld.classList.remove('active');
 
         if (type === 'all') {
             document.getElementById('btnFilterAll').classList.add('active');
@@ -761,6 +915,8 @@
             document.getElementById('btnFilterPayment').classList.add('active');
         } else if (type === 'adjustment') {
             document.getElementById('btnFilterAdjustment').classList.add('active');
+        } else if (type === 'opening_balance' || type === 'old_udhar') {
+            if (btnOld) btnOld.classList.add('active');
         }
 
         filterKhataLedger();
@@ -861,7 +1017,8 @@
             const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
 
             // Type filter
-            const matchesType = (activeTypeFilter === 'all') || (rowType === activeTypeFilter);
+            const matchesType = (activeTypeFilter === 'all') || 
+                                (activeTypeFilter === 'opening_balance' ? (rowType === 'opening_balance' || rowType === 'old_udhar') : (rowType === activeTypeFilter));
             // Customer filter
             const matchesCustomer = (selectedCustomer === 'all') || (rowCustomerId === selectedCustomer);
             // Search filter
@@ -890,7 +1047,8 @@
             const rawDate = (card.dataset.date || '').trim();
             const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
 
-            const matchesType = (activeTypeFilter === 'all') || (cardType === activeTypeFilter);
+            const matchesType = (activeTypeFilter === 'all') || 
+                                (activeTypeFilter === 'opening_balance' ? (cardType === 'opening_balance' || cardType === 'old_udhar') : (cardType === activeTypeFilter));
             const matchesCustomer = (selectedCustomer === 'all') || (cardCustomerId === selectedCustomer);
             const matchesSearch = !searchVal || cardText.includes(searchVal);
             let matchesDate = true;
@@ -1009,6 +1167,274 @@
         const modal = document.getElementById('debtorsModal');
         if (modal) modal.style.display = 'none';
     }
+
+    /* ─── ADD OLD UDHAR MODAL LOGIC ─── */
+    const khataAllCustomersData = @json($customers ?? []);
+    let currentOldUdharMode = 'existing';
+
+    function openAddOldUdharModal() {
+        setOldUdharCustomerMode('existing');
+        const amountInput = document.getElementById('oldUdharAmount');
+        if (amountInput) amountInput.value = '';
+        const remarksInput = document.getElementById('oldUdharRemarks');
+        if (remarksInput) remarksInput.value = '';
+        const refInput = document.getElementById('oldUdharRef');
+        if (refInput) refInput.value = '';
+        const dateInput = document.getElementById('oldUdharDate');
+        if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+        clearOldUdharCustSearch();
+
+        const modal = document.getElementById('addOldUdharModal');
+        if (modal) modal.style.display = 'flex';
+        recalcOldUdharPreview();
+
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    function closeAddOldUdharModal() {
+        const modal = document.getElementById('addOldUdharModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function openAddOldUdharForCustomer(id, name, phone, due) {
+        openAddOldUdharModal();
+        setOldUdharCustomerMode('existing');
+        const select = document.getElementById('oldUdharCustomerSelect');
+        if (select) {
+            select.value = id;
+            onOldUdharCustomerChange(select);
+        }
+        const searchInput = document.getElementById('oldUdharCustomerSearchInput');
+        if (searchInput) {
+            searchInput.value = name + ' (' + (phone || '') + ')';
+            const clearBtn = document.getElementById('btnClearOldUdharCustSearch');
+            if (clearBtn) clearBtn.style.display = 'inline-block';
+        }
+        const amountInput = document.getElementById('oldUdharAmount');
+        if (amountInput) amountInput.focus();
+    }
+
+    function setOldUdharCustomerMode(mode) {
+        currentOldUdharMode = mode;
+        const btnExist = document.getElementById('btnToggleOldUdharExisting');
+        const btnNew = document.getElementById('btnToggleOldUdharNew');
+        const boxExist = document.getElementById('oldUdharExistingCustomerBox');
+        const boxNew = document.getElementById('oldUdharNewCustomerBox');
+        const select = document.getElementById('oldUdharCustomerSelect');
+        const inputName = document.getElementById('oldUdharNewName');
+        const inputPhone = document.getElementById('oldUdharNewPhone');
+
+        if (mode === 'existing') {
+            if (btnExist) {
+                btnExist.style.background = '#4F46E5';
+                btnExist.style.color = '#fff';
+            }
+            if (btnNew) {
+                btnNew.style.background = 'transparent';
+                btnNew.style.color = '#64748B';
+            }
+            if (boxExist) boxExist.style.display = 'block';
+            if (boxNew) boxNew.style.display = 'none';
+            if (select) select.required = true;
+            if (inputName) inputName.required = false;
+            if (inputPhone) inputPhone.required = false;
+        } else {
+            if (btnNew) {
+                btnNew.style.background = '#4F46E5';
+                btnNew.style.color = '#fff';
+            }
+            if (btnExist) {
+                btnExist.style.background = 'transparent';
+                btnExist.style.color = '#64748B';
+            }
+            if (boxExist) boxExist.style.display = 'none';
+            if (boxNew) boxNew.style.display = 'block';
+            if (select) {
+                select.required = false;
+                select.value = '';
+            }
+            if (inputName) inputName.required = true;
+            if (inputPhone) inputPhone.required = true;
+        }
+        recalcOldUdharPreview();
+    }
+
+    function onOldUdharCustomerChange(select) {
+        const searchInput = document.getElementById('oldUdharCustomerSearchInput');
+        const clearBtn = document.getElementById('btnClearOldUdharCustSearch');
+        const opt = select ? select.options[select.selectedIndex] : null;
+        if (opt && opt.value) {
+            if (searchInput) searchInput.value = (opt.dataset.name || '') + ' (' + (opt.dataset.phone || '') + ')';
+            if (clearBtn) clearBtn.style.display = 'inline-block';
+        }
+        recalcOldUdharPreview();
+    }
+
+    function onOldUdharCustomerSearch(input) {
+        const query = (input.value || '').trim().toLowerCase();
+        const dd = document.getElementById('oldUdharCustomerDropdown');
+        const clearBtn = document.getElementById('btnClearOldUdharCustSearch');
+        if (clearBtn) clearBtn.style.display = query ? 'inline-block' : 'none';
+
+        if (!dd) return;
+        if (!query) {
+            dd.style.display = 'none';
+            dd.innerHTML = '';
+            return;
+        }
+
+        const matches = (khataAllCustomersData || []).filter(c => {
+            const name = (c.name || '').toLowerCase();
+            const phone = (c.phone || '').toLowerCase();
+            return name.includes(query) || phone.includes(query);
+        }).slice(0, 15);
+
+        if (matches.length === 0) {
+            dd.innerHTML = '<div style="padding:10px 12px; font-size:12px; color:#64748B; text-align:center;">No customers found matching "' + query + '"</div>';
+        } else {
+            dd.innerHTML = matches.map(c => {
+                const due = parseFloat(c.udhari_balance || 0);
+                return `
+                    <div onclick="selectOldUdharCustomer(${c.id})" style="padding:8px 12px; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:background 0.1s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                        <div>
+                            <div style="font-weight:700; font-size:12.5px; color:#0F172A;">${c.name}</div>
+                            <div style="font-size:11px; color:#64748B;">${c.phone || 'No phone'}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:11px; font-weight:800; color:${due > 0 ? '#DC2626' : '#16A34A'};">Due: ₹${due.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        dd.style.display = 'block';
+    }
+
+    function selectOldUdharCustomer(id) {
+        const select = document.getElementById('oldUdharCustomerSelect');
+        if (select) {
+            select.value = id;
+            onOldUdharCustomerChange(select);
+        }
+        const dd = document.getElementById('oldUdharCustomerDropdown');
+        if (dd) dd.style.display = 'none';
+        recalcOldUdharPreview();
+    }
+
+    function clearOldUdharCustSearch() {
+        const searchInput = document.getElementById('oldUdharCustomerSearchInput');
+        if (searchInput) searchInput.value = '';
+        const clearBtn = document.getElementById('btnClearOldUdharCustSearch');
+        if (clearBtn) clearBtn.style.display = 'none';
+        const dd = document.getElementById('oldUdharCustomerDropdown');
+        if (dd) {
+            dd.style.display = 'none';
+            dd.innerHTML = '';
+        }
+        const select = document.getElementById('oldUdharCustomerSelect');
+        if (select) select.value = '';
+        recalcOldUdharPreview();
+    }
+
+    function setOldUdharPreset(val) {
+        const input = document.getElementById('oldUdharAmount');
+        if (input) {
+            const current = parseFloat(input.value) || 0;
+            input.value = (current + val).toFixed(2);
+            recalcOldUdharPreview();
+        }
+    }
+
+    function recalcOldUdharPreview() {
+        let currentDue = 0;
+        if (currentOldUdharMode === 'existing') {
+            const select = document.getElementById('oldUdharCustomerSelect');
+            const opt = select ? select.options[select.selectedIndex] : null;
+            if (opt && opt.dataset.due) {
+                currentDue = parseFloat(opt.dataset.due) || 0;
+            }
+        }
+
+        const amountInput = document.getElementById('oldUdharAmount');
+        const amount = parseFloat(amountInput?.value) || 0;
+        const newDue = currentDue + amount;
+
+        const calcText = document.getElementById('oldUdharCalcText');
+        const newDueText = document.getElementById('oldUdharNewDueText');
+
+        if (calcText) {
+            calcText.textContent = `Current Due: ₹${currentDue.toFixed(2)} + Udhar: ₹${amount.toFixed(2)}`;
+        }
+        if (newDueText) {
+            newDueText.textContent = `₹${newDue.toFixed(2)}`;
+        }
+    }
+
+    function onAddOldUdharSubmit(e) {
+        const amountInput = document.getElementById('oldUdharAmount');
+        const amount = parseFloat(amountInput?.value) || 0;
+        if (amount <= 0) {
+            alert('Please enter a valid udhar amount greater than ₹0.');
+            if (amountInput) amountInput.focus();
+            if (e) e.preventDefault();
+            return false;
+        }
+
+        if (currentOldUdharMode === 'existing') {
+            const select = document.getElementById('oldUdharCustomerSelect');
+            if (!select || !select.value) {
+                alert('Please select an existing customer.');
+                if (select) select.focus();
+                if (e) e.preventDefault();
+                return false;
+            }
+        } else {
+            const nameInput = document.getElementById('oldUdharNewName');
+            const phoneInput = document.getElementById('oldUdharNewPhone');
+            if (!nameInput || !nameInput.value.trim()) {
+                alert('Please enter the customer name.');
+                if (nameInput) nameInput.focus();
+                if (e) e.preventDefault();
+                return false;
+            }
+            if (!phoneInput || !phoneInput.value.trim()) {
+                alert('Please enter customer mobile number.');
+                if (phoneInput) phoneInput.focus();
+                if (e) e.preventDefault();
+                return false;
+            }
+        }
+
+        const btn = document.getElementById('btnSubmitOldUdhar');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving to Khata...';
+        }
+
+        return true;
+    }
+
+    // Close modals when clicking outside modal box
+    document.addEventListener('click', function(e) {
+        const repayModal = document.getElementById('repayModal');
+        if (repayModal && e.target === repayModal) {
+            closeRepayModal();
+        }
+        const oldUdharModal = document.getElementById('addOldUdharModal');
+        if (oldUdharModal && e.target === oldUdharModal) {
+            closeAddOldUdharModal();
+        }
+        const debtorsModal = document.getElementById('debtorsModal');
+        if (debtorsModal && e.target === debtorsModal) {
+            closeDebtorsModal();
+        }
+        const oldUdharSearchBox = document.getElementById('oldUdharExistingCustomerBox');
+        if (oldUdharSearchBox && !oldUdharSearchBox.contains(e.target)) {
+            const dd = document.getElementById('oldUdharCustomerDropdown');
+            if (dd) dd.style.display = 'none';
+        }
+    });
 
     function filterDebtorModalList() {
         const query = (document.getElementById('debtorSearchInput')?.value || '').toLowerCase().trim();

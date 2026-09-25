@@ -196,14 +196,14 @@
             <span class="stat-val">{{ $totalInvoicesCount }}</span>
         </div>
         <div class="stat-divider"></div>
-        <div class="stat-strip-item">
-            <span class="stat-label">Units</span>
-            <span class="stat-val" style="color:#15803D;">{{ number_format($totalUnitsPurchased) }}</span>
+        <div class="stat-strip-item" onclick="toggleDefectiveRegistry()" style="cursor:pointer;" title="Click to view Defective Items & Returns">
+            <span class="stat-label">Defects</span>
+            <span class="stat-val" style="color:#DC2626;">{{ $totalDefectiveQty ?? 0 }}</span>
         </div>
     </div>
 
     <!-- Top KPI Cards (Desktop View) -->
-    <div class="kpi-grid">
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
         <div class="card kpi-card">
             <div class="kpi-label">Total Procurement</div>
             <div class="kpi-num">₹{{ fmod($totalPOValue, 1) != 0 ? number_format($totalPOValue, 2) : number_format($totalPOValue, 0) }}</div>
@@ -223,18 +223,38 @@
             <div class="kpi-label">Vendors Active</div>
             <div class="kpi-num">{{ count($suppliers) }} Vendors</div>
         </div>
+
+        <div class="card kpi-card" onclick="toggleDefectiveRegistry()" style="cursor:pointer; border-color:#FECACA;" title="Click to view Defective Items & Returns">
+            <div class="kpi-label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#991B1B;">⚠️ Defective / RMA</span>
+                @if(($totalDefectiveQty ?? 0) > 0)
+                    <span class="badge badge-red" style="font-size:9.5px; padding:1px 6px;">{{ $totalDefectiveQty }} Pending</span>
+                @endif
+            </div>
+            <div class="kpi-num" style="color:#DC2626;">{{ $totalDefectiveQty ?? 0 }} <span style="font-size:12px; font-weight:600; color:#64748B;">Units</span></div>
+        </div>
     </div>
 
     <!-- Master Live Purchase Invoice Registry (Single un-nested container) -->
     <div class="card purchase-registry-card">
         <div class="purchase-header-container">
-            <div class="purchase-header-title-box flex items-center gap-2">
+            <div class="purchase-header-title-box flex items-center gap-2" style="flex-wrap:wrap;">
                 <div class="w-6 h-6 rounded-sm bg-primary-tint text-primary flex items-center justify-center flex-shrink-0">
                     <i data-lucide="file-spreadsheet" style="width:14px;height:14px;"></i>
                 </div>
                 <div>
-                    <h2 class="text-xs font-semibold text-ink leading-tight m-0">Live Purchase Invoice Registry</h2>
+                    <h2 class="text-xs font-semibold text-ink leading-tight m-0" id="purchaseRegistryHeading">Live Purchase Invoice Registry</h2>
                     <span id="purchaseVisibleCountBadge" style="display:none;"></span>
+                </div>
+
+                <!-- View Selector Tabs (Invoices vs Defective Items) -->
+                <div class="purchase-view-tabs" style="display:inline-flex; align-items:center; gap:4px; margin-left:8px; background:#F1F5F9; padding:2px; border-radius:6px;">
+                    <button type="button" id="tabBtnPurchases" onclick="switchPurchaseView('purchases')" style="font-size:11px; font-weight:700; height:24px; padding:0 10px; background:#5E6AD2; color:#fff; border:none; border-radius:4px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                        <i data-lucide="file-spreadsheet" style="width:12px;height:12px;"></i> Invoices ({{ count($purchaseInvoices) }})
+                    </button>
+                    <button type="button" id="tabBtnDefective" onclick="switchPurchaseView('defective')" style="font-size:11px; font-weight:700; height:24px; padding:0 10px; color:#DC2626; background:transparent; border:none; border-radius:4px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                        <i data-lucide="alert-triangle" style="width:12px;height:12px;"></i> Defective Items ({{ count($defectiveItems ?? []) }})
+                    </button>
                 </div>
             </div>
 
@@ -275,215 +295,359 @@
         </div>
 
         <div class="card-body" style="padding:0; overflow-x:auto;">
-            <table class="data-table" id="purchaseInvoicesTable" style="margin:0; width:100%;">
-                <thead style="background:#F8FAFC;">
-                    <tr>
-                        <th style="padding:12px 16px;">Date</th>
-                        <th>Invoice / PO #</th>
-                        <th>Supplier / Vendor</th>
-                        <th>Type</th>
-                        <th>Purchased Items</th>
-                        <th>Payment Status</th>
-                        <th style="text-align:right;">Invoice Amount (₹)</th>
-                        <th style="text-align:center;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($purchaseInvoices as $inv)
-                    @php
-                        $poType = 'accessories';
-                        $badgeLabel = 'Wholesale Parts';
-                        $badgeClass = 'badge-blue';
-                        if (str_contains($inv->po_number, 'PARTS') || str_contains($inv->po_number, 'SPARE')) {
-                            $badgeLabel = '🛠️ Spare Parts';
-                            $badgeClass = 'badge-purple';
-                        } else {
-                            $badgeLabel = '📦 Accessories';
-                            $badgeClass = 'badge-green';
-                        }
-
-                        // Preview text of first 2 items
-                        $itemPreviews = $inv->items->take(2)->map(function($i) {
-                            return $i->brand . ' ' . $i->model . ($i->qty > 1 ? " (x{$i->qty})" : "");
-                        })->implode(', ');
-                        if ($inv->item_count > 2) {
-                            $itemPreviews .= ' +' . ($inv->item_count - 2) . ' more';
-                        }
-                    @endphp
-                    <tr class="purchase-invoice-row purchase-data-row" data-type="{{ $poType }}" data-date="{{ \Carbon\Carbon::parse($inv->order_date)->format('Y-m-d') }}">
-                        <td style="font-size:11px; color:#64748B; padding:12px 16px; white-space:nowrap;">
-                            {{ \Carbon\Carbon::parse($inv->order_date)->format('d M Y') }}
-                        </td>
-                        <td>
-                            <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" style="font-family:monospace; font-weight:800; color:var(--brand-700); text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
-                                <i data-lucide="file-text" style="width:13px;height:13px;"></i>
-                                #{{ $inv->po_number }}
-                            </a>
-                        </td>
-                        <td>
-                            <div style="font-weight:800; color:#0F172A; font-size:13px;">{{ $inv->supplier_name ?: 'Vendor / Distributor' }}</div>
-                            <div style="font-size:11px; color:#64748B; font-family:monospace;">{{ $inv->supplier_phone ?: '—' }}</div>
-                        </td>
-                        <td>
-                            <span class="badge {{ $badgeClass }}" style="font-size:11px; font-weight:700;">{{ $badgeLabel }}</span>
-                        </td>
-                        <td>
-                            <div style="display:inline-flex; align-items:center; gap:6px; margin-bottom:2px;">
-                                <span class="badge badge-gray" style="font-weight:800; font-size:11px;">{{ $inv->item_count }} {{ Str::plural('Item', $inv->item_count) }}</span>
-                                <span style="font-size:11px; font-weight:700; color:#15803D;">({{ $inv->total_units }} Units)</span>
-                            </div>
-                            <div style="font-size:11px; color:#64748B; max-width:280px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                {{ $itemPreviews ?: 'Standard stock items' }}
-                            </div>
-                        </td>
-                        <td>
-                            @if(($inv->status ?? '') === 'paid' || ($inv->status ?? '') === 'received')
-                                <span class="badge badge-green" style="font-weight:700;">Paid in Full</span>
-                            @elseif(($inv->status ?? '') === 'partial' || ($inv->status ?? '') === 'partially_paid')
-                                <span class="badge badge-orange" style="font-weight:700;">Partial Due</span>
-                            @else
-                                <span class="badge badge-gray" style="font-weight:700;">{{ ucfirst(str_replace('_', ' ', $inv->status ?? 'pending')) }}</span>
-                            @endif
-                        </td>
-                        <td style="text-align:right; font-weight:900; font-size:13px; color:#0F172A;">
-                            ₹{{ number_format($inv->total_amount, 2) }}
-                        </td>
-                        <td style="text-align:center; white-space:nowrap;">
-                            <div style="display:inline-flex; gap:6px; align-items:center;">
-                                <button type="button" class="btn btn-outline btn-sm" style="padding:4px 10px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:4px; color:var(--brand-700); border-color:#CBD5E1;"
-                                        data-invoice='@json($inv)'
-                                        data-items='@json($inv->items)'
-                                        onclick="openViewPurchaseModal(this)">
-                                    <i data-lucide="eye" style="width:13px;height:13px;"></i> View Items
-                                </button>
-                                <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:11px; font-weight:700; color:#475569; border-color:#CBD5E1;" title="Print Full Purchase Invoice">
-                                    <i data-lucide="printer" style="width:13px;height:13px;"></i>
+            <!-- Purchase Invoices Container (Default View) -->
+            <div id="purchaseInvoicesContainer">
+                <table class="data-table" id="purchaseInvoicesTable" style="margin:0; width:100%;">
+                    <thead style="background:#F8FAFC;">
+                        <tr>
+                            <th style="padding:12px 16px;">Date</th>
+                            <th>Invoice / PO #</th>
+                            <th>Supplier / Vendor</th>
+                            <th>Purchased Items</th>
+                            <th>Payment Status</th>
+                            <th style="text-align:right;">Invoice Amount (₹)</th>
+                            <th style="text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($purchaseInvoices as $inv)
+                        @php
+                            // Preview text of first 2 items
+                            $itemPreviews = $inv->items->take(2)->map(function($i) {
+                                return $i->brand . ' ' . $i->model . ($i->qty > 1 ? " (x{$i->qty})" : "");
+                            })->implode(', ');
+                            if ($inv->item_count > 2) {
+                                $itemPreviews .= ' +' . ($inv->item_count - 2) . ' more';
+                            }
+                        @endphp
+                        <tr class="purchase-invoice-row purchase-data-row" data-date="{{ \Carbon\Carbon::parse($inv->order_date)->format('Y-m-d') }}">
+                            <td style="font-size:11px; color:#64748B; padding:12px 16px; white-space:nowrap;">
+                                {{ \Carbon\Carbon::parse($inv->order_date)->format('d M Y') }}
+                            </td>
+                            <td>
+                                <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" style="font-family:monospace; font-weight:800; color:var(--brand-700); text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                                    <i data-lucide="file-text" style="width:13px;height:13px;"></i>
+                                    #{{ $inv->po_number }}
                                 </a>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="8" style="text-align:center; padding:32px; color:#94A3B8;">
-                            <i data-lucide="inbox" style="width:36px;height:36px; stroke-width:1.5; margin-bottom:8px;"></i>
-                            <div style="font-weight:700; font-size:14px; color:#475569;">No purchase invoices recorded yet</div>
-                            <div style="font-size:12px;">Add phone stock or import wholesale parts bills to start recording purchase invoices.</div>
-                        </td>
-                    </tr>
-                    @endforelse
-                    <tr id="purchaseEmptyFilterRow" style="display:none;">
-                        <td colspan="7" style="text-align:center; padding:36px 16px; color:#64748B;">
-                            <div style="display:inline-flex; flex-direction:column; align-items:center; gap:8px;">
-                                <div style="width:38px; height:38px; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#64748B;">
-                                    <i data-lucide="calendar-x" style="width:20px; height:20px;"></i>
+                            </td>
+                            <td>
+                                <div style="font-weight:800; color:#0F172A; font-size:13px;">{{ $inv->supplier_name ?: 'Vendor / Distributor' }}</div>
+                                <div style="font-size:11px; color:#64748B; font-family:monospace;">{{ $inv->supplier_phone ?: '—' }}</div>
+                            </td>
+                            <td>
+                                <div style="display:inline-flex; align-items:center; gap:6px; margin-bottom:2px;">
+                                    <span class="badge badge-gray" style="font-weight:800; font-size:11px;">{{ $inv->item_count }} {{ Str::plural('Item', $inv->item_count) }}</span>
+                                    <span style="font-size:11px; font-weight:700; color:#15803D;">({{ $inv->total_units }} Units)</span>
                                 </div>
-                                <div style="font-weight:700; color:#1E293B; font-size:13px;">No purchase invoices found for this date range</div>
-                                <div style="font-size:11.5px; color:#64748B;">Try selecting a different date preset (e.g. 7 Days, This Month) or reset filters</div>
-                                <button type="button" onclick="setPurchaseDatePreset('all')" class="filter-pill" style="margin-top:6px; cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:4px 12px; border-radius:6px; font-weight:700; font-size:11.5px;">
-                                    Show All Invoices
-                                </button>
+                                <div style="font-size:11px; color:#64748B; max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    {{ $itemPreviews ?: 'Standard stock items' }}
+                                </div>
+                            </td>
+                            <td>
+                                @if(($inv->status ?? '') === 'paid' || ($inv->status ?? '') === 'received')
+                                    <span class="badge badge-green" style="font-weight:700;">Paid in Full</span>
+                                @elseif(($inv->status ?? '') === 'partial' || ($inv->status ?? '') === 'partially_paid')
+                                    <span class="badge badge-orange" style="font-weight:700;">Partial Due</span>
+                                @else
+                                    <span class="badge badge-gray" style="font-weight:700;">{{ ucfirst(str_replace('_', ' ', $inv->status ?? 'pending')) }}</span>
+                                @endif
+                            </td>
+                            <td style="text-align:right; font-weight:900; font-size:13px; color:#0F172A;">
+                                ₹{{ number_format($inv->total_amount, 2) }}
+                            </td>
+                            <td style="text-align:center; white-space:nowrap;">
+                                <div style="display:inline-flex; gap:6px; align-items:center;">
+                                    <button type="button" class="btn btn-outline btn-sm" style="padding:4px 10px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:4px; color:var(--brand-700); border-color:#CBD5E1;"
+                                            data-invoice='@json($inv)'
+                                            data-items='@json($inv->items)'
+                                            onclick="openViewPurchaseModal(this)">
+                                        <i data-lucide="eye" style="width:13px;height:13px;"></i> View Items
+                                    </button>
+                                    <button type="button" class="btn btn-outline btn-sm" style="padding:4px 9px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:4px; color:#DC2626; border-color:#FECACA; background:#FEF2F2;"
+                                            data-invoice='@json($inv)'
+                                            data-items='@json($inv->items)'
+                                            onclick="openPurchaseDefectModal(this)"
+                                            title="Record Defective Item / Return to Supplier">
+                                        <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i> Return / Defect
+                                    </button>
+                                    <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:11px; font-weight:700; color:#475569; border-color:#CBD5E1;" title="Print Full Purchase Invoice">
+                                        <i data-lucide="printer" style="width:13px;height:13px;"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" style="text-align:center; padding:32px; color:#94A3B8;">
+                                <i data-lucide="inbox" style="width:36px;height:36px; stroke-width:1.5; margin-bottom:8px;"></i>
+                                <div style="font-weight:700; font-size:14px; color:#475569;">No purchase invoices recorded yet</div>
+                                <div style="font-size:12px;">Add phone stock or import wholesale parts bills to start recording purchase invoices.</div>
+                            </td>
+                        </tr>
+                        @endforelse
+                        <tr id="purchaseEmptyFilterRow" style="display:none;">
+                            <td colspan="7" style="text-align:center; padding:36px 16px; color:#64748B;">
+                                <div style="display:inline-flex; flex-direction:column; align-items:center; gap:8px;">
+                                    <div style="width:38px; height:38px; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#64748B;">
+                                        <i data-lucide="calendar-x" style="width:20px; height:20px;"></i>
+                                    </div>
+                                    <div style="font-weight:700; color:#1E293B; font-size:13px;">No purchase invoices found for this date range</div>
+                                    <div style="font-size:11.5px; color:#64748B;">Try selecting a different date preset (e.g. 7 Days, This Month) or reset filters</div>
+                                    <button type="button" onclick="setPurchaseDatePreset('all')" class="filter-pill" style="margin-top:6px; cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:4px 12px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                                        Show All Invoices
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- MOBILE FLAT LIST VIEW -->
+                <div id="purchaseMobileCards" class="mobile-purchase-cards">
+                    @forelse($purchaseInvoices as $inv)
+                        @php
+                            $itemPreviews = $inv->items->take(2)->map(function($i) {
+                                return $i->brand . ' ' . $i->model . ($i->qty > 1 ? " (x{$i->qty})" : "");
+                            })->implode(', ');
+                            if ($inv->item_count > 2) {
+                                $itemPreviews .= ' +' . ($inv->item_count - 2) . ' more';
+                            }
+
+                            $statusLabel = 'Paid';
+                            $statusBg = '#DCFCE7';
+                            $statusColor = '#15803D';
+                            if (($inv->status ?? '') === 'partial' || ($inv->status ?? '') === 'partially_paid') {
+                                $statusLabel = 'Partial Due';
+                                $statusBg = '#FEF2F2';
+                                $statusColor = '#B91C1C';
+                            } elseif (($inv->status ?? '') !== 'paid' && ($inv->status ?? '') !== 'received') {
+                                $statusLabel = ucfirst(str_replace('_', ' ', $inv->status ?? 'pending'));
+                                $statusBg = '#F1F5F9';
+                                $statusColor = '#475569';
+                            }
+                        @endphp
+                        <div class="purchase-flat-row purchase-data-row" data-date="{{ \Carbon\Carbon::parse($inv->order_date)->format('Y-m-d') }}">
+                            <!-- Row 1: PO # + Payment Status + Total Amount -->
+                            <div class="row-line1">
+                                <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="inv-num">
+                                    #{{ $inv->po_number }}
+                                </a>
+                                <span class="pay-badge" style="background:{{ $statusBg }}; color:{{ $statusColor }};">
+                                    {{ $statusLabel }}
+                                </span>
+                                <div class="row-amount">₹{{ number_format($inv->total_amount, 2) }}</div>
                             </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
 
-            <!-- ══════════════════════════════════════════════════════════ -->
-            <!-- MOBILE FLAT LIST VIEW (Displayed on mobile screens < 768px)-->
-            <!-- ══════════════════════════════════════════════════════════ -->
-            <div id="purchaseMobileCards" class="mobile-purchase-cards">
-                @forelse($purchaseInvoices as $inv)
+                            <!-- Row 2: Supplier Name + Date & Phone -->
+                            <div class="row-line2">
+                                <div class="cust-name">{{ $inv->supplier_name ?: 'Vendor / Distributor' }}</div>
+                                <div class="cust-phone">{{ \Carbon\Carbon::parse($inv->order_date)->format('d M Y') }} • {{ $inv->supplier_phone ?: '—' }}</div>
+                            </div>
+
+                            <!-- Row 3: Items Summary + Compact Actions -->
+                            <div class="row-line3">
+                                <div class="items-summary">
+                                    <strong>{{ $inv->item_count }} {{ Str::plural('Item', $inv->item_count) }} ({{ $inv->total_units }}u)</strong>
+                                    • {{ $itemPreviews ?: 'Standard stock' }}
+                                </div>
+                                <div class="row-actions">
+                                    <button type="button" class="compact-action-btn"
+                                            data-invoice='@json($inv)'
+                                            data-items='@json($inv->items)'
+                                            onclick="openViewPurchaseModal(this)"
+                                            title="View Line Items">
+                                        <i data-lucide="eye" style="width:15px;height:15px;"></i>
+                                    </button>
+                                    <button type="button" class="compact-action-btn" style="color:#DC2626; border-color:#FECACA; background:#FEF2F2;"
+                                            data-invoice='@json($inv)'
+                                            data-items='@json($inv->items)'
+                                            onclick="openPurchaseDefectModal(this)"
+                                            title="Record Defective / Return Items">
+                                        <i data-lucide="alert-triangle" style="width:14px;height:14px;"></i>
+                                    </button>
+                                    <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="compact-action-btn" title="Print Invoice">
+                                        <i data-lucide="printer" style="width:15px;height:15px;"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div style="text-align:center; padding:32px 16px; color:#94A3B8;">
+                            <i data-lucide="inbox" style="width:32px;height:32px; margin-bottom:8px;"></i>
+                            <div style="font-weight:700; font-size:13px; color:#475569;">No purchase invoices recorded yet</div>
+                        </div>
+                    @endforelse
+                    <div id="purchaseMobileEmptyFilterRow" style="display:none; text-align:center; padding:28px 16px; color:#64748B;">
+                        <div style="font-weight:700; color:#1E293B; font-size:13px; margin-bottom:4px;">No purchase invoices found for this date range</div>
+                        <div style="font-size:11.5px; color:#64748B; margin-bottom:10px;">Try selecting 7 Days, This Month, or All Time</div>
+                        <button type="button" onclick="setPurchaseDatePreset('all')" class="filter-pill" style="cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:5px 14px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                            Show All Invoices
+                        </button>
+                    </div>
+                </div>
+                <div id="purchaseInvoicesPagination"></div>
+            </div>
+
+            <!-- Defective Items & Returns Registry Container (Switched View) -->
+            <div id="defectiveItemsContainer" style="display:none;">
+                <!-- Defective Sub-Toolbar -->
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding:12px 16px; background:#FEF2F2; border-bottom:1px solid #FECACA;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:12px; font-weight:800; color:#991B1B;">Filter Status:</span>
+                        <div style="display:inline-flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" onclick="filterDefectiveStatus('all', this)" class="btn btn-sm defective-status-pill active" style="font-size:11px; font-weight:700; height:24px; padding:0 8px; border-radius:4px; background:#991B1B; color:#fff; border:none; cursor:pointer;">All ({{ count($defectiveItems ?? []) }})</button>
+                            <button type="button" onclick="filterDefectiveStatus('pending_supplier_return', this)" class="btn btn-sm btn-outline defective-status-pill" style="font-size:11px; font-weight:700; height:24px; padding:0 8px; border-radius:4px; background:#fff; color:#B45309; border-color:#FDE68A; cursor:pointer;">Pending Return ({{ ($defectiveItems ?? collect())->where('status', 'pending_supplier_return')->count() }})</button>
+                            <button type="button" onclick="filterDefectiveStatus('returned_to_supplier', this)" class="btn btn-sm btn-outline defective-status-pill" style="font-size:11px; font-weight:700; height:24px; padding:0 8px; border-radius:4px; background:#fff; color:#1D4ED8; border-color:#BFDBFE; cursor:pointer;">Returned ({{ ($defectiveItems ?? collect())->where('status', 'returned_to_supplier')->count() }})</button>
+                            <button type="button" onclick="filterDefectiveStatus('replaced_by_supplier', this)" class="btn btn-sm btn-outline defective-status-pill" style="font-size:11px; font-weight:700; height:24px; padding:0 8px; border-radius:4px; background:#fff; color:#15803D; border-color:#BBF7D0; cursor:pointer;">Replaced ({{ ($defectiveItems ?? collect())->where('status', 'replaced_by_supplier')->count() }})</button>
+                            <button type="button" onclick="filterDefectiveStatus('scrap_written_off', this)" class="btn btn-sm btn-outline defective-status-pill" style="font-size:11px; font-weight:700; height:24px; padding:0 8px; border-radius:4px; background:#fff; color:#64748B; border-color:#CBD5E1; cursor:pointer;">Scrap ({{ ($defectiveItems ?? collect())->where('status', 'scrap_written_off')->count() }})</button>
+                        </div>
+                    </div>
+                    <div style="font-size:12px; font-weight:700; color:#991B1B;">
+                        Total Defective Units: <span style="font-size:14px; font-weight:900;">{{ ($defectiveItems ?? collect())->sum('qty') }}</span>
+                    </div>
+                </div>
+
+                <!-- Defective Items Table (Desktop) -->
+                <table class="data-table" id="defectiveItemsTable" style="margin:0; width:100%;">
+                    <thead style="background:#F8FAFC;">
+                        <tr>
+                            <th style="padding:12px 16px;">Date</th>
+                            <th>Source</th>
+                            <th>Defective Item</th>
+                            <th>Supplier / Customer</th>
+                            <th style="text-align:center;">Defect Qty</th>
+                            <th style="text-align:right;">Cost (₹)</th>
+                            <th>Reason & Remarks</th>
+                            <th style="text-align:center;">Status</th>
+                            <th style="text-align:center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="defectiveItemsTableBody">
+                        @forelse($defectiveItems ?? [] as $defect)
+                        @php
+                            $statusStyle = match($defect->status) {
+                                'returned_to_supplier' => ['bg' => '#EFF6FF', 'color' => '#1D4ED8', 'label' => '🚚 Dispatched to Vendor'],
+                                'replaced_by_supplier' => ['bg' => '#DCFCE7', 'color' => '#15803D', 'label' => '✅ Replaced by Vendor'],
+                                'scrap_written_off'    => ['bg' => '#F1F5F9', 'color' => '#64748B', 'label' => '🗑️ Written Off / Scrap'],
+                                default                => ['bg' => '#FEF3C7', 'color' => '#B45309', 'label' => '⚠️ Pending Vendor Return'],
+                            };
+                            $sourceBadge = ($defect->source_type === 'sale_return')
+                                ? ['bg' => '#EDE9FE', 'color' => '#6D28D9', 'label' => 'Sold Item Return']
+                                : ['bg' => '#EFF6FF', 'color' => '#1E40AF', 'label' => 'Purchase Return'];
+                        @endphp
+                        <tr class="defective-data-row" data-status="{{ $defect->status }}">
+                            <td style="font-size:11px; color:#64748B; padding:12px 16px; white-space:nowrap;">
+                                {{ \Carbon\Carbon::parse($defect->created_at)->format('d M Y') }}
+                            </td>
+                            <td>
+                                <span class="badge" style="background:{{ $sourceBadge['bg'] }}; color:{{ $sourceBadge['color'] }}; font-size:10px; font-weight:700;">{{ $sourceBadge['label'] }}</span>
+                                @if($defect->source_ref)
+                                    <div style="font-size:11px; font-family:monospace; font-weight:700; color:#475569; margin-top:2px;">#{{ $defect->source_ref }}</div>
+                                @endif
+                            </td>
+                            <td>
+                                <div style="font-weight:800; color:#0F172A; font-size:13px;">{{ $defect->item_name }}</div>
+                            </td>
+                            <td>
+                                <div style="font-weight:700; color:#334155; font-size:12px;">{{ $defect->supplier_name ?: ($defect->customer_name ?: 'Vendor / Customer') }}</div>
+                                @if($defect->customer_name && $defect->source_type === 'sale_return')
+                                    <div style="font-size:10.5px; color:#7C3AED; font-weight:600;">Customer Return</div>
+                                @endif
+                            </td>
+                            <td style="text-align:center;">
+                                <span class="badge badge-red" style="font-weight:800; font-size:12px; padding:3px 8px;">{{ $defect->qty }}</span>
+                            </td>
+                            <td style="text-align:right; font-weight:800; font-size:12px; color:#0F172A;">
+                                ₹{{ number_format($defect->total_cost, 2) }}
+                                @if($defect->unit_cost > 0)
+                                    <div style="font-size:10px; color:#64748B; font-weight:600;">@ ₹{{ number_format($defect->unit_cost, 2) }}</div>
+                                @endif
+                            </td>
+                            <td style="max-width:260px;">
+                                <div style="font-weight:700; color:#991B1B; font-size:12px;">{{ $defect->defect_reason }}</div>
+                                @if($defect->notes)
+                                    <div style="font-size:11px; color:#64748B; white-space:pre-wrap; margin-top:2px;">{{ $defect->notes }}</div>
+                                @endif
+                            </td>
+                            <td style="text-align:center; white-space:nowrap;">
+                                <span class="badge" style="background:{{ $statusStyle['bg'] }}; color:{{ $statusStyle['color'] }}; font-weight:700; font-size:11px;">
+                                    {{ $statusStyle['label'] }}
+                                </span>
+                            </td>
+                            <td style="text-align:center; white-space:nowrap;">
+                                <button type="button" class="btn btn-outline btn-sm" style="font-size:11px; font-weight:700; padding:4px 8px; color:var(--brand-700); border-color:#CBD5E1;"
+                                        data-id="{{ $defect->id }}"
+                                        data-name="{{ $defect->item_name }}"
+                                        data-status="{{ $defect->status }}"
+                                        data-qty="{{ $defect->qty }}"
+                                        onclick="openUpdateDefectiveStatusModal(this)">
+                                    <i data-lucide="edit-3" style="width:12px;height:12px;"></i> Update Status
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr id="emptyDefectiveRow">
+                            <td colspan="9" style="text-align:center; padding:36px; color:#94A3B8;">
+                                <i data-lucide="shield-check" style="width:36px;height:36px; stroke-width:1.5; margin-bottom:8px; color:#16A34A;"></i>
+                                <div style="font-weight:700; font-size:14px; color:#475569;">No Defective Items Recorded</div>
+                                <div style="font-size:12px; margin-top:4px;">You can record defective accessories directly from any purchase invoice using the <strong style="color:#DC2626;">Return / Defect</strong> button, or through customer sales returns.</div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+
+                <!-- Defective Items Mobile View -->
+                <div class="mobile-purchase-cards" style="display:none;" id="defectiveMobileCards">
+                    @forelse($defectiveItems ?? [] as $defect)
                     @php
-                        $poType = 'accessories';
-                        $badgeLabel = 'Parts';
-                        $badgeBg = '#EFF6FF';
-                        $badgeColor = '#1D4ED8';
-                        if (str_contains($inv->po_number, 'PARTS') || str_contains($inv->po_number, 'SPARE')) {
-                            $badgeLabel = 'Spare Parts';
-                            $badgeBg = '#F5F3FF';
-                            $badgeColor = '#7C3AED';
-                        } else {
-                            $badgeLabel = 'Accessories';
-                            $badgeBg = '#DCFCE7';
-                            $badgeColor = '#15803D';
-                        }
-
-                        $itemPreviews = $inv->items->take(2)->map(function($i) {
-                            return $i->brand . ' ' . $i->model . ($i->qty > 1 ? " (x{$i->qty})" : "");
-                        })->implode(', ');
-                        if ($inv->item_count > 2) {
-                            $itemPreviews .= ' +' . ($inv->item_count - 2) . ' more';
-                        }
-
-                        $statusLabel = 'Paid';
-                        $statusBg = '#DCFCE7';
-                        $statusColor = '#15803D';
-                        if (($inv->status ?? '') === 'partial' || ($inv->status ?? '') === 'partially_paid') {
-                            $statusLabel = 'Partial Due';
-                            $statusBg = '#FEF2F2';
-                            $statusColor = '#B91C1C';
-                        } elseif (($inv->status ?? '') !== 'paid' && ($inv->status ?? '') !== 'received') {
-                            $statusLabel = ucfirst(str_replace('_', ' ', $inv->status ?? 'pending'));
-                            $statusBg = '#F1F5F9';
-                            $statusColor = '#475569';
-                        }
+                        $statusStyle = match($defect->status) {
+                            'returned_to_supplier' => ['bg' => '#EFF6FF', 'color' => '#1D4ED8', 'label' => 'Dispatched to Vendor'],
+                            'replaced_by_supplier' => ['bg' => '#DCFCE7', 'color' => '#15803D', 'label' => 'Replaced by Vendor'],
+                            'scrap_written_off'    => ['bg' => '#F1F5F9', 'color' => '#64748B', 'label' => 'Scrap / Written Off'],
+                            default                => ['bg' => '#FEF3C7', 'color' => '#B45309', 'label' => 'Pending Vendor Return'],
+                        };
                     @endphp
-                    <div class="purchase-flat-row purchase-data-row" data-type="{{ $poType }}" data-date="{{ \Carbon\Carbon::parse($inv->order_date)->format('Y-m-d') }}">
-                        <!-- Row 1: PO # + Category Badge + Payment Status + Total Amount -->
+                    <div class="purchase-flat-row defective-data-row" data-status="{{ $defect->status }}">
                         <div class="row-line1">
-                            <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="inv-num">
-                                #{{ $inv->po_number }}
-                            </a>
-                            <span class="pay-badge" style="background:{{ $badgeBg }}; color:{{ $badgeColor }};">
-                                {{ $badgeLabel }}
+                            <span class="inv-num" style="color:#991B1B;">
+                                {{ $defect->qty }}x Defective
                             </span>
-                            <span class="pay-badge" style="background:{{ $statusBg }}; color:{{ $statusColor }};">
-                                {{ $statusLabel }}
+                            <span class="pay-badge" style="background:{{ $statusStyle['bg'] }}; color:{{ $statusStyle['color'] }};">
+                                {{ $statusStyle['label'] }}
                             </span>
-                            <div class="row-amount">₹{{ number_format($inv->total_amount, 2) }}</div>
+                            <div class="row-amount">₹{{ number_format($defect->total_cost, 2) }}</div>
                         </div>
-
-                        <!-- Row 2: Supplier Name + Date & Phone -->
                         <div class="row-line2">
-                            <div class="cust-name">{{ $inv->supplier_name ?: 'Vendor / Distributor' }}</div>
-                            <div class="cust-phone">{{ \Carbon\Carbon::parse($inv->order_date)->format('d M Y') }} • {{ $inv->supplier_phone ?: '—' }}</div>
+                            <div class="cust-name">{{ $defect->item_name }}</div>
+                            <div class="cust-phone">{{ \Carbon\Carbon::parse($defect->created_at)->format('d M Y') }} • {{ $defect->supplier_name ?: ($defect->customer_name ?: 'Vendor') }}</div>
                         </div>
-
-                        <!-- Row 3: Items Summary + Compact Actions -->
                         <div class="row-line3">
-                            <div class="items-summary">
-                                <strong>{{ $inv->item_count }} {{ Str::plural('Item', $inv->item_count) }} ({{ $inv->total_units }}u)</strong>
-                                • {{ $itemPreviews ?: 'Standard stock' }}
+                            <div class="items-summary" style="color:#991B1B;">
+                                <strong>Reason:</strong> {{ $defect->defect_reason }}
                             </div>
                             <div class="row-actions">
                                 <button type="button" class="compact-action-btn"
-                                        data-invoice='@json($inv)'
-                                        data-items='@json($inv->items)'
-                                        onclick="openViewPurchaseModal(this)"
-                                        title="View Line Items">
-                                    <i data-lucide="eye" style="width:15px;height:15px;"></i>
+                                        data-id="{{ $defect->id }}"
+                                        data-name="{{ $defect->item_name }}"
+                                        data-status="{{ $defect->status }}"
+                                        data-qty="{{ $defect->qty }}"
+                                        onclick="openUpdateDefectiveStatusModal(this)"
+                                        title="Update Status">
+                                    <i data-lucide="edit-3" style="width:14px;height:14px;"></i>
                                 </button>
-                                <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="compact-action-btn" title="Print Invoice">
-                                    <i data-lucide="printer" style="width:15px;height:15px;"></i>
-                                </a>
                             </div>
                         </div>
                     </div>
-                @empty
+                    @empty
                     <div style="text-align:center; padding:32px 16px; color:#94A3B8;">
-                        <i data-lucide="inbox" style="width:32px;height:32px; margin-bottom:8px;"></i>
-                        <div style="font-weight:700; font-size:13px; color:#475569;">No purchase invoices recorded yet</div>
+                        <i data-lucide="shield-check" style="width:32px;height:32px; margin-bottom:8px; color:#16A34A;"></i>
+                        <div style="font-weight:700; font-size:13px; color:#475569;">No Defective Items Recorded</div>
                     </div>
-                @endforelse
-                <div id="purchaseMobileEmptyFilterRow" style="display:none; text-align:center; padding:28px 16px; color:#64748B;">
-                    <div style="font-weight:700; color:#1E293B; font-size:13px; margin-bottom:4px;">No purchase invoices found for this date range</div>
-                    <div style="font-size:11.5px; color:#64748B; margin-bottom:10px;">Try selecting 7 Days, This Month, or All Time</div>
-                    <button type="button" onclick="setPurchaseDatePreset('all')" class="filter-pill" style="cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:5px 14px; border-radius:6px; font-weight:700; font-size:11.5px;">
-                        Show All Invoices
-                    </button>
+                    @endforelse
                 </div>
             </div>
-            <div id="purchaseInvoicesPagination"></div>
+            <!-- End Defective Items Container -->
         </div>
     </div>
 
@@ -615,7 +779,143 @@
         </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MODAL: Record Defective / Purchase Return -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div id="purchaseReturnDefectModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+        <div class="card" style="max-width: 520px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; background:#fff; overflow:hidden;">
+            <div class="card-header" style="background:#FEF2F2; border-bottom:1px solid #FECACA; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:34px; height:34px; border-radius:8px; background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i data-lucide="alert-triangle" style="width:18px;height:18px;"></i>
+                    </div>
+                    <div>
+                        <div class="card-title" style="color:#991B1B; font-weight:800; font-size:15px; margin:0;">Record Defective / Return Items</div>
+                        <div id="lblDefectModalPoSub" style="font-size:11.5px; color:#B91C1C; font-weight:600; margin-top:2px;">PO # — Vendor</div>
+                    </div>
+                </div>
+                <button type="button" onclick="closePurchaseDefectModal()" style="background:none; border:none; color:#991B1B; font-size:20px; cursor:pointer; line-height:1; padding:4px;">✕</button>
+            </div>
 
+            <form action="{{ route('mobileshop.purchase.defect') }}" method="POST" id="purchaseDefectForm">
+                @csrf
+                <input type="hidden" name="purchase_order_id" id="defectPurchaseOrderId" value="">
+
+                <div class="card-body" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+                    <!-- Select Item from Invoice -->
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; display:block;">Select Item from this Purchase Order *</label>
+                        <select name="po_item_id" id="defectPoItemId" class="form-control" style="width:100%; padding:8px 12px; font-size:13px; border:1px solid #CBD5E1; border-radius:8px; font-weight:600; color:#0F172A;" onchange="onDefectItemSelectChange()" required>
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+
+                    <!-- Selected Item Info Card -->
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 14px; font-size:12px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span style="color:#64748B;">Total Purchased Qty:</span>
+                            <strong id="lblDefectItemPurchasedQty" style="color:#0F172A;">0 Units</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#64748B;">Unit Purchase Cost:</span>
+                            <strong id="lblDefectItemUnitCost" style="color:#0F172A;">₹0.00</strong>
+                        </div>
+                    </div>
+
+                    <!-- Defect Quantity -->
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="font-size:12px; font-weight:700; color:#334155; margin:0;">Defective Quantity *</label>
+                            <span id="lblDefectMaxQtyNote" style="font-size:11px; color:#DC2626; font-weight:700;">Max: 1</span>
+                        </div>
+                        <input type="number" name="defect_qty" id="defectQtyInput" min="1" max="1" value="1" class="form-control" style="width:100%; padding:8px 12px; font-size:14px; font-weight:800; border:1px solid #CBD5E1; border-radius:8px;" required>
+                    </div>
+
+                    <!-- Reason for Defect -->
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; display:block;">Reason for Defect *</label>
+                        <select name="defect_reason" id="defectReasonSelect" class="form-control" style="width:100%; padding:8px 12px; font-size:13px; border:1px solid #CBD5E1; border-radius:8px; font-weight:600; color:#0F172A;" required>
+                            <option value="Dead on Arrival (DOA) / Not Working">Dead on Arrival (DOA) / Not Working</option>
+                            <option value="Broken / Cracked / Physical Damage">Broken / Cracked / Physical Damage</option>
+                            <option value="Touch / Display Faulty">Touch / Display Faulty</option>
+                            <option value="Wrong Piece / Model Mismatch">Wrong Piece / Model Mismatch</option>
+                            <option value="Manufacturing / Quality Defect">Manufacturing / Quality Defect</option>
+                            <option value="Customer Warranty Return to Vendor">Customer Warranty Return to Vendor</option>
+                            <option value="Other Defect">Other Defect</option>
+                        </select>
+                    </div>
+
+                    <!-- Additional Notes -->
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; display:block;">Defect Notes / Remarks (Optional)</label>
+                        <textarea name="notes" id="defectNotesInput" rows="2" placeholder="e.g. Broken packaging, touch dead on lower half..." style="width:100%; padding:8px 12px; font-size:12px; border:1px solid #CBD5E1; border-radius:8px; resize:vertical; font-family:inherit;"></textarea>
+                    </div>
+
+                    <!-- Stock Adjustment Notice -->
+                    <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:10px 12px; display:flex; align-items:flex-start; gap:10px;">
+                        <input type="checkbox" name="deduct_stock" id="defectDeductStockCheck" value="1" checked style="margin-top:3px; cursor:pointer;">
+                        <label for="defectDeductStockCheck" style="font-size:11.5px; color:#92400E; font-weight:600; margin:0; cursor:pointer;">
+                            <strong>Deduct from Sellable Stock:</strong> Automatically remove this defective quantity from current store inventory.
+                        </label>
+                    </div>
+                </div>
+
+                <div style="padding:14px 20px; border-top:1px solid #E2E8F0; background:#F8FAFC; display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" onclick="closePurchaseDefectModal()" class="btn btn-outline" style="font-size:12px; font-weight:700; padding:6px 14px;">Cancel</button>
+                    <button type="submit" class="btn" style="background:#DC2626; color:#fff; border:none; font-size:12px; font-weight:800; padding:6px 18px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                        <i data-lucide="check" style="width:14px; height:14px;"></i> Confirm Defect Return
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MODAL: Update Defective Item Status -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div id="updateDefectiveStatusModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+        <div class="card" style="max-width: 480px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; background:#fff; overflow:hidden;">
+            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="margin:0; font-size:15px; font-weight:800; color:#0F172A;">Update Defective Item Status</h3>
+                    <div id="lblStatusModalItemName" style="font-size:12px; color:#64748B; font-weight:600; margin-top:2px;">Item Name</div>
+                </div>
+                <button type="button" onclick="closeUpdateDefectiveStatusModal()" style="border:none; background:transparent; font-size:18px; color:#64748B; cursor:pointer; padding:4px 8px;">✕</button>
+            </div>
+
+            <form action="" method="POST" id="updateDefectiveStatusForm">
+                @csrf
+                <div style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; display:block;">Defective Item Status *</label>
+                        <select name="status" id="defectStatusSelect" class="form-control" style="width:100%; padding:8px 12px; font-size:13px; border:1px solid #CBD5E1; border-radius:8px; font-weight:700;" onchange="onStatusSelectChange(this.value)" required>
+                            <option value="pending_supplier_return">⚠️ Pending Return to Supplier</option>
+                            <option value="returned_to_supplier">🚚 Returned / Dispatched to Supplier</option>
+                            <option value="replaced_by_supplier">✅ Replaced by Supplier (New Piece Received)</option>
+                            <option value="scrap_written_off">🗑️ Scrapped / Written Off (No Supplier Warranty)</option>
+                        </select>
+                    </div>
+
+                    <div id="restockReplacementOption" style="display:none; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 12px;">
+                        <label style="font-size:11.5px; color:#166534; font-weight:700; display:flex; align-items:center; gap:8px; margin:0; cursor:pointer;">
+                            <input type="checkbox" name="restock_replacement" value="1" checked style="cursor:pointer;">
+                            Add Replacement Piece to Current Sellable Stock
+                        </label>
+                    </div>
+
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; display:block;">Action Note / Tracking # (Optional)</label>
+                        <input type="text" name="notes" id="statusNotesInput" placeholder="e.g. Courier Tracking # / Replaced on 25 Sep..." class="form-control" style="width:100%; padding:8px 12px; font-size:12px; border:1px solid #CBD5E1; border-radius:8px;">
+                    </div>
+                </div>
+
+                <div style="padding:14px 20px; border-top:1px solid #E2E8F0; background:#F8FAFC; display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" onclick="closeUpdateDefectiveStatusModal()" class="btn btn-outline" style="font-size:12px; font-weight:700; padding:6px 14px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="font-size:12px; font-weight:800; padding:6px 18px; border-radius:6px;">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- MODAL: Supplier Payment / Advance / Settlement -->
     <div id="paymentModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
@@ -990,6 +1290,170 @@
 
     function closeViewPurchaseModal() {
         document.getElementById('viewPurchaseItemsModal').style.display = 'none';
+    }
+
+    let currentDefectInvoice = null;
+    let currentDefectItems = [];
+
+    function openPurchaseDefectModal(btn) {
+        try {
+            currentDefectInvoice = JSON.parse(btn.getAttribute('data-invoice') || '{}');
+            currentDefectItems = JSON.parse(btn.getAttribute('data-items') || '[]');
+        } catch(e) {
+            currentDefectInvoice = {};
+            currentDefectItems = [];
+        }
+
+        document.getElementById('defectPurchaseOrderId').value = currentDefectInvoice.id || '';
+        document.getElementById('lblDefectModalPoSub').textContent = '#' + (currentDefectInvoice.po_number || '') + ' • ' + (currentDefectInvoice.supplier_name || 'Vendor');
+
+        const select = document.getElementById('defectPoItemId');
+        select.innerHTML = '';
+
+        if (currentDefectItems.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = 'No items found on this invoice';
+            select.appendChild(opt);
+        } else {
+            currentDefectItems.forEach((item) => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                const title = (item.brand || '') + ' ' + (item.model || 'Item') + (item.variant && item.variant !== 'Standard' ? ' (' + item.variant + ')' : '');
+                opt.textContent = `${title} — Qty: ${item.qty} @ ₹${parseFloat(item.unit_cost || 0).toLocaleString('en-IN')}`;
+                opt.setAttribute('data-qty', item.qty || 1);
+                opt.setAttribute('data-cost', item.unit_cost || 0);
+                select.appendChild(opt);
+            });
+        }
+
+        onDefectItemSelectChange();
+        document.getElementById('purchaseReturnDefectModal').style.display = 'flex';
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    function onDefectItemSelectChange() {
+        const select = document.getElementById('defectPoItemId');
+        const selectedOpt = select.options[select.selectedIndex];
+        if (!selectedOpt || !selectedOpt.value) return;
+
+        const maxQty = parseInt(selectedOpt.getAttribute('data-qty') || 1);
+        const unitCost = parseFloat(selectedOpt.getAttribute('data-cost') || 0);
+
+        document.getElementById('lblDefectItemPurchasedQty').textContent = maxQty + ' Units';
+        document.getElementById('lblDefectItemUnitCost').textContent = '₹' + unitCost.toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('lblDefectMaxQtyNote').textContent = 'Max: ' + maxQty + ' units';
+
+        const qtyInput = document.getElementById('defectQtyInput');
+        qtyInput.max = maxQty;
+        qtyInput.value = Math.min(parseInt(qtyInput.value || 1), maxQty) || 1;
+    }
+
+    function closePurchaseDefectModal() {
+        document.getElementById('purchaseReturnDefectModal').style.display = 'none';
+    }
+
+    function openUpdateDefectiveStatusModal(btn) {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const status = btn.getAttribute('data-status');
+        const form = document.getElementById('updateDefectiveStatusForm');
+
+        form.action = `/${companyId}/mobileshop/defective-items/${id}/status`;
+        document.getElementById('lblStatusModalItemName').textContent = name || 'Item';
+        document.getElementById('defectStatusSelect').value = status || 'pending_supplier_return';
+        onStatusSelectChange(status);
+
+        document.getElementById('updateDefectiveStatusModal').style.display = 'flex';
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    function closeUpdateDefectiveStatusModal() {
+        document.getElementById('updateDefectiveStatusModal').style.display = 'none';
+    }
+
+    function onStatusSelectChange(val) {
+        const opt = document.getElementById('restockReplacementOption');
+        if (opt) {
+            opt.style.display = (val === 'replaced_by_supplier') ? 'block' : 'none';
+        }
+    }
+
+    function switchPurchaseView(view) {
+        const purchasesBox = document.getElementById('purchaseInvoicesContainer');
+        const defectiveBox = document.getElementById('defectiveItemsContainer');
+        const tabPurchases = document.getElementById('tabBtnPurchases');
+        const tabDefective = document.getElementById('tabBtnDefective');
+        const heading = document.getElementById('purchaseRegistryHeading');
+
+        if (view === 'defective') {
+            if (purchasesBox) purchasesBox.style.display = 'none';
+            if (defectiveBox) defectiveBox.style.display = 'block';
+            if (heading) heading.textContent = 'Defective Items & Returns Registry';
+
+            if (tabPurchases) {
+                tabPurchases.style.background = 'transparent';
+                tabPurchases.style.color = '#475569';
+            }
+            if (tabDefective) {
+                tabDefective.style.background = '#DC2626';
+                tabDefective.style.color = '#FFFFFF';
+            }
+        } else {
+            if (purchasesBox) purchasesBox.style.display = 'block';
+            if (defectiveBox) defectiveBox.style.display = 'none';
+            if (heading) heading.textContent = 'Live Purchase Invoice Registry';
+
+            if (tabPurchases) {
+                tabPurchases.style.background = '#5E6AD2';
+                tabPurchases.style.color = '#FFFFFF';
+            }
+            if (tabDefective) {
+                tabDefective.style.background = 'transparent';
+                tabDefective.style.color = '#DC2626';
+            }
+        }
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    function toggleDefectiveRegistry() {
+        switchPurchaseView('defective');
+        const el = document.getElementById('defectiveItemsContainer');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    let activeDefectiveStatusFilter = 'all';
+    function filterDefectiveStatus(status, btn) {
+        activeDefectiveStatusFilter = status;
+        document.querySelectorAll('.defective-status-pill').forEach(b => {
+            b.classList.remove('active');
+            b.style.background = '#fff';
+            if (b.textContent.includes('Pending')) b.style.color = '#B45309';
+            else if (b.textContent.includes('Returned')) b.style.color = '#1D4ED8';
+            else if (b.textContent.includes('Replaced')) b.style.color = '#15803D';
+            else if (b.textContent.includes('Scrap')) b.style.color = '#64748B';
+            else b.style.color = '#475569';
+        });
+
+        btn.classList.add('active');
+        btn.style.background = '#991B1B';
+        btn.style.color = '#fff';
+
+        filterDefectiveTable();
+    }
+
+    function filterDefectiveTable() {
+        const rows = document.querySelectorAll('.defective-data-row');
+        rows.forEach(row => {
+            const rowStatus = row.getAttribute('data-status') || '';
+            const matchesStatus = (activeDefectiveStatusFilter === 'all') || (rowStatus === activeDefectiveStatusFilter);
+            row.style.display = matchesStatus ? '' : 'none';
+        });
     }
 
     function openPurchaseDateFilterDrawer() {

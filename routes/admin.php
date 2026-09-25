@@ -122,6 +122,10 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('purchase/store', 'MobileShop\PurchaseController@storePurchase')
         ->middleware('permission:create-purchase-accessories|create-purchase-covers')
         ->name('purchase.store');
+    Route::post('purchase/defect', 'MobileShop\PurchaseController@recordPurchaseDefect')
+        ->name('purchase.defect');
+    Route::post('defective-items/{id}/status', 'MobileShop\PurchaseController@updateDefectiveStatus')
+        ->name('defective.status');
 
     // ── SALES ACTIONS (niche-gated) ──
     Route::post('sales/store', 'MobileShop\SalesController@storeSale')
@@ -227,6 +231,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('khata/collect', 'MobileShop\KhataController@collectKhata')
         ->middleware('permission:create-mobileshop-khata|read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|create-sale-accessories|create-mobileshop-pos')
         ->name('khata.collect');
+    Route::post('khata/old-udhar', 'MobileShop\KhataController@addOldUdhar')
+        ->middleware('permission:create-mobileshop-khata|read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|create-sale-accessories|create-mobileshop-pos')
+        ->name('khata.old_udhar');
     Route::get('khata/customer/{id}/statement', 'MobileShop\KhataController@customerStatement')
         ->middleware('permission:read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|read-mobileshop-dashboard')
         ->name('khata.customer_statement');

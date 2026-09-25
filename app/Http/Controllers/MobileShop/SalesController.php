@@ -125,13 +125,18 @@ class SalesController extends BaseMobileShopController
                 ->get();
         });
 
+        $parts = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'selling_price', 'stock_qty', 'category']);
+
         $isOwner = $this->isOwner();
 
         return view('mobileshop.sales', compact(
             'niche', 'accSales', 'isOwner',
             'canCreateAccessories', 'canCreateCovers',
             'todaySalesTotal', 'monthSalesTotal', 'salesCount',
-            'availableParts', 'customers', 'categories'
+            'availableParts', 'customers', 'categories', 'parts'
         ));
     }
 
@@ -261,6 +266,64 @@ class SalesController extends BaseMobileShopController
      */
     public function storeSale(Request $request)
     {
+        // Support Quick Sale single-item direct submission from sales page
+        if ($request->filled('part_id') && !$request->has('items')) {
+            $partId = (int) $request->input('part_id');
+            $qty = max(1, (int) ($request->input('quantity', 1) ?: 1));
+            
+            // Get item price if custom_price not provided
+            $customPrice = $request->input('custom_price');
+            if ($customPrice !== null && $customPrice !== '') {
+                $unitPrice = (float) $customPrice;
+            } else {
+                $part = DB::table('ms_parts_inventory')
+                    ->where('company_id', $this->getCompanyId())
+                    ->where('id', $partId)
+                    ->first();
+                $unitPrice = (float) ($part->selling_price ?? 0);
+            }
+
+            $total = round($unitPrice * $qty, 2);
+            $mode = $request->input('payment_mode', 'cash');
+
+            // Determine amount_paid
+            if ($request->filled('amount_paid')) {
+                $amountPaid = (float) $request->input('amount_paid');
+            } elseif ($mode === 'udhari') {
+                $amountPaid = 0.00;
+            } elseif (in_array($mode, ['cash+udhari', 'upi+udhari'])) {
+                $amountPaid = (float) ($request->input('split_paid_amount') ?? $request->input('cash_amount') ?? $request->input('upi_amount') ?? 0);
+            } else {
+                $amountPaid = $total;
+            }
+
+            $items = [
+                [
+                    'part_id'    => $partId,
+                    'quantity'   => $qty,
+                    'unit_price' => $unitPrice,
+                ]
+            ];
+
+            $phone = trim((string) $request->input('customer_phone', ''));
+            if (empty($phone)) {
+                $phone = '0000000000';
+            }
+            $name = trim((string) $request->input('customer_name', ''));
+            if (empty($name)) {
+                $name = 'Walk-in Customer';
+            }
+
+            $request->merge([
+                'items'          => $items,
+                'sale_type'      => 'accessory',
+                'customer_phone' => $phone,
+                'customer_name'  => $name,
+                'amount_paid'    => $amountPaid,
+                'payment_mode'   => $mode,
+            ]);
+        }
+
         if ($request->has('items') || $request->input('sale_type') === 'accessory') {
             return app(AccessoriesController::class)->sellAccessory($request);
         }

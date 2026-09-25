@@ -188,12 +188,332 @@
             display: none !important;
         }
     }
+
+    /* ─── QUICK SALE & SEARCH DUAL TOP PANELS (App Theme Matched) ─── */
+    .quick-sales-top-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+    @media (max-width: 900px) {
+        .quick-sales-top-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .light-sale-panel {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 16px 20px;
+        color: #0f172a;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .panel-header-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .panel-header-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .panel-header-icon.sale-icon {
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+    .panel-header-icon.search-icon {
+        background: #f1f5f9;
+        color: #475569;
+    }
+    .panel-header-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        letter-spacing: -0.2px;
+    }
+    .app-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    @media (max-width: 580px) {
+        .app-form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .app-input-field {
+        width: 100%;
+        height: 38px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 13px;
+        color: #0f172a;
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        box-sizing: border-box;
+    }
+    .app-input-field:focus {
+        border-color: #5e6ad2;
+        box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.12);
+    }
+    .app-input-field::placeholder {
+        color: #94a3b8;
+    }
+    .btn-app-primary {
+        background: #5e6ad2;
+        color: #ffffff;
+        border: none;
+        border-radius: 7px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .btn-app-primary:hover {
+        background: #4f5bc2;
+    }
+    .btn-app-primary:active {
+        transform: scale(0.98);
+    }
+    .btn-app-success {
+        background: #10b981;
+        color: #ffffff;
+        border: none;
+        border-radius: 7px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .btn-app-success:hover {
+        background: #059669;
+    }
+    .btn-app-success:active {
+        transform: scale(0.98);
+    }
+    .split-row-light {
+        grid-column: 1 / -1;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 7px;
+        padding: 10px 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .search-picker-wrapper {
+        position: relative;
+    }
+    .search-picker-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        margin-top: 4px;
+        max-height: 240px;
+        overflow-y: auto;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .search-picker-item {
+        padding: 8px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.12s ease;
+    }
+    .search-picker-item:last-child {
+        border-bottom: none;
+    }
+    .search-picker-item:hover {
+        background: #f8fafc;
+    }
 </style>
 @endpush
 
 @section('content')
 
 <div class="sales-page-wrapper">
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- QUICK SALE & SEARCH DUAL PANELS (TOP OF SALES PAGE)        -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="quick-sales-top-grid">
+        <!-- 🛒 CARD 1: QUICK ADD SALE -->
+        <div class="light-sale-panel">
+            <div class="panel-header-box">
+                <div class="panel-header-icon sale-icon">
+                    <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
+                </div>
+                <h3 class="panel-header-title">Add Sale</h3>
+            </div>
+
+            <form action="{{ route('mobileshop.sales.store') }}" method="POST" id="quickSaleForm" onsubmit="return validateQuickSaleForm(event)">
+                @csrf
+                <input type="hidden" name="sale_type" value="accessory">
+                <input type="hidden" name="amount_paid" id="quickSaleAmountPaid" value="0">
+
+                <div class="app-form-grid">
+                    <!-- Row 1: Search Item (Type alphabets to show dropdown) & Quantity -->
+                    <div class="search-picker-wrapper" id="quickItemPickerContainer">
+                        <div style="position: relative;">
+                            <input type="text"
+                                   id="quickItemSearchInput"
+                                   class="app-input-field"
+                                   style="padding-right: 34px;"
+                                   placeholder="Type item name to search..."
+                                   autocomplete="off"
+                                   oninput="onQuickItemSearchInput(this)">
+                            <input type="hidden" name="part_id" id="quickSalePartId" required>
+                            <button type="button"
+                                    id="btnQuickItemClear"
+                                    onclick="clearQuickItemSelection()"
+                                    title="Clear selected item"
+                                    style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                        </div>
+                        <div id="quickItemDropdownList" class="search-picker-dropdown">
+                            <!-- Items appear when user types alphabets -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <input type="number" name="quantity" id="quickSaleQty" class="app-input-field" placeholder="Quantity" value="1" min="1" required oninput="recalcQuickSaleTotal()">
+                    </div>
+
+                    <!-- Row 2: Customer Name & Custom Price -->
+                    <div>
+                        <input type="text" name="customer_name" id="quickSaleCustName" class="app-input-field" placeholder="Customer Name" list="quickCustNames" required>
+                        <datalist id="quickCustNames">
+                            @foreach($customers as $c)
+                                <option value="{{ $c->name }}">{{ $c->phone }}</option>
+                            @endforeach
+                        </datalist>
+                    </div>
+
+                    <div>
+                        <input type="number" step="0.01" name="custom_price" id="quickSaleCustomPrice" class="app-input-field" placeholder="Custom Price (Optional)" oninput="recalcQuickSaleTotal()">
+                    </div>
+
+                    <!-- Row 3: Mobile Number & Mode of Payment -->
+                    <div>
+                        <input type="tel" name="customer_phone" id="quickSaleCustPhone" class="app-input-field" placeholder="Mobile Number" list="quickCustPhones" required onchange="onQuickPhoneChange(this)">
+                        <datalist id="quickCustPhones">
+                            @foreach($customers as $c)
+                                <option value="{{ $c->phone }}">{{ $c->name }}</option>
+                            @endforeach
+                        </datalist>
+                    </div>
+
+                    <div>
+                        <select name="payment_mode" id="quickSalePaymentMode" class="app-input-field" required onchange="onQuickPaymentModeChange(this)">
+                            <option value="cash" selected>Cash</option>
+                            <option value="upi">UPI</option>
+                            <option value="udhari">Udhari</option>
+                            <option value="cash+upi">Cash + UPI</option>
+                            <option value="cash+udhari">Cash + Udhari</option>
+                            <option value="upi+udhari">UPI + Udhari</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic Split Payment Fields (when cash+upi, cash+udhari, upi+udhari) -->
+                    <div id="quickSplitRow" class="split-row-light" style="display: none;">
+                        <!-- Configured dynamically by onQuickPaymentModeChange() -->
+                    </div>
+
+                    <!-- Submit Button Row -->
+                    <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; margin-top: 4px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                        <button type="submit" class="btn-app-primary" id="quickSaleSubmitBtn">
+                            <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Sale
+                        </button>
+                        <div id="quickSaleTotalBadge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; border-radius:6px; padding:4px 12px; font-size: 13px; font-weight: 700;">
+                            Total: ₹0.00
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 🔍 CARD 2: SEARCH SALES (FILTER OPTIONS) -->
+        <div class="light-sale-panel">
+            <div class="panel-header-box">
+                <div class="panel-header-icon search-icon">
+                    <i data-lucide="search" style="width:16px;height:16px;"></i>
+                </div>
+                <h3 class="panel-header-title">Search Sales</h3>
+            </div>
+
+            <div class="app-form-grid">
+                <!-- Row 1: Search by customer name & Select Item (Search first) -->
+                <div>
+                    <input type="text" id="filterCustName" class="app-input-field" placeholder="Search by customer name" oninput="applyCombinedSalesFilter()">
+                </div>
+
+                <div class="search-picker-wrapper" id="filterItemPickerContainer">
+                    <div style="position: relative;">
+                        <input type="text"
+                               id="filterItemSearchInput"
+                               class="app-input-field"
+                               style="padding-right: 34px;"
+                               placeholder="Type item to filter (Optional)..."
+                               autocomplete="off"
+                               oninput="onFilterItemSearchInput(this)">
+                        <input type="hidden" id="filterItemName">
+                        <button type="button"
+                                id="btnFilterItemClear"
+                                onclick="clearFilterItemSelection()"
+                                title="Clear item filter"
+                                style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                    </div>
+                    <div id="filterItemDropdownList" class="search-picker-dropdown">
+                    </div>
+                </div>
+
+                <!-- Row 2: Date From & Date To -->
+                <div>
+                    <input type="date" id="filterFromDate" class="app-input-field" placeholder="dd-mm-yyyy" onchange="applyCombinedSalesFilter()">
+                </div>
+
+                <div>
+                    <input type="date" id="filterToDate" class="app-input-field" placeholder="dd-mm-yyyy" onchange="applyCombinedSalesFilter()">
+                </div>
+
+                <!-- Action Buttons: Search & Reset -->
+                <div style="grid-column: 1 / -1; display:flex; gap: 10px; align-items:center; margin-top: 4px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                    <button type="button" class="btn-app-primary" onclick="applyCombinedSalesFilter()">
+                        <i data-lucide="search" style="width:14px;height:14px;"></i> Search
+                    </button>
+                    <button type="button" class="btn-app-success" onclick="resetCombinedSalesFilter()">
+                        <i data-lucide="rotate-cw" style="width:14px;height:14px;"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Mobile Compact Stat Strip (shown only on mobile) -->
     <div class="mobile-stat-strip">
@@ -1602,5 +1922,539 @@
     window.addEventListener('pageshow', function () {
         initSalesPage();
     });
+
+    /* ─── Quick Add Sale & Search Item Dropdown Handlers ─── */
+    window.allPartsData = @json($parts ?? []);
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // Quick Sale: Search first - dropdown only appears when typing alphabets
+    function onQuickItemSearchInput(inputEl) {
+        const rawVal = inputEl.value || '';
+        const query = rawVal.trim().toLowerCase();
+        const dropdown = document.getElementById('quickItemDropdownList');
+        const clearBtn = document.getElementById('btnQuickItemClear');
+        const partIdInput = document.getElementById('quickSalePartId');
+
+        if (!dropdown) return;
+
+        // If empty or user cleared text, hide dropdown and reset
+        if (query.length === 0) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+            if (clearBtn) clearBtn.style.display = 'none';
+            if (partIdInput) partIdInput.value = '';
+            recalcQuickSaleTotal();
+            return;
+        }
+
+        if (clearBtn) clearBtn.style.display = 'block';
+
+        // Filter items
+        const matches = (window.allPartsData || []).filter(item => {
+            const name = (item.name || '').toLowerCase();
+            const cat = (item.category || '').toLowerCase();
+            return name.includes(query) || cat.includes(query);
+        }).slice(0, 30);
+
+        if (matches.length === 0) {
+            dropdown.innerHTML = `
+                <div style="padding: 12px 14px; text-align: center; color: #64748b; font-size: 12px;">
+                    No items found matching "<strong>${escapeHtml(rawVal.trim())}</strong>"
+                </div>
+            `;
+        } else {
+            dropdown.innerHTML = matches.map(item => {
+                const price = parseFloat(item.selling_price || 0);
+                const stock = parseInt(item.stock_qty || 0);
+                const stockBadgeColor = stock > 0 ? '#059669' : '#dc2626';
+                const stockBadgeBg = stock > 0 ? '#ecfdf5' : '#fef2f2';
+                const categoryText = item.category ? escapeHtml(item.category) : 'General';
+                const safeName = escapeHtml(item.name);
+                return `
+                    <div class="search-picker-item" onclick="selectQuickItem(${item.id})">
+                        <div style="display:flex; flex-direction:column; gap:2px; text-align:left; overflow:hidden;">
+                            <span style="font-weight:600; font-size:13px; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${safeName}</span>
+                            <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:#64748b;">
+                                <span style="background:#f1f5f9; padding:1px 5px; border-radius:4px;">${categoryText}</span>
+                                <span>•</span>
+                                <span style="background:${stockBadgeBg}; color:${stockBadgeColor}; padding:1px 5px; border-radius:4px; font-weight:600;">Stock: ${stock}</span>
+                            </div>
+                        </div>
+                        <div style="text-align:right; flex-shrink:0; padding-left:12px;">
+                            <div style="font-weight:700; font-size:13px; color:#059669;">₹${price.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        dropdown.style.display = 'block';
+    }
+
+    function selectQuickItem(id) {
+        const item = (window.allPartsData || []).find(p => String(p.id) === String(id));
+        if (!item) return;
+
+        const input = document.getElementById('quickItemSearchInput');
+        const partIdInput = document.getElementById('quickSalePartId');
+        const priceInput = document.getElementById('quickSaleCustomPrice');
+        const dropdown = document.getElementById('quickItemDropdownList');
+        const clearBtn = document.getElementById('btnQuickItemClear');
+
+        if (input) input.value = item.name;
+        if (partIdInput) partIdInput.value = item.id;
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+        if (clearBtn) clearBtn.style.display = 'block';
+
+        const price = parseFloat(item.selling_price || 0);
+        if (priceInput) {
+            priceInput.placeholder = 'Custom Price (Default: ₹' + price.toFixed(2) + ')';
+            priceInput.value = price > 0 ? price : '';
+        }
+
+        recalcQuickSaleTotal();
+    }
+
+    function clearQuickItemSelection() {
+        const input = document.getElementById('quickItemSearchInput');
+        const partIdInput = document.getElementById('quickSalePartId');
+        const priceInput = document.getElementById('quickSaleCustomPrice');
+        const dropdown = document.getElementById('quickItemDropdownList');
+        const clearBtn = document.getElementById('btnQuickItemClear');
+
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        if (partIdInput) partIdInput.value = '';
+        if (priceInput) {
+            priceInput.value = '';
+            priceInput.placeholder = 'Custom Price (Optional)';
+        }
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+        if (clearBtn) clearBtn.style.display = 'none';
+
+        recalcQuickSaleTotal();
+    }
+
+    // Filter Panel: Item search-first dropdown
+    function onFilterItemSearchInput(inputEl) {
+        const rawVal = inputEl.value || '';
+        const query = rawVal.trim().toLowerCase();
+        const dropdown = document.getElementById('filterItemDropdownList');
+        const clearBtn = document.getElementById('btnFilterItemClear');
+        const filterItemHidden = document.getElementById('filterItemName');
+
+        if (!dropdown) return;
+
+        if (query.length === 0) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+            if (clearBtn) clearBtn.style.display = 'none';
+            if (filterItemHidden) filterItemHidden.value = '';
+            applyCombinedSalesFilter();
+            return;
+        }
+
+        if (clearBtn) clearBtn.style.display = 'block';
+        if (filterItemHidden) filterItemHidden.value = rawVal.trim();
+
+        const matches = (window.allPartsData || []).filter(item => {
+            const name = (item.name || '').toLowerCase();
+            const cat = (item.category || '').toLowerCase();
+            return name.includes(query) || cat.includes(query);
+        }).slice(0, 20);
+
+        if (matches.length === 0) {
+            dropdown.innerHTML = `
+                <div style="padding: 10px 12px; text-align: center; color: #64748b; font-size: 12px;">
+                    No items matching "<strong>${escapeHtml(rawVal.trim())}</strong>"
+                </div>
+            `;
+        } else {
+            dropdown.innerHTML = matches.map(item => {
+                const safeName = escapeHtml(item.name);
+                const safeCategory = escapeHtml(item.category || 'General');
+                const escapedForJs = safeName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return `
+                    <div class="search-picker-item" onclick="selectFilterItem('${escapedForJs}')">
+                        <span style="font-weight:500; font-size:13px; color:#0f172a;">${safeName}</span>
+                        <span style="font-size:11px; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${safeCategory}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        dropdown.style.display = 'block';
+        applyCombinedSalesFilter();
+    }
+
+    function selectFilterItem(itemName) {
+        const input = document.getElementById('filterItemSearchInput');
+        const filterItemHidden = document.getElementById('filterItemName');
+        const dropdown = document.getElementById('filterItemDropdownList');
+        const clearBtn = document.getElementById('btnFilterItemClear');
+
+        if (input) input.value = itemName;
+        if (filterItemHidden) filterItemHidden.value = itemName;
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+        if (clearBtn) clearBtn.style.display = 'block';
+
+        applyCombinedSalesFilter();
+    }
+
+    function clearFilterItemSelection() {
+        const input = document.getElementById('filterItemSearchInput');
+        const filterItemHidden = document.getElementById('filterItemName');
+        const dropdown = document.getElementById('filterItemDropdownList');
+        const clearBtn = document.getElementById('btnFilterItemClear');
+
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        if (filterItemHidden) filterItemHidden.value = '';
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+        if (clearBtn) clearBtn.style.display = 'none';
+
+        applyCombinedSalesFilter();
+    }
+
+    // Close item dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        const quickPicker = document.getElementById('quickItemPickerContainer');
+        if (quickPicker && !quickPicker.contains(e.target)) {
+            const dd = document.getElementById('quickItemDropdownList');
+            if (dd) dd.style.display = 'none';
+        }
+
+        const filterPicker = document.getElementById('filterItemPickerContainer');
+        if (filterPicker && !filterPicker.contains(e.target)) {
+            const dd = document.getElementById('filterItemDropdownList');
+            if (dd) dd.style.display = 'none';
+        }
+    });
+
+    function recalcQuickSaleTotal() {
+        const qtyInput = document.getElementById('quickSaleQty');
+        const customPriceInput = document.getElementById('quickSaleCustomPrice');
+        const badge = document.getElementById('quickSaleTotalBadge');
+
+        const qty = Math.max(1, parseInt(qtyInput?.value || 1));
+        let unitPrice = 0;
+        if (customPriceInput && customPriceInput.value !== '') {
+            unitPrice = parseFloat(customPriceInput.value) || 0;
+        } else {
+            const partId = document.getElementById('quickSalePartId')?.value;
+            if (partId && window.allPartsData) {
+                const found = window.allPartsData.find(p => String(p.id) === String(partId));
+                if (found) {
+                    unitPrice = parseFloat(found.selling_price || 0);
+                }
+            }
+        }
+
+        const total = (unitPrice * qty).toFixed(2);
+        if (badge) {
+            badge.textContent = 'Total: ₹' + total;
+        }
+
+        const modeSelect = document.getElementById('quickSalePaymentMode');
+        if (modeSelect) {
+            syncQuickSplitAmounts(modeSelect.value, parseFloat(total));
+        }
+    }
+
+    function onQuickPaymentModeChange(selectEl) {
+        const mode = selectEl.value;
+        const total = getQuickSaleCurrentTotal();
+        const splitRow = document.getElementById('quickSplitRow');
+        if (!splitRow) return;
+
+        if (mode === 'cash+upi') {
+            splitRow.style.display = 'grid';
+            splitRow.innerHTML = `
+                <div>
+                    <label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:4px;">Cash Amount (₹)</label>
+                    <input type="number" step="0.01" name="cash_amount" id="quickSplitCash" class="app-input-field" placeholder="Cash Amount" value="${(total/2).toFixed(2)}" oninput="onQuickCashSplitChange(this, ${total})">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:4px;">UPI Amount (₹)</label>
+                    <input type="number" step="0.01" name="upi_amount" id="quickSplitUpi" class="app-input-field" placeholder="UPI Amount" value="${(total - (total/2)).toFixed(2)}" oninput="onQuickUpiSplitChange(this, ${total})">
+                </div>
+            `;
+        } else if (mode === 'cash+udhari') {
+            splitRow.style.display = 'grid';
+            const paid = (total > 0 ? (total * 0.5) : 0).toFixed(2);
+            const udhari = (total - paid).toFixed(2);
+            splitRow.innerHTML = `
+                <div>
+                    <label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:4px;">Cash Paid (₹)</label>
+                    <input type="number" step="0.01" name="cash_amount" id="quickSplitCashPaid" class="app-input-field" placeholder="Cash Paid" value="${paid}" oninput="onQuickCashUdhariChange(this, ${total})">
+                </div>
+                <div style="display:flex;flex-direction:column;justify-content:center;">
+                    <span style="font-size:11px;color:#475569;font-weight:600;margin-bottom:4px;">Remaining to Khata</span>
+                    <span id="quickUdhariBadge" style="font-size:13px;font-weight:700;color:#dc2626;">Udhari: ₹${udhari}</span>
+                </div>
+            `;
+        } else if (mode === 'upi+udhari') {
+            splitRow.style.display = 'grid';
+            const paid = (total > 0 ? (total * 0.5) : 0).toFixed(2);
+            const udhari = (total - paid).toFixed(2);
+            splitRow.innerHTML = `
+                <div>
+                    <label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:4px;">UPI Paid (₹)</label>
+                    <input type="number" step="0.01" name="upi_amount" id="quickSplitUpiPaid" class="app-input-field" placeholder="UPI Paid" value="${paid}" oninput="onQuickUpiUdhariChange(this, ${total})">
+                </div>
+                <div style="display:flex;flex-direction:column;justify-content:center;">
+                    <span style="font-size:11px;color:#475569;font-weight:600;margin-bottom:4px;">Remaining to Khata</span>
+                    <span id="quickUdhariBadge" style="font-size:13px;font-weight:700;color:#dc2626;">Udhari: ₹${udhari}</span>
+                </div>
+            `;
+        } else if (mode === 'udhari') {
+            splitRow.style.display = 'grid';
+            splitRow.innerHTML = `
+                <div style="grid-column: 1 / -1; font-size:12px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding: 8px 12px;">
+                    <i data-lucide="info" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>
+                    Full invoice amount (₹${total.toFixed(2)}) will be recorded as <strong>Udhari</strong> in Customer Khata ledger.
+                </div>
+            `;
+            if (window.refreshIcons) window.refreshIcons();
+            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        } else {
+            splitRow.style.display = 'none';
+            splitRow.innerHTML = '';
+        }
+    }
+
+    function syncQuickSplitAmounts(mode, total) {
+        if (mode === 'cash+upi') {
+            const cashEl = document.getElementById('quickSplitCash');
+            const upiEl = document.getElementById('quickSplitUpi');
+            if (cashEl && upiEl) {
+                const cash = Math.min(total, parseFloat(cashEl.value) || 0);
+                upiEl.value = Math.max(0, total - cash).toFixed(2);
+            }
+        } else if (mode === 'cash+udhari') {
+            const cashEl = document.getElementById('quickSplitCashPaid');
+            const udhariBadge = document.getElementById('quickUdhariBadge');
+            if (cashEl && udhariBadge) {
+                const cash = Math.min(total, parseFloat(cashEl.value) || 0);
+                udhariBadge.textContent = 'Udhari: ₹' + Math.max(0, total - cash).toFixed(2);
+            }
+        } else if (mode === 'upi+udhari') {
+            const upiEl = document.getElementById('quickSplitUpiPaid');
+            const udhariBadge = document.getElementById('quickUdhariBadge');
+            if (upiEl && udhariBadge) {
+                const upi = Math.min(total, parseFloat(upiEl.value) || 0);
+                udhariBadge.textContent = 'Udhari: ₹' + Math.max(0, total - upi).toFixed(2);
+            }
+        }
+    }
+
+    function onQuickCashSplitChange(inputEl, total) {
+        const cash = Math.max(0, Math.min(total, parseFloat(inputEl.value) || 0));
+        const upiEl = document.getElementById('quickSplitUpi');
+        if (upiEl) upiEl.value = Math.max(0, total - cash).toFixed(2);
+    }
+
+    function onQuickUpiSplitChange(inputEl, total) {
+        const upi = Math.max(0, Math.min(total, parseFloat(inputEl.value) || 0));
+        const cashEl = document.getElementById('quickSplitCash');
+        if (cashEl) cashEl.value = Math.max(0, total - upi).toFixed(2);
+    }
+
+    function onQuickCashUdhariChange(inputEl, total) {
+        const cash = Math.max(0, parseFloat(inputEl.value) || 0);
+        const udhariBadge = document.getElementById('quickUdhariBadge');
+        if (udhariBadge) {
+            udhariBadge.textContent = 'Udhari: ₹' + Math.max(0, total - cash).toFixed(2);
+        }
+    }
+
+    function onQuickUpiUdhariChange(inputEl, total) {
+        const upi = Math.max(0, parseFloat(inputEl.value) || 0);
+        const udhariBadge = document.getElementById('quickUdhariBadge');
+        if (udhariBadge) {
+            udhariBadge.textContent = 'Udhari: ₹' + Math.max(0, total - upi).toFixed(2);
+        }
+    }
+
+    function getQuickSaleCurrentTotal() {
+        const qtyInput = document.getElementById('quickSaleQty');
+        const customPriceInput = document.getElementById('quickSaleCustomPrice');
+
+        const qty = Math.max(1, parseInt(qtyInput?.value || 1));
+        let unitPrice = 0;
+        if (customPriceInput && customPriceInput.value !== '') {
+            unitPrice = parseFloat(customPriceInput.value) || 0;
+        } else {
+            const partId = document.getElementById('quickSalePartId')?.value;
+            if (partId && window.allPartsData) {
+                const found = window.allPartsData.find(p => String(p.id) === String(partId));
+                if (found) {
+                    unitPrice = parseFloat(found.selling_price || 0);
+                }
+            }
+        }
+        return unitPrice * qty;
+    }
+
+    function onQuickPhoneChange(inputEl) {
+        const phone = (inputEl.value || '').trim();
+        if (!phone) return;
+        const datalist = document.getElementById('quickCustPhones');
+        if (datalist) {
+            for (let opt of datalist.options) {
+                if (opt.value === phone && opt.textContent) {
+                    const nameInput = document.getElementById('quickSaleCustName');
+                    if (nameInput && (!nameInput.value || nameInput.value === 'Walk-in Customer')) {
+                        nameInput.value = opt.textContent;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    function validateQuickSaleForm(e) {
+        const partId = document.getElementById('quickSalePartId')?.value;
+        if (!partId) {
+            alert('Please search and select an item to sell.');
+            const searchInput = document.getElementById('quickItemSearchInput');
+            if (searchInput) searchInput.focus();
+            if (e) e.preventDefault();
+            return false;
+        }
+
+        const custName = (document.getElementById('quickSaleCustName')?.value || '').trim();
+        if (!custName) {
+            alert('Please enter a customer name.');
+            document.getElementById('quickSaleCustName')?.focus();
+            if (e) e.preventDefault();
+            return false;
+        }
+
+        const custPhone = (document.getElementById('quickSaleCustPhone')?.value || '').trim();
+        if (!custPhone) {
+            alert('Please enter a customer mobile number.');
+            document.getElementById('quickSaleCustPhone')?.focus();
+            if (e) e.preventDefault();
+            return false;
+        }
+
+        const total = getQuickSaleCurrentTotal();
+        const mode = document.getElementById('quickSalePaymentMode')?.value || 'cash';
+        const amountPaidInput = document.getElementById('quickSaleAmountPaid');
+
+        if (mode === 'cash' || mode === 'upi' || mode === 'cash+upi') {
+            if (amountPaidInput) amountPaidInput.value = total.toFixed(2);
+        } else if (mode === 'udhari') {
+            if (amountPaidInput) amountPaidInput.value = '0';
+        } else if (mode === 'cash+udhari') {
+            const cash = parseFloat(document.getElementById('quickSplitCashPaid')?.value) || 0;
+            if (amountPaidInput) amountPaidInput.value = cash.toFixed(2);
+        } else if (mode === 'upi+udhari') {
+            const upi = parseFloat(document.getElementById('quickSplitUpiPaid')?.value) || 0;
+            if (amountPaidInput) amountPaidInput.value = upi.toFixed(2);
+        }
+
+        const submitBtn = document.getElementById('quickSaleSubmitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+        }
+
+        return true;
+    }
+
+    /* ─── Search Sales Combined Filter JS Handlers ─── */
+    function applyCombinedSalesFilter() {
+        const custTerm = (document.getElementById('filterCustName')?.value || '').toLowerCase().trim();
+        const itemTerm = (document.getElementById('filterItemName')?.value || '').toLowerCase().trim();
+        const fromDate = document.getElementById('filterFromDate')?.value || '';
+        const toDate = document.getElementById('filterToDate')?.value || '';
+        const globalSearch = (document.getElementById('salesSearchInput')?.value || '').toLowerCase().trim();
+
+        let visibleCount = 0;
+        document.querySelectorAll('#salesTable tbody tr.sales-row').forEach(row => {
+            const rowText = row.textContent.toLowerCase();
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
+
+            const matchesCust = !custTerm || rowText.includes(custTerm);
+            const matchesItem = !itemTerm || rowText.includes(itemTerm);
+            const matchesGlobal = !globalSearch || rowText.includes(globalSearch);
+
+            let matchesDate = true;
+            if (fromDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
+            if (toDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
+
+            const isVisible = matchesCust && matchesItem && matchesGlobal && matchesDate;
+            row.dataset.mobiHidden = isVisible ? '0' : '1';
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        let visibleMobileCount = 0;
+        document.querySelectorAll('#salesMobileCards .sales-flat-row').forEach(card => {
+            const cardText = card.textContent.toLowerCase();
+            const rawDate = (card.dataset.date || '').trim();
+            const cleanCardDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
+
+            const matchesCust = !custTerm || cardText.includes(custTerm);
+            const matchesItem = !itemTerm || cardText.includes(itemTerm);
+            const matchesGlobal = !globalSearch || cardText.includes(globalSearch);
+
+            let matchesDate = true;
+            if (fromDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate >= fromDate);
+            if (toDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate <= toDate);
+
+            const isVisible = matchesCust && matchesItem && matchesGlobal && matchesDate;
+            card.dataset.mobiHidden = isVisible ? '0' : '1';
+            card.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleMobileCount++;
+        });
+
+        const emptyRow = document.getElementById('salesEmptyFilterRow');
+        if (emptyRow) emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+        const mobEmptyRow = document.getElementById('salesMobileEmptyFilterRow');
+        if (mobEmptyRow) mobEmptyRow.style.display = (visibleMobileCount === 0) ? 'block' : 'none';
+
+        if (window.salesPager && typeof window.salesPager.refresh === 'function') {
+            window.salesPager.refresh(true);
+        }
+    }
+
+    function resetCombinedSalesFilter() {
+        const cust = document.getElementById('filterCustName');
+        const fromD = document.getElementById('filterFromDate');
+        const toD = document.getElementById('filterToDate');
+
+        if (cust) cust.value = '';
+        if (fromD) fromD.value = '';
+        if (toD) toD.value = '';
+
+        clearFilterItemSelection();
+    }
 </script>
 @endpush
