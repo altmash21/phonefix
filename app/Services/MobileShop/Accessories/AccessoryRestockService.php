@@ -197,6 +197,11 @@ class AccessoryRestockService
                 }
             }
 
+            $calculatedCost = $totalCost;
+            if ($request->filled('custom_total_cost') && (float) $request->custom_total_cost > 0) {
+                $totalCost = round((float) $request->custom_total_cost, 2);
+            }
+
             // Create formal Purchase Order for this batch
             $supplierName = trim($request->supplier_name ?: 'National Screen & Spare Parts Hub');
             $supplier = DB::table('ms_suppliers')->where('company_id', $companyId)->where('name', $supplierName)->first();
@@ -366,6 +371,12 @@ class AccessoryRestockService
             foreach ($request->items as $item) {
                 $q = (int) ($item['qty'] ?? 1);
                 $c = (float) ($item['unit_cost'] ?? 0);
+                $lineTot = $q * $c;
+                if ($calculatedCost > 0 && abs($totalCost - $calculatedCost) > 0.01) {
+                    $itemRatio = $lineTot / $calculatedCost;
+                    $lineTot = round($totalCost * $itemRatio, 2);
+                    $c = $q > 0 ? round($lineTot / $q, 2) : $c;
+                }
                 DB::table('ms_purchase_order_items')->insert([
                     'purchase_order_id' => $poId,
                     'brand'             => $item['brand'] ?? 'Universal',
@@ -376,7 +387,7 @@ class AccessoryRestockService
                     'qty_received'      => $q,
                     'unit_cost'         => $c,
                     'tax_rate'          => 18.00,
-                    'line_total'        => $q * $c,
+                    'line_total'        => $lineTot,
                 ]);
             }
 

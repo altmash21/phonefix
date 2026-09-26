@@ -365,6 +365,9 @@
                                 onclick="openUpdateModal({{ json_encode($repair) }})">
                                 <i data-lucide="edit-3" style="width:11px;height:11px;"></i> Update
                             </button>
+                            <a href="{{ route('mobileshop.repairs.bill', ['id' => $repair->id]) }}" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:11px; font-weight:700; color:#4F46E5; border-color:#C7D2FE; background:#EEF2FF;" title="Print Repair Bill / Job Sheet">
+                                <i data-lucide="printer" style="width:13px;height:13px;"></i> Bill
+                            </a>
                             <a href="{{ route('public.track_repair', ['ticket_number' => $repair->ticket_number]) }}" target="_blank" class="btn-icon" title="Public Tracking View">
                                 <i data-lucide="external-link" style="width:13px;height:13px;"></i>
                             </a>
@@ -465,6 +468,9 @@
                             onclick="openUpdateModal({{ json_encode($repair) }})">
                             <i data-lucide="edit-3" style="width:11px;height:11px;"></i>
                         </button>
+                        <a href="{{ route('mobileshop.repairs.bill', ['id' => $repair->id]) }}" class="compact-action-btn" title="Print Repair Bill" style="padding:4px 6px; border:1px solid #C7D2FE; border-radius:6px; color:#4F46E5; background:#EEF2FF; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
+                            <i data-lucide="printer" style="width:13px;height:13px;"></i>
+                        </a>
                         <a href="{{ route('public.track_repair', ['ticket_number' => $repair->ticket_number]) }}" target="_blank" class="compact-action-btn" title="Public Tracking View" style="padding:4px 6px; border:1px solid #CBD5E1; border-radius:6px; color:#475569; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
                             <i data-lucide="external-link" style="width:13px;height:13px;"></i>
                         </a>
@@ -591,11 +597,16 @@
                     </div>
                 </div>
 
-                <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap:10px; padding-top:12px; border-top:1px solid var(--card-border);">
-                    <button type="button" onclick="closeUpdateModal()" class="btn btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i data-lucide="save" style="width:14px;height:14px;"></i> Save & Update Ticket
-                    </button>
+                <div class="modal-sticky-footer" style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:12px; border-top:1px solid var(--card-border);">
+                    <a id="modalPrintBillBtn" href="#" target="_blank" class="btn btn-outline" style="color:#4F46E5; border-color:#C7D2FE; background:#EEF2FF; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="printer" style="width:14px;height:14px;"></i> Print Bill
+                    </a>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" onclick="closeUpdateModal()" class="btn btn-outline">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="save" style="width:14px;height:14px;"></i> Save & Update Ticket
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -628,9 +639,12 @@ function openUpdateModal(repair, targetStatus = null) {
     currentTicket = repair;
     const modal = document.getElementById('updateRepairModal');
     
-    // Set form action URL
+    // Set form action URL and Print Bill link
     const updateUrl = "{{ route('mobileshop.repairs.update', ['id' => ':id']) }}".replace(':id', repair.id);
     document.getElementById('updateRepairForm').action = updateUrl;
+    const billUrl = "{{ route('mobileshop.repairs.bill', ['id' => ':id']) }}".replace(':id', repair.id);
+    const printBtn = document.getElementById('modalPrintBillBtn');
+    if (printBtn) printBtn.href = billUrl;
 
     // Set title and subtitle
     document.getElementById('modalTicketTitle').textContent = `Service Desk — ${repair.ticket_number || ('#REP-' + repair.id)}`;

@@ -697,20 +697,24 @@
             <div class="card-body" style="padding:12px 16px;">
                 <!-- Row 1: Metrics & Totals -->
                 <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding-bottom:12px; border-bottom:1px solid #F1F5F9;">
-                    <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
                         <div>
                             <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Items</span>
                             <div style="font-size:15px; font-weight:800; color:#0F172A;" id="lblBulkLineCount">0 lines</div>
                         </div>
-                        <div style="border-left:1px solid #E2E8F0; padding-left:24px;">
+                        <div style="border-left:1px solid #E2E8F0; padding-left:20px;">
                             <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Units</span>
                             <div style="font-size:15px; font-weight:800; color:#0F172A;" id="lblBulkTotalUnits">0 units</div>
                         </div>
-                        <div style="border-left:1px solid #E2E8F0; padding-left:24px;">
-                            <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Invoice Total</span>
+                        <div style="border-left:1px solid #E2E8F0; padding-left:20px;">
+                            <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Invoice Cost</span>
                             <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace;" id="lblBulkTotalCost">₹0.00</div>
                         </div>
-                        <div id="supplierDueSummaryBlock" style="display:none; border-left:1px solid #E2E8F0; padding-left:24px;">
+                        <div style="border-left:1px solid #E2E8F0; padding-left:20px;">
+                            <span style="font-size:10px; color:#15803D; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Total Sell Value</span>
+                            <div style="font-size:16px; font-weight:900; color:#15803D; font-family:'JetBrains Mono', monospace;" id="lblBulkTotalSellValue">₹0.00</div>
+                        </div>
+                        <div id="supplierDueSummaryBlock" style="display:none; border-left:1px solid #E2E8F0; padding-left:20px;">
                             <span style="font-size:10px; color:#DC2626; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Supplier Past Due</span>
                             <div style="font-size:16px; font-weight:800; color:#DC2626; font-family:'JetBrains Mono', monospace;" id="lblSupplierPastDue">₹0.00</div>
                         </div>
@@ -723,6 +727,41 @@
                         <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitBulkRestock" style="background:#5E6AD2; border-color:#5E6AD2; font-weight:800; padding:8px 20px; font-size:12px; border-radius:6px; box-shadow:0 2px 6px rgba(94, 106, 210, 0.3);">
                             <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Purchase Accessories &amp; Settle
                         </button>
+                    </div>
+                </div>
+
+                <!-- Custom Price / Bill Negotiation Option -->
+                <div style="margin-top:10px; padding:8px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="font-size:11px; font-weight:800; text-transform:uppercase; color:#475569;">Purchase Bill Price:</span>
+                        <div style="display:inline-flex; gap:4px;">
+                            <button type="button" class="btn btn-outline btn-xs" id="btnPriceModeAuto" onclick="setBulkPriceMode('auto')" style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:5px; background:#EEF2FF; color:#4F46E5; border-color:#C7D2FE;">
+                                Items Total (<span id="lblAutoTotalTag">₹0</span>)
+                            </button>
+                            <button type="button" class="btn btn-outline btn-xs" id="btnPriceModeCustom" onclick="setBulkPriceMode('custom')" style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:5px; color:#475569;">
+                                Custom Price
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Price Input Field -->
+                    <div id="bulkCustomPriceWrap" style="display:none; align-items:center; gap:8px;">
+                        <label for="bulkCustomTotalCost" style="font-size:11px; font-weight:700; color:#334155; margin:0;">Set Custom Bill (₹):</label>
+                        <div style="position:relative;">
+                            <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); font-weight:700; color:#64748B; font-size:12px;">₹</span>
+                            <input type="number" step="0.01" min="0" name="custom_total_cost" id="bulkCustomTotalCost"
+                                placeholder="Amount"
+                                class="restock-input num-field"
+                                style="width:130px; padding:3px 8px 3px 22px !important; font-size:13px !important; font-weight:800 !important; color:#4F46E5 !important; height:28px;"
+                                oninput="onCustomPriceChanged(this.value)">
+                        </div>
+                        <button type="button" onclick="resetCustomPriceToAuto()" class="btn btn-outline btn-xs" style="font-size:10.5px; font-weight:700; padding:3px 8px;" title="Reset to total of all items">
+                            Reset to Items Total
+                        </button>
+                    </div>
+
+                    <div style="font-size:11.5px; color:#15803D; font-weight:700;">
+                        Can be sold for: <span id="lblBulkRetailTotal" style="font-weight:900; font-family:'JetBrains Mono', monospace;">₹0</span>
                     </div>
                 </div>
 
@@ -929,10 +968,55 @@
     }
     window.onSupplierSelected = onSupplierSelected;
 
-    function getCurrentBatchTotalCost() {
-        const rows = document.querySelectorAll('#bulkTableBody .batch-item-row');
+    let bulkPriceMode = 'auto'; // 'auto' or 'custom'
+    let customBillAmount = null;
+
+    function setBulkPriceMode(mode) {
+        bulkPriceMode = mode;
+        const btnAuto = document.getElementById('btnPriceModeAuto');
+        const btnCustom = document.getElementById('btnPriceModeCustom');
+        const wrap = document.getElementById('bulkCustomPriceWrap');
+        const customInput = document.getElementById('bulkCustomTotalCost');
+
+        if (mode === 'custom') {
+            if (btnAuto) { btnAuto.style.background = '#fff'; btnAuto.style.color = '#475569'; btnAuto.style.borderColor = '#CBD5E1'; }
+            if (btnCustom) { btnCustom.style.background = '#EEF2FF'; btnCustom.style.color = '#4F46E5'; btnCustom.style.borderColor = '#C7D2FE'; }
+            if (wrap) wrap.style.display = 'inline-flex';
+            if (customInput && (!customInput.value || parseFloat(customInput.value) <= 0)) {
+                const autoTot = getAutoTotalCost();
+                customInput.value = autoTot > 0 ? autoTot.toFixed(2) : '';
+                customBillAmount = autoTot;
+            }
+        } else {
+            if (btnAuto) { btnAuto.style.background = '#EEF2FF'; btnAuto.style.color = '#4F46E5'; btnAuto.style.borderColor = '#C7D2FE'; }
+            if (btnCustom) { btnCustom.style.background = '#fff'; btnCustom.style.color = '#475569'; btnCustom.style.borderColor = '#CBD5E1'; }
+            if (wrap) wrap.style.display = 'none';
+            if (customInput) customInput.value = '';
+            customBillAmount = null;
+        }
+        updateBulkSummary();
+    }
+    window.setBulkPriceMode = setBulkPriceMode;
+
+    function onCustomPriceChanged(val) {
+        const parsed = parseFloat(val);
+        customBillAmount = (!isNaN(parsed) && parsed >= 0) ? parsed : null;
+        updateBulkSummary();
+    }
+    window.onCustomPriceChanged = onCustomPriceChanged;
+
+    function resetCustomPriceToAuto() {
+        const autoTot = getAutoTotalCost();
+        const customInput = document.getElementById('bulkCustomTotalCost');
+        if (customInput) customInput.value = autoTot > 0 ? autoTot.toFixed(2) : '';
+        customBillAmount = autoTot;
+        updateBulkSummary();
+    }
+    window.resetCustomPriceToAuto = resetCustomPriceToAuto;
+
+    function getAutoTotalCost() {
         let totalCost = 0.0;
-        rows.forEach(r => {
+        document.querySelectorAll('#bulkTableBody .batch-item-row').forEach(r => {
             const qtyInput = r.querySelector('input[name*="[qty]"]');
             const costInput = r.querySelector('input[name*="[unit_cost]"]');
             if (qtyInput && costInput) {
@@ -942,6 +1026,14 @@
             }
         });
         return totalCost;
+    }
+    window.getAutoTotalCost = getAutoTotalCost;
+
+    function getCurrentBatchTotalCost() {
+        if (bulkPriceMode === 'custom' && customBillAmount !== null) {
+            return customBillAmount;
+        }
+        return getAutoTotalCost();
     }
     window.getCurrentBatchTotalCost = getCurrentBatchTotalCost;
 
@@ -2110,20 +2202,30 @@
     function updateBulkSummary() {
         const rows = document.querySelectorAll('#bulkTableBody .batch-item-row');
         let totalUnits = 0;
-        let totalCost = 0.0;
+        let calculatedItemCost = 0.0;
+        let totalSellValue = 0.0;
 
         rows.forEach(r => {
             const qtyInput = r.querySelector('input[name*="[qty]"]');
             const costInput = r.querySelector('input[name*="[unit_cost]"]');
+            const sellInput = r.querySelector('input[name*="[selling_price]"]');
             if (qtyInput && costInput) {
                 const q = parseInt(qtyInput.value) || 0;
                 const c = parseFloat(costInput.value) || 0;
+                const s = sellInput ? (parseFloat(sellInput.value) || 0) : 0;
                 totalUnits += q;
-                totalCost += (q * c);
+                calculatedItemCost += (q * c);
+                totalSellValue += (q * s);
             }
         });
 
-        const formattedCost = formatCurrency(totalCost);
+        // Determine effective bill cost (custom price or items total)
+        const effectiveBillCost = (bulkPriceMode === 'custom' && customBillAmount !== null)
+            ? customBillAmount
+            : calculatedItemCost;
+
+        const formattedCost = formatCurrency(effectiveBillCost);
+        const formattedSell = formatCurrency(totalSellValue);
 
         const rowCountEl = document.getElementById('bulkRowCount');
         if (rowCountEl) rowCountEl.textContent = rows.length;
@@ -2137,6 +2239,15 @@
         const totalCostEl = document.getElementById('lblBulkTotalCost');
         if (totalCostEl) totalCostEl.textContent = formattedCost;
 
+        const totalSellEl = document.getElementById('lblBulkTotalSellValue');
+        if (totalSellEl) totalSellEl.textContent = formattedSell;
+
+        const retailTotalEl = document.getElementById('lblBulkRetailTotal');
+        if (retailTotalEl) retailTotalEl.textContent = formattedSell;
+
+        const autoTagEl = document.getElementById('lblAutoTotalTag');
+        if (autoTagEl) autoTagEl.textContent = formatCurrency(calculatedItemCost);
+
         // Mobile Sticky Dock elements
         const mobileTotalEl = document.getElementById('mobileStickyTotal');
         if (mobileTotalEl) mobileTotalEl.textContent = formattedCost;
@@ -2149,25 +2260,25 @@
         const outBal = s ? (parseFloat(s.outstanding_balance) || 0) : 0;
 
         const btnBillAmt = document.getElementById('btnLblBillAmt');
-        if (btnBillAmt) btnBillAmt.textContent = formatCurrency(totalCost);
+        if (btnBillAmt) btnBillAmt.textContent = formatCurrency(effectiveBillCost);
 
         const btnClearAll = document.getElementById('btnLblClearAll');
-        if (btnClearAll) btnClearAll.textContent = formatCurrency(totalCost + outBal);
+        if (btnClearAll) btnClearAll.textContent = formatCurrency(effectiveBillCost + outBal);
 
-        // If user hasn't explicitly entered anything or input is untouched, default to totalCost
+        // If user hasn't explicitly entered anything or input is untouched, default to effectiveBillCost
         let actualPaid = (rawPaidStr !== '' && rawPaidStr !== null && !isNaN(parseFloat(rawPaidStr)))
             ? parseFloat(rawPaidStr)
-            : totalCost;
+            : effectiveBillCost;
 
         // Update live Supplier Debt Breakdown box
-        const totalDueWithPast = totalCost + outBal;
+        const totalDueWithPast = effectiveBillCost + outBal;
         const remainingDebt = Math.max(0, totalDueWithPast - actualPaid);
 
         const elPastDebt = document.getElementById('valSupplierPastDebt');
         if (elPastDebt) elPastDebt.textContent = formatCurrency(outBal);
 
         const elBillAmt = document.getElementById('valCurrentBillAmt');
-        if (elBillAmt) elBillAmt.textContent = formatCurrency(totalCost);
+        if (elBillAmt) elBillAmt.textContent = formatCurrency(effectiveBillCost);
 
         const elTotalPayable = document.getElementById('valTotalPayable');
         if (elTotalPayable) elTotalPayable.textContent = formatCurrency(totalDueWithPast);
@@ -2188,13 +2299,13 @@
             if (rawPaidStr === '') {
                 pill.style.background = '#EEF2FF';
                 pill.style.color = '#4338CA';
-                pill.innerHTML = `Default: <strong>Full Invoice Payment (₹${totalCost.toFixed(2)})</strong>. Change amount to clear balance.`;
+                pill.innerHTML = `Default: <strong>Full Invoice Payment (₹${effectiveBillCost.toFixed(2)})</strong>. Change amount to clear balance.`;
             } else if (actualPaid <= 0) {
                 pill.style.background = '#FEF2F2';
                 pill.style.color = '#B91C1C';
-                pill.innerHTML = `⚠️ <strong>Full Credit (Udhari)</strong>: Entire ₹${totalCost.toFixed(2)} will be added to supplier balance`;
-            } else if (actualPaid < totalCost) {
-                const due = totalCost - actualPaid;
+                pill.innerHTML = `⚠️ <strong>Full Credit (Udhari)</strong>: Entire ₹${effectiveBillCost.toFixed(2)} will be added to supplier balance`;
+            } else if (actualPaid < effectiveBillCost) {
+                const due = effectiveBillCost - actualPaid;
                 pill.style.background = '#FFFBEB';
                 pill.style.color = '#B45309';
                 pill.innerHTML = `🟡 <strong>Partial Payment (₹${actualPaid.toFixed(2)})</strong>: Remaining invoice due ₹${due.toFixed(2)} added to supplier debt`;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MobileShop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RepairsController extends BaseMobileShopController
 {
@@ -249,5 +250,71 @@ class RepairsController extends BaseMobileShopController
 
             return redirect()->route('mobileshop.repairs')->with('success', "Ticket #{$ticket->ticket_number} updated to status: {$status}!");
         });
+    }
+
+    /**
+     * Resolve repair ticket details with parts and company security
+     */
+    protected function resolveRepairTicketDetails(int $companyId, int $id)
+    {
+        $ticket = DB::table('ms_repair_tickets')
+            ->join('ms_customers', 'ms_repair_tickets.customer_id', '=', 'ms_customers.id')
+            ->select('ms_repair_tickets.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
+            ->where('ms_repair_tickets.company_id', $companyId)
+            ->where('ms_repair_tickets.id', $id)
+            ->first();
+
+        if (!$ticket) {
+            return null;
+        }
+
+        $ticket->decrypted_pin = $ticket->passcode_encrypted ? Crypt::decryptString($ticket->passcode_encrypted) : 'None';
+        $ticket->decrypted_pattern = $ticket->pattern_code_encrypted ? Crypt::decryptString($ticket->pattern_code_encrypted) : 'None';
+
+        $parts = DB::table('ms_repair_ticket_parts')
+            ->join('ms_parts_inventory', 'ms_repair_ticket_parts.part_id', '=', 'ms_parts_inventory.id')
+            ->where('ms_repair_ticket_parts.repair_ticket_id', $ticket->id)
+            ->select('ms_repair_ticket_parts.*', 'ms_parts_inventory.name as part_name', 'ms_parts_inventory.category as part_category')
+            ->get();
+
+        $company = DB::table('companies')->where('id', $companyId)->first();
+
+        return [
+            'ticket'  => $ticket,
+            'parts'   => $parts,
+            'company' => $company,
+        ];
+    }
+
+    /**
+     * Print Repair Bill / Job Sheet (Web Preview)
+     */
+    public function printBill(Request $request, $id)
+    {
+        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-repairs') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('repair-technician')), 403, 'Unauthorized access to repair service bills.');
+
+        $data = $this->resolveRepairTicketDetails($this->getCompanyId(), (int) $id);
+        if (!$data) {
+            abort(404, 'Repair ticket record not found.');
+        }
+
+        return view('mobileshop.repair_bill', $data);
+    }
+
+    /**
+     * Download Repair Bill as PDF
+     */
+    public function printBillPdf(Request $request, $id)
+    {
+        abort_unless(auth()->check() && (auth()->user()->can('read-mobileshop-repairs') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('repair-technician')), 403, 'Unauthorized access to repair service bills.');
+
+        $data = $this->resolveRepairTicketDetails($this->getCompanyId(), (int) $id);
+        if (!$data) {
+            abort(404, 'Repair ticket record not found.');
+        }
+
+        $pdf = Pdf::loadView('mobileshop.pdf.repair_bill', $data);
+        $pdf->setPaper('a4', 'portrait');
+        return $pdf->download("RepairBill-{$data['ticket']->ticket_number}.pdf");
     }
 }

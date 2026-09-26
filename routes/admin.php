@@ -252,6 +252,12 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('repairs', 'MobileShop\RepairsController@repairs')
         ->middleware('permission:read-mobileshop-repairs')
         ->name('repairs');
+    Route::get('repairs/{id}/bill', 'MobileShop\RepairsController@printBill')
+        ->middleware('permission:read-mobileshop-repairs')
+        ->name('repairs.bill');
+    Route::get('repairs/{id}/pdf', 'MobileShop\RepairsController@printBillPdf')
+        ->middleware('permission:read-mobileshop-repairs')
+        ->name('repairs.pdf');
     Route::post('repairs/store', 'MobileShop\RepairsController@storeRepair')
         ->middleware('permission:update-mobileshop-repairs|read-mobileshop-repairs')
         ->name('repairs.store');
