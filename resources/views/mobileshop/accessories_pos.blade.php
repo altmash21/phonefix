@@ -479,10 +479,10 @@
 
         <div class="pos-desktop-layout">
 
-            <!-- ═══════════ LEFT COLUMN: CUSTOMER & PRODUCT CATALOG ═══════════ -->
+            <!-- ═══════════ LEFT COLUMN: CUSTOMER, PRODUCT SEARCH & BILLED ITEMS ═══════════ -->
             <div class="pos-col-left">
 
-                <!-- ── 2. Customer Information Card ── -->
+                <!-- ── 1. Customer Information Card ── -->
                 <div class="app-card">
                     <div class="app-card-header">
                         <div class="app-card-title">
@@ -493,11 +493,11 @@
                         </span>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <!-- Customer Mobile Phone -->
                         <div>
                             <label class="app-input-label">Customer Mobile *</label>
-                            <input type="tel" name="customer_phone" id="accCustomerPhone" list="accCustomerList" placeholder="10-digit Mobile Number" required class="app-input-text" autocomplete="off" oninput="handlePhoneInput(this.value)">
+                            <input type="tel" name="customer_phone" id="accCustomerPhone" list="accCustomerList" placeholder="Mobile" required class="app-input-text" autocomplete="off" oninput="handlePhoneInput(this.value)">
                             <datalist id="accCustomerList">
                                 @foreach($customers ?? [] as $c)
                                     <option value="{{ $c->phone }}" data-name="{{ $c->name }}" data-balance="{{ $c->udhari_balance ?? 0 }}" data-gstin="{{ $c->gstin ?? '' }}">
@@ -510,21 +510,13 @@
                         <!-- Customer Full Name -->
                         <div>
                             <label class="app-input-label">Customer Name *</label>
-                            <input type="text" name="customer_name" id="accCustomerName" placeholder="Full Name" required class="app-input-text">
+                            <input type="text" name="customer_name" id="accCustomerName" placeholder="Name" required class="app-input-text">
                         </div>
                     </div>
-
-                    <!-- GST Bill Toggle -->
-                    <label class="toggle-switch-card">
-                        <div>
-                            <span style="font-size:13px; font-weight:700; color:#0F172A;">Make GST Bill (18% Tax Invoice)</span>
-                            <p style="font-size:11px; color:#64748B; margin:2px 0 0 0;">Toggle on for B2B GST tax invoice (Standard estimate by default)</p>
-                        </div>
-                        <input type="checkbox" name="is_gst" id="accIsGstCheckbox" value="1" style="width:20px; height:20px; accent-color:#2563EB; cursor:pointer;" onchange="toggleGstBilling(this.checked)">
-                    </label>
+                    <input type="hidden" name="is_gst" id="accIsGstCheckbox" value="0">
                 </div>
 
-                <!-- ── 3. Product Picker & Fast Search Dropdown Card ── -->
+                <!-- ── 2. Select Product to Bill Card ── -->
                 <div class="app-card" id="productPickerCard">
                     <div class="app-card-header" style="margin-bottom:12px;">
                         <div class="app-card-title">
@@ -535,58 +527,36 @@
                         </span>
                     </div>
 
-                    <!-- Category Selector Dropdown & Filter Pills -->
-                    <div style="margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <label class="app-input-label" style="margin:0;">Filter by Category</label>
-                            <span style="font-size:11px; color:#64748B;">Active: <strong id="currentCategoryLabel" style="color:#0F172A;">All Categories</strong></span>
-                        </div>
-                        <div class="category-pills-row" id="categoryPillContainer">
-                            <div class="category-pill active" data-slug="" onclick="selectCategoryFilter('')">All Categories</div>
-                            @php
-                                $allCatsInStore = collect($partsList ?? [])->pluck('category')->filter()->unique()->values();
-                            @endphp
-                            @foreach($allCatsInStore as $cSlug)
-                                <div class="category-pill {{ ($presetCategory ?? '') === $cSlug ? 'active' : '' }}" data-slug="{{ $cSlug }}" onclick="selectCategoryFilter('{{ $cSlug }}')">
-                                    {{ ucwords(str_replace('_', ' ', $cSlug)) }}
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <!-- Product Search Input with Live Dropdown -->
+                    <!-- Product Search Input with Add Button -->
                     <div style="position:relative;" id="productSearchWrapper">
-                        <label class="app-input-label" style="display:flex; justify-content:space-between; align-items:center;">
-                            <span>Search & Select Item</span>
-                            <span style="font-size:11px; font-weight:500; color:#64748B;">Type name, model, brand, or category</span>
-                        </label>
-                        <div style="position:relative;">
-                            <input type="text" id="accSearchInput" 
-                                placeholder="Type to search e.g. iPhone 15 glass, Type-C cable, 20W charger..." 
-                                class="app-input-text" 
-                                style="padding-left:42px; padding-right:42px; height:44px; font-size:13.5px; font-weight:600; border-radius:10px; border:1.5px solid #CBD5E1;" 
-                                autocomplete="off" 
-                                oninput="onLiveSearch(this.value)" 
-                                onfocus="onLiveSearch(this.value, true)"
-                                onkeydown="handleSearchKeyNavigation(event)">
-                            <i data-lucide="search" style="position:absolute; left:14px; top:13px; width:18px; height:18px; color:#64748B;"></i>
-                            <button type="button" id="btnClearSearch" onclick="clearSearch()" style="display:none; position:absolute; right:12px; top:12px; background:#E2E8F0; border:none; color:#475569; width:20px; height:20px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer; align-items:center; justify-content:center;">✕</button>
+                        <label class="app-input-label">Search & Select Item</label>
+                        <div style="display:flex; gap:8px;">
+                            <div style="position:relative; flex:1;">
+                                <input type="text" id="accSearchInput" 
+                                    placeholder="Product" 
+                                    class="app-input-text" 
+                                    style="padding-left:40px; padding-right:36px; height:44px; font-size:14px; font-weight:700; border-radius:10px; border:1.5px solid #CBD5E1;" 
+                                    autocomplete="off" 
+                                    oninput="onLiveSearch(this.value)" 
+                                    onfocus="onLiveSearch(this.value, true)"
+                                    onkeydown="handleSearchKeyNavigation(event)">
+                                <i data-lucide="search" style="position:absolute; left:13px; top:13px; width:18px; height:18px; color:#64748B;"></i>
+                                <button type="button" id="btnClearSearch" onclick="clearSearch()" style="display:none; position:absolute; right:10px; top:12px; background:#E2E8F0; border:none; color:#475569; width:20px; height:20px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer; align-items:center; justify-content:center;">✕</button>
+                            </div>
+                            <button type="button" onclick="addFirstMatchingProduct()" class="btn btn-primary" style="height:44px; padding:0 18px; font-weight:800; font-size:13px; border-radius:10px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; background:#2563EB; color:#fff; border:none; cursor:pointer;">
+                                <i data-lucide="plus" style="width:16px;height:16px;"></i> Add
+                            </button>
                         </div>
 
                         <!-- Dropdown Results -->
                         <div id="accSearchDropdown" class="app-search-dropdown" style="display:none;"></div>
                     </div>
 
-                    <!-- Keyboard navigation & tips hint bar -->
+                    <!-- Keyboard Navigation Tips Hint Bar -->
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:8px 12px; background:#F8FAFC; border-radius:8px; border:1px solid #F1F5F9; font-size:11px; color:#64748B;">
                         <span style="display:inline-flex; align-items:center; gap:5px;">
-                            <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">↑</kbd>
-                            <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">↓</kbd>
-                            Navigate &bull;
                             <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">Enter</kbd>
-                            Add to Bill &bull;
-                            <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">Esc</kbd>
-                            Close
+                            Press Enter or Click Add to bill item &bull; Cursor stays in input
                         </span>
                         <span id="quickItemMatchCount" style="font-weight:700; color:#2563EB;">Click any item to add</span>
                     </div>
@@ -598,12 +568,7 @@
                     </div>
                 </div>
 
-            </div>
-
-            <!-- ═══════════ RIGHT COLUMN: CART & CHECKOUT ═══════════ -->
-            <div class="pos-col-right">
-
-                <!-- ── 4. Cart / Billed Items Card ── -->
+                <!-- ── 3. Cart / Billed Items Card (Moved below Item Select) ── -->
                 <div class="app-card" id="cartSectionCard" style="margin-bottom:0;">
                     <div class="app-card-header">
                         <div class="app-card-title">
@@ -620,12 +585,17 @@
                         <div id="emptyCartMessage" style="text-align:center; padding:32px 16px; color:#64748B;">
                             <i data-lucide="shopping-cart" style="width:36px; height:36px; color:#CBD5E1; margin:0 auto 10px; display:block;"></i>
                             <div style="font-size:14px; font-weight:700; color:#475569;">Your bill is currently empty</div>
-                            <p style="font-size:12px; color:#94A3B8; margin:4px 0 0 0;">Tap or search products to add items</p>
+                            <p style="font-size:12px; color:#94A3B8; margin:4px 0 0 0;">Tap or search products above to add items</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- ── 5. Payment & Settlement Card ── -->
+            </div>
+
+            <!-- ═══════════ RIGHT COLUMN: PAYMENT & SETTLEMENT ON TOP RIGHT ═══════════ -->
+            <div class="pos-col-right">
+
+                <!-- ── 4. Payment & Settlement Card ── -->
                 <div class="app-card">
                     <div class="app-card-header">
                         <div class="app-card-title">
@@ -659,7 +629,7 @@
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <input type="number" id="accCustomPriceInput" min="0" step="1" class="app-input-text"
                                     style="height:38px; font-size:16px; font-weight:900; color:#4F46E5; padding:6px 10px;"
-                                    placeholder="Enter custom bill amount"
+                                    placeholder="Amount"
                                     oninput="onCustomPriceInput(this.value)">
                                 <span id="customPriceDiscountBadge" style="font-size:12px; font-weight:800; color:#16A34A; white-space:nowrap;"></span>
                             </div>
@@ -677,11 +647,11 @@
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                                 <div>
                                     <label class="app-input-label" style="font-size:11px; margin-bottom:2px;">💵 Cash (₹)</label>
-                                    <input type="number" id="splitCashInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:14px; font-weight:800;" placeholder="0" oninput="onSplitCashInput(this.value)">
+                                    <input type="number" id="splitCashInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:14px; font-weight:800;" placeholder="Cash" oninput="onSplitCashInput(this.value)">
                                 </div>
                                 <div>
                                     <label class="app-input-label" style="font-size:11px; margin-bottom:2px;">📱 UPI (₹)</label>
-                                    <input type="number" id="splitUpiInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:14px; font-weight:800;" placeholder="0" oninput="onSplitUpiInput(this.value)">
+                                    <input type="number" id="splitUpiInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:14px; font-weight:800;" placeholder="UPI" oninput="onSplitUpiInput(this.value)">
                                 </div>
                             </div>
                         </div>
@@ -699,7 +669,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <input type="number" step="1" name="amount_paid" id="accAmountPaid" required placeholder="0" class="app-input-text" style="font-size:20px; font-weight:900; color:#111827;" oninput="onAmountPaidManualInput()">
+                            <input type="number" step="1" name="amount_paid" id="accAmountPaid" required placeholder="Amount" class="app-input-text" style="font-size:20px; font-weight:900; color:#111827;" oninput="onAmountPaidManualInput()">
                         </div>
 
                         <!-- Full Khata Notice -->
@@ -844,9 +814,7 @@
         // Filter products across Name, Compatible Model, Brand, Category
         const words = q.split(/\s+/).filter(Boolean);
         currentFilteredItems = ALL_PARTS.filter(p => {
-            const matchesCat = !activeCategoryFilter || p.category === activeCategoryFilter;
-            if (!matchesCat) return false;
-            if (words.length === 0) return true; // show all available in category on focus
+            if (words.length === 0) return true; // show all available on focus
 
             const name = (p.name || '').toLowerCase();
             const model = (p.compatible_model || '').toLowerCase();
@@ -879,7 +847,7 @@
         } else {
             html += `<div style="padding:6px 12px; font-size:11px; font-weight:800; color:#2563EB; text-transform:uppercase; background:#EFF6FF; border-radius:6px; margin-bottom:4px; display:flex; justify-content:space-between;">
                 <span>Matches for "${escapeHtml(q)}" (${currentFilteredItems.length})</span>
-                <span style="font-weight:600; color:#64748B;">Press Enter or click to add</span>
+                <span style="font-weight:600; color:#64748B;">Press Enter or click Add</span>
             </div>`;
         }
 
@@ -911,11 +879,17 @@
         dropdown.style.display = 'block';
     }
 
-    // ── Keyboard Navigation (Arrow Keys & Enter) ──
+    // ── Keyboard Navigation (Arrow Keys & Enter to Add) ──
     function handleSearchKeyNavigation(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addFirstMatchingProduct();
+            return;
+        }
+
         const dropdown = document.getElementById('accSearchDropdown');
         if (!dropdown || dropdown.style.display === 'none') {
-            if (e.key === 'ArrowDown' || e.key === 'Enter') {
+            if (e.key === 'ArrowDown') {
                 onLiveSearch(document.getElementById('accSearchInput').value, true);
                 e.preventDefault();
             }
@@ -933,18 +907,47 @@
             e.preventDefault();
             keyboardHighlightedIndex = (keyboardHighlightedIndex - 1 + rows.length) % rows.length;
             updateDropdownHighlight(rows);
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (keyboardHighlightedIndex >= 0 && keyboardHighlightedIndex < rows.length) {
-                rows[keyboardHighlightedIndex].click();
-            } else if (rows.length > 0) {
-                rows[0].click();
-            }
         } else if (e.key === 'Escape') {
             dropdown.style.display = 'none';
             keyboardHighlightedIndex = -1;
         }
     }
+
+    // ── Instant Add First Matching Product & Keep Cursor Focused ──
+    function addFirstMatchingProduct() {
+        const input = document.getElementById('accSearchInput');
+        const q = (input ? input.value : '').trim().toLowerCase();
+        const dropdown = document.getElementById('accSearchDropdown');
+        const rows = dropdown ? dropdown.querySelectorAll('.search-result-row') : [];
+
+        let targetId = null;
+
+        if (keyboardHighlightedIndex >= 0 && currentFilteredItems[keyboardHighlightedIndex]) {
+            targetId = currentFilteredItems[keyboardHighlightedIndex].id;
+        } else if (rows.length > 0 && currentFilteredItems.length > 0) {
+            targetId = currentFilteredItems[0].id;
+        } else if (q.length > 0) {
+            const words = q.split(/\s+/).filter(Boolean);
+            const matched = ALL_PARTS.find(p => {
+                const fullText = `${p.name || ''} ${p.compatible_model || ''} ${p.brand || ''} ${p.category || ''}`.toLowerCase();
+                return words.every(w => fullText.includes(w));
+            });
+            if (matched) {
+                targetId = matched.id;
+            }
+        }
+
+        if (targetId) {
+            onPickProductFromSearch(targetId);
+        } else if (q.length > 0) {
+            alert('No matching in-stock product found.');
+        }
+
+        if (input) {
+            setTimeout(() => input.focus(), 10);
+        }
+    }
+    window.addFirstMatchingProduct = addFirstMatchingProduct;
 
     function updateDropdownHighlight(rows) {
         rows.forEach((r, i) => {
@@ -959,7 +962,10 @@
 
     function clearSearch() {
         const input = document.getElementById('accSearchInput');
-        if (input) input.value = '';
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
         const clearBtn = document.getElementById('btnClearSearch');
         if (clearBtn) clearBtn.style.display = 'none';
         const dropdown = document.getElementById('accSearchDropdown');
@@ -1007,7 +1013,7 @@
         renderCart();
     }
 
-    // ── Pick Product From Search Dropdown (One-Click Direct Add) ──
+    // ── Pick Product From Search Dropdown (One-Click Direct Add & Keep Cursor) ──
     function onPickProductFromSearch(partId) {
         const item = ALL_PARTS.find(p => p.id === partId);
         if (!item) return;
@@ -1018,7 +1024,7 @@
         const input = document.getElementById('accSearchInput');
         if (input) {
             input.value = '';
-            input.focus();
+            setTimeout(() => input.focus(), 10);
         }
         const clearBtn = document.getElementById('btnClearSearch');
         if (clearBtn) clearBtn.style.display = 'none';
