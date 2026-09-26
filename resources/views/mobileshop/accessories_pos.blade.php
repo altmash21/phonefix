@@ -635,68 +635,88 @@
 
                     <!-- Payment Mode Selector -->
                     <label class="app-input-label">Select Payment Method</label>
-                    <div class="payment-chip-grid">
+                    <div class="payment-chip-grid" style="grid-template-columns: repeat(3, 1fr);">
                         <div class="payment-chip-btn active" data-mode="cash" onclick="selectPaymentMode('cash')">💵 Cash</div>
-                        <div class="payment-chip-btn" data-mode="upi" onclick="selectPaymentMode('upi')">📱 UPI / QR</div>
-                        <div class="payment-chip-btn" data-mode="card" onclick="selectPaymentMode('card')">💳 Card</div>
+                        <div class="payment-chip-btn" data-mode="upi" onclick="selectPaymentMode('upi')">📱 UPI</div>
+                        <div class="payment-chip-btn" data-mode="cash+upi" onclick="selectPaymentMode('cash+upi')">💵+📱 Cash + UPI</div>
+                        <div class="payment-chip-btn" data-mode="cash+udhari" onclick="selectPaymentMode('cash+udhari')">💵+📒 Cash + Udhari</div>
+                        <div class="payment-chip-btn" data-mode="upi+udhari" onclick="selectPaymentMode('upi+udhari')">📱+📒 UPI + Udhari</div>
                         <div class="payment-chip-btn" data-mode="credit_udhari" onclick="selectPaymentMode('credit_udhari')">📒 Full Khata</div>
-                        <div class="payment-chip-btn" data-mode="split" onclick="selectPaymentMode('split')">⚖️ Split</div>
                     </div>
                     <input type="hidden" name="payment_mode" id="accPaymentMode" value="cash">
 
-                    <!-- Whole Invoice Discount Selector -->
-                    <!-- Whole Invoice Discount & Custom Price Selector -->
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
-                            <label class="app-input-label" style="margin:0; font-weight:800;">Discount / Custom Price</label>
-                            <div class="disc-pill-group">
-                                <button type="button" class="disc-pill-btn active" id="accDiscPill_none" onclick="setAccBillDiscountMode('none')">None</button>
-                                <button type="button" class="disc-pill-btn" id="accDiscPill_percent" onclick="setAccBillDiscountMode('percent')">% Off</button>
-                                <button type="button" class="disc-pill-btn" id="accDiscPill_flat" onclick="setAccBillDiscountMode('flat')">₹ Off</button>
-                                <button type="button" class="disc-pill-btn" id="accDiscPill_custom" onclick="setAccBillDiscountMode('custom')" style="font-weight:800;">Custom Price</button>
-                            </div>
-                        </div>
+                    <!-- Custom Price Tickbox (All discount buttons removed) -->
+                    <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+                        <label style="display:flex; align-items:center; gap:9px; cursor:pointer; margin:0; user-select:none;">
+                            <input type="checkbox" id="chkCustomPrice" onchange="toggleCustomPrice(this.checked)" style="width:18px; height:18px; accent-color:#4F46E5; cursor:pointer;">
+                            <span style="font-size:14px; font-weight:800; color:#0F172A;">Custom Price</span>
+                            <span style="font-size:11.5px; font-weight:600; color:#64748B;">(Click to enter custom bill amount)</span>
+                        </label>
 
-                        <!-- Dynamic Input for Discount / Custom Price -->
-                        <div id="accBillDiscInputWrap" style="display:none; align-items:center; gap:8px;">
-                            <span id="accBillDiscPrefix" style="font-size:12px; font-weight:800; color:#475569; white-space:nowrap;">Custom Price ₹</span>
-                            <div style="position:relative; flex:1;">
-                                <input type="number" id="accBillDiscValInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:15px; font-weight:800; color:#4F46E5; padding:6px 10px;" placeholder="Enter Custom Bill Price" oninput="onAccBillDiscountInput(this.value)">
+                        <!-- Custom Price Input (Opens when ticked) -->
+                        <div id="customPriceBox" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #CBD5E1;">
+                            <label class="app-input-label" style="font-size:11.5px; margin-bottom:4px; color:#475569;">Enter Custom Bill Amount (₹)</label>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <input type="number" id="accCustomPriceInput" min="0" step="1" class="app-input-text"
+                                    style="height:38px; font-size:16px; font-weight:900; color:#4F46E5; padding:6px 10px;"
+                                    placeholder="Enter custom bill amount"
+                                    oninput="onCustomPriceInput(this.value)">
+                                <span id="customPriceDiscountBadge" style="font-size:12px; font-weight:800; color:#16A34A; white-space:nowrap;"></span>
                             </div>
-                            <span id="accBillDiscSummary" style="font-size:12px; font-weight:700; color:#111827;"></span>
+                            <div style="font-size:11px; color:#64748B; margin-top:4px;">
+                                Difference from full price will automatically be recorded as discount on the bill.
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Amount Paid Input & Fast Chips -->
+                    <!-- Amount Paid Section & Mode-Specific Sub-Inputs -->
                     <div style="margin-bottom: 14px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <label class="app-input-label" style="margin-bottom:0;">Amount Paid Now (₹) *</label>
-                            <div style="display:flex; gap:6px;">
-                                <button type="button" onclick="setFullPayment()" style="font-size:11px; padding:3px 10px; border-radius:6px; font-weight:800; color:#111827; border:1px solid #CBD5E1; background:#F1F5F9; cursor:pointer;">
-                                    Full Paid
-                                </button>
-                                <button type="button" onclick="setZeroPayment()" style="font-size:11px; padding:3px 10px; border-radius:6px; font-weight:800; color:#111827; border:1px solid #CBD5E1; background:#F1F5F9; cursor:pointer;">
-                                    Udhari (₹0)
-                                </button>
+                        <!-- For Split Cash + UPI -->
+                        <div id="wrapSplitCashUpi" style="display:none; margin-bottom:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:10px 12px;">
+                            <div style="font-size:11.5px; font-weight:800; color:#334155; margin-bottom:6px;">Split Payment Breakdown</div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                <div>
+                                    <label class="app-input-label" style="font-size:11px; margin-bottom:2px;">💵 Cash (₹)</label>
+                                    <input type="number" id="splitCashInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:14px; font-weight:800;" placeholder="0" oninput="onSplitCashInput(this.value)">
+                                </div>
+                                <div>
+                                    <label class="app-input-label" style="font-size:11px; margin-bottom:2px;">📱 UPI (₹)</label>
+                                    <input type="number" id="splitUpiInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:14px; font-weight:800;" placeholder="0" oninput="onSplitUpiInput(this.value)">
+                                </div>
                             </div>
                         </div>
-                        <input type="number" step="1" name="amount_paid" id="accAmountPaid" required placeholder="0" class="app-input-text" style="font-size:20px; font-weight:900; color:#111827;" oninput="onAmountPaidManualInput()">
-                        <div id="quickCustomPricePrompt" style="display:none; margin-top:6px;">
-                            <button type="button" onclick="applyPaidAsCustomPrice()" class="btn btn-outline btn-xs" style="color:#4F46E5; border-color:#C7D2FE; background:#EEF2FF; font-weight:800; padding:4px 10px; border-radius:6px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">
-                                ⚡ Make ₹<span id="promptPaidVal">0</span> the Custom Bill Price (Paid in Full, ₹0 Udhari)
-                            </button>
+
+                        <!-- Standard / Cash+Udhari / UPI+Udhari Amount Paid Input -->
+                        <div id="wrapMainAmountPaid">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <label class="app-input-label" id="lblAmountPaidTitle" style="margin-bottom:0;">Amount Paid Now (₹) *</label>
+                                <div id="payActionButtons" style="display:flex; gap:6px;">
+                                    <button type="button" onclick="setFullPayment()" style="font-size:11px; padding:3px 10px; border-radius:6px; font-weight:800; color:#111827; border:1px solid #CBD5E1; background:#F1F5F9; cursor:pointer;">
+                                        Full Paid
+                                    </button>
+                                    <button type="button" onclick="setZeroPayment()" style="font-size:11px; padding:3px 10px; border-radius:6px; font-weight:800; color:#111827; border:1px solid #CBD5E1; background:#F1F5F9; cursor:pointer;">
+                                        Udhari (₹0)
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="number" step="1" name="amount_paid" id="accAmountPaid" required placeholder="0" class="app-input-text" style="font-size:20px; font-weight:900; color:#111827;" oninput="onAmountPaidManualInput()">
+                        </div>
+
+                        <!-- Full Khata Notice -->
+                        <div id="fullKhataNotice" style="display:none; background:#FEF3C7; border:1px solid #FCD34D; color:#92400E; border-radius:8px; padding:10px 12px; font-size:12px; font-weight:700;">
+                            📒 Entire bill amount will be added to Customer Khata (Udhari).
                         </div>
                     </div>
 
                     <!-- Calculation Summary -->
                     <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:14px 16px;">
                         <div style="display:flex; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:6px;">
-                            <span>Gross Items Total:</span>
+                            <span>Full Price (Gross Items Total):</span>
                             <strong id="lblItemsGross" style="color:#0F172A;">₹0</strong>
                         </div>
-                        <div id="lblDiscountRow" style="display:none; justify-content:space-between; font-size:13px; color:#111827; margin-bottom:6px;">
-                            <span>Discount Total:</span>
-                            <strong id="lblDiscountAmount" style="color:#111827;">-₹0</strong>
+                        <div id="lblDiscountRow" style="display:none; justify-content:space-between; font-size:13px; color:#16A34A; margin-bottom:6px;">
+                            <span style="font-weight:700;">Discount (Custom Price):</span>
+                            <strong id="lblDiscountAmount" style="color:#16A34A;">-₹0</strong>
                         </div>
                         <div id="gstSummaryRow" style="display:none; justify-content:space-between; font-size:13px; color:#475569; margin-bottom:6px;">
                             <span>GST (18% Included):</span>
@@ -708,7 +728,7 @@
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; color:#111827; margin-bottom:6px;">
                             <span>Paid Now:</span>
-                            <strong id="lblPaidAmount" style="color:#111827;">₹0</strong>
+                            <strong id="lblPaidAmount" style="color:#16A34A;">₹0</strong>
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:800; border-top:1px dashed #CBD5E1; padding-top:8px;">
                             <span style="color:#475569;">Added to Khata (Remaining Due):</span>
@@ -1019,56 +1039,39 @@
         }, 1800);
     }
 
-    // ── Whole Invoice Discount Handlers ──
-    let accBillDiscountMode = 'none'; // 'none', 'percent', 'flat', 'custom'
-    let accBillDiscountVal = 0;
+    // ── Custom Bill Price Tickbox & Input ──
+    let isCustomPriceActive = false;
+    let customPriceValue = null;
+    let currentPaymentMode = 'cash';
 
-    function setAccBillDiscountMode(mode) {
-        accBillDiscountMode = mode;
-        ['none', 'percent', 'flat', 'custom'].forEach(m => {
-            const pill = document.getElementById(`accDiscPill_${m}`);
-            if (pill) pill.classList.toggle('active', m === mode);
-        });
+    function toggleCustomPrice(checked) {
+        isCustomPriceActive = checked;
+        const box = document.getElementById('customPriceBox');
+        const input = document.getElementById('accCustomPriceInput');
+        if (box) box.style.display = checked ? 'block' : 'none';
 
-        const wrap = document.getElementById('accBillDiscInputWrap');
-        const prefix = document.getElementById('accBillDiscPrefix');
-        const valInput = document.getElementById('accBillDiscValInput');
-
-        if (mode === 'none') {
-            if (wrap) wrap.style.display = 'none';
-            accBillDiscountVal = 0;
-            if (valInput) valInput.value = '';
-        } else {
-            if (wrap) wrap.style.display = 'flex';
-            if (mode === 'percent') {
-                if (prefix) prefix.innerText = '%';
-                if (valInput) {
-                    valInput.placeholder = 'e.g. 10';
-                    if (!accBillDiscountVal) { accBillDiscountVal = 10; valInput.value = 10; }
-                }
-            } else if (mode === 'flat') {
-                if (prefix) prefix.innerText = '₹';
-                if (valInput) {
-                    valInput.placeholder = 'e.g. 200';
-                    if (!accBillDiscountVal) { accBillDiscountVal = 100; valInput.value = 100; }
-                }
-            } else if (mode === 'custom') {
-                if (prefix) prefix.innerText = 'Custom Bill ₹';
-                const gross = getGrossTotal();
-                if (valInput) {
-                    valInput.placeholder = 'Enter Custom Bill Amount';
-                    if (!accBillDiscountVal) { accBillDiscountVal = gross; valInput.value = gross; }
-                }
+        if (checked) {
+            const gross = getGrossTotal();
+            if (!customPriceValue || customPriceValue === 0) {
+                customPriceValue = gross;
+                if (input) input.value = gross > 0 ? gross : '';
             }
+            if (input) setTimeout(() => input.focus(), 50);
+        } else {
+            customPriceValue = null;
+            if (input) input.value = '';
         }
-
         updateCalculations();
     }
+    window.toggleCustomPrice = toggleCustomPrice;
 
-    function onAccBillDiscountInput(val) {
-        accBillDiscountVal = Math.max(0, parseFloat(val) || 0);
+    function onCustomPriceInput(val) {
+        if (!isCustomPriceActive) return;
+        const parsed = parseFloat(val);
+        customPriceValue = isNaN(parsed) ? null : Math.max(0, Math.round(parsed));
         updateCalculations();
     }
+    window.onCustomPriceInput = onCustomPriceInput;
 
     // ── Render Cart Items ──
     function renderCart() {
@@ -1185,17 +1188,99 @@
 
     // ── Payment Mode & Calculation Updates ──
     function selectPaymentMode(mode) {
+        currentPaymentMode = mode;
         document.getElementById('accPaymentMode').value = mode;
         document.querySelectorAll('.payment-chip-btn').forEach(btn => {
             btn.classList.toggle('active', btn.getAttribute('data-mode') === mode);
         });
 
-        if (mode === 'credit_udhari') {
+        const wrapSplit = document.getElementById('wrapSplitCashUpi');
+        const wrapMain = document.getElementById('wrapMainAmountPaid');
+        const khataNotice = document.getElementById('fullKhataNotice');
+        const lblTitle = document.getElementById('lblAmountPaidTitle');
+        const payBtns = document.getElementById('payActionButtons');
+        const paidInput = document.getElementById('accAmountPaid');
+
+        if (mode === 'cash+upi') {
+            if (wrapSplit) wrapSplit.style.display = 'block';
+            if (wrapMain) wrapMain.style.display = 'none';
+            if (khataNotice) khataNotice.style.display = 'none';
+            const total = getGrandTotal();
+            const half = Math.round(total / 2);
+            const cashInput = document.getElementById('splitCashInput');
+            const upiInput = document.getElementById('splitUpiInput');
+            if (cashInput) cashInput.value = half;
+            if (upiInput) upiInput.value = Math.max(0, total - half);
+            if (paidInput) {
+                paidInput.value = total;
+                paidInput.dataset.manual = "false";
+            }
+        } else if (mode === 'credit_udhari') {
+            if (wrapSplit) wrapSplit.style.display = 'none';
+            if (wrapMain) wrapMain.style.display = 'none';
+            if (khataNotice) khataNotice.style.display = 'block';
             setZeroPayment();
         } else {
-            setFullPayment();
+            if (wrapSplit) wrapSplit.style.display = 'none';
+            if (wrapMain) wrapMain.style.display = 'block';
+            if (khataNotice) khataNotice.style.display = 'none';
+
+            if (mode === 'cash') {
+                if (lblTitle) lblTitle.innerText = "Cash Paid Now (₹) *";
+                if (payBtns) payBtns.style.display = 'flex';
+                setFullPayment();
+            } else if (mode === 'upi') {
+                if (lblTitle) lblTitle.innerText = "UPI Paid Now (₹) *";
+                if (payBtns) payBtns.style.display = 'flex';
+                setFullPayment();
+            } else if (mode === 'cash+udhari') {
+                if (lblTitle) lblTitle.innerText = "Cash Paid (₹) — Rest in Khata *";
+                if (payBtns) payBtns.style.display = 'flex';
+                if (!paidInput.value || paidInput.dataset.manual !== "true") {
+                    paidInput.value = Math.round(getGrandTotal() / 2);
+                }
+            } else if (mode === 'upi+udhari') {
+                if (lblTitle) lblTitle.innerText = "UPI Paid (₹) — Rest in Khata *";
+                if (payBtns) payBtns.style.display = 'flex';
+                if (!paidInput.value || paidInput.dataset.manual !== "true") {
+                    paidInput.value = Math.round(getGrandTotal() / 2);
+                }
+            }
         }
+
+        updateCalculations();
     }
+    window.selectPaymentMode = selectPaymentMode;
+
+    function onSplitCashInput(val) {
+        const total = getGrandTotal();
+        let cash = Math.max(0, Math.min(total, parseFloat(val) || 0));
+        let upi = Math.max(0, total - cash);
+        const upiInput = document.getElementById('splitUpiInput');
+        if (upiInput) upiInput.value = Math.round(upi);
+        const paidInput = document.getElementById('accAmountPaid');
+        if (paidInput) {
+            paidInput.value = total;
+            paidInput.dataset.manual = "false";
+        }
+        updateCalculations();
+    }
+    window.onSplitCashInput = onSplitCashInput;
+
+    function onSplitUpiInput(val) {
+        const total = getGrandTotal();
+        let upi = Math.max(0, Math.min(total, parseFloat(val) || 0));
+        let cash = Math.max(0, total - upi);
+        const cashInput = document.getElementById('splitCashInput');
+        if (cashInput) cashInput.value = Math.round(cash);
+        const paidInput = document.getElementById('accAmountPaid');
+        if (paidInput) {
+            paidInput.value = total;
+            paidInput.dataset.manual = "false";
+        }
+        updateCalculations();
+    }
+    window.onSplitUpiInput = onSplitUpiInput;
 
     function toggleGstBilling(isGst) {
         document.getElementById('accBillType').value = isGst ? 'gst' : 'non_gst';
@@ -1209,14 +1294,8 @@
 
     function getGrandTotal() {
         const gross = getGrossTotal();
-        if (accBillDiscountMode === 'percent') {
-            const discountAmt = Math.round((gross * accBillDiscountVal) / 100);
-            return Math.max(0, gross - discountAmt);
-        } else if (accBillDiscountMode === 'flat') {
-            const discountAmt = Math.min(gross, Math.round(accBillDiscountVal));
-            return Math.max(0, gross - discountAmt);
-        } else if (accBillDiscountMode === 'custom') {
-            return Math.max(0, Math.round(accBillDiscountVal));
+        if (isCustomPriceActive && customPriceValue !== null && customPriceValue >= 0) {
+            return customPriceValue;
         }
         return gross;
     }
@@ -1226,6 +1305,25 @@
         const total = getGrandTotal();
         const discountAmt = Math.max(0, gross - total);
         const isGst = document.getElementById('accIsGstCheckbox') ? document.getElementById('accIsGstCheckbox').checked : false;
+
+        // Update Custom Price Discount badge
+        const badge = document.getElementById('customPriceDiscountBadge');
+        if (badge) {
+            if (isCustomPriceActive && customPriceValue !== null) {
+                if (discountAmt > 0) {
+                    badge.innerText = `Discount: -₹${discountAmt.toLocaleString('en-IN')}`;
+                    badge.style.color = '#16A34A';
+                } else if (customPriceValue > gross) {
+                    badge.innerText = `+₹${(customPriceValue - gross).toLocaleString('en-IN')}`;
+                    badge.style.color = '#4F46E5';
+                } else {
+                    badge.innerText = 'Same as Full Price';
+                    badge.style.color = '#64748B';
+                }
+            } else {
+                badge.innerText = '';
+            }
+        }
 
         // Proportionally distribute grandTotal to cart items
         if (cart.length > 0 && gross > 0) {
@@ -1254,19 +1352,6 @@
             });
         }
 
-        const summaryText = document.getElementById('accBillDiscSummary');
-        if (summaryText) {
-            if (accBillDiscountMode === 'percent') {
-                summaryText.innerText = `-₹${discountAmt.toLocaleString('en-IN')}`;
-            } else if (accBillDiscountMode === 'flat') {
-                summaryText.innerText = `-₹${discountAmt.toLocaleString('en-IN')}`;
-            } else if (accBillDiscountMode === 'custom') {
-                summaryText.innerText = `Net ₹${total.toLocaleString('en-IN')}`;
-            } else {
-                summaryText.innerText = '';
-            }
-        }
-
         const grossLbl = document.getElementById('lblItemsGross');
         if (grossLbl) grossLbl.innerText = `₹${gross.toLocaleString('en-IN')}`;
 
@@ -1292,11 +1377,32 @@
         const dockGrandTotalLbl = document.getElementById('dockGrandTotal');
         if (dockGrandTotalLbl) dockGrandTotalLbl.innerText = `₹${total.toLocaleString('en-IN')}`;
 
-        // If amount paid is empty or equals previous total, auto-update
+        // Auto-update amount paid if in full payment modes
         const paidInput = document.getElementById('accAmountPaid');
-        const mode = document.getElementById('accPaymentMode').value;
-        if (mode !== 'credit_udhari' && (!paidInput.dataset.manual || paidInput.dataset.manual === "false")) {
+        const mode = currentPaymentMode;
+        if (mode === 'credit_udhari') {
+            paidInput.value = "0";
+        } else if (mode === 'cash+upi') {
             paidInput.value = total;
+            const cashInput = document.getElementById('splitCashInput');
+            const upiInput = document.getElementById('splitUpiInput');
+            if (cashInput && upiInput) {
+                const currentCash = parseFloat(cashInput.value) || 0;
+                if (currentCash > total) {
+                    cashInput.value = total;
+                    upiInput.value = 0;
+                } else {
+                    upiInput.value = Math.max(0, total - currentCash);
+                }
+            }
+        } else if (mode === 'cash' || mode === 'upi') {
+            if (!paidInput.dataset.manual || paidInput.dataset.manual === "false") {
+                paidInput.value = total;
+            }
+        } else if (mode === 'cash+udhari' || mode === 'upi+udhari') {
+            if (!paidInput.dataset.manual || paidInput.dataset.manual === "false") {
+                paidInput.value = Math.round(total / 2);
+            }
         }
 
         onAmountPaidManualInput();
@@ -1304,37 +1410,19 @@
 
     function onAmountPaidManualInput() {
         const total = getGrandTotal();
-        const paid = Math.round(parseFloat(document.getElementById('accAmountPaid').value) || 0);
+        let paid = Math.round(parseFloat(document.getElementById('accAmountPaid').value) || 0);
+        if (currentPaymentMode === 'credit_udhari') {
+            paid = 0;
+        }
         const due = Math.max(0, total - paid);
 
         document.getElementById('lblPaidAmount').innerText = `₹${paid.toLocaleString('en-IN')}`;
-        document.getElementById('lblDueAmount').innerText = `₹${due.toLocaleString('en-IN')}`;
-        document.getElementById('accAmountPaid').dataset.manual = "true";
-
-        const quickPrompt = document.getElementById('quickCustomPricePrompt');
-        const promptVal = document.getElementById('promptPaidVal');
-        if (quickPrompt && promptVal) {
-            if (paid > 0 && paid < total) {
-                promptVal.innerText = paid.toLocaleString('en-IN');
-                quickPrompt.style.display = 'block';
-            } else {
-                quickPrompt.style.display = 'none';
-            }
+        const lblDue = document.getElementById('lblDueAmount');
+        if (lblDue) {
+            lblDue.innerText = `₹${due.toLocaleString('en-IN')}`;
+            lblDue.style.color = due > 0 ? '#DC2626' : '#16A34A';
         }
     }
-
-    function applyPaidAsCustomPrice() {
-        const paid = Math.round(parseFloat(document.getElementById('accAmountPaid').value) || 0);
-        if (paid <= 0) return;
-        setAccBillDiscountMode('custom');
-        const valInput = document.getElementById('accBillDiscValInput');
-        if (valInput) valInput.value = paid;
-        accBillDiscountVal = paid;
-        document.getElementById('accAmountPaid').value = paid;
-        document.getElementById('accAmountPaid').dataset.manual = "false";
-        updateCalculations();
-    }
-    window.applyPaidAsCustomPrice = applyPaidAsCustomPrice;
 
     function updateCartItemRate(index, newRate) {
         if (!cart[index]) return;

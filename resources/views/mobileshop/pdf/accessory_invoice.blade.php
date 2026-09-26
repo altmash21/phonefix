@@ -7,6 +7,19 @@
     if ($accGross <= 0 && $accDiscount > 0) {
         $accGross = round((float)$sale->total_amount + $accDiscount, 2);
     }
+    if ($accGross <= 0) {
+        $accGross = (float)$sale->total_amount;
+    }
+
+    $displayMode = match(strtolower($sale->payment_mode ?? 'cash')) {
+        'cash' => 'Cash',
+        'upi' => 'UPI',
+        'cash+upi', 'split', 'cash_upi' => 'Cash + UPI',
+        'cash+udhari', 'cash_udhari' => 'Cash + Udhari',
+        'upi+udhari', 'upi_udhari' => 'UPI + Udhari',
+        'credit_udhari', 'udhari', 'full_khata' => 'Full Khata (Udhari)',
+        default => strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode))
+    };
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -175,7 +188,7 @@
             </td>
             <td style="width: 50%;">
                 <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Payment &amp; Dispatch Information</div>
-                <div style="font-size: 10px; color: #111827; margin-top: 2px;">Mode: <strong>{{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</strong></div>
+                <div style="font-size: 10px; color: #111827; margin-top: 2px;">Mode: <strong>{{ $displayMode }}</strong></div>
                 @if($sale->bill_type === 'gst')
                     <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Tax Regime: <strong>Intra-State GST @ 18%</strong></div>
                 @else
@@ -267,12 +280,12 @@
                 <table class="summary-table">
                     @if($accDiscount > 0)
                     <tr>
-                        <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Gross Items Total</td>
+                        <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Full Price (Gross Total)</td>
                         <td style="text-align: right;" class="font-mono">Rs. {{ number_format($accGross, 2) }}</td>
                     </tr>
                     <tr>
-                        <td style="background-color: #f9fafb; color: #111827; font-weight: bold;">Discount Given</td>
-                        <td style="text-align: right; color: #111827; font-weight: bold;" class="font-mono">-Rs. {{ number_format($accDiscount, 2) }}</td>
+                        <td style="background-color: #f9fafb; color: #16a34a; font-weight: bold;">Discount (Custom Price)</td>
+                        <td style="text-align: right; color: #16a34a; font-weight: bold;" class="font-mono">-Rs. {{ number_format($accDiscount, 2) }}</td>
                     </tr>
                     @endif
                     <tr>
@@ -289,6 +302,16 @@
                         <td style="color: #111827;">Invoice Grand Total</td>
                         <td style="text-align: right; color: #111827;" class="font-mono">Rs. {{ number_format($sale->total_amount, 2) }}</td>
                     </tr>
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #111827; font-weight: bold;">Amount Paid Now</td>
+                        <td style="text-align: right; color: #16a34a; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->amount_paid, 2) }}</td>
+                    </tr>
+                    @if($sale->udhari_amount > 0)
+                    <tr>
+                        <td style="background-color: #fef2f2; color: #dc2626; font-weight: bold;">Added to Khata (Udhari Due)</td>
+                        <td style="text-align: right; color: #dc2626; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->udhari_amount, 2) }}</td>
+                    </tr>
+                    @endif
                 </table>
             </td>
         </tr>
