@@ -83,14 +83,16 @@
 
                 @php
                     $statusConfig = match($ticket->status) {
-                        'received', 'pending'     => ['label' => 'Intake Logged · Waiting Diagnostics', 'badge' => 'bg-[#f5f5f5] text-[#111111] border-[#e5e7eb]'],
-                        'diagnosing'              => ['label' => 'Diagnostic Assessment in Progress', 'badge' => 'bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]'],
-                        'in_progress', 'repairing'=> ['label' => 'Active Bench Micro-Soldering', 'badge' => 'bg-[#fefce8] text-[#854d0e] border-[#fef08a]'],
-                        'parts_awaited'           => ['label' => 'OEM Parts In Transit to Bench', 'badge' => 'bg-[#fff7ed] text-[#c2410c] border-[#fed7aa]'],
-                        'testing', 'qc'           => ['label' => '21-Point Stress & QC Testing', 'badge' => 'bg-[#ecfeff] text-[#0e7490] border-[#a5f3fc]'],
-                        'ready_for_pickup'        => ['label' => 'Ready for Pickup at Counter', 'badge' => 'bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]'],
-                        'completed', 'delivered'  => ['label' => 'Handover Completed', 'badge' => 'bg-[#f5f5f5] text-[#111111] border-[#e5e7eb]'],
-                        default                   => ['label' => ucfirst($ticket->status), 'badge' => 'bg-[#f5f5f5] text-[#111111] border-[#e5e7eb]']
+                        'received', 'pending'                   => ['label' => 'Intake Logged · Waiting Diagnostics', 'badge' => 'bg-[#f5f5f5] text-[#111111] border-[#e5e7eb]'],
+                        'in_diagnosis', 'diagnosing'            => ['label' => 'Diagnostic Assessment in Progress', 'badge' => 'bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]'],
+                        'waiting_for_parts', 'parts_awaited'    => ['label' => 'OEM Parts In Transit to Bench', 'badge' => 'bg-[#fff7ed] text-[#c2410c] border-[#fed7aa]'],
+                        'waiting_approval'                      => ['label' => 'Awaiting Customer Approval', 'badge' => 'bg-[#fefce8] text-[#854d0e] border-[#fef08a]'],
+                        'in_repair', 'repairing', 'in_progress' => ['label' => 'Active Bench Micro-Soldering / Repair', 'badge' => 'bg-[#fefce8] text-[#854d0e] border-[#fef08a]'],
+                        'testing', 'qc'                         => ['label' => '21-Point Stress & QC Testing', 'badge' => 'bg-[#ecfeff] text-[#0e7490] border-[#a5f3fc]'],
+                        'ready', 'ready_for_pickup', 'completed'=> ['label' => 'Ready for Pickup at Counter', 'badge' => 'bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]'],
+                        'delivered'                             => ['label' => 'Handover Completed', 'badge' => 'bg-[#f5f5f5] text-[#111111] border-[#e5e7eb]'],
+                        'cancelled'                             => ['label' => 'Job Cancelled / Returned Unfixed', 'badge' => 'bg-[#fef2f2] text-[#dc2626] border-[#fecaca]'],
+                        default                                 => ['label' => ucfirst(str_replace('_', ' ', $ticket->status)), 'badge' => 'bg-[#f5f5f5] text-[#111111] border-[#e5e7eb]']
                     };
                 @endphp
                 <div>

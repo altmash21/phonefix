@@ -597,7 +597,7 @@
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
                     <div>
                         <label class="mobile-card-label" style="display:block;">Supplier / Distributor <span style="color:#EF4444;">*</span></label>
-                        <input type="text" name="supplier_name" id="bulkSupplierName" list="suppliersList" placeholder="e.g. Metro Mobile Wholesale" class="restock-input" required oninput="onSupplierSelected()" onchange="onSupplierSelected()">
+                        <input type="text" name="supplier_name" id="bulkSupplierName" list="suppliersList" placeholder="Supplier" class="restock-input" required oninput="onSupplierSelected()" onchange="onSupplierSelected()">
                         <datalist id="suppliersList">
                             @if(isset($suppliers))
                                 @foreach($suppliers as $s)
@@ -610,7 +610,7 @@
 
                     <div>
                         <label class="mobile-card-label" style="display:block;">Invoice / PO #</label>
-                        <input type="text" name="invoice_no" id="bulkInvoiceNo" placeholder="e.g. INV-98421" class="restock-input num-field">
+                        <input type="text" name="invoice_no" id="bulkInvoiceNo" placeholder="Invoice#" class="restock-input num-field">
                     </div>
 
                     <div>
@@ -726,11 +726,41 @@
                     </div>
                 </div>
 
+                <!-- Live Supplier Debt & Settlement Breakdown -->
+                <div id="supplierDebtBreakdownBox" style="margin-top:12px; padding:10px 14px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px;">
+                    <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#64748B; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="calculator" style="width:13px;height:13px; color:#4F46E5;"></i>
+                        Supplier Debt &amp; Payment Ledger
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
+                        <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px;">
+                            <div style="font-size:10px; font-weight:700; color:#64748B;">Previous Debt</div>
+                            <div id="valSupplierPastDebt" style="font-size:13px; font-weight:800; color:#DC2626;">₹0.00</div>
+                        </div>
+                        <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px;">
+                            <div style="font-size:10px; font-weight:700; color:#64748B;">Current Bill</div>
+                            <div id="valCurrentBillAmt" style="font-size:13px; font-weight:800; color:#0F172A;">₹0.00</div>
+                        </div>
+                        <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px;">
+                            <div style="font-size:10px; font-weight:700; color:#64748B;">Total Due</div>
+                            <div id="valTotalPayable" style="font-size:13px; font-weight:800; color:#4338CA;">₹0.00</div>
+                        </div>
+                        <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px;">
+                            <div style="font-size:10px; font-weight:700; color:#64748B;">Amount Paid</div>
+                            <div id="valAmountPaidDisplay" style="font-size:13px; font-weight:800; color:#16A34A;">₹0.00</div>
+                        </div>
+                        <div style="background:#FFF1F2; border:1px solid #FECDD3; border-radius:6px; padding:6px 10px;">
+                            <div style="font-size:10px; font-weight:700; color:#991B1B;">Remaining Debt</div>
+                            <div id="valSupplierRemainingDebt" style="font-size:13px; font-weight:900; color:#DC2626;">₹0.00</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Row 2: Amount Submitted / Paid to Settle Supplier -->
                 <div style="margin-top:12px; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; align-items:center;">
                     <div>
                         <label style="font-size:11px; font-weight:700; color:#334155; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
-                            <span>Amount Submitted / Paid (₹)</span>
+                            <span>Amount Paid (₹)</span>
                             <span style="font-size:10.5px; font-weight:600; color:#64748B;">Clear balance or pay invoice</span>
                         </label>
                         <div style="position:relative;">
@@ -738,7 +768,7 @@
                             <input type="number" step="0.01" min="0" name="amount_paid" id="bulkAmountPaid"
                                 class="restock-input num-field"
                                 style="padding-left:26px !important; font-size:14px !important; font-weight:800 !important; color:#0F172A !important;"
-                                placeholder="0.00" oninput="onAmountPaidChanged()">
+                                placeholder="Amount" oninput="onAmountPaidChanged()">
                         </div>
                     </div>
 
@@ -1796,7 +1826,7 @@
                     <label class="mobile-card-label">Category</label>
                     <div style="position:relative; display:flex; align-items:center;">
                         <input type="text" id="catSearchInput_${idx}" class="restock-input search-combobox-input cat-search-input"
-                            value="${escapeHtml(selectedCatName)}" placeholder="🔍 Search Category..."
+                            value="${escapeHtml(selectedCatName)}" placeholder="Category"
                             autocomplete="off"
                             onfocus="openCategoryCombobox(${idx})"
                             onclick="openCategoryCombobox(${idx})"
@@ -1818,7 +1848,7 @@
                     
                     <div style="position:relative; display:flex; align-items:center;">
                         <input type="text" id="searchInput_${idx}" class="restock-input search-combobox-input"
-                            value="${nameVal}" placeholder="🔍 Search stock or type new item..."
+                            value="${nameVal}" placeholder="Item"
                             autocomplete="off"
                             onfocus="openCombobox(${idx})"
                             onclick="openCombobox(${idx})"
@@ -1849,7 +1879,7 @@
                 <div>
                     <label class="mobile-card-label">Description / Specs</label>
                     <input type="text" name="items[${idx}][description]" id="desc_${idx}"
-                        value="${descVal}" placeholder="e.g. Matte, 120Hz, Black"
+                        value="${descVal}" placeholder="Description"
                         class="restock-input">
                 </div>
 
@@ -1892,7 +1922,7 @@
                     <div>
                         <label class="mobile-card-label">Alert</label>
                         <input type="number" name="items[${idx}][min_stock_alert]" id="alert_${idx}"
-                            value="${alertVal}" min="0" placeholder="3"
+                            value="${alertVal}" min="0" placeholder="Alert"
                             class="bulk-num-input restock-input num-field" style="text-align:center;"
                             title="Low stock threshold">
                     </div>
@@ -2124,13 +2154,32 @@
         const btnClearAll = document.getElementById('btnLblClearAll');
         if (btnClearAll) btnClearAll.textContent = formatCurrency(totalCost + outBal);
 
-        const amtInput = document.getElementById('bulkAmountPaid');
-        const rawPaidStr = amtInput ? amtInput.value.trim() : '';
-
         // If user hasn't explicitly entered anything or input is untouched, default to totalCost
         let actualPaid = (rawPaidStr !== '' && rawPaidStr !== null && !isNaN(parseFloat(rawPaidStr)))
             ? parseFloat(rawPaidStr)
             : totalCost;
+
+        // Update live Supplier Debt Breakdown box
+        const totalDueWithPast = totalCost + outBal;
+        const remainingDebt = Math.max(0, totalDueWithPast - actualPaid);
+
+        const elPastDebt = document.getElementById('valSupplierPastDebt');
+        if (elPastDebt) elPastDebt.textContent = formatCurrency(outBal);
+
+        const elBillAmt = document.getElementById('valCurrentBillAmt');
+        if (elBillAmt) elBillAmt.textContent = formatCurrency(totalCost);
+
+        const elTotalPayable = document.getElementById('valTotalPayable');
+        if (elTotalPayable) elTotalPayable.textContent = formatCurrency(totalDueWithPast);
+
+        const elAmtPaidDisp = document.getElementById('valAmountPaidDisplay');
+        if (elAmtPaidDisp) elAmtPaidDisp.textContent = formatCurrency(actualPaid);
+
+        const elRemDebt = document.getElementById('valSupplierRemainingDebt');
+        if (elRemDebt) {
+            elRemDebt.textContent = formatCurrency(remainingDebt);
+            elRemDebt.style.color = remainingDebt > 0 ? '#DC2626' : '#15803D';
+        }
 
         const pill = document.getElementById('bulkSettlementPill');
         const mobSettlement = document.getElementById('mobileStickySettlement');

@@ -13,8 +13,8 @@
 
 @section('page-actions')
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-primary btn-sm" style="color: #fff; background: var(--color-primary); border-color: var(--color-primary);">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> Restock Accessories &amp; Spare Parts
+        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-primary btn-sm" style="color: #fff; background: var(--color-primary); border-color: var(--color-primary); font-weight:800; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="plus-circle" style="width:15px;height:15px;"></i> + Create Purchase Order / Restock
         </a>
         @if(($isAdmin ?? false) || auth()->user()->hasRole('store-admin') || auth()->user()->can('read-mobileshop-procurement'))
         <button type="button" onclick="openPaymentModal({{ $suppliers->first()->id ?? 0 }}, '{{ addslashes($suppliers->first()->name ?? 'Primary Supplier') }}')" class="btn btn-outline btn-sm">
@@ -262,7 +262,7 @@
             <div class="purchase-search-wrapper relative">
                 <div class="search-bar purchase-search-box">
                     <i data-lucide="search"></i>
-                    <input type="text" id="purchaseSearchInput" oninput="filterPurchaseTables()" placeholder="Search invoice, supplier, item..." class="purchase-search-input">
+                    <input type="text" id="purchaseSearchInput" oninput="filterPurchaseTables()" placeholder="Search" class="purchase-search-input">
                     <button type="button" onclick="clearPurchaseSearch()" id="btnClearPurchaseSearch" style="display:none; background:#e2e4e8; border:none; border-radius:50%; width:16px; height:16px; color:#4f535b; cursor:pointer; font-size:10px; line-height:16px; text-align:center; padding:0;">✕</button>
                     <button type="button" onclick="openPurchaseDateFilterDrawer()" id="btnMobilePurchaseDateFilter" class="mobile-filter-btn" title="Filter by Date Range" style="height:22px; width:22px; padding:0; border-radius:4px; background:#ffffff; border:1px solid #e2e4e8; color:#5e6ad2; align-items:center; justify-content:center; cursor:pointer; position:relative;">
                         <i data-lucide="calendar" style="width:12px; height:12px;"></i>
@@ -306,6 +306,8 @@
                             <th>Purchased Items</th>
                             <th>Payment Status</th>
                             <th style="text-align:right;">Invoice Amount (₹)</th>
+                            <th style="text-align:right;">Amount Paid (₹)</th>
+                            <th style="text-align:right;">Supplier Due (₹)</th>
                             <th style="text-align:center;">Actions</th>
                         </tr>
                     </thead>
@@ -355,6 +357,12 @@
                             <td style="text-align:right; font-weight:900; font-size:13px; color:#0F172A;">
                                 ₹{{ number_format($inv->total_amount, 2) }}
                             </td>
+                            <td style="text-align:right; font-weight:700; font-size:13px; color:#15803D;">
+                                ₹{{ number_format($inv->amount_paid ?? 0, 2) }}
+                            </td>
+                            <td style="text-align:right; font-weight:800; font-size:13px; color:{{ ($inv->balance_due ?? 0) > 0 ? '#B91C1C' : '#64748B' }};">
+                                ₹{{ number_format($inv->balance_due ?? 0, 2) }}
+                            </td>
                             <td style="text-align:center; white-space:nowrap;">
                                 <div style="display:inline-flex; gap:6px; align-items:center;">
                                     <button type="button" class="btn btn-outline btn-sm" style="padding:4px 10px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:4px; color:var(--brand-700); border-color:#CBD5E1;"
@@ -373,12 +381,15 @@
                                     <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:11px; font-weight:700; color:#475569; border-color:#CBD5E1;" title="Print Full Purchase Invoice">
                                         <i data-lucide="printer" style="width:13px;height:13px;"></i>
                                     </a>
+                                    <a href="{{ route('mobileshop.purchase.invoice.pdf', ['id' => $inv->id]) }}" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:11px; font-weight:700; color:#D97706; border-color:#FDE68A; background:#FFFBEB;" title="Download Purchase Order PDF">
+                                        <i data-lucide="download" style="width:13px;height:13px;"></i> PDF
+                                    </a>
                                 </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" style="text-align:center; padding:32px; color:#94A3B8;">
+                            <td colspan="9" style="text-align:center; padding:32px; color:#94A3B8;">
                                 <i data-lucide="inbox" style="width:36px;height:36px; stroke-width:1.5; margin-bottom:8px;"></i>
                                 <div style="font-weight:700; font-size:14px; color:#475569;">No purchase invoices recorded yet</div>
                                 <div style="font-size:12px;">Add phone stock or import wholesale parts bills to start recording purchase invoices.</div>
@@ -386,7 +397,7 @@
                         </tr>
                         @endforelse
                         <tr id="purchaseEmptyFilterRow" style="display:none;">
-                            <td colspan="7" style="text-align:center; padding:36px 16px; color:#64748B;">
+                            <td colspan="9" style="text-align:center; padding:36px 16px; color:#64748B;">
                                 <div style="display:inline-flex; flex-direction:column; align-items:center; gap:8px;">
                                     <div style="width:38px; height:38px; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#64748B;">
                                         <i data-lucide="calendar-x" style="width:20px; height:20px;"></i>
@@ -438,6 +449,14 @@
                                 <div class="row-amount">₹{{ number_format($inv->total_amount, 2) }}</div>
                             </div>
 
+                            <!-- Row 1b: Supplier Debt & Paid Breakdown -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin:3px 0 5px; padding:3px 8px; background:#F8FAFC; border-radius:6px; border:1px solid #E2E8F0;">
+                                <span style="color:#15803D; font-weight:700;">Paid: ₹{{ number_format($inv->amount_paid ?? 0, 2) }}</span>
+                                <span style="color:{{ ($inv->balance_due ?? 0) > 0 ? '#B91C1C' : '#64748B' }}; font-weight:800;">
+                                    Due: ₹{{ number_format($inv->balance_due ?? 0, 2) }}
+                                </span>
+                            </div>
+
                             <!-- Row 2: Supplier Name + Date & Phone -->
                             <div class="row-line2">
                                 <div class="cust-name">{{ $inv->supplier_name ?: 'Vendor / Distributor' }}</div>
@@ -467,6 +486,9 @@
                                     </button>
                                     <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="compact-action-btn" title="Print Invoice">
                                         <i data-lucide="printer" style="width:15px;height:15px;"></i>
+                                    </a>
+                                    <a href="{{ route('mobileshop.purchase.invoice.pdf', ['id' => $inv->id]) }}" class="compact-action-btn" title="Download PDF" style="color:#D97706;">
+                                        <i data-lucide="download" style="width:15px;height:15px;"></i>
                                     </a>
                                 </div>
                             </div>
@@ -848,7 +870,7 @@
                     <!-- Additional Notes -->
                     <div>
                         <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; display:block;">Defect Notes / Remarks (Optional)</label>
-                        <textarea name="notes" id="defectNotesInput" rows="2" placeholder="e.g. Broken packaging, touch dead on lower half..." style="width:100%; padding:8px 12px; font-size:12px; border:1px solid #CBD5E1; border-radius:8px; resize:vertical; font-family:inherit;"></textarea>
+                        <textarea name="notes" id="defectNotesInput" rows="2" placeholder="Reason" style="width:100%; padding:8px 12px; font-size:12px; border:1px solid #CBD5E1; border-radius:8px; resize:vertical; font-family:inherit;"></textarea>
                     </div>
 
                     <!-- Stock Adjustment Notice -->
@@ -905,7 +927,7 @@
 
                     <div>
                         <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; display:block;">Action Note / Tracking # (Optional)</label>
-                        <input type="text" name="notes" id="statusNotesInput" placeholder="e.g. Courier Tracking # / Replaced on 25 Sep..." class="form-control" style="width:100%; padding:8px 12px; font-size:12px; border:1px solid #CBD5E1; border-radius:8px;">
+                        <input type="text" name="notes" id="statusNotesInput" placeholder="Notes" class="form-control" style="width:100%; padding:8px 12px; font-size:12px; border:1px solid #CBD5E1; border-radius:8px;">
                     </div>
                 </div>
 
@@ -949,7 +971,7 @@
 
                     <div class="form-group" style="margin-bottom:12px;">
                         <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Amount Sent (₹) *</label>
-                        <input type="number" step="0.01" inputmode="decimal" name="amount" id="payAmount" required placeholder="0.00" class="form-control" style="font-size:16px; font-weight:800; color:#16A34A;">
+                        <input type="number" step="0.01" inputmode="decimal" name="amount" id="payAmount" required placeholder="Amount" class="form-control" style="font-size:16px; font-weight:800; color:#16A34A;">
                     </div>
 
                     <div class="form-group" style="margin-bottom:12px;">
@@ -964,7 +986,7 @@
 
                     <div class="form-group" style="margin-bottom:14px;">
                         <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Reference / UTR Number</label>
-                        <input type="text" name="reference_no" placeholder="e.g. UTR-948102948" class="form-control" style="font-size:13px;">
+                        <input type="text" name="reference_no" placeholder="Reference" class="form-control" style="font-size:13px;">
                     </div>
 
                     <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
@@ -1019,7 +1041,7 @@
 
                     <div class="form-group" style="margin-bottom:14px;">
                         <label class="form-label" style="font-weight:700; font-size:12px; margin-bottom:4px; display:block;">Adjustment Reason / Note</label>
-                        <input type="text" name="adjustment_notes" class="form-control" placeholder="e.g. Ledger reconciliation" style="font-size:13px;">
+                        <input type="text" name="adjustment_notes" class="form-control" placeholder="Notes" style="font-size:13px;">
                     </div>
 
                     <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">

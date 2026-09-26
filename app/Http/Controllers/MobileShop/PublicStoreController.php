@@ -262,8 +262,8 @@ class PublicStoreController extends BaseMobileShopController
 
         if (!empty($ticketNo)) {
             $companyId = company_id() ?? session('company_id') ?? 1;
-            $ticket = DB::table('ms_repair_tickets')
-                ->join('ms_customers', 'ms_repair_tickets.customer_id', '=', 'ms_customers.id')
+            $ticketQuery = DB::table('ms_repair_tickets')
+                ->leftJoin('ms_customers', 'ms_repair_tickets.customer_id', '=', 'ms_customers.id')
                 ->select(
                     'ms_repair_tickets.id',
                     'ms_repair_tickets.ticket_number',
@@ -280,46 +280,65 @@ class PublicStoreController extends BaseMobileShopController
                     'ms_repair_tickets.delivered_at',
                     'ms_customers.name as customer_name'
                 )
-                ->where('ms_repair_tickets.company_id', $companyId)
                 ->where(function($q) use ($ticketNo) {
                     $q->where('ms_repair_tickets.ticket_number', $ticketNo)
                       ->orWhere('ms_repair_tickets.ticket_number', 'like', "%{$ticketNo}%");
-                })
-                ->first();
+                });
+
+            // Try with company scope first, fallback to any matching ticket
+            $ticket = (clone $ticketQuery)->where('ms_repair_tickets.company_id', $companyId)->first();
+            if (!$ticket) {
+                $ticket = $ticketQuery->first();
+            }
 
             if ($ticket) {
-                // Determine 5-step status
-                // Steps: 1: Received, 2: Diagnosing, 3: In Repair, 4: QC Testing, 5: Ready for Pickup / Delivered
+                // Determine 5-step status matching repair desk stages:
+                // Steps: 1: Received, 2: In Diagnosis, 3: Parts / Approval, 4: Bench Repair & QC, 5: Ready for Pickup / Delivered
                 switch ($ticket->status) {
                     case 'received':
                     case 'pending':
                         $activeStep = 1;
                         $progressPct = 20;
                         break;
+                    case 'in_diagnosis':
                     case 'diagnosing':
                         $activeStep = 2;
                         $progressPct = 40;
                         break;
-                    case 'in_progress':
-                    case 'repairing':
+                    case 'waiting_for_parts':
                     case 'parts_awaited':
+                    case 'waiting_approval':
                         $activeStep = 3;
-                        $progressPct = 65;
+                        $progressPct = 60;
+                        break;
+                    case 'in_repair':
+                    case 'repairing':
+                    case 'in_progress':
+                        $activeStep = 4;
+                        $progressPct = 80;
                         break;
                     case 'testing':
                     case 'qc':
                         $activeStep = 4;
-                        $progressPct = 85;
+                        $progressPct = 90;
                         break;
+                    case 'ready':
                     case 'ready_for_pickup':
                     case 'completed':
+                        $activeStep = 5;
+                        $progressPct = 100;
+                        break;
                     case 'delivered':
                         $activeStep = 5;
                         $progressPct = 100;
                         break;
+                    case 'cancelled':
+                        $activeStep = 1;
+                        $progressPct = 100;
+                        break;
                     default:
                         $activeStep = 2;
-                        $progressPct = 35;
+                        $progressPct = 40;
                 }
             }
         }

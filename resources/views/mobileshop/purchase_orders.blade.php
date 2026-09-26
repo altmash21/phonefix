@@ -4,9 +4,14 @@
 @section('page-title', 'Procurement & Supplier Ledgers')
 
 @section('page-actions')
-    <button onclick="openPaymentModal({{ $suppliers->first()->id ?? 0 }}, '{{ addslashes($suppliers->first()->name ?? 'Supplier') }}')" class="btn btn-primary btn-sm">
-        <i data-lucide="plus" style="width:14px;height:14px;"></i> Record Supplier Payment
-    </button>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-primary btn-sm">
+            <i data-lucide="plus-circle" style="width:14px;height:14px;"></i> Create Purchase Order
+        </a>
+        <button onclick="openPaymentModal({{ $suppliers->first()->id ?? 0 }}, '{{ addslashes($suppliers->first()->name ?? 'Supplier') }}')" class="btn btn-outline btn-sm">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Record Payment
+        </button>
+    </div>
 @endsection
 
 @section('content')
@@ -44,7 +49,7 @@
         </div>
         <div class="search-bar">
             <i data-lucide="search" style="width:15px;height:15px;"></i>
-            <input type="text" placeholder="Search PO #, supplier..." oninput="onPOSearch(this.value)">
+            <input type="text" placeholder="Search" oninput="onPOSearch(this.value)">
         </div>
     </div>
 
@@ -81,14 +86,22 @@
                                 {{ strtoupper(str_replace('_', ' ', $po->status)) }}
                             </span>
                         </td>
-                        <td style="text-align:center;">
-                            @if($po->balance_due > 0)
-                                <button onclick="openPaymentForPO({{ $po->supplier_id }}, '{{ addslashes($po->supplier_name) }}', {{ $po->id }}, {{ $po->balance_due }})" class="btn btn-outline btn-sm">
-                                    Pay PO
-                                </button>
-                            @else
-                                <span class="badge badge-green">Settled</span>
-                            @endif
+                        <td style="text-align:center; white-space:nowrap;">
+                            <div style="display:inline-flex; gap:6px; align-items:center;">
+                                @if($po->balance_due > 0)
+                                    <button onclick="openPaymentForPO({{ $po->supplier_id }}, '{{ addslashes($po->supplier_name) }}', {{ $po->id }}, {{ $po->balance_due }})" class="btn btn-outline btn-sm" style="padding:3px 8px; font-size:11px;">
+                                        Pay
+                                    </button>
+                                @else
+                                    <span class="badge badge-green" style="font-size:11px;">Settled</span>
+                                @endif
+                                <a href="{{ route('mobileshop.purchase.invoice', ['id' => $po->id]) }}" class="btn btn-outline btn-sm" style="padding:3px 8px; font-size:11px;" title="View Invoice">
+                                    <i data-lucide="file-text" style="width:13px;height:13px;"></i>
+                                </a>
+                                <a href="{{ route('mobileshop.purchase.invoice.pdf', ['id' => $po->id]) }}" class="btn btn-outline btn-sm" style="padding:3px 8px; font-size:11px; color:#D97706; border-color:#FDE68A; background:#FFFBEB;" title="Download PDF">
+                                    <i data-lucide="download" style="width:13px;height:13px;"></i> PDF
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @empty
@@ -133,7 +146,7 @@
 
                 <div class="form-group">
                     <label class="form-label required">Amount Sent (₹)</label>
-                    <input type="number" step="0.01" name="amount" id="payAmount" required placeholder="0.00" class="form-control" style="font-size:16px; font-weight:800; color:var(--lama-green-dark);">
+                    <input type="number" step="0.01" name="amount" id="payAmount" required placeholder="Amount" class="form-control" style="font-size:16px; font-weight:800; color:var(--lama-green-dark);">
                 </div>
 
                 <div class="form-group">
@@ -148,7 +161,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Reference / UTR Number</label>
-                    <input type="text" name="reference_no" placeholder="e.g. UTR-948102948" class="form-control">
+                    <input type="text" name="reference_no" placeholder="Reference" class="form-control">
                 </div>
 
                 <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--card-border);">
@@ -203,7 +216,7 @@
 
                 <div class="form-group" style="margin-bottom:14px;">
                     <label class="form-label" style="font-weight:700; font-size:12px;">Adjustment Reason / Note</label>
-                    <input type="text" name="adjustment_notes" class="form-control" placeholder="e.g. Ledger reconciliation" style="font-size:13px;">
+                    <input type="text" name="adjustment_notes" class="form-control" placeholder="Notes" style="font-size:13px;">
                 </div>
 
                 <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--card-border);">

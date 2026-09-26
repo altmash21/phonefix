@@ -282,6 +282,10 @@ class AccessoriesController extends BaseMobileShopController
             $msg .= " — Cleared ₹" . number_format($summary['clearedOldBalance'], 2) . " from supplier's past balance!";
         }
 
+        if (!empty($summary['poId'])) {
+            return $this->safeRedirect($request, 'mobileshop.purchase.invoice', ['id' => $summary['poId']], 'success', $msg);
+        }
+
         return $this->safeRedirect($request, 'mobileshop.purchase', [], 'success', $msg);
     }
 
