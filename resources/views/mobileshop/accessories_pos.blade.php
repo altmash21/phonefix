@@ -479,12 +479,12 @@
 
         <div class="pos-desktop-layout">
 
-            <!-- ═══════════ LEFT COLUMN: CUSTOMER, PRODUCT SEARCH & BILLED ITEMS ═══════════ -->
+            <!-- ═══════════ LEFT COLUMN: ALL IN ONE BOX ═══════════ -->
             <div class="pos-col-left">
 
-                <!-- ── 1. Customer Information Card ── -->
-                <div class="app-card">
-                    <div class="app-card-header">
+                <div class="app-card" id="mainPosBillingCard" style="margin-bottom:0;">
+                    <!-- ── 1. Customer Details ── -->
+                    <div class="app-card-header" style="margin-bottom:12px; padding-bottom:8px;">
                         <div class="app-card-title">
                             <i data-lucide="user" style="width:16px;height:16px; color:#2563EB;"></i> Customer Details
                         </div>
@@ -493,7 +493,7 @@
                         </span>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
                         <!-- Customer Mobile Phone -->
                         <div>
                             <label class="app-input-label">Customer Mobile *</label>
@@ -514,21 +514,16 @@
                         </div>
                     </div>
                     <input type="hidden" name="is_gst" id="accIsGstCheckbox" value="0">
-                </div>
 
-                <!-- ── 2. Select Product to Bill Card ── -->
-                <div class="app-card" id="productPickerCard">
-                    <div class="app-card-header" style="margin-bottom:12px;">
+                    <!-- ── 2. Select Product to Bill ── -->
+                    <div class="app-card-header" style="margin-bottom:12px; padding-bottom:8px; border-top:1px solid #F1F5F9; padding-top:14px;">
                         <div class="app-card-title">
                             <i data-lucide="search" style="width:16px;height:16px; color:#2563EB;"></i> Select Product to Bill
                         </div>
-                        <span id="productTotalCountBadge" style="font-size:11px; font-weight:700; color:#2563EB; background:#EFF6FF; padding:3px 9px; border-radius:12px; border:1px solid #DBEAFE;">
-                            {{ count($partsList ?? []) }} In-Stock Products
-                        </span>
                     </div>
 
                     <!-- Product Search Input with Add Button -->
-                    <div style="position:relative;" id="productSearchWrapper">
+                    <div style="position:relative; margin-bottom:14px;" id="productSearchWrapper">
                         <label class="app-input-label">Search & Select Item</label>
                         <div style="display:flex; gap:8px;">
                             <div style="position:relative; flex:1;">
@@ -553,24 +548,22 @@
                     </div>
 
                     <!-- Keyboard Navigation Tips Hint Bar -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:8px 12px; background:#F8FAFC; border-radius:8px; border:1px solid #F1F5F9; font-size:11px; color:#64748B;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding:7px 12px; background:#F8FAFC; border-radius:8px; border:1px solid #F1F5F9; font-size:11px; color:#64748B;">
                         <span style="display:inline-flex; align-items:center; gap:5px;">
                             <kbd style="background:#fff; border:1px solid #CBD5E1; border-radius:4px; padding:1px 5px; font-size:10px; font-family:monospace; font-weight:700;">Enter</kbd>
                             Press Enter or Click Add to bill item &bull; Cursor stays in input
                         </span>
-                        <span id="quickItemMatchCount" style="font-weight:700; color:#2563EB;">Click any item to add</span>
+                        <span style="font-weight:700; color:#2563EB;">Click any item to add</span>
                     </div>
 
                     <!-- Instant Added Feedback Toast (Inline) -->
-                    <div id="itemAddedNotice" style="display:none; margin-top:10px; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; align-items:center; gap:6px;">
+                    <div id="itemAddedNotice" style="display:none; margin-bottom:14px; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; align-items:center; gap:6px;">
                         <i data-lucide="check-circle" style="width:14px;height:14px; color:#10B981;"></i>
                         <span id="itemAddedNoticeText">Item added to bill</span>
                     </div>
-                </div>
 
-                <!-- ── 3. Cart / Billed Items Card (Moved below Item Select) ── -->
-                <div class="app-card" id="cartSectionCard" style="margin-bottom:0;">
-                    <div class="app-card-header">
+                    <!-- ── 3. Billed Items ── -->
+                    <div class="app-card-header" style="margin-bottom:12px; padding-bottom:8px; border-top:1px solid #F1F5F9; padding-top:14px;">
                         <div class="app-card-title">
                             <i data-lucide="shopping-bag" style="width:16px;height:16px; color:#D97706;"></i> Billed Items
                             <span id="cartCountBadge" style="background:#E2E8F0; color:#334155; font-size:11px; font-weight:800; padding:2px 7px; border-radius:9999px; margin-left:4px;">0</span>
@@ -582,10 +575,10 @@
 
                     <div id="cartItemsList">
                         <!-- Empty Cart State -->
-                        <div id="emptyCartMessage" style="text-align:center; padding:32px 16px; color:#64748B;">
+                        <div id="emptyCartMessage" style="text-align:center; padding:28px 16px; color:#64748B;">
                             <i data-lucide="shopping-cart" style="width:36px; height:36px; color:#CBD5E1; margin:0 auto 10px; display:block;"></i>
                             <div style="font-size:14px; font-weight:700; color:#475569;">Your bill is currently empty</div>
-                            <p style="font-size:12px; color:#94A3B8; margin:4px 0 0 0;">Tap or search products above to add items</p>
+                            <p style="font-size:12px; color:#94A3B8; margin:4px 0 0 0;">Search products above to add items</p>
                         </div>
                     </div>
                 </div>
