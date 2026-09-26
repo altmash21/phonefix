@@ -1214,6 +1214,7 @@ input:focus, select:focus, textarea:focus {
         z-index: 1000 !important;
         align-items: center !important;
         justify-content: center !important;
+        gap: 8px !important;
         transition: opacity 0.2s ease, transform 0.2s ease !important;
         will-change: opacity, transform !important;
     }

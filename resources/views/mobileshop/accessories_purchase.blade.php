@@ -69,6 +69,29 @@
         color: #047857 !important;
     }
 
+    /* ── Ghost Add Plus Button (Matches theme, highlights on hover) ── */
+    .btn-ghost-add {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        background: #EEF2FF;
+        border: 1px solid #C7D2FE;
+        color: #4F46E5;
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+    .btn-ghost-add:hover {
+        background: #4F46E5 !important;
+        border-color: #4F46E5 !important;
+        color: #FFFFFF !important;
+        transform: scale(1.05);
+    }
+
     /* ── Ghost Delete Cross Button (Clearly visible, turns red on hover) ── */
     .btn-ghost-delete {
         width: 30px;
@@ -160,13 +183,19 @@
         display: inline-flex;
     }
 
+    .category-combobox-menu {
+        min-width: 240px !important;
+        max-width: 340px !important;
+        max-height: 280px !important;
+    }
+
     /* ==========================================================================
        DESKTOP VIEWPORT (>= 880px): True Aligned Tabular Grid
        ========================================================================== */
     @media (min-width: 880px) {
         .batch-grid-row {
             display: grid;
-            grid-template-columns: 140px minmax(220px, 2fr) minmax(150px, 1.2fr) 96px 105px 105px 65px 105px 36px;
+            grid-template-columns: 180px minmax(220px, 2fr) minmax(140px, 1.2fr) 92px 100px 100px 65px 100px 72px;
             gap: 8px;
             align-items: start;
         }
@@ -568,14 +597,15 @@
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
                     <div>
                         <label class="mobile-card-label" style="display:block;">Supplier / Distributor <span style="color:#EF4444;">*</span></label>
-                        <input type="text" name="supplier_name" id="bulkSupplierName" list="suppliersList" placeholder="e.g. Metro Mobile Wholesale" class="restock-input" required>
+                        <input type="text" name="supplier_name" id="bulkSupplierName" list="suppliersList" placeholder="e.g. Metro Mobile Wholesale" class="restock-input" required oninput="onSupplierSelected()" onchange="onSupplierSelected()">
                         <datalist id="suppliersList">
                             @if(isset($suppliers))
                                 @foreach($suppliers as $s)
-                                    <option value="{{ $s->name }}">{{ $s->name }} @if($s->phone)({{ $s->phone }})@endif</option>
+                                    <option value="{{ $s->name }}">{{ $s->name }} @if($s->phone)({{ $s->phone }})@endif @if(!empty($s->outstanding_balance) && $s->outstanding_balance > 0)[Due: ₹{{ number_format($s->outstanding_balance, 2) }}]@endif</option>
                                 @endforeach
                             @endif
                         </datalist>
+                        <div id="supplierLedgerInfo" style="display:none; margin-top:6px; padding:6px 10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; font-size:11.5px;"></div>
                     </div>
 
                     <div>
@@ -608,7 +638,7 @@
                     Batch Items &mdash; <span id="bulkRowCount" style="color:var(--color-primary); font-weight:800;">0</span> rows
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
-                    <button type="button" onclick="addBulkRow()" class="btn btn-primary btn-sm" style="font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:6px;">
+                    <button type="button" onclick="addBulkRowAndFocus()" class="btn btn-primary btn-sm" style="font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:6px;">
                         <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Row
                     </button>
                     <button type="button" onclick="addMultipleRows(5)" class="btn btn-outline btn-sm" style="font-weight:700; font-size:11.5px; padding:4px 9px; border-radius:6px;">
@@ -622,7 +652,7 @@
 
             <!-- 1. DESKTOP ALIGNED TABLE HEADER -->
             <div class="batch-table-header batch-grid-row" id="batchTableHeader">
-                <div>Category <span style="color:#EF4444;">*</span></div>
+                <div>Category (Search) <span style="color:#EF4444;">*</span></div>
                 <div>Item &amp; Current Stock <span style="color:#EF4444;">*</span></div>
                 <div>Description / Specs</div>
                 <div style="text-align:center;">Qty <span style="color:#EF4444;">*</span></div>
@@ -662,43 +692,101 @@
             </div>
         </div>
 
-        <!-- ─── DESKTOP SUMMARY STAT STRIP ─── -->
+        <!-- ─── DESKTOP SUMMARY & SUPPLIER SETTLEMENT CARD ─── -->
         <div class="card desktop-summary-card" style="border:1px solid #E2E8F0; background:#FFFFFF; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.03); margin-bottom:20px;">
-            <div class="card-body" style="padding:10px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
-                <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
-                    <div>
-                        <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Items</span>
-                        <div style="font-size:15px; font-weight:800; color:#0F172A;" id="lblBulkLineCount">0 lines</div>
+            <div class="card-body" style="padding:12px 16px;">
+                <!-- Row 1: Metrics & Totals -->
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding-bottom:12px; border-bottom:1px solid #F1F5F9;">
+                    <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+                        <div>
+                            <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Items</span>
+                            <div style="font-size:15px; font-weight:800; color:#0F172A;" id="lblBulkLineCount">0 lines</div>
+                        </div>
+                        <div style="border-left:1px solid #E2E8F0; padding-left:24px;">
+                            <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Units</span>
+                            <div style="font-size:15px; font-weight:800; color:#0F172A;" id="lblBulkTotalUnits">0 units</div>
+                        </div>
+                        <div style="border-left:1px solid #E2E8F0; padding-left:24px;">
+                            <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Invoice Total</span>
+                            <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace;" id="lblBulkTotalCost">₹0.00</div>
+                        </div>
+                        <div id="supplierDueSummaryBlock" style="display:none; border-left:1px solid #E2E8F0; padding-left:24px;">
+                            <span style="font-size:10px; color:#DC2626; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Supplier Past Due</span>
+                            <div style="font-size:16px; font-weight:800; color:#DC2626; font-family:'JetBrains Mono', monospace;" id="lblSupplierPastDue">₹0.00</div>
+                        </div>
                     </div>
-                    <div style="border-left:1px solid #E2E8F0; padding-left:24px;">
-                        <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Units</span>
-                        <div style="font-size:15px; font-weight:800; color:#0F172A;" id="lblBulkTotalUnits">0 units</div>
-                    </div>
-                    <div style="border-left:1px solid #E2E8F0; padding-left:24px;">
-                        <span style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:700; letter-spacing:0.4px;">Total Cost</span>
-                        <div style="font-size:18px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace;" id="lblBulkTotalCost">₹0.00</div>
+
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline btn-sm" style="font-weight:700; padding:7px 14px; border-radius:6px; font-size:12px;">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitBulkRestock" style="background:#5E6AD2; border-color:#5E6AD2; font-weight:800; padding:8px 20px; font-size:12px; border-radius:6px; box-shadow:0 2px 6px rgba(94, 106, 210, 0.3);">
+                            <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Purchase Accessories &amp; Settle
+                        </button>
                     </div>
                 </div>
 
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <a href="{{ route('mobileshop.purchase') }}" class="btn btn-outline btn-sm" style="font-weight:700; padding:6px 14px; border-radius:6px; font-size:12px;">
-                        Cancel
-                    </a>
-                    <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitBulkRestock" style="background:#5E6AD2; border-color:#5E6AD2; font-weight:800; padding:7px 18px; font-size:12px; border-radius:6px; box-shadow:0 2px 6px rgba(94, 106, 210, 0.3);">
-                        <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Purchase Accessories
-                    </button>
+                <!-- Row 2: Amount Submitted / Paid to Settle Supplier -->
+                <div style="margin-top:12px; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; align-items:center;">
+                    <div>
+                        <label style="font-size:11px; font-weight:700; color:#334155; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+                            <span>Amount Submitted / Paid (₹)</span>
+                            <span style="font-size:10.5px; font-weight:600; color:#64748B;">Clear balance or pay invoice</span>
+                        </label>
+                        <div style="position:relative;">
+                            <span style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-weight:700; color:#64748B; font-family:'JetBrains Mono', monospace;">₹</span>
+                            <input type="number" step="0.01" min="0" name="amount_paid" id="bulkAmountPaid"
+                                class="restock-input num-field"
+                                style="padding-left:26px !important; font-size:14px !important; font-weight:800 !important; color:#0F172A !important;"
+                                placeholder="0.00" oninput="onAmountPaidChanged()">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size:11px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">
+                            Payment Mode
+                        </label>
+                        <select name="payment_mode" id="bulkPaymentMode" class="restock-input" style="font-size:12.5px !important; font-weight:700 !important;">
+                            <option value="cash">💵 Cash Payment</option>
+                            <option value="upi">📱 UPI / QR Transfer</option>
+                            <option value="bank_transfer">🏦 Bank Transfer (NEFT/IMPS)</option>
+                            <option value="cheque">📝 Cheque</option>
+                        </select>
+                    </div>
+
+                    <div style="grid-column: 1 / -1; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                        <!-- Quick settlement preset buttons -->
+                        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                            <span style="font-size:10.5px; font-weight:700; color:#64748B; text-transform:uppercase;">Quick Pay:</span>
+                            <button type="button" class="btn btn-outline btn-xs" onclick="setBulkAmountPaid('invoice')" style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:5px;" id="btnQuickPayInvoice">
+                                Pay Bill (<span id="btnLblBillAmt">₹0</span>)
+                            </button>
+                            <button type="button" class="btn btn-outline btn-xs" id="btnQuickClearAll" onclick="setBulkAmountPaid('clear_all')" style="display:none; font-size:11px; font-weight:700; padding:3px 8px; border-radius:5px; color:#059669; border-color:#6EE7B7; background:#ECFDF5;">
+                                🎯 Clear Out All Balance (<span id="btnLblClearAll">₹0</span>)
+                            </button>
+                            <button type="button" class="btn btn-outline btn-xs" onclick="setBulkAmountPaid('zero')" style="font-size:11px; font-weight:700; padding:3px 8px; border-radius:5px; color:#64748B;">
+                                Unpaid / Credit (₹0)
+                            </button>
+                        </div>
+
+                        <!-- Live settlement feedback pill -->
+                        <div id="bulkSettlementPill" style="font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px; background:#F1F5F9; color:#475569;">
+                            Enter amount submitted to update supplier ledger
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- ─── MOBILE STICKY BOTTOM DOCK ─── -->
         <div class="mobile-sticky-footer" id="mobileStickyFooter" style="display:none;">
-            <div>
+            <div style="flex:1; min-width:0;">
                 <div style="font-size:9.5px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.3px;" id="mobileStickyCount">0 ITEMS &bull; 0 UNITS</div>
-                <div style="font-size:17px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickyTotal">₹0.00</div>
+                <div style="font-size:16px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickyTotal">₹0.00</div>
+                <div style="font-size:10px; font-weight:700; color:#059669;" id="mobileStickySettlement">Paid: ₹0.00</div>
             </div>
-            <button type="submit" class="btn btn-primary" id="btnMobileSubmitRestock" style="height:44px; padding:0 20px; font-size:13.5px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35);">
-                <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Purchase Accessories
+            <button type="submit" class="btn btn-primary" id="btnMobileSubmitRestock" style="height:44px; padding:0 16px; font-size:13px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35); flex-shrink:0;">
+                <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Purchase &amp; Settle
             </button>
         </div>
 
@@ -727,6 +815,7 @@
         return '₹' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    const suppliersData = {!! json_encode($suppliers ?? []) !!};
     const rawCatalogParts = {!! json_encode($parts ?? []) !!};
     const catalogParts = Array.isArray(rawCatalogParts) ? rawCatalogParts : Object.values(rawCatalogParts || {});
     const rawCatalogCategories = {!! json_encode($categories ?? []) !!};
@@ -747,6 +836,108 @@
             { slug: 'general_accessory', name: 'General Accessories 🎁' }
         ];
     }
+
+    function formatCategoryLabel(slug) {
+        if (!slug) return 'General Accessories 🎁';
+        const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
+        const found = cats.find(c => c && (c.slug === slug || canonicalizeCategory(c.slug) === slug));
+        if (found) return found.name || found.slug;
+        return slug.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    window.formatCategoryLabel = formatCategoryLabel;
+
+    function getSelectedSupplier() {
+        const input = document.getElementById('bulkSupplierName');
+        if (!input) return null;
+        const name = input.value.trim().toLowerCase();
+        if (!name) return null;
+        const list = Array.isArray(suppliersData) ? suppliersData : Object.values(suppliersData || {});
+        return list.find(s => s && s.name && s.name.toLowerCase() === name);
+    }
+    window.getSelectedSupplier = getSelectedSupplier;
+
+    function onSupplierSelected() {
+        const s = getSelectedSupplier();
+        const infoBox = document.getElementById('supplierLedgerInfo');
+        const pastDueSummary = document.getElementById('supplierDueSummaryBlock');
+        const pastDueLbl = document.getElementById('lblSupplierPastDue');
+        const clearAllBtn = document.getElementById('btnQuickClearAll');
+
+        if (s) {
+            const outBal = parseFloat(s.outstanding_balance) || 0;
+            const advBal = parseFloat(s.advance_balance) || 0;
+
+            if (infoBox) {
+                infoBox.style.display = 'block';
+                let html = `<strong>${escapeHtml(s.name)}</strong> `;
+                if (s.phone) html += `(${escapeHtml(s.phone)}) &bull; `;
+                if (outBal > 0) {
+                    html += `<span style="color:#DC2626; font-weight:800;">Previous Balance Due: ₹${outBal.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>`;
+                } else {
+                    html += `<span style="color:#059669; font-weight:700;">✅ Clean Ledger (No Past Due)</span>`;
+                }
+                if (advBal > 0) {
+                    html += ` &bull; <span style="color:#4F46E5; font-weight:700;">Prepaid Advance: ₹${advBal.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>`;
+                }
+                infoBox.innerHTML = html;
+            }
+
+            if (outBal > 0) {
+                if (pastDueSummary) pastDueSummary.style.display = 'block';
+                if (pastDueLbl) pastDueLbl.textContent = formatCurrency(outBal);
+                if (clearAllBtn) clearAllBtn.style.display = 'inline-flex';
+            } else {
+                if (pastDueSummary) pastDueSummary.style.display = 'none';
+                if (clearAllBtn) clearAllBtn.style.display = 'none';
+            }
+        } else {
+            if (infoBox) infoBox.style.display = 'none';
+            if (pastDueSummary) pastDueSummary.style.display = 'none';
+            if (clearAllBtn) clearAllBtn.style.display = 'none';
+        }
+        updateBulkSummary();
+    }
+    window.onSupplierSelected = onSupplierSelected;
+
+    function getCurrentBatchTotalCost() {
+        const rows = document.querySelectorAll('#bulkTableBody .batch-item-row');
+        let totalCost = 0.0;
+        rows.forEach(r => {
+            const qtyInput = r.querySelector('input[name*="[qty]"]');
+            const costInput = r.querySelector('input[name*="[unit_cost]"]');
+            if (qtyInput && costInput) {
+                const q = parseInt(qtyInput.value) || 0;
+                const c = parseFloat(costInput.value) || 0;
+                totalCost += (q * c);
+            }
+        });
+        return totalCost;
+    }
+    window.getCurrentBatchTotalCost = getCurrentBatchTotalCost;
+
+    function setBulkAmountPaid(mode) {
+        const totalCost = getCurrentBatchTotalCost();
+        const s = getSelectedSupplier();
+        const outBal = s ? (parseFloat(s.outstanding_balance) || 0) : 0;
+        const input = document.getElementById('bulkAmountPaid');
+        if (!input) return;
+
+        if (mode === 'invoice') {
+            input.value = totalCost > 0 ? totalCost.toFixed(2) : '';
+        } else if (mode === 'clear_all') {
+            const totalWithDue = totalCost + outBal;
+            input.value = totalWithDue > 0 ? totalWithDue.toFixed(2) : '';
+        } else if (mode === 'zero') {
+            input.value = '0.00';
+        }
+        onAmountPaidChanged();
+    }
+    window.setBulkAmountPaid = setBulkAmountPaid;
+
+    function onAmountPaidChanged() {
+        updateBulkSummary();
+    }
+    window.onAmountPaidChanged = onAmountPaidChanged;
 
     /* ── Canonicalize category names & aliases to standard DB slugs ── */
     function canonicalizeCategory(cat, name = '') {
@@ -1068,15 +1259,14 @@
 
         if (trimmed.length >= 2) {
             const autoCat = canonicalizeCategory('', trimmed);
-            const selectEl = document.getElementById(`catSelect_${idx}`);
-            if (selectEl && autoCat && autoCat !== 'general_accessory') {
-                for (let i = 0; i < selectEl.options.length; i++) {
-                    const optVal = selectEl.options[i].value;
-                    if (optVal === autoCat || canonicalizeCategory(optVal) === autoCat) {
-                        selectEl.selectedIndex = i;
-                        break;
-                    }
-                }
+            if (autoCat && autoCat !== 'general_accessory') {
+                const catValEl = document.getElementById(`catValue_${idx}`);
+                const catSearchEl = document.getElementById(`catSearchInput_${idx}`);
+                if (catValEl) catValEl.value = autoCat;
+                if (catSearchEl) catSearchEl.value = formatCategoryLabel(autoCat);
+                const catClearBtn = document.getElementById(`catClearBtn_${idx}`);
+                if (catClearBtn) catClearBtn.style.display = 'flex';
+                onBulkCategoryChange(idx, autoCat);
             }
         }
 
@@ -1127,20 +1317,15 @@
 
         if (p.category) {
             const targetCat = canonicalizeCategory(p.category, p.name);
-            const catSelect = document.getElementById(`catSelect_${idx}`);
-            if (catSelect) {
-                for (let i = 0; i < catSelect.options.length; i++) {
-                    const optVal = catSelect.options[i].value;
-                    if (optVal === targetCat || canonicalizeCategory(optVal) === targetCat) {
-                        catSelect.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-            const qualityToggle = document.getElementById(`qualityToggle_${idx}`);
-            if (qualityToggle) {
-                qualityToggle.classList.toggle('visible', targetCat === 'folder_display');
-            }
+            const catValEl = document.getElementById(`catValue_${idx}`);
+            const catSearchEl = document.getElementById(`catSearchInput_${idx}`);
+            if (catValEl) catValEl.value = targetCat;
+            if (catSearchEl) catSearchEl.value = formatCategoryLabel(targetCat);
+
+            const catClearBtn = document.getElementById(`catClearBtn_${idx}`);
+            if (catClearBtn) catClearBtn.style.display = 'flex';
+
+            onBulkCategoryChange(idx, targetCat);
         }
 
         const detectedB = guessBrand(p.name);
@@ -1290,6 +1475,247 @@
         }
     });
 
+    /* ── Render Category Combobox Menu ── */
+    function renderCategoryMenu(idx, query = '') {
+        const menuEl = document.getElementById(`catComboboxMenu_${idx}`);
+        if (!menuEl) return;
+
+        const q = (query || '').toLowerCase().trim();
+        const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
+        const currentSlug = document.getElementById(`catValue_${idx}`)?.value || '';
+
+        const matches = cats.filter(cat => {
+            if (!cat) return false;
+            if (!q) return true;
+            const name = (cat.name || '').toLowerCase();
+            const slug = (cat.slug || '').toLowerCase();
+            return name.includes(q) || slug.includes(q);
+        });
+
+        if (matches.length === 0) {
+            menuEl.innerHTML = `
+                <div style="padding:10px 12px; text-align:center; font-size:11.5px; color:#64748B;">
+                    No category matches "<strong>${escapeHtml(query)}</strong>".<br>
+                    <span style="font-size:10.5px; color:#4F46E5; font-weight:600;">Press Enter to use standard category</span>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        matches.forEach((c, itemIdx) => {
+            const isSelected = (c.slug === currentSlug);
+            const isActive = (itemIdx === 0);
+            html += `
+                <div class="combobox-item ${isActive ? 'active' : ''}"
+                    data-slug="${escapeHtml(c.slug)}"
+                    data-name="${escapeHtml(c.name)}"
+                    data-idx="${itemIdx}"
+                    onmousedown="selectCategoryOption(${idx}, '${escapeHtml(c.slug)}', '${escapeHtml(c.name)}')">
+                    <div style="font-weight:700; color:#0F172A; font-size:11.5px;">${escapeHtml(c.name)}</div>
+                    ${isSelected ? '<span style="font-size:10px; background:#DCFCE7; color:#15803D; font-weight:800; padding:1px 6px; border-radius:4px;">Selected</span>' : ''}
+                </div>
+            `;
+        });
+
+        menuEl.innerHTML = html;
+    }
+
+    /* ── Open / Show Category Combobox (One List at Once) ── */
+    function openCategoryCombobox(idx) {
+        // Enforce ONE LIST AT ONCE: close all other open comboboxes everywhere!
+        document.querySelectorAll('.combobox-menu').forEach(m => {
+            if (m.id !== `catComboboxMenu_${idx}`) m.style.display = 'none';
+        });
+
+        const input = document.getElementById(`catSearchInput_${idx}`);
+        renderCategoryMenu(idx, input ? input.value : '');
+
+        const menuEl = document.getElementById(`catComboboxMenu_${idx}`);
+        if (menuEl) menuEl.style.display = 'block';
+
+        const clearBtn = document.getElementById(`catClearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = (input && input.value) ? 'flex' : 'none';
+    }
+    window.openCategoryCombobox = openCategoryCombobox;
+
+    /* ── On Category Blur ── */
+    function onCategoryComboboxBlur(idx) {
+        setTimeout(() => {
+            const menuEl = document.getElementById(`catComboboxMenu_${idx}`);
+            if (menuEl) menuEl.style.display = 'none';
+
+            const input = document.getElementById(`catSearchInput_${idx}`);
+            const typed = (input ? input.value : '').trim();
+            const currentSlug = document.getElementById(`catValue_${idx}`)?.value;
+
+            if (typed) {
+                const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
+                const exact = cats.find(c => c && (c.name.toLowerCase() === typed.toLowerCase() || c.slug.toLowerCase() === typed.toLowerCase()));
+                if (exact) {
+                    selectCategoryOption(idx, exact.slug, exact.name);
+                } else if (!currentSlug) {
+                    const auto = canonicalizeCategory('', typed);
+                    const found = cats.find(c => c && c.slug === auto);
+                    selectCategoryOption(idx, auto, found ? found.name : formatCategoryLabel(auto));
+                }
+            }
+        }, 180);
+    }
+    window.onCategoryComboboxBlur = onCategoryComboboxBlur;
+
+    /* ── On Typing Category ── */
+    function onCategoryComboboxInput(idx, val) {
+        const clearBtn = document.getElementById(`catClearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = val ? 'flex' : 'none';
+
+        renderCategoryMenu(idx, val);
+
+        const menuEl = document.getElementById(`catComboboxMenu_${idx}`);
+        if (menuEl) menuEl.style.display = 'block';
+    }
+    window.onCategoryComboboxInput = onCategoryComboboxInput;
+
+    /* ── Category Keyboard Navigation (Arrow Keys + Enter Selection) ── */
+    function onCategoryComboboxKeydown(idx, e) {
+        const menuEl = document.getElementById(`catComboboxMenu_${idx}`);
+        const isMenuOpen = menuEl && menuEl.style.display !== 'none';
+
+        if (e.key === 'ArrowDown') {
+            if (!isMenuOpen) {
+                openCategoryCombobox(idx);
+                e.preventDefault();
+                return;
+            }
+            const items = menuEl.querySelectorAll('.combobox-item');
+            if (items.length === 0) return;
+            e.preventDefault();
+            let activeIdx = -1;
+            items.forEach((it, i) => {
+                if (it.classList.contains('active')) activeIdx = i;
+            });
+            if (activeIdx >= 0) items[activeIdx].classList.remove('active');
+            activeIdx = (activeIdx + 1) % items.length;
+            items[activeIdx].classList.add('active');
+            items[activeIdx].scrollIntoView({ block: 'nearest' });
+            return;
+        }
+
+        if (e.key === 'ArrowUp') {
+            if (!isMenuOpen) return;
+            const items = menuEl.querySelectorAll('.combobox-item');
+            if (items.length === 0) return;
+            e.preventDefault();
+            let activeIdx = -1;
+            items.forEach((it, i) => {
+                if (it.classList.contains('active')) activeIdx = i;
+            });
+            if (activeIdx >= 0) items[activeIdx].classList.remove('active');
+            activeIdx = (activeIdx - 1 + items.length) % items.length;
+            items[activeIdx].classList.add('active');
+            items[activeIdx].scrollIntoView({ block: 'nearest' });
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent accidental form submission
+            if (isMenuOpen) {
+                const activeItem = menuEl.querySelector('.combobox-item.active') || menuEl.querySelector('.combobox-item');
+                if (activeItem) {
+                    const slug = activeItem.getAttribute('data-slug');
+                    const name = activeItem.getAttribute('data-name');
+                    selectCategoryOption(idx, slug, name);
+                    return;
+                }
+            }
+            const input = document.getElementById(`catSearchInput_${idx}`);
+            const typed = (input ? input.value : '').trim();
+            if (typed) {
+                const auto = canonicalizeCategory('', typed);
+                const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
+                const found = cats.find(c => c && c.slug === auto);
+                selectCategoryOption(idx, auto, found ? found.name : formatCategoryLabel(auto));
+            }
+            if (menuEl) menuEl.style.display = 'none';
+            const searchInput = document.getElementById(`searchInput_${idx}`);
+            if (searchInput) searchInput.focus();
+            return;
+        }
+
+        if (e.key === 'Tab') {
+            if (isMenuOpen) {
+                const activeItem = menuEl.querySelector('.combobox-item.active') || menuEl.querySelector('.combobox-item');
+                if (activeItem) {
+                    const slug = activeItem.getAttribute('data-slug');
+                    const name = activeItem.getAttribute('data-name');
+                    selectCategoryOption(idx, slug, name);
+                }
+                menuEl.style.display = 'none';
+            }
+            return;
+        }
+
+        if (e.key === 'Escape') {
+            if (menuEl) menuEl.style.display = 'none';
+            return;
+        }
+    }
+    window.onCategoryComboboxKeydown = onCategoryComboboxKeydown;
+
+    /* ── Select Category Option ── */
+    function selectCategoryOption(idx, slug, name) {
+        const valInput = document.getElementById(`catValue_${idx}`);
+        if (valInput) valInput.value = slug;
+
+        const searchInput = document.getElementById(`catSearchInput_${idx}`);
+        if (searchInput) searchInput.value = name;
+
+        const clearBtn = document.getElementById(`catClearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = 'flex';
+
+        const menuEl = document.getElementById(`catComboboxMenu_${idx}`);
+        if (menuEl) menuEl.style.display = 'none';
+
+        onBulkCategoryChange(idx, slug);
+
+        // Auto-focus next field: Item Name Combobox
+        const itemInput = document.getElementById(`searchInput_${idx}`);
+        if (itemInput) {
+            setTimeout(() => itemInput.focus(), 30);
+        }
+    }
+    window.selectCategoryOption = selectCategoryOption;
+
+    /* ── Clear Category Item ── */
+    function clearCategoryItem(idx) {
+        const searchInput = document.getElementById(`catSearchInput_${idx}`);
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+        }
+        const valInput = document.getElementById(`catValue_${idx}`);
+        if (valInput) valInput.value = '';
+
+        const clearBtn = document.getElementById(`catClearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = 'none';
+
+        openCategoryCombobox(idx);
+    }
+    window.clearCategoryItem = clearCategoryItem;
+
+    /* ── Add Bulk Row and Automatically Focus Category Input ── */
+    function addBulkRowAndFocus() {
+        addBulkRow();
+        setTimeout(() => {
+            const newCatInput = document.getElementById(`catSearchInput_${bulkRowIndex}`);
+            if (newCatInput) {
+                newCatInput.focus();
+                newCatInput.select();
+            }
+        }, 50);
+    }
+    window.addBulkRowAndFocus = addBulkRowAndFocus;
+
     /* ── Add New Row to Batch Intake Table ── */
     function addBulkRow(itemData = null) {
         try {
@@ -1302,29 +1728,10 @@
             row.className = 'batch-item-row batch-grid-row';
             row.id = `bulk-row-${idx}`;
 
-            const targetCat = canonicalizeCategory(itemData?.category, itemData?.name);
-
-            let catOptions = '';
-            let matchedOption = false;
+            const targetCat = canonicalizeCategory(itemData?.category, itemData?.name) || 'tempered_glass';
             const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
-            cats.forEach(cat => {
-                if (!cat) return;
-                const slug = cat.slug || cat.name || '';
-                const name = cat.name || cat.slug || '';
-                const isSelected = itemData && (
-                    itemData.category === slug ||
-                    itemData.category === name ||
-                    targetCat === slug ||
-                    canonicalizeCategory(slug) === targetCat ||
-                    canonicalizeCategory(name) === targetCat
-                );
-                if (isSelected && !matchedOption) {
-                    matchedOption = true;
-                    catOptions += `<option value="${escapeHtml(slug)}" selected>${escapeHtml(name)}</option>`;
-                } else {
-                    catOptions += `<option value="${escapeHtml(slug)}">${escapeHtml(name)}</option>`;
-                }
-            });
+            const foundCat = cats.find(c => c && (c.slug === targetCat || canonicalizeCategory(c.slug) === targetCat || canonicalizeCategory(c.name) === targetCat));
+            const selectedCatName = foundCat ? (foundCat.name || foundCat.slug) : formatCategoryLabel(targetCat);
 
             // Check if itemData matches an existing part in inventory
             const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
@@ -1366,24 +1773,43 @@
                 <div class="mobile-card-top">
                     <div style="display:flex; align-items:center; gap:6px;">
                         <span class="mobile-row-badge">#${idx}</span>
-                        <span style="font-size:11px; font-weight:700; color:#64748B;" id="mobileCardCatLabel_${idx}">Category</span>
+                        <span style="font-size:11px; font-weight:700; color:#64748B;" id="mobileCardCatLabel_${idx}">${escapeHtml(selectedCatName)}</span>
                     </div>
-                    <button type="button" class="btn-ghost-delete" onclick="removeBulkRow(${idx})" title="Remove item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <button type="button" class="btn-ghost-add" onclick="addBulkRowAndFocus()" title="Add another item row (+)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                        <button type="button" class="btn-ghost-delete" onclick="removeBulkRow(${idx})" title="Remove item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- 1. CATEGORY -->
-                <div>
+                <!-- 1. CATEGORY SEARCHABLE COMBOBOX -->
+                <div class="combobox-wrapper" id="catComboboxWrap_${idx}">
                     <label class="mobile-card-label">Category</label>
-                    <select name="items[${idx}][category]" id="catSelect_${idx}"
-                        class="restock-input cat-select"
-                        onchange="onBulkCategoryChange(${idx}, this.value)">
-                        ${catOptions}
-                    </select>
+                    <div style="position:relative; display:flex; align-items:center;">
+                        <input type="text" id="catSearchInput_${idx}" class="restock-input search-combobox-input cat-search-input"
+                            value="${escapeHtml(selectedCatName)}" placeholder="🔍 Search Category..."
+                            autocomplete="off"
+                            onfocus="openCategoryCombobox(${idx})"
+                            onclick="openCategoryCombobox(${idx})"
+                            onblur="onCategoryComboboxBlur(${idx})"
+                            oninput="onCategoryComboboxInput(${idx}, this.value)"
+                            onkeydown="onCategoryComboboxKeydown(${idx}, event)">
+                        <button type="button" id="catClearBtn_${idx}" class="combobox-clear-btn"
+                            onclick="clearCategoryItem(${idx})"
+                            style="${selectedCatName ? 'display:flex;' : 'display:none;'}"
+                            title="Clear category">✕</button>
+                    </div>
+                    <input type="hidden" name="items[${idx}][category]" id="catValue_${idx}" value="${escapeHtml(targetCat)}">
+                    <div id="catComboboxMenu_${idx}" class="combobox-menu category-combobox-menu" style="display:none;"></div>
                 </div>
 
                 <!-- 2. SEARCHABLE DROPDOWN (COMBOBOX) -->
@@ -1477,8 +1903,14 @@
                     <div class="desktop-total-amt" id="lineTotal_${idx}">${formatCurrency(lineTotal)}</div>
                 </div>
 
-                <!-- 6. DESKTOP GHOST DELETE BUTTON -->
-                <div class="desktop-action-cell" style="text-align:center;">
+                <!-- 6. DESKTOP ACTION BUTTONS (+ and Remove) -->
+                <div class="desktop-action-cell" style="display:flex; align-items:center; justify-content:center; gap:5px; padding-top:2px;">
+                    <button type="button" class="btn-ghost-add" onclick="addBulkRowAndFocus()" title="Add another item row (+)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
                     <button type="button" class="btn-ghost-delete" onclick="removeBulkRow(${idx})" title="Remove item">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1505,17 +1937,12 @@
                 renderStockBadge(idx, null);
             }
 
-            // Ensure category select matches targetCat
-            const selectEl = document.getElementById(`catSelect_${idx}`);
-            if (selectEl && targetCat) {
-                for (let i = 0; i < selectEl.options.length; i++) {
-                    const optVal = selectEl.options[i].value;
-                    const optText = selectEl.options[i].text;
-                    if (optVal === targetCat || canonicalizeCategory(optVal) === targetCat || canonicalizeCategory(optText) === targetCat) {
-                        selectEl.selectedIndex = i;
-                        break;
-                    }
-                }
+            // Ensure category inputs match targetCat
+            const catValInput = document.getElementById(`catValue_${idx}`);
+            const catSearchInput = document.getElementById(`catSearchInput_${idx}`);
+            if (catValInput && targetCat) {
+                catValInput.value = targetCat;
+                if (catSearchInput) catSearchInput.value = selectedCatName;
             }
 
             updateBulkRowTotal(idx);
@@ -1587,10 +2014,9 @@
             giftEl.value = isGift ? '1' : '0';
         }
 
-        const catSelect = document.getElementById(`catSelect_${idx}`);
         const mobileBadge = document.getElementById(`mobileCardCatLabel_${idx}`);
-        if (catSelect && mobileBadge && catSelect.selectedOptions[0]) {
-            mobileBadge.textContent = catSelect.selectedOptions[0].text;
+        if (mobileBadge) {
+            mobileBadge.textContent = formatCategoryLabel(canonicalVal);
         }
 
         // If combobox menu is open, re-render it with new category prioritization
@@ -1673,7 +2099,7 @@
         if (rowCountEl) rowCountEl.textContent = rows.length;
 
         const lineCountEl = document.getElementById('lblBulkLineCount');
-        if (lineCountEl) lineCountEl.textContent = `${rows.length} items`;
+        if (lineCountEl) lineCountEl.textContent = `${rows.length} lines`;
 
         const totalUnitsEl = document.getElementById('lblBulkTotalUnits');
         if (totalUnitsEl) totalUnitsEl.textContent = `${totalUnits} units`;
@@ -1687,6 +2113,69 @@
 
         const mobileCountEl = document.getElementById('mobileStickyCount');
         if (mobileCountEl) mobileCountEl.textContent = `${rows.length} ITEMS • ${totalUnits} UNITS`;
+
+        // Supplier Ledger & Settlement sync
+        const s = getSelectedSupplier();
+        const outBal = s ? (parseFloat(s.outstanding_balance) || 0) : 0;
+
+        const btnBillAmt = document.getElementById('btnLblBillAmt');
+        if (btnBillAmt) btnBillAmt.textContent = formatCurrency(totalCost);
+
+        const btnClearAll = document.getElementById('btnLblClearAll');
+        if (btnClearAll) btnClearAll.textContent = formatCurrency(totalCost + outBal);
+
+        const amtInput = document.getElementById('bulkAmountPaid');
+        const rawPaidStr = amtInput ? amtInput.value.trim() : '';
+
+        // If user hasn't explicitly entered anything or input is untouched, default to totalCost
+        let actualPaid = (rawPaidStr !== '' && rawPaidStr !== null && !isNaN(parseFloat(rawPaidStr)))
+            ? parseFloat(rawPaidStr)
+            : totalCost;
+
+        const pill = document.getElementById('bulkSettlementPill');
+        const mobSettlement = document.getElementById('mobileStickySettlement');
+
+        if (pill) {
+            if (rawPaidStr === '') {
+                pill.style.background = '#EEF2FF';
+                pill.style.color = '#4338CA';
+                pill.innerHTML = `Default: <strong>Full Invoice Payment (₹${totalCost.toFixed(2)})</strong>. Change amount to clear balance.`;
+            } else if (actualPaid <= 0) {
+                pill.style.background = '#FEF2F2';
+                pill.style.color = '#B91C1C';
+                pill.innerHTML = `⚠️ <strong>Full Credit (Udhari)</strong>: Entire ₹${totalCost.toFixed(2)} will be added to supplier balance`;
+            } else if (actualPaid < totalCost) {
+                const due = totalCost - actualPaid;
+                pill.style.background = '#FFFBEB';
+                pill.style.color = '#B45309';
+                pill.innerHTML = `🟡 <strong>Partial Payment (₹${actualPaid.toFixed(2)})</strong>: Remaining invoice due ₹${due.toFixed(2)} added to supplier debt`;
+            } else if (Math.abs(actualPaid - totalCost) < 0.01) {
+                pill.style.background = '#ECFDF5';
+                pill.style.color = '#047857';
+                pill.innerHTML = `✅ <strong>Invoice Paid in Full (₹${totalCost.toFixed(2)})</strong>: Supplier balance unaffected`;
+            } else {
+                const excess = actualPaid - totalCost;
+                if (outBal > 0) {
+                    const cleared = Math.min(excess, outBal);
+                    const remainingDue = Math.max(0, outBal - cleared);
+                    pill.style.background = '#F0FDF4';
+                    pill.style.color = '#15803D';
+                    if (remainingDue <= 0.01) {
+                        pill.innerHTML = `🎉 <strong>100% Cleared Out!</strong> Invoice paid + ₹${cleared.toFixed(2)} completely CLEARS supplier's previous debt!`;
+                    } else {
+                        pill.innerHTML = `🟢 <strong>Invoice Paid + Clears ₹${cleared.toFixed(2)}</strong> from past debt (Remaining past due: ₹${remainingDue.toFixed(2)})`;
+                    }
+                } else {
+                    pill.style.background = '#EEF2FF';
+                    pill.style.color = '#4338CA';
+                    pill.innerHTML = `💎 <strong>Invoice Paid + ₹${excess.toFixed(2)} Advance</strong> credited to supplier prepaid wallet`;
+                }
+            }
+        }
+
+        if (mobSettlement) {
+            mobSettlement.textContent = `Paid: ₹${(actualPaid || 0).toFixed(2)}`;
+        }
     }
 
     function validateAndSubmitBulkRestock(form) {

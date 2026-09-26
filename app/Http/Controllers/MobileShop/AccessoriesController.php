@@ -96,9 +96,25 @@ class AccessoriesController extends BaseMobileShopController
         $companyId = $this->getCompanyId();
         $niche     = $this->getUserNiche();
 
+        $prefix = DB::getTablePrefix();
         $suppliers = DB::table('ms_suppliers')
-            ->where('company_id', $companyId)
-            ->orderBy('name')
+            ->leftJoin('ms_purchase_orders', function ($j) use ($companyId) {
+                $j->on('ms_suppliers.id', '=', 'ms_purchase_orders.supplier_id')
+                  ->where('ms_purchase_orders.company_id', $companyId)
+                  ->whereNotIn('ms_purchase_orders.status', ['paid', 'cancelled']);
+            })
+            ->leftJoin('ms_supplier_credit_wallets', function ($j) use ($companyId) {
+                $j->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
+                  ->where('ms_supplier_credit_wallets.company_id', $companyId);
+            })
+            ->where('ms_suppliers.company_id', $companyId)
+            ->groupBy('ms_suppliers.id', 'ms_suppliers.name', 'ms_suppliers.phone', 'ms_suppliers.gstin')
+            ->select(
+                'ms_suppliers.id', 'ms_suppliers.name', 'ms_suppliers.phone', 'ms_suppliers.gstin',
+                DB::raw("COALESCE(SUM({$prefix}ms_purchase_orders.balance_due), 0) as outstanding_balance"),
+                DB::raw("COALESCE(MAX({$prefix}ms_supplier_credit_wallets.credit_balance), 0) as advance_balance")
+            )
+            ->orderBy('ms_suppliers.name')
             ->get();
 
         $categories = $this->categoryService->getCategories($companyId);
@@ -258,7 +274,15 @@ class AccessoriesController extends BaseMobileShopController
             ]);
         }
 
-        return $this->safeRedirect($request, 'mobileshop.purchase', [], 'success', "Bulk restock successful! Added {$summary['totalUnits']} units (Value: ₹" . number_format($summary['totalCost'], 2) . ") into inventory.");
+        $msg = "Bulk restock successful! Added {$summary['totalUnits']} units (Total: ₹" . number_format($summary['totalCost'], 2) . ", Paid: ₹" . number_format($summary['amountPaid'], 2) . ")";
+        if ($summary['balanceDue'] > 0) {
+            $msg .= " — Balance Due: ₹" . number_format($summary['balanceDue'], 2);
+        }
+        if (!empty($summary['clearedOldBalance']) && $summary['clearedOldBalance'] > 0) {
+            $msg .= " — Cleared ₹" . number_format($summary['clearedOldBalance'], 2) . " from supplier's past balance!";
+        }
+
+        return $this->safeRedirect($request, 'mobileshop.purchase', [], 'success', $msg);
     }
 
     /**

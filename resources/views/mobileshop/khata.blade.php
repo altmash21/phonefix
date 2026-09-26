@@ -564,11 +564,10 @@
         </div>
     </div>
     <div id="khataPagination"></div>
-</div>
 </div> <!-- End #viewKhataLedger -->
 
 <!-- Mobile Floating Action Button -->
-<div class="mobile-fab-container" style="display:flex; gap:8px;">
+<div class="mobile-fab-container">
     <button type="button" class="btn-app-fab" onclick="openAddOldUdharModal()" title="Add Old Udhar / Khata" style="background:#4F46E5;">
         <i data-lucide="book-plus" style="width:18px;height:18px;"></i>
         <span>+ Old Udhar</span>

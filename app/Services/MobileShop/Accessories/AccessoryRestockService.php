@@ -73,6 +73,8 @@ class AccessoryRestockService
             'items.*.qty'           => 'required|integer|min:1',
             'items.*.unit_cost'     => 'required|numeric|min:0',
             'items.*.selling_price' => 'nullable|numeric|min:0',
+            'amount_paid'           => 'nullable|numeric|min:0',
+            'payment_mode'          => 'nullable|string|in:cash,bank_transfer,cheque,upi',
         ]);
 
         $supplierRef = trim(($request->supplier_name ? $request->supplier_name . ' ' : '') . ($request->invoice_no ? '#' . $request->invoice_no : 'Shipment Intake'));
@@ -221,26 +223,145 @@ class AccessoryRestockService
             }
 
             $billType = $request->bill_type === 'non_gst' ? 'non_gst' : 'gst';
+            $orderDate = $request->filled('order_date') ? $request->order_date : now()->toDateString();
+
+            // Calculate payments & supplier settlement
+            $rawAmountPaid = $request->has('amount_paid') && $request->amount_paid !== null && $request->amount_paid !== ''
+                ? max(0.0, (float) $request->amount_paid)
+                : $totalCost;
+
+            $paymentMode = in_array($request->payment_mode, ['cash', 'bank_transfer', 'cheque', 'upi'])
+                ? $request->payment_mode
+                : 'cash';
+
+            // Amount applied to THIS current purchase order (capped at totalCost)
+            $poAmountPaid = min($rawAmountPaid, $totalCost);
+            $poBalanceDue = max(0.0, $totalCost - $poAmountPaid);
+            $poStatus = ($poBalanceDue <= 0.001) ? 'paid' : (($poAmountPaid > 0) ? 'partially_paid' : 'received');
 
             $poId = DB::table('ms_purchase_orders')->insertGetId([
                 'company_id'   => $companyId,
                 'supplier_id'  => $supplierId,
                 'po_number'    => $invNumber,
                 'bill_type'    => $billType,
-                'order_date'   => now()->toDateString(),
-                'tax_type'     => 'intra_state',
+                'order_date'   => $orderDate,
+                'tax_type'     => $billType === 'gst' ? 'intra_state' : 'none',
                 'subtotal'     => $totalCost,
                 'cgst_amount'  => 0,
                 'sgst_amount'  => 0,
                 'igst_amount'  => 0,
                 'total_amount' => $totalCost,
-                'amount_paid'  => $totalCost,
-                'balance_due'  => 0,
-                'status'       => 'received',
+                'amount_paid'  => $poAmountPaid,
+                'balance_due'  => $poBalanceDue,
+                'status'       => $poStatus,
                 'created_by'   => auth()->id(),
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ]);
+
+            // 1. Record payment for this PO if paid
+            if ($poAmountPaid > 0) {
+                DB::table('ms_supplier_payments')->insert([
+                    'company_id'        => $companyId,
+                    'supplier_id'       => $supplierId,
+                    'purchase_order_id' => $poId,
+                    'amount'            => $poAmountPaid,
+                    'payment_date'      => $orderDate,
+                    'mode'              => $paymentMode,
+                    'reference_no'      => $request->invoice_no ?: $invNumber,
+                    'remarks'           => "Payment on bulk accessory intake {$invNumber}",
+                    'recorded_by'       => auth()->id(),
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ]);
+            }
+
+            // 2. If owner submitted more than this PO cost, use excess to CLEAR OUT older supplier balance!
+            $excessAmount = round($rawAmountPaid - $totalCost, 2);
+            $clearedOldBalance = 0.0;
+
+            if ($excessAmount > 0) {
+                // Find older unpaid purchase orders for this supplier, oldest first
+                $unpaidPOs = DB::table('ms_purchase_orders')
+                    ->where('company_id', $companyId)
+                    ->where('supplier_id', $supplierId)
+                    ->where('id', '!=', $poId)
+                    ->where('balance_due', '>', 0)
+                    ->orderBy('order_date', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->lockForUpdate()
+                    ->get();
+
+                $remainingExcess = $excessAmount;
+                foreach ($unpaidPOs as $oldPo) {
+                    if ($remainingExcess <= 0.001) break;
+
+                    $applyToOld = min($remainingExcess, (float) $oldPo->balance_due);
+                    $newOldPaid = (float) $oldPo->amount_paid + $applyToOld;
+                    $newOldDue = max(0.0, (float) $oldPo->balance_due - $applyToOld);
+                    $newOldStatus = ($newOldDue <= 0.001) ? 'paid' : 'partially_paid';
+
+                    DB::table('ms_purchase_orders')->where('id', $oldPo->id)->update([
+                        'amount_paid' => $newOldPaid,
+                        'balance_due' => $newOldDue,
+                        'status'      => $newOldStatus,
+                        'updated_at'  => now(),
+                    ]);
+
+                    DB::table('ms_supplier_payments')->insert([
+                        'company_id'        => $companyId,
+                        'supplier_id'       => $supplierId,
+                        'purchase_order_id' => $oldPo->id,
+                        'amount'            => $applyToOld,
+                        'payment_date'      => $orderDate,
+                        'mode'              => $paymentMode,
+                        'reference_no'      => $request->invoice_no ?: $invNumber,
+                        'remarks'           => "Balance clearance from intake {$invNumber} applied to PO #{$oldPo->po_number}",
+                        'recorded_by'       => auth()->id(),
+                        'created_at'        => now(),
+                        'updated_at'        => now(),
+                    ]);
+
+                    $remainingExcess -= $applyToOld;
+                    $clearedOldBalance += $applyToOld;
+                }
+
+                // If still excess remaining after clearing ALL old POs, credit to supplier prepaid wallet
+                if ($remainingExcess > 0.001) {
+                    $wallet = DB::table('ms_supplier_credit_wallets')
+                        ->where('company_id', $companyId)
+                        ->where('supplier_id', $supplierId)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$wallet) {
+                        DB::table('ms_supplier_credit_wallets')->insert([
+                            'company_id'     => $companyId,
+                            'supplier_id'    => $supplierId,
+                            'credit_balance' => $remainingExcess,
+                            'created_at'     => now(),
+                            'updated_at'     => now(),
+                        ]);
+                        $newBal = $remainingExcess;
+                    } else {
+                        $newBal = (float) $wallet->credit_balance + $remainingExcess;
+                        DB::table('ms_supplier_credit_wallets')->where('id', $wallet->id)->update([
+                            'credit_balance' => $newBal,
+                            'updated_at'     => now(),
+                        ]);
+                    }
+
+                    DB::table('ms_supplier_credit_transactions')->insert([
+                        'supplier_id'   => $supplierId,
+                        'txn_type'      => 'credit_added',
+                        'amount'        => $remainingExcess,
+                        'related_po_id' => $poId,
+                        'balance_after' => $newBal,
+                        'remarks'       => "Prepayment / excess clearance from intake {$invNumber}",
+                        'txn_date'      => now(),
+                    ]);
+                }
+            }
 
             foreach ($request->items as $item) {
                 $q = (int) ($item['qty'] ?? 1);
@@ -260,12 +381,15 @@ class AccessoryRestockService
             }
 
             return [
-                'existingCount' => $existingCount,
-                'newCount'      => $newCount,
-                'totalUnits'    => $totalUnits,
-                'totalCost'     => $totalCost,
-                'invoiceNumber' => $invNumber,
-                'poId'          => $poId,
+                'existingCount'     => $existingCount,
+                'newCount'          => $newCount,
+                'totalUnits'        => $totalUnits,
+                'totalCost'         => $totalCost,
+                'amountPaid'        => $rawAmountPaid,
+                'balanceDue'        => $poBalanceDue,
+                'clearedOldBalance' => $clearedOldBalance,
+                'invoiceNumber'     => $invNumber,
+                'poId'              => $poId,
             ];
         });
     }
