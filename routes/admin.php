@@ -271,5 +271,19 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('accessories/search-parts', 'MobileShop\AccessoriesController@searchParts')
         ->middleware('permission:read-mobileshop-repairs|read-mobileshop-accessories')
         ->name('accessories.search_parts');
+
+    // ── SHOP EXPENSES MANAGEMENT ──
+    Route::get('expenses', 'MobileShop\ExpenseController@index')
+        ->middleware('permission:read-mobileshop-dashboard|read-mobileshop-reports|read-admin-panel')
+        ->name('expenses.index');
+    Route::post('expenses/store', 'MobileShop\ExpenseController@store')
+        ->middleware('permission:read-mobileshop-dashboard|read-admin-panel')
+        ->name('expenses.store');
+    Route::delete('expenses/{id}', 'MobileShop\ExpenseController@destroy')
+        ->middleware('permission:read-mobileshop-dashboard|read-admin-panel')
+        ->name('expenses.destroy');
+    Route::get('expenses/export', 'MobileShop\ExpenseController@exportCsv')
+        ->middleware('permission:read-mobileshop-dashboard|read-mobileshop-reports|read-admin-panel')
+        ->name('expenses.export');
 });
 

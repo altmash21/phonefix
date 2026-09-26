@@ -382,6 +382,11 @@
                             <i data-lucide="bar-chart-3" style="width:14px;height:14px;"></i> Reports & Analytics
                         </a>
                         @endcanany
+                        @canany(['read-mobileshop-dashboard', 'read-mobileshop-reports', 'read-admin-panel'])
+                        <a href="{{ route('mobileshop.expenses.index') }}">
+                            <i data-lucide="receipt" style="width:14px;height:14px;"></i> Shop Expenses
+                        </a>
+                        @endcanany
                         @canany(['read-mobileshop-repairs', 'manage-stock-repairs', 'update-mobileshop-repairs', 'read-admin-panel'])
                         <a href="{{ route('mobileshop.repairs') }}">
                             <i data-lucide="wrench" style="width:14px;height:14px;"></i> Repair Desk
@@ -475,6 +480,14 @@
             </a>
             @endcanany
 
+            @canany(['read-mobileshop-dashboard', 'read-mobileshop-reports', 'read-admin-panel'])
+            <a href="{{ route('mobileshop.expenses.index') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.expenses*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()">
+                <i data-lucide="receipt"></i> Expenses
+            </a>
+            @endcanany
+
             @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->can('read-mobileshop-masters') || $u->can('read-admin-panel')))
             <a href="{{ route('mobileshop.masters') }}"
                class="nav-link {{ request()->routeIs('mobileshop.masters*') ? 'active' : '' }}"
@@ -555,6 +568,14 @@
                    class="nav-link {{ request()->routeIs('mobileshop.reports*') ? 'active' : '' }}">
                     <i data-lucide="bar-chart-3"></i>
                     Report
+                </a>
+                @endcanany
+
+                @canany(['read-mobileshop-dashboard', 'read-mobileshop-reports', 'read-admin-panel'])
+                <a href="{{ route('mobileshop.expenses.index') }}"
+                   class="nav-link {{ request()->routeIs('mobileshop.expenses*') ? 'active' : '' }}">
+                    <i data-lucide="receipt"></i>
+                    Expenses
                 </a>
                 @endcanany
 

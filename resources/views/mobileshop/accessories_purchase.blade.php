@@ -195,16 +195,16 @@
     @media (min-width: 880px) {
         .batch-grid-row {
             display: grid;
-            grid-template-columns: 180px minmax(220px, 2fr) minmax(140px, 1.2fr) 92px 100px 100px 65px 100px 72px;
+            grid-template-columns: 180px minmax(210px, 2fr) minmax(130px, 1.2fr) 92px 95px 95px 65px 95px 68px;
             gap: 8px;
-            align-items: start;
+            align-items: center !important;
         }
 
         .batch-table-header {
             background: #F8FAFC;
             border-bottom: 2px solid #E2E8F0;
-            padding: 8px 14px;
-            font-size: 10px;
+            padding: 9px 14px;
+            font-size: 10.5px;
             font-weight: 700;
             color: #64748B;
             text-transform: uppercase;
@@ -213,10 +213,11 @@
         }
 
         .batch-item-row {
-            padding: 7px 14px;
+            padding: 8px 14px;
             background: #FFFFFF;
             border-bottom: 1px solid #F1F5F9;
             transition: background 0.12s ease;
+            align-items: center !important;
         }
         .batch-item-row:hover {
             background: #FBFBFE;
@@ -226,11 +227,11 @@
         }
 
         .restock-input {
-            height: 32px !important;
-            font-size: 12px !important;
+            height: 34px !important;
+            font-size: 12.5px !important;
         }
         .stepper-wrap {
-            height: 32px;
+            height: 34px;
         }
         .stepper-btn {
             width: 26px;
@@ -243,23 +244,33 @@
         /* Hide mobile card chrome on desktop */
         .mobile-card-top,
         .mobile-card-label,
+        .mobile-card-footer,
         .mobile-sticky-footer {
             display: none !important;
         }
 
         .desktop-total-cell {
             text-align: right;
-            padding-top: 6px;
+            padding-top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
         }
         .desktop-total-amt {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 800;
             color: #0F172A;
             line-height: 1.2;
         }
         .desktop-action-cell {
-            padding-top: 4px;
+            padding-top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            height: 100%;
         }
     }
 
@@ -494,13 +505,13 @@
 
         /* Mobile metric columns */
         .mobile-metric-grid {
-            display: grid;
+            display: grid !important;
             grid-template-columns: 1.1fr 1fr 1fr 0.7fr;
             gap: 8px;
         }
 
         .mobile-card-footer {
-            display: flex;
+            display: flex !important;
             align-items: center;
             justify-content: space-between;
             padding-top: 8px;
