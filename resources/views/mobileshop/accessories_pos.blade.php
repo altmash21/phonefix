@@ -645,22 +645,23 @@
                     <input type="hidden" name="payment_mode" id="accPaymentMode" value="cash">
 
                     <!-- Whole Invoice Discount Selector -->
+                    <!-- Whole Invoice Discount & Custom Price Selector -->
                     <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:12px 14px; margin-bottom:14px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label class="app-input-label" style="margin:0;">Invoice Discount</label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                            <label class="app-input-label" style="margin:0; font-weight:800;">Discount / Custom Price</label>
                             <div class="disc-pill-group">
                                 <button type="button" class="disc-pill-btn active" id="accDiscPill_none" onclick="setAccBillDiscountMode('none')">None</button>
                                 <button type="button" class="disc-pill-btn" id="accDiscPill_percent" onclick="setAccBillDiscountMode('percent')">% Off</button>
                                 <button type="button" class="disc-pill-btn" id="accDiscPill_flat" onclick="setAccBillDiscountMode('flat')">₹ Off</button>
-                                <button type="button" class="disc-pill-btn" id="accDiscPill_custom" onclick="setAccBillDiscountMode('custom')">Final ₹</button>
+                                <button type="button" class="disc-pill-btn" id="accDiscPill_custom" onclick="setAccBillDiscountMode('custom')" style="font-weight:800;">Custom Price</button>
                             </div>
                         </div>
 
-                        <!-- Dynamic Input for Discount -->
+                        <!-- Dynamic Input for Discount / Custom Price -->
                         <div id="accBillDiscInputWrap" style="display:none; align-items:center; gap:8px;">
-                            <span id="accBillDiscPrefix" style="font-size:13px; font-weight:700; color:#475569;">₹</span>
+                            <span id="accBillDiscPrefix" style="font-size:12px; font-weight:800; color:#475569; white-space:nowrap;">Custom Price ₹</span>
                             <div style="position:relative; flex:1;">
-                                <input type="number" id="accBillDiscValInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:14px; font-weight:800; padding:6px 10px;" placeholder="0" oninput="onAccBillDiscountInput(this.value)">
+                                <input type="number" id="accBillDiscValInput" min="0" step="1" class="app-input-text" style="height:36px; font-size:15px; font-weight:800; color:#4F46E5; padding:6px 10px;" placeholder="Enter Custom Bill Price" oninput="onAccBillDiscountInput(this.value)">
                             </div>
                             <span id="accBillDiscSummary" style="font-size:12px; font-weight:700; color:#111827;"></span>
                         </div>
@@ -680,6 +681,11 @@
                             </div>
                         </div>
                         <input type="number" step="1" name="amount_paid" id="accAmountPaid" required placeholder="0" class="app-input-text" style="font-size:20px; font-weight:900; color:#111827;" oninput="onAmountPaidManualInput()">
+                        <div id="quickCustomPricePrompt" style="display:none; margin-top:6px;">
+                            <button type="button" onclick="applyPaidAsCustomPrice()" class="btn btn-outline btn-xs" style="color:#4F46E5; border-color:#C7D2FE; background:#EEF2FF; font-weight:800; padding:4px 10px; border-radius:6px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">
+                                ⚡ Make ₹<span id="promptPaidVal">0</span> the Custom Bill Price (Paid in Full, ₹0 Udhari)
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Calculation Summary -->
@@ -1047,10 +1053,10 @@
                     if (!accBillDiscountVal) { accBillDiscountVal = 100; valInput.value = 100; }
                 }
             } else if (mode === 'custom') {
-                if (prefix) prefix.innerText = '₹ Total';
+                if (prefix) prefix.innerText = 'Custom Bill ₹';
                 const gross = getGrossTotal();
                 if (valInput) {
-                    valInput.placeholder = 'Set Final Bill Amount';
+                    valInput.placeholder = 'Enter Custom Bill Amount';
                     if (!accBillDiscountVal) { accBillDiscountVal = gross; valInput.value = gross; }
                 }
             }
@@ -1117,9 +1123,15 @@
                     </div>
 
                     <div class="app-cart-item-footer">
-                        <!-- Rate Display -->
-                        <div style="font-size:11.5px; font-weight:700; color:#334155;">
-                            Rate: <span id="cartItemRate_${index}" style="color:#0F172A; font-weight:800;">₹${Number(Math.round(item.unit_price)).toLocaleString('en-IN')}</span>
+                        <!-- Rate Display with inline Custom Price edit -->
+                        <div style="display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#334155;">
+                            <span>Rate: ₹</span>
+                            <input type="number" min="0" step="1" value="${Math.round(item.unit_price)}" 
+                                class="app-input-text" 
+                                style="width:72px; height:26px; padding:2px 6px; font-size:12px; font-weight:800; color:#0F172A; border:1px solid #CBD5E1; border-radius:4px; background:#FFFFFF;"
+                                onchange="updateCartItemRate(${index}, this.value)"
+                                oninput="updateCartItemRate(${index}, this.value)"
+                                title="Custom Item Rate">
                         </div>
 
                         <!-- Touch Stepper -->
@@ -1298,7 +1310,50 @@
         document.getElementById('lblPaidAmount').innerText = `₹${paid.toLocaleString('en-IN')}`;
         document.getElementById('lblDueAmount').innerText = `₹${due.toLocaleString('en-IN')}`;
         document.getElementById('accAmountPaid').dataset.manual = "true";
+
+        const quickPrompt = document.getElementById('quickCustomPricePrompt');
+        const promptVal = document.getElementById('promptPaidVal');
+        if (quickPrompt && promptVal) {
+            if (paid > 0 && paid < total) {
+                promptVal.innerText = paid.toLocaleString('en-IN');
+                quickPrompt.style.display = 'block';
+            } else {
+                quickPrompt.style.display = 'none';
+            }
+        }
     }
+
+    function applyPaidAsCustomPrice() {
+        const paid = Math.round(parseFloat(document.getElementById('accAmountPaid').value) || 0);
+        if (paid <= 0) return;
+        setAccBillDiscountMode('custom');
+        const valInput = document.getElementById('accBillDiscValInput');
+        if (valInput) valInput.value = paid;
+        accBillDiscountVal = paid;
+        document.getElementById('accAmountPaid').value = paid;
+        document.getElementById('accAmountPaid').dataset.manual = "false";
+        updateCalculations();
+    }
+    window.applyPaidAsCustomPrice = applyPaidAsCustomPrice;
+
+    function updateCartItemRate(index, newRate) {
+        if (!cart[index]) return;
+        const rate = Math.max(0, parseFloat(newRate) || 0);
+        cart[index].unit_price = rate;
+        cart[index].original_price = rate;
+
+        const hiddenPrice = document.getElementById(`cartUnitPrice_${index}`);
+        if (hiddenPrice) hiddenPrice.value = rate;
+
+        const totalDisplay = document.getElementById(`cartItemTotal_${index}`);
+        if (totalDisplay) {
+            const itemTotal = Math.round(cart[index].quantity * rate);
+            totalDisplay.innerText = `₹${itemTotal.toLocaleString('en-IN')}`;
+        }
+
+        updateCalculations();
+    }
+    window.updateCartItemRate = updateCartItemRate;
 
     function setFullPayment() {
         const total = getGrandTotal();
