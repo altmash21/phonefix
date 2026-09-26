@@ -189,6 +189,14 @@
         max-height: 280px !important;
     }
 
+    /* Mobile-only elements default hidden on desktop */
+    .mobile-card-top,
+    .mobile-card-label,
+    .mobile-card-footer,
+    .mobile-sticky-footer {
+        display: none !important;
+    }
+
     /* ==========================================================================
        DESKTOP VIEWPORT (>= 880px): True Aligned Tabular Grid
        ========================================================================== */
@@ -2052,8 +2060,8 @@
                     </button>
                 </div>
 
-                <!-- 7. MOBILE CARD FOOTER -->
-                <div class="mobile-card-footer">
+                <!-- 7. MOBILE CARD FOOTER (Only for mobile card view) -->
+                <div class="mobile-card-footer" style="display:none;">
                     <span style="font-size:11px; color:#64748B; font-weight:700; text-transform:uppercase; letter-spacing:0.3px;">Line Total</span>
                     <strong style="font-size:14px; font-family:'JetBrains Mono', monospace; font-weight:800; color:#0F172A;" id="mobileLineTotal_${idx}">${formatCurrency(lineTotal)}</strong>
                 </div>
