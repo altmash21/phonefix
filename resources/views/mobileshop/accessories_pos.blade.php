@@ -533,7 +533,7 @@
                                     style="padding-left:40px; padding-right:36px; height:44px; font-size:14px; font-weight:700; border-radius:10px; border:1.5px solid #CBD5E1;" 
                                     autocomplete="off" 
                                     oninput="onLiveSearch(this.value)" 
-                                    onfocus="onLiveSearch(this.value, true)"
+                                    onfocus="if(this.value.trim().length >= 1) onLiveSearch(this.value)"
                                     onkeydown="handleSearchKeyNavigation(event)">
                                 <i data-lucide="search" style="position:absolute; left:13px; top:13px; width:18px; height:18px; color:#64748B;"></i>
                                 <button type="button" id="btnClearSearch" onclick="clearSearch()" style="display:none; position:absolute; right:10px; top:12px; background:#E2E8F0; border:none; color:#475569; width:20px; height:20px; border-radius:50%; font-size:12px; font-weight:bold; cursor:pointer; align-items:center; justify-content:center;">✕</button>
@@ -797,18 +797,27 @@
     }
 
     // ── Live Product Search & Dropdown ──
-    function onLiveSearch(query, isFocus = false) {
+    function onLiveSearch(query) {
         const q = (query || '').trim().toLowerCase();
         const dropdown = document.getElementById('accSearchDropdown');
         const clearBtn = document.getElementById('btnClearSearch');
 
         if (clearBtn) clearBtn.style.display = q.length > 0 ? 'flex' : 'none';
 
+        // Dropdown only opens when 1 or more letters are typed, not before
+        if (q.length < 1) {
+            if (dropdown) {
+                dropdown.style.display = 'none';
+                dropdown.innerHTML = '';
+            }
+            currentFilteredItems = [];
+            keyboardHighlightedIndex = -1;
+            return;
+        }
+
         // Filter products across Name, Compatible Model, Brand, Category
         const words = q.split(/\s+/).filter(Boolean);
         currentFilteredItems = ALL_PARTS.filter(p => {
-            if (words.length === 0) return true; // show all available on focus
-
             const name = (p.name || '').toLowerCase();
             const model = (p.compatible_model || '').toLowerCase();
             const brand = (p.brand || '').toLowerCase();
@@ -822,8 +831,8 @@
 
         if (currentFilteredItems.length === 0) {
             dropdown.innerHTML = `
-                <div style="padding:22px; text-align:center; color:#64748B; font-size:13px;">
-                    <i data-lucide="package-x" style="width:28px;height:28px; margin:0 auto 8px; display:block; opacity:0.6; color:#94A3B8;"></i>
+                <div style="padding:18px; text-align:center; color:#64748B; font-size:13px;">
+                    <i data-lucide="package-x" style="width:24px;height:24px; margin:0 auto 6px; display:block; opacity:0.6; color:#94A3B8;"></i>
                     No matching in-stock products found.
                 </div>`;
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -831,18 +840,11 @@
             return;
         }
 
-        let html = '';
-        if (words.length === 0) {
-            html += `<div style="padding:6px 12px; font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; background:#F8FAFC; border-radius:6px; margin-bottom:4px; display:flex; justify-content:space-between;">
-                <span>In-Stock Products (${currentFilteredItems.length} available)</span>
-                <span style="font-weight:600; color:#2563EB;">Type to filter</span>
-            </div>`;
-        } else {
-            html += `<div style="padding:6px 12px; font-size:11px; font-weight:800; color:#2563EB; text-transform:uppercase; background:#EFF6FF; border-radius:6px; margin-bottom:4px; display:flex; justify-content:space-between;">
+        let html = `
+            <div style="padding:6px 12px; font-size:11px; font-weight:800; color:#2563EB; text-transform:uppercase; background:#EFF6FF; border-radius:6px; margin-bottom:4px; display:flex; justify-content:space-between;">
                 <span>Matches for "${escapeHtml(q)}" (${currentFilteredItems.length})</span>
                 <span style="font-weight:600; color:#64748B;">Press Enter or click Add</span>
             </div>`;
-        }
 
         currentFilteredItems.forEach((item, idx) => {
             const price = Math.round(parseFloat(item.selling_price || 0));
@@ -883,8 +885,11 @@
         const dropdown = document.getElementById('accSearchDropdown');
         if (!dropdown || dropdown.style.display === 'none') {
             if (e.key === 'ArrowDown') {
-                onLiveSearch(document.getElementById('accSearchInput').value, true);
-                e.preventDefault();
+                const val = document.getElementById('accSearchInput').value;
+                if (val.trim().length >= 1) {
+                    onLiveSearch(val);
+                    e.preventDefault();
+                }
             }
             return;
         }
