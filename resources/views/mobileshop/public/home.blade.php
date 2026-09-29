@@ -5,38 +5,38 @@
 
 @section('content')
 
-    <!-- ════ 1. HERO SECTION (Spacious, Uncluttered, Airy) ════ -->
-    <section class="relative bg-white pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-[#e5e7eb]">
+    <!-- ════ 1. HERO SECTION (Spacious, De-Slopped Editorial Aesthetic) ════ -->
+    <section class="relative bg-white pt-12 pb-20 sm:pt-20 sm:pb-28 border-b border-[#e5e7eb] overflow-hidden glow-radial-accent">
         <div class="max-w-[1200px] mx-auto px-6 sm:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-12 items-center">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-12 items-center">
                 
                 <!-- LEFT (7 cols): Editorial & Value Proposition -->
                 <div class="lg:col-span-7 space-y-7 text-left">
                     
-                    <!-- Clean Category Pill (No 45-min claim) -->
-                    <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#f8f9fa] text-[#111111] text-xs font-semibold border border-[#e5e7eb]">
-                        <span class="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
-                        <span>Certified Phone Repair Lab & Genuine Accessories</span>
+                    <!-- Clean Category Pill with Pulse -->
+                    <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#f8f9fa] text-[#111111] text-xs font-semibold border border-[#e5e7eb] shadow-xs">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
+                        <span>Certified Express Phone Repair Lab & Genuine Accessories</span>
                     </div>
 
                     <!-- Cal Sans Display Headline -->
-                    <h1 class="cal-display-xl text-[#111111] max-w-2xl leading-[1.08]">
-                        The better way to repair and equip your phone.
+                    <h1 class="cal-display-xl text-[#111111] max-w-2xl leading-[1.08] tracking-tight">
+                        The precision lab for phone repair & genuine gear.
                     </h1>
 
                     <!-- Lead text with comfortable line-height -->
                     <p class="text-[#4b5563] text-base sm:text-lg max-w-xl font-normal leading-relaxed">
-                        Professional display replacements, battery renewals, and chip-level micro soldering in {{ store_city() }}. Cleanroom ESD benches, zero data wipe, and a transparent 90-day warranty.
+                        Certified display panels, high-health OEM batteries, and level-4 micro soldering in {{ store_city() }}. Cleanroom ESD benches, zero data wipe policy, and transparent 90-day counter warranty.
                     </p>
                     
                     <!-- Call To Action Row -->
                     <div class="pt-2 flex items-center gap-4 flex-wrap">
-                        <a href="{{ route('public.store') }}" class="cal-btn-primary h-11 px-6 text-[14px]">
+                        <a href="{{ route('public.store') }}" class="cal-btn-primary h-11 px-6 text-[14px] shadow-sm hover:shadow transition-all">
                             <span>Browse Accessories</span>
                             <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </a>
-                        <a href="#repairs" class="cal-btn-secondary h-11 px-6 text-[14px]">
-                            <span>View Repair Services</span>
+                        <a href="#repairs" class="cal-btn-secondary h-11 px-6 text-[14px] hover:border-[#111111] transition-all">
+                            <span>View Repair Bench</span>
                         </a>
                     </div>
 
@@ -44,7 +44,7 @@
                     <div class="pt-6 border-t border-[#f3f4f6] flex items-center gap-8 text-xs text-[#6b7280] flex-wrap">
                         <div class="flex items-center gap-2">
                             <svg class="w-4 h-4 text-[#10b981] stroke-current fill-none stroke-2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="font-medium text-[#111111]">90-Day Warranty</span>
+                            <span class="font-medium text-[#111111]">90-Day Counter Warranty</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <svg class="w-4 h-4 text-[#10b981] stroke-current fill-none stroke-2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -52,64 +52,188 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <svg class="w-4 h-4 text-[#10b981] stroke-current fill-none stroke-2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <span class="font-medium text-[#111111]">Express Diagnostic Bench</span>
+                            <span class="font-medium text-[#111111]">Immediate Intake SLA</span>
                         </div>
                     </div>
 
                 </div>
 
-                <!-- RIGHT (5 cols): Streamlined, Clean Repair Ticket Lookup Card -->
-                <div class="lg:col-span-5">
-                    <div class="bg-[#fafafa] p-8 sm:p-9 border border-[#e5e7eb] rounded-2xl shadow-xs space-y-6">
+                <!-- RIGHT (5 cols): Interactive Estimator + Repair Ticket Card -->
+                <div class="lg:col-span-5 space-y-4">
+                    
+                    <!-- Card Container with Tab Switcher -->
+                    <div class="card-glass p-6 sm:p-7 border border-[#e5e7eb] rounded-2xl shadow-sm space-y-5">
                         
-                        <div class="flex items-center justify-between pb-4 border-b border-[#e5e7eb]">
+                        <!-- Header & Tab Toggle -->
+                        <div class="flex items-center justify-between pb-3 border-b border-[#e5e7eb]">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse"></span>
-                                <span class="text-xs font-semibold text-[#111111]">Service Bench Status</span>
+                                <span class="text-xs font-semibold text-[#111111]">Live Lab Desk</span>
                             </div>
-                            <span class="text-[11px] font-medium text-[#6b7280] bg-white px-2.5 py-1 rounded-full border border-[#e5e7eb]">
-                                {{ $activeRepairsCount }} Active in Lab
-                            </span>
+                            <!-- Tab Switch Pills -->
+                            <div class="flex items-center bg-[#f3f4f6] p-1 rounded-lg border border-[#e5e7eb] text-xs font-medium">
+                                <button type="button" id="tab-btn-estimator" onclick="switchHeroTab('estimator')" class="px-3 py-1 rounded-md text-[#111111] font-semibold bg-white shadow-xs transition-all">Quick Quote</button>
+                                <button type="button" id="tab-btn-tracker" onclick="switchHeroTab('tracker')" class="px-3 py-1 rounded-md text-[#6b7280] hover:text-[#111111] transition-all">Track Ticket</button>
+                            </div>
                         </div>
 
-                        <div class="space-y-2 text-left">
-                            <h3 class="text-base font-semibold text-[#111111] tracking-tight">Track Your Repair</h3>
-                            <p class="text-xs text-[#6b7280] leading-relaxed">
-                                Enter your Job Sheet Ticket Number from your physical receipt to check live diagnostic status.
-                            </p>
+                        <!-- TAB 1: INTERACTIVE REPAIR ESTIMATOR -->
+                        <div id="hero-tab-estimator" class="space-y-4">
+                            <div class="space-y-1 text-left">
+                                <h3 class="text-base font-semibold text-[#111111] tracking-tight">Express Repair Quick Estimator</h3>
+                                <p class="text-xs text-[#6b7280]">Select your brand & repair type for instant SLA and price estimate.</p>
+                            </div>
+
+                            <!-- Brand Selection Buttons -->
+                            <div class="space-y-1.5 text-left">
+                                <label class="text-[11px] font-semibold uppercase tracking-wider text-[#6b7280]">1. Smartphone Brand</label>
+                                <div class="grid grid-cols-4 gap-1.5 text-xs font-medium" id="brand-selector">
+                                    <button type="button" onclick="selectBrand('Apple', this)" class="brand-opt py-1.5 rounded-md border border-[#111111] bg-[#111111] text-white transition-all text-center">Apple</button>
+                                    <button type="button" onclick="selectBrand('Samsung', this)" class="brand-opt py-1.5 rounded-md border border-[#e5e7eb] bg-white text-[#111111] hover:border-[#9ca3af] transition-all text-center">Samsung</button>
+                                    <button type="button" onclick="selectBrand('OnePlus', this)" class="brand-opt py-1.5 rounded-md border border-[#e5e7eb] bg-white text-[#111111] hover:border-[#9ca3af] transition-all text-center">OnePlus</button>
+                                    <button type="button" onclick="selectBrand('Xiaomi', this)" class="brand-opt py-1.5 rounded-md border border-[#e5e7eb] bg-white text-[#111111] hover:border-[#9ca3af] transition-all text-center">Xiaomi</button>
+                                </div>
+                            </div>
+
+                            <!-- Issue Selection Dropdown -->
+                            <div class="space-y-1.5 text-left">
+                                <label class="text-[11px] font-semibold uppercase tracking-wider text-[#6b7280]">2. Issue / Repair Required</label>
+                                <select id="issue-selector" onchange="calculateEstimate()" class="w-full text-xs bg-white text-[#111111] border border-[#d1d5db] rounded-lg h-10 px-3 outline-none font-medium focus:border-[#111111] transition-all">
+                                    <option value="screen">Display & OLED Glass Replacement</option>
+                                    <option value="battery">High-Health Battery Renewal</option>
+                                    <option value="port">Charging Port / Mic Fix</option>
+                                    <option value="board">Level-4 Logic Board / Micro-Soldering</option>
+                                </select>
+                            </div>
+
+                            <!-- Result Display Card -->
+                            <div class="p-3.5 rounded-xl bg-[#f8f9fa] border border-[#e5e7eb] space-y-2 text-left">
+                                <div class="flex items-center justify-between text-xs text-[#6b7280]">
+                                    <span>Estimated Turnaround:</span>
+                                    <span id="est-time" class="font-bold font-mono text-[#111111]">35 - 45 Mins</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs text-[#6b7280]">
+                                    <span>Est. Price Range:</span>
+                                    <span id="est-price" class="font-bold text-[#10b981] font-mono text-sm">₹1,490 – ₹3,890</span>
+                                </div>
+                            </div>
+
+                            <!-- WhatsApp Booking Button -->
+                            <a id="estimator-wa-link" href="#" target="_blank" class="cal-btn-primary w-full h-10 text-xs justify-center rounded-lg shadow-xs">
+                                <span>Book Bench Intake on WhatsApp</span>
+                                <svg class="w-3.5 h-3.5 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
                         </div>
 
-                        <!-- Ticket Lookup Form -->
-                        <form action="{{ route('public.track_repair') }}" method="GET" class="space-y-3">
-                            <div class="relative">
-                                <input type="text" name="ticket_number" placeholder="e.g. REP-2026-0042" 
-                                       class="w-full pl-10 pr-4 text-sm bg-white font-mono text-[#111111] placeholder:text-[#9ca3af] border border-[#d1d5db] rounded-lg h-11 focus:border-[#111111] focus:ring-1 focus:ring-[#111111] outline-none transition-all">
-                                <svg class="w-4 h-4 text-[#6b7280] absolute left-3.5 top-1/2 -translate-y-1/2 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
-                                    <line x1="4" y1="9" x2="20" y2="9"></line>
-                                    <line x1="4" y1="15" x2="20" y2="15"></line>
-                                    <line x1="10" y1="3" x2="8" y2="21"></line>
-                                    <line x1="16" y1="3" x2="14" y2="21"></line>
-                                </svg>
+                        <!-- TAB 2: TICKET STATUS LOOKUP -->
+                        <div id="hero-tab-tracker" class="hidden space-y-4">
+                            <div class="space-y-1 text-left">
+                                <h3 class="text-base font-semibold text-[#111111] tracking-tight">Track Repair Job Sheet</h3>
+                                <p class="text-xs text-[#6b7280]">Enter your ticket number from physical counter receipt.</p>
                             </div>
-                            <button type="submit" class="cal-btn-primary w-full h-11 justify-center rounded-lg">
-                                <span>Track Ticket Status</span>
-                                <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </button>
-                        </form>
 
-                        <div class="pt-4 border-t border-[#e5e7eb] flex items-center justify-between text-xs text-[#6b7280]">
-                            <span>Need assistance?</span>
-                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', store_whatsapp()) }}?text={{ urlencode('Hi ' . store_name() . ', I have a question regarding my repair') }}" target="_blank" class="text-[#111111] font-semibold underline hover:text-[#3b82f6]">
+                            <form action="{{ route('public.track_repair') }}" method="GET" class="space-y-3">
+                                <div class="relative">
+                                    <input type="text" name="ticket_number" placeholder="e.g. REP-2026-0042" 
+                                           class="w-full pl-10 pr-4 text-sm bg-white font-mono text-[#111111] placeholder:text-[#9ca3af] border border-[#d1d5db] rounded-lg h-11 focus:border-[#111111] focus:ring-1 focus:ring-[#111111] outline-none transition-all">
+                                    <svg class="w-4 h-4 text-[#6b7280] absolute left-3.5 top-1/2 -translate-y-1/2 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
+                                        <line x1="4" y1="9" x2="20" y2="9"></line>
+                                        <line x1="4" y1="15" x2="20" y2="15"></line>
+                                        <line x1="10" y1="3" x2="8" y2="21"></line>
+                                        <line x1="16" y1="3" x2="14" y2="21"></line>
+                                    </svg>
+                                </div>
+                                <button type="submit" class="cal-btn-primary w-full h-11 justify-center rounded-lg">
+                                    <span>Track Ticket Status</span>
+                                    <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Card Footer Desk Note -->
+                        <div class="pt-3 border-t border-[#e5e7eb] flex items-center justify-between text-[11px] text-[#6b7280]">
+                            <span>Lab Status: <strong class="text-[#10b981] font-semibold">{{ $activeRepairsCount }} Jobs Active</strong></span>
+                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', store_whatsapp()) }}" target="_blank" class="text-[#111111] font-semibold underline hover:text-[#3b82f6]">
                                 WhatsApp Desk &rarr;
                             </a>
                         </div>
 
                     </div>
+
                 </div>
 
             </div>
         </div>
     </section>
+
+    <!-- Script for Hero Estimator Calculator -->
+    <script>
+        let currentBrand = 'Apple';
+        
+        function switchHeroTab(tab) {
+            const btnEst = document.getElementById('tab-btn-estimator');
+            const btnTrk = document.getElementById('tab-btn-tracker');
+            const tabEst = document.getElementById('hero-tab-estimator');
+            const tabTrk = document.getElementById('hero-tab-tracker');
+            
+            if (tab === 'estimator') {
+                btnEst.className = "px-3 py-1 rounded-md text-[#111111] font-semibold bg-white shadow-xs transition-all";
+                btnTrk.className = "px-3 py-1 rounded-md text-[#6b7280] hover:text-[#111111] transition-all";
+                tabEst.classList.remove('hidden');
+                tabTrk.classList.add('hidden');
+            } else {
+                btnTrk.className = "px-3 py-1 rounded-md text-[#111111] font-semibold bg-white shadow-xs transition-all";
+                btnEst.className = "px-3 py-1 rounded-md text-[#6b7280] hover:text-[#111111] transition-all";
+                tabTrk.classList.remove('hidden');
+                tabEst.classList.add('hidden');
+            }
+        }
+
+        function selectBrand(brand, btnEl) {
+            currentBrand = brand;
+            document.querySelectorAll('#brand-selector button').forEach(b => {
+                b.className = "brand-opt py-1.5 rounded-md border border-[#e5e7eb] bg-white text-[#111111] hover:border-[#9ca3af] transition-all text-center";
+            });
+            btnEl.className = "brand-opt py-1.5 rounded-md border border-[#111111] bg-[#111111] text-white transition-all text-center";
+            calculateEstimate();
+        }
+
+        function calculateEstimate() {
+            const issue = document.getElementById('issue-selector').value;
+            let time = "30 - 45 Mins";
+            let price = "₹1,490 – ₹3,890";
+            let issueText = "Display & OLED Glass";
+
+            if (issue === 'screen') {
+                time = "35 - 50 Mins";
+                price = currentBrand === 'Apple' ? "₹2,490 – ₹8,990" : "₹1,290 – ₹4,500";
+                issueText = "Screen / Display Panel";
+            } else if (issue === 'battery') {
+                time = "20 - 30 Mins";
+                price = currentBrand === 'Apple' ? "₹1,190 – ₹3,200" : "₹790 – ₹1,890";
+                issueText = "High-Health Battery Renewal";
+            } else if (issue === 'port') {
+                time = "25 - 40 Mins";
+                price = "₹490 – ₹1,490";
+                issueText = "Charging Port & Audio Fix";
+            } else if (issue === 'board') {
+                time = "2 - 4 Hours";
+                price = "₹1,990 – ₹6,500";
+                issueText = "Micro-Soldering / Logic Board";
+            }
+
+            document.getElementById('est-time').innerText = time;
+            document.getElementById('est-price').innerText = price;
+
+            const waNum = "{{ preg_replace('/[^0-9]/', '', store_whatsapp()) }}";
+            const text = encodeURIComponent(`Hi ${"{{ store_name() }}"}, I want to book a repair intake for ${currentBrand} (${issueText}). Estimated quote: ${price}`);
+            document.getElementById('estimator-wa-link').href = `https://wa.me/${waNum}?text=${text}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateEstimate();
+        });
+    </script>
 
     <!-- ════ 2. THREE CORE PILLARS (Clean, Spacious Cards) ════ -->
     <section class="py-20 sm:py-28 bg-white border-b border-[#e5e7eb]">

@@ -220,7 +220,7 @@
             overflow: hidden;
         }
 
-        /* ── Cal.com Badge Pills ── */
+        /* ── Cal.com Badge Pills & Modern Micro-Animations ── */
         .cal-badge-pill {
             background-color: #f5f5f5;
             color: #111111;
@@ -244,6 +244,48 @@
             font-size: 13px;
             font-weight: 600;
             flex-shrink: 0;
+        }
+
+        /* De-slop Design System Utilities */
+        .glow-radial-accent {
+            background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
+        }
+
+        .card-glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-glass-hover {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .card-glass-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+            border-color: rgba(17, 17, 17, 0.2);
+        }
+
+        .badge-pulse {
+            position: relative;
+        }
+        .badge-pulse::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 9999px;
+            background: inherit;
+            opacity: 0.4;
+            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(1.6);
+                opacity: 0;
+            }
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }

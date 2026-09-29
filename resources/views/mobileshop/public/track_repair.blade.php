@@ -105,60 +105,63 @@
 
             <!-- 5-Step Visual Progress Bar -->
             <div class="py-4">
-                <div class="flex items-center justify-between text-xs font-semibold text-[#6b7280] mb-2.5">
-                    <span>Diagnostic Progress</span>
-                    <span class="text-[#111111] font-mono font-bold">{{ $progressPct }}% Complete</span>
+                <div class="flex items-center justify-between text-xs font-semibold text-[#6b7280] mb-3">
+                    <span class="flex items-center gap-2 text-[#111111] font-semibold">
+                        <svg class="w-4 h-4 text-[#10b981]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Diagnostic & Bench Progress
+                    </span>
+                    <span class="text-[#111111] font-mono font-bold bg-[#f3f4f6] px-2.5 py-1 rounded-full border border-[#e5e7eb]">{{ $progressPct }}% Complete</span>
                 </div>
                 
                 <!-- Progress track -->
-                <div class="w-full bg-[#f3f4f6] h-2 rounded-full overflow-hidden mb-8 border border-[#e5e7eb]">
-                    <div class="bg-[#111111] h-full rounded-full transition-all duration-700" style="width: {{ $progressPct }}%;"></div>
+                <div class="w-full bg-[#f3f4f6] h-2.5 rounded-full overflow-hidden mb-8 border border-[#e5e7eb] p-0.5">
+                    <div class="bg-[#111111] h-full rounded-full transition-all duration-700 shadow-xs" style="width: {{ $progressPct }}%;"></div>
                 </div>
 
                 <!-- 5 Step Nodes -->
                 <div class="grid grid-cols-5 gap-2 text-center relative">
                     <!-- Step 1 -->
-                    <div class="space-y-1.5 {{ $activeStep >= 1 ? 'opacity-100' : 'opacity-40' }}">
-                        <div class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-semibold {{ $activeStep >= 1 ? 'bg-[#111111] text-white' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
+                    <div class="space-y-2 {{ $activeStep >= 1 ? 'opacity-100' : 'opacity-40' }}">
+                        <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-all {{ $activeStep >= 1 ? 'bg-[#111111] text-white shadow-md ring-4 ring-[#111111]/10' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
                             1
                         </div>
-                        <div class="font-semibold text-[#111111] text-xs">Received</div>
+                        <div class="font-bold text-[#111111] text-xs">Received</div>
                         <div class="text-[11px] text-[#6b7280] hidden sm:block">Intake & Inspection</div>
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="space-y-1.5 {{ $activeStep >= 2 ? 'opacity-100' : 'opacity-40' }}">
-                        <div class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-semibold {{ $activeStep >= 2 ? 'bg-[#111111] text-white' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
+                    <div class="space-y-2 {{ $activeStep >= 2 ? 'opacity-100' : 'opacity-40' }}">
+                        <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-all {{ $activeStep >= 2 ? 'bg-[#111111] text-white shadow-md ring-4 ring-[#111111]/10' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
                             2
                         </div>
-                        <div class="font-semibold text-[#111111] text-xs">Diagnostics</div>
+                        <div class="font-bold text-[#111111] text-xs">Diagnostics</div>
                         <div class="text-[11px] text-[#6b7280] hidden sm:block">Circuit Probe</div>
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="space-y-1.5 {{ $activeStep >= 3 ? 'opacity-100' : 'opacity-40' }}">
-                        <div class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-semibold {{ $activeStep >= 3 ? 'bg-[#111111] text-white' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
+                    <div class="space-y-2 {{ $activeStep >= 3 ? 'opacity-100' : 'opacity-40' }}">
+                        <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-all {{ $activeStep >= 3 ? 'bg-[#111111] text-white shadow-md ring-4 ring-[#111111]/10' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
                             3
                         </div>
-                        <div class="font-semibold text-[#111111] text-xs">Bench Repair</div>
+                        <div class="font-bold text-[#111111] text-xs">Bench Repair</div>
                         <div class="text-[11px] text-[#6b7280] hidden sm:block">Micro-Soldering / Swap</div>
                     </div>
 
                     <!-- Step 4 -->
-                    <div class="space-y-1.5 {{ $activeStep >= 4 ? 'opacity-100' : 'opacity-40' }}">
-                        <div class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-semibold {{ $activeStep >= 4 ? 'bg-[#111111] text-white' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
+                    <div class="space-y-2 {{ $activeStep >= 4 ? 'opacity-100' : 'opacity-40' }}">
+                        <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-all {{ $activeStep >= 4 ? 'bg-[#111111] text-white shadow-md ring-4 ring-[#111111]/10' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
                             4
                         </div>
-                        <div class="font-semibold text-[#111111] text-xs">QC & Stress</div>
+                        <div class="font-bold text-[#111111] text-xs">QC & Stress</div>
                         <div class="text-[11px] text-[#6b7280] hidden sm:block">Hardware Validation</div>
                     </div>
 
                     <!-- Step 5 -->
-                    <div class="space-y-1.5 {{ $activeStep >= 5 ? 'opacity-100' : 'opacity-40' }}">
-                        <div class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-semibold {{ $activeStep >= 5 ? 'bg-[#10b981] text-white' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
+                    <div class="space-y-2 {{ $activeStep >= 5 ? 'opacity-100' : 'opacity-40' }}">
+                        <div class="w-9 h-9 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-all {{ $activeStep >= 5 ? 'bg-[#10b981] text-white shadow-md ring-4 ring-[#10b981]/20' : 'bg-[#e5e7eb] text-[#6b7280]' }}">
                             ✓
                         </div>
-                        <div class="font-semibold text-[#111111] text-xs">Ready</div>
+                        <div class="font-bold text-[#111111] text-xs">Ready</div>
                         <div class="text-[11px] text-[#6b7280] hidden sm:block">Counter Handover</div>
                     </div>
                 </div>
