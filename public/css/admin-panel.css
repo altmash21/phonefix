@@ -517,7 +517,28 @@ a:hover {
     border-radius: var(--radius-sm);
 }
 
-/* ════ 5. CARDS & PANELS ════ */
+/* ════ 5. SINGLE-LEVEL CARDS (NO BOX-IN-BOX ARCHITECTURE) ════ */
+/* Rule 1: Page canvas and wrapper remain seamless with zero redundant outer borders */
+.content-area, .main-content, .page-body, .page-wrapper {
+    background: var(--color-canvas);
+    border: none;
+    box-shadow: none;
+}
+
+/* Rule 2: Single-level card hierarchy (Prevent nested border-in-border cards) */
+.card .card, 
+.panel .panel, 
+.card .panel, 
+.panel .card, 
+.card-body .card, 
+.card-body .panel {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 .card {
     background: var(--color-canvas);
     border: 1px solid var(--color-hairline);
