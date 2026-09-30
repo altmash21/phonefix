@@ -53,90 +53,56 @@
         margin-bottom: 12px;
     }
 
-    /* ─── TABULAR QUICK STOCK INFLOW & SEARCH STRIP (NO BOX-IN-BOX) ─── */
-    .purchase-tabular-card {
+    /* ─── QUICK PURCHASE & SEARCH DUAL TOP PANELS (Matched to Sales page) ─── */
+    .quick-purchases-top-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 16px 0 20px 0;
+    }
+    @media (max-width: 900px) {
+        .quick-purchases-top-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .light-purchase-panel {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 10px;
-        margin: 16px 0 20px 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-        overflow: visible;
-    }
-    .purchase-tabular-card .tabular-header-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 16px;
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-        border-top-left-radius: 9px;
-        border-top-right-radius: 9px;
-    }
-    .tabular-inflow-container {
-        overflow: visible;
-    }
-    @media (max-width: 1024px) {
-        .tabular-inflow-container {
-            overflow-x: auto;
-            padding-bottom: 90px;
-        }
-    }
-    .tabular-inflow-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 12px;
-    }
-    .tabular-inflow-table th {
-        background: #f8fafc;
-        padding: 9px 12px;
-        font-size: 11px;
-        font-weight: 700;
-        color: #475569;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        border-bottom: 1px solid #e2e8f0;
-        white-space: nowrap;
-    }
-    .tabular-inflow-table td {
-        padding: 8px 10px;
-        vertical-align: middle;
-        background: #ffffff;
-        border-bottom: none;
-    }
-    .tabular-cell-input {
-        width: 100%;
-        height: 36px;
-        background: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        padding: 6px 10px;
-        font-size: 12px;
+        padding: 16px 20px;
         color: #0f172a;
-        box-sizing: border-box;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
     }
-    .tabular-cell-input:focus {
-        border-color: #5e6ad2 !important;
-        box-shadow: 0 0 0 2px rgba(94, 106, 210, 0.15) !important;
-        outline: none !important;
+    .panel-header-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
     }
-    .tabular-search-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 160px 160px auto auto;
-        gap: 12px;
-        align-items: flex-end;
-        padding: 14px 16px;
-        background: #ffffff;
+    .panel-header-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
     }
-    @media (max-width: 900px) {
-        .tabular-search-grid {
-            grid-template-columns: 1fr 1fr;
-        }
+    .panel-header-icon.purchase-icon {
+        background: #eef2ff;
+        color: #4f46e5;
     }
-    @media (max-width: 580px) {
-        .tabular-search-grid {
-            grid-template-columns: 1fr;
-        }
+    .panel-header-icon.search-icon {
+        background: #f1f5f9;
+        color: #475569;
+    }
+    .panel-header-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        letter-spacing: -0.2px;
     }
     .app-form-grid {
         display: grid;
@@ -425,205 +391,140 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- TABULAR QUICK PURCHASE INFLOW & SEARCH STRIP (NO BOX-IN-BOX) -->
+    <!-- QUICK PURCHASE & SEARCH DUAL PANELS (BELOW STATS)          -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="card purchase-tabular-card">
-        <!-- Compact Header Bar with View Switcher -->
-        <div class="tabular-header-bar">
-            <div style="display:flex; align-items:center; gap: 8px;">
-                <button type="button" id="tabBtnTabularInflow" onclick="switchTabularSection('inflow')"
-                        style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:5px 12px; border-radius:6px; background:#5e6ad2; color:#ffffff; border:none; cursor:pointer; transition:all 0.15s;">
-                    <i data-lucide="shopping-bag" style="width:13px;height:13px;"></i>
-                    Quick Stock Inflow
-                </button>
-                <button type="button" id="tabBtnTabularSearch" onclick="switchTabularSection('search')"
-                        style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:5px 12px; border-radius:6px; background:transparent; color:#64748b; border:1px solid #cbd5e1; cursor:pointer; transition:all 0.15s;">
-                    <i data-lucide="search" style="width:13px;height:13px;"></i>
-                    Search Purchases
-                </button>
+    <div class="quick-purchases-top-grid">
+        <!-- 🛒 CARD 1: QUICK ADD PURCHASE -->
+        <div class="light-purchase-panel">
+            <div class="panel-header-box">
+                <div class="panel-header-icon purchase-icon">
+                    <i data-lucide="shopping-bag" style="width:16px;height:16px;"></i>
+                </div>
+                <h3 class="panel-header-title">Add Purchase</h3>
             </div>
-            <div style="font-size:11px; color:#64748b; font-weight:500; display:flex; align-items:center; gap:6px;" id="tabularInflowHint">
-                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
-                Direct Inflow &bull; No Supplier Required
-            </div>
-        </div>
 
-        <!-- 🛒 TABULAR INFLOW VIEW (DEFAULT) -->
-        <div id="tabularInflowContainer" class="tabular-inflow-container">
-            <form action="{{ route('mobileshop.purchase.quick') }}" method="POST" id="quickPurchaseCardForm" onsubmit="return handleQuickPurchaseCardSubmit(event, this)" style="margin:0;">
+            <form action="{{ route('mobileshop.purchase.quick') }}" method="POST" id="quickPurchaseCardForm" onsubmit="return handleQuickPurchaseCardSubmit(event, this)">
                 @csrf
-                <table class="tabular-inflow-table">
-                    <thead>
-                        <tr>
-                            <th style="min-width:240px; text-align:left;">Item Name <span style="color:#ef4444;">*</span></th>
-                            <th style="min-width:170px; text-align:left;">Category</th>
-                            <th style="width:75px; text-align:center;">Qty <span style="color:#ef4444;">*</span></th>
-                            <th style="min-width:135px; text-align:left;">Purchase Price <span style="color:#ef4444;">*</span></th>
-                            <th style="min-width:135px; text-align:left;">Selling Price</th>
-                            <th style="width:85px; text-align:center;">Low Stock</th>
-                            <th style="min-width:105px; text-align:right;">Total</th>
-                            <th style="width:125px; text-align:center;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <!-- Cell 1: Item Name -->
-                            <td style="position:relative;">
-                                <div class="search-picker-wrapper" id="qpCardItemPickerContainer">
-                                    <div style="position: relative;">
-                                        <input type="text"
-                                               name="name"
-                                               id="qpCardItemName"
-                                               class="tabular-cell-input"
-                                               style="padding-right: 28px;"
-                                               placeholder="Type item name to search..."
-                                               autocomplete="off"
-                                               required
-                                               oninput="onQpCardItemInput(this)">
-                                        <button type="button"
-                                                id="btnQpCardItemClear"
-                                                onclick="clearQpCardItemSelection()"
-                                                title="Clear item name"
-                                                style="display:none; position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; line-height: 18px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
-                                    </div>
-                                    <div id="qpCardItemDropdownList" class="search-picker-dropdown" style="top: 38px; min-width: 280px;"></div>
-                                </div>
-                            </td>
+                <div class="app-form-grid">
+                    <!-- Row 1: Item Name (Search / Type) & Quantity -->
+                    <div class="search-picker-wrapper" id="qpCardItemPickerContainer">
+                        <div style="position: relative;">
+                            <input type="text"
+                                   name="name"
+                                   id="qpCardItemName"
+                                   class="app-input-field"
+                                   style="padding-right: 32px;"
+                                   placeholder="Type item name to search..."
+                                   autocomplete="off"
+                                   required
+                                   oninput="onQpCardItemInput(this)">
+                            <button type="button"
+                                    id="btnQpCardItemClear"
+                                    onclick="clearQpCardItemSelection()"
+                                    title="Clear item name"
+                                    style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                        </div>
+                        <div id="qpCardItemDropdownList" class="search-picker-dropdown">
+                            <!-- Populated as user types -->
+                        </div>
+                    </div>
 
-                            <!-- Cell 2: Category -->
-                            <td style="position:relative;">
-                                <div class="search-picker-wrapper" id="qpCardCategoryPickerContainer">
-                                    <div style="position: relative;">
-                                        <input type="text"
-                                               name="category"
-                                               id="qpCardCategory"
-                                               class="tabular-cell-input"
-                                               style="padding-right: 28px;"
-                                               placeholder="Type/search category..."
-                                               autocomplete="off"
-                                               list="qpCategoryDatalist"
-                                               onfocus="onQpCardCategoryFocus(this)"
-                                               oninput="onQpCardCategoryInput(this)">
-                                        <datalist id="qpCategoryDatalist">
-                                            @if(isset($categories) && count($categories) > 0)
-                                                @foreach($categories as $cat)
-                                                    <option value="{{ $cat->name }}">{{ $cat->slug }}</option>
-                                                @endforeach
-                                            @endif
-                                        </datalist>
-                                        <button type="button"
-                                                id="btnQpCardCategoryClear"
-                                                onclick="clearQpCardCategorySelection()"
-                                                title="Clear category"
-                                                style="display:none; position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; line-height: 18px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
-                                    </div>
-                                    <div id="qpCardCategoryDropdownList" class="search-picker-dropdown" style="top: 38px; min-width: 220px;"></div>
-                                </div>
-                            </td>
+                    <div>
+                        <input type="number" name="quantity" id="qpCardQty" class="app-input-field" placeholder="Quantity" value="1" min="1" required oninput="recalcQpCardTotal()">
+                    </div>
 
-                            <!-- Cell 3: Qty -->
-                            <td>
-                                <input type="number"
-                                       name="quantity"
-                                       id="qpCardQty"
-                                       class="tabular-cell-input"
-                                       style="text-align:center; font-weight:600;"
-                                       placeholder="1"
-                                       value="1"
-                                       min="1"
-                                       required
-                                       oninput="recalcQpCardTotal()">
-                            </td>
+                    <!-- Row 2: Category (Searchable & Typeable) & Purchase Price -->
+                    <div class="search-picker-wrapper" id="qpCardCategoryPickerContainer">
+                        <div style="position: relative;">
+                            <input type="text"
+                                   name="category"
+                                   id="qpCardCategory"
+                                   class="app-input-field"
+                                   style="padding-right: 32px;"
+                                   placeholder="Type or search category..."
+                                   autocomplete="off"
+                                   list="qpCategoryDatalist"
+                                   onfocus="onQpCardCategoryFocus(this)"
+                                   oninput="onQpCardCategoryInput(this)">
+                            <datalist id="qpCategoryDatalist">
+                                @if(isset($categories) && count($categories) > 0)
+                                    @foreach($categories as $cat)
+                                        <option value="{{ $cat->name }}">{{ $cat->slug }}</option>
+                                    @endforeach
+                                @endif
+                            </datalist>
+                            <button type="button"
+                                    id="btnQpCardCategoryClear"
+                                    onclick="clearQpCardCategorySelection()"
+                                    title="Clear category"
+                                    style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                        </div>
+                        <div id="qpCardCategoryDropdownList" class="search-picker-dropdown">
+                            <!-- Populated as user types or focuses -->
+                        </div>
+                    </div>
 
-                            <!-- Cell 4: Purchase Price -->
-                            <td>
-                                <div style="position:relative;">
-                                    <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); color:#64748b; font-size:12px; font-weight:600;">₹</span>
-                                    <input type="number"
-                                           step="0.01"
-                                           name="purchase_price"
-                                           id="qpCardPurchasePrice"
-                                           class="tabular-cell-input"
-                                           style="padding-left: 20px; font-weight:600;"
-                                           placeholder="0.00"
-                                           min="0"
-                                           required
-                                           oninput="recalcQpCardTotal()">
-                                </div>
-                            </td>
+                    <div>
+                        <input type="number" step="0.01" name="purchase_price" id="qpCardPurchasePrice" class="app-input-field" placeholder="Purchase Price (₹)" min="0" required oninput="recalcQpCardTotal()">
+                    </div>
 
-                            <!-- Cell 5: Selling Price -->
-                            <td>
-                                <div style="position:relative;">
-                                    <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); color:#64748b; font-size:12px; font-weight:600;">₹</span>
-                                    <input type="number"
-                                           step="0.01"
-                                           name="selling_price"
-                                           id="qpCardSellingPrice"
-                                           class="tabular-cell-input"
-                                           style="padding-left: 20px;"
-                                           placeholder="Optional">
-                                </div>
-                            </td>
+                    <!-- Row 3: Low Stock Alert & Selling Price (Optional) -->
+                    <div>
+                        <input type="number" name="low_stock" id="qpCardLowStock" class="app-input-field" placeholder="Low Stock Alert (Default: 3)" min="0" value="3">
+                    </div>
 
-                            <!-- Cell 6: Low Stock -->
-                            <td>
-                                <input type="number"
-                                       name="low_stock"
-                                       id="qpCardLowStock"
-                                       class="tabular-cell-input"
-                                       style="text-align:center;"
-                                       placeholder="3"
-                                       value="3"
-                                       min="0">
-                            </td>
+                    <div>
+                        <input type="number" step="0.01" name="selling_price" id="qpCardSellingPrice" class="app-input-field" placeholder="Selling Price (Optional)">
+                    </div>
 
-                            <!-- Cell 7: Live Total Badge -->
-                            <td style="text-align:right;">
-                                <div id="qpCardTotalBadge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; border-radius:6px; padding:6px 10px; font-size: 12px; font-weight: 700; white-space:nowrap; display:inline-block;">
-                                    ₹0.00
-                                </div>
-                            </td>
-
-                            <!-- Cell 8: Action Button -->
-                            <td style="text-align:center;">
-                                <button type="submit" class="btn-app-primary" id="qpCardSubmitBtn" style="height:36px; padding:0 14px; font-size:12px; width:100%; justify-content:center; white-space:nowrap;">
-                                    <i data-lucide="plus" style="width:13px;height:13px;"></i> Add
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <!-- Submit Button & Live Total Badge -->
+                    <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; margin-top: 4px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                        <button type="submit" class="btn-app-primary" id="qpCardSubmitBtn">
+                            <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Purchase
+                        </button>
+                        <div id="qpCardTotalBadge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; border-radius:6px; padding:4px 12px; font-size: 13px; font-weight: 700;">
+                            Total: ₹0.00
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
 
-        <!-- 🔍 TABULAR SEARCH VIEW -->
-        <div id="tabularSearchContainer" style="display:none;">
-            <div class="tabular-search-grid">
-                <div>
-                    <label style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:3px; display:block;">Supplier / PO #</label>
-                    <input type="text" id="filterPoSupplier" class="tabular-cell-input" placeholder="Search by supplier or PO #" oninput="applyCombinedPurchaseFilter()">
+        <!-- 🔍 CARD 2: SEARCH PURCHASES -->
+        <div class="light-purchase-panel">
+            <div class="panel-header-box">
+                <div class="panel-header-icon search-icon">
+                    <i data-lucide="search" style="width:16px;height:16px;"></i>
                 </div>
+                <h3 class="panel-header-title">Search Purchases</h3>
+            </div>
+
+            <div class="app-form-grid">
+                <!-- Row 1: Search by supplier or PO # & Item name -->
                 <div>
-                    <label style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:3px; display:block;">Item Filter</label>
-                    <input type="text" id="filterPoItem" class="tabular-cell-input" placeholder="Type item to filter (Optional)..." oninput="applyCombinedPurchaseFilter()">
+                    <input type="text" id="filterPoSupplier" class="app-input-field" placeholder="Search by supplier or PO #" oninput="applyCombinedPurchaseFilter()">
                 </div>
+
                 <div>
-                    <label style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:3px; display:block;">Date From</label>
-                    <input type="date" id="filterPoFromDate" class="tabular-cell-input" onchange="applyCombinedPurchaseFilter()">
+                    <input type="text" id="filterPoItem" class="app-input-field" placeholder="Type item to filter (Optional)..." oninput="applyCombinedPurchaseFilter()">
                 </div>
+
+                <!-- Row 2: Date From & Date To -->
                 <div>
-                    <label style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:3px; display:block;">Date To</label>
-                    <input type="date" id="filterPoToDate" class="tabular-cell-input" onchange="applyCombinedPurchaseFilter()">
+                    <input type="date" id="filterPoFromDate" class="app-input-field" placeholder="dd-mm-yyyy" onchange="applyCombinedPurchaseFilter()">
                 </div>
+
                 <div>
-                    <button type="button" class="btn-app-primary" style="height:36px; font-size:12px; padding:0 14px;" onclick="applyCombinedPurchaseFilter()">
-                        <i data-lucide="search" style="width:13px;height:13px;"></i> Search
+                    <input type="date" id="filterPoToDate" class="app-input-field" placeholder="dd-mm-yyyy" onchange="applyCombinedPurchaseFilter()">
+                </div>
+
+                <!-- Action Buttons: Search & Reset -->
+                <div style="grid-column: 1 / -1; display:flex; gap: 10px; align-items:center; margin-top: 4px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                    <button type="button" class="btn-app-primary" onclick="applyCombinedPurchaseFilter()">
+                        <i data-lucide="search" style="width:14px;height:14px;"></i> Search
                     </button>
-                </div>
-                <div>
-                    <button type="button" class="btn-app-success" style="height:36px; font-size:12px; padding:0 14px;" onclick="resetCombinedPurchaseFilter()">
-                        <i data-lucide="rotate-cw" style="width:13px;height:13px;"></i> Reset
+                    <button type="button" class="btn-app-success" onclick="resetCombinedPurchaseFilter()">
+                        <i data-lucide="rotate-cw" style="width:14px;height:14px;"></i> Reset
                     </button>
                 </div>
             </div>
@@ -1907,50 +1808,6 @@
         if (fTo) fTo.value = '';
 
         applyCombinedPurchaseFilter();
-    }
-
-    function switchTabularSection(mode) {
-        const inflowBox = document.getElementById('tabularInflowContainer');
-        const searchBox = document.getElementById('tabularSearchContainer');
-        const tabInflow = document.getElementById('tabBtnTabularInflow');
-        const tabSearch = document.getElementById('tabBtnTabularSearch');
-        const hint = document.getElementById('tabularInflowHint');
-
-        if (mode === 'search') {
-            if (inflowBox) inflowBox.style.display = 'none';
-            if (searchBox) searchBox.style.display = 'block';
-            if (tabInflow) {
-                tabInflow.style.background = 'transparent';
-                tabInflow.style.color = '#64748b';
-                tabInflow.style.border = '1px solid #cbd5e1';
-            }
-            if (tabSearch) {
-                tabSearch.style.background = '#5e6ad2';
-                tabSearch.style.color = '#ffffff';
-                tabSearch.style.border = 'none';
-            }
-            if (hint) {
-                hint.innerHTML = '<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#3b82f6;"></span> Filter Invoices & Inflow Records';
-            }
-        } else {
-            if (inflowBox) inflowBox.style.display = 'block';
-            if (searchBox) searchBox.style.display = 'none';
-            if (tabInflow) {
-                tabInflow.style.background = '#5e6ad2';
-                tabInflow.style.color = '#ffffff';
-                tabInflow.style.border = 'none';
-            }
-            if (tabSearch) {
-                tabSearch.style.background = 'transparent';
-                tabSearch.style.color = '#64748b';
-                tabSearch.style.border = '1px solid #cbd5e1';
-            }
-            if (hint) {
-                hint.innerHTML = '<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span> Direct Inflow &bull; No Supplier Required';
-            }
-        }
-        if (window.refreshIcons) window.refreshIcons();
-        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     }
 
     // Stubs for backward compatibility
