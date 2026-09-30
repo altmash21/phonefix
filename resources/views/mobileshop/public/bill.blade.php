@@ -26,10 +26,10 @@
                         Invoice #{{ $invoice_number }} &bull; {{ date('d M Y, h:i A', strtotime($sale->created_at)) }}
                     </p>
                 </div>
-                <a href="{{ $pdfUrl }}" target="_blank"
-                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all">
+                <a href="{{ $pdfUrl }}" download="Invoice-{{ $invoice_number }}.pdf" onclick="handleDownloadFeedback(this)"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    Download PDF
+                    <span>Download PDF</span>
                 </a>
             </div>
 
@@ -153,10 +153,10 @@
 
             <!-- Primary Action Buttons -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <a href="{{ $pdfUrl }}" target="_blank"
-                   class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all">
+                <a href="{{ $pdfUrl }}" download="Invoice-{{ $invoice_number }}.pdf" onclick="handleDownloadFeedback(this)"
+                   class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    Download Official PDF
+                    <span>Download Official PDF</span>
                 </a>
                 <button type="button" onclick="window.print()"
                         class="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition-all border border-slate-200">
@@ -176,3 +176,17 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function handleDownloadFeedback(el) {
+    const span = el.querySelector('span');
+    if (!span) return;
+    const oldText = span.textContent;
+    span.textContent = 'Downloading PDF...';
+    setTimeout(() => {
+        span.textContent = oldText;
+    }, 4500);
+}
+</script>
+@endpush

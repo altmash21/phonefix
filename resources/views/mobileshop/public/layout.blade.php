@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>@yield('title', store_name() . ' — Mobile Accessories & Express Repair Lab')</title>
     <meta name="description" content="@yield('meta_description', 'Official mobile accessories, fast chargers, tempered glass, OEM batteries, and certified express phone repair in ' . store_city() . '.')">
-    <base href="{{ config('app.url') . '/' }}">
 
     <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
