@@ -259,34 +259,63 @@ class AccessoriesController extends BaseMobileShopController
     {
         abort_unless(auth()->check() && (
             auth()->user()->can('create-mobileshop-accessories') || 
+            auth()->user()->can('create-purchase-accessories') || 
             auth()->user()->hasRole('admin') || 
             auth()->user()->hasRole('store-admin') || 
-            auth()->user()->hasRole('accessories-staff')
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('owner')
         ), 403, 'Unauthorized action.');
 
-        $summary = $this->restockService->bulkRestock($this->getCompanyId(), $request);
+        try {
+            $summary = $this->restockService->bulkRestock($this->getCompanyId(), $request);
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => "Successfully restocked {$summary['totalUnits']} units across {$summary['existingCount']} existing and {$summary['newCount']} new catalog items (Total Value: ₹" . number_format($summary['totalCost'], 2) . ")!",
-                'summary' => $summary,
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Successfully restocked {$summary['totalUnits']} units across {$summary['existingCount']} existing and {$summary['newCount']} new catalog items (Total Value: ₹" . number_format($summary['totalCost'], 2) . ")!",
+                    'summary' => $summary,
+                ]);
+            }
+
+            $msg = "Bulk restock successful! Added {$summary['totalUnits']} units (Total: ₹" . number_format($summary['totalCost'], 2) . ", Paid: ₹" . number_format($summary['amountPaid'], 2) . ")";
+            if ($summary['balanceDue'] > 0) {
+                $msg .= " — Balance Due: ₹" . number_format($summary['balanceDue'], 2);
+            }
+            if (!empty($summary['clearedOldBalance']) && $summary['clearedOldBalance'] > 0) {
+                $msg .= " — Cleared ₹" . number_format($summary['clearedOldBalance'], 2) . " from supplier's past balance!";
+            }
+
+            if (!empty($summary['poId']) && (auth()->user()->can('read-mobileshop-purchase') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin'))) {
+                return $this->safeRedirect($request, 'mobileshop.purchase.invoice', ['id' => $summary['poId']], 'success', $msg);
+            }
+
+            return $this->safeRedirect($request, 'mobileshop.accessories.purchase', [], 'success', $msg);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error: ' . implode('; ', array_map(fn($errs) => implode(', ', $errs), $ve->errors())),
+                    'errors'  => $ve->errors(),
+                ], 422);
+            }
+            return redirect()->back()->withErrors($ve->errors())->withInput()->with('error', 'Please correct the highlighted errors.');
+        } catch (\Throwable $e) {
+            Log::error("Bulk Restock Error: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'input' => $request->except(['_token']),
             ]);
-        }
 
-        $msg = "Bulk restock successful! Added {$summary['totalUnits']} units (Total: ₹" . number_format($summary['totalCost'], 2) . ", Paid: ₹" . number_format($summary['amountPaid'], 2) . ")";
-        if ($summary['balanceDue'] > 0) {
-            $msg .= " — Balance Due: ₹" . number_format($summary['balanceDue'], 2);
-        }
-        if (!empty($summary['clearedOldBalance']) && $summary['clearedOldBalance'] > 0) {
-            $msg .= " — Cleared ₹" . number_format($summary['clearedOldBalance'], 2) . " from supplier's past balance!";
-        }
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Restock processing failed: ' . $e->getMessage(),
+                ], 500);
+            }
 
-        if (!empty($summary['poId'])) {
-            return $this->safeRedirect($request, 'mobileshop.purchase.invoice', ['id' => $summary['poId']], 'success', $msg);
+            return redirect()->route('mobileshop.accessories.purchase')
+                ->withInput()
+                ->with('error', 'Restock processing failed: ' . $e->getMessage());
         }
-
-        return $this->safeRedirect($request, 'mobileshop.purchase', [], 'success', $msg);
     }
 
     /**

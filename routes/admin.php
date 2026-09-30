@@ -200,8 +200,10 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('accessories/store', 'MobileShop\AccessoriesController@storePart')
         ->middleware('permission:create-mobileshop-accessories')
         ->name('accessories.store');
+    Route::get('accessories/bulk-restock', fn() => redirect()->route('mobileshop.accessories.purchase'))
+        ->name('accessories.bulk_restock.get');
     Route::post('accessories/bulk-restock', 'MobileShop\AccessoriesController@bulkRestock')
-        ->middleware('permission:create-mobileshop-accessories')
+        ->middleware('permission:create-mobileshop-accessories|create-purchase-accessories')
         ->name('accessories.bulk_restock');
     Route::post('accessories/sale', 'MobileShop\AccessoriesController@sellAccessory')
         ->middleware('permission:sell-mobileshop-accessories')

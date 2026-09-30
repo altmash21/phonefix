@@ -29,6 +29,10 @@ class AccessoryRestockService
         $finalCategorySlug = $categoryRow ? $categoryRow->slug : AccessoryCategoryService::canonicalSlug($request->category, $request->name);
         $isGift = $request->has('is_gift_eligible') ? 1 : ($categoryRow ? ($categoryRow->is_gift_eligible ? 1 : 0) : 0);
 
+        $rawDisplayType = strtolower(trim((string) ($request->display_type ?? 'na')));
+        $validDisplayTypes = ['original_oem', 'oled', 'in_cell', 'tft', 'na'];
+        $displayType = in_array($rawDisplayType, $validDisplayTypes) ? $rawDisplayType : 'na';
+
         $partId = DB::table('ms_parts_inventory')->insertGetId([
             'company_id'       => $companyId,
             'category'         => $finalCategorySlug,
@@ -36,7 +40,7 @@ class AccessoryRestockService
             'is_gift_eligible' => $isGift,
             'brand'            => $request->brand ?: 'Universal',
             'compatible_model' => $request->compatible_model ?: 'Universal / Multi-Model',
-            'display_type'     => $request->display_type ?: 'Normal',
+            'display_type'     => $displayType,
             'description'      => $request->description,
             'hsn_code'         => $request->hsn_code ?? '85177090',
             'name'             => $request->name,
@@ -163,6 +167,10 @@ class AccessoryRestockService
                     $categoryRow = AccessoryCategoryService::resolveCategory($companyId, $categorySlug, $partName);
                     $finalCategorySlug = $categoryRow ? $categoryRow->slug : AccessoryCategoryService::canonicalSlug($categorySlug, $partName);
 
+                    $rawDisplayType = strtolower(trim((string) ($item['display_type'] ?? 'na')));
+                    $validDisplayTypes = ['original_oem', 'oled', 'in_cell', 'tft', 'na'];
+                    $displayType = in_array($rawDisplayType, $validDisplayTypes) ? $rawDisplayType : 'na';
+
                     $newPartId = DB::table('ms_parts_inventory')->insertGetId([
                         'company_id'       => $companyId,
                         'name'             => $partName,
@@ -170,7 +178,7 @@ class AccessoryRestockService
                         'category_id'      => $categoryRow?->id,
                         'brand'            => $brand,
                         'compatible_model' => $model,
-                        'display_type'     => $item['display_type'] ?? 'Normal',
+                        'display_type'     => $displayType,
                         'description'      => $item['description'] ?? null,
                         'hsn_code'         => $item['hsn_code'] ?? '85177090',
                         'unit_cost'        => $unitCost,
@@ -219,11 +227,11 @@ class AccessoryRestockService
 
             $invNumber = trim($request->invoice_no ?: '');
             if (empty($invNumber)) {
-                $invNumber = 'INV-' . date('Ymd') . '-' . str_pad(DB::table('ms_purchase_orders')->where('company_id', $companyId)->count() + 1, 4, '0', STR_PAD_LEFT);
+                $invNumber = 'INV-' . date('Ymd') . '-' . str_pad(DB::table('ms_purchase_orders')->count() + 1, 4, '0', STR_PAD_LEFT);
             }
             $basePoNum = $invNumber;
             $counter = 1;
-            while (DB::table('ms_purchase_orders')->where('company_id', $companyId)->where('po_number', $invNumber)->exists()) {
+            while (DB::table('ms_purchase_orders')->where('po_number', $invNumber)->exists()) {
                 $invNumber = $basePoNum . '-' . $counter++;
             }
 
@@ -244,13 +252,16 @@ class AccessoryRestockService
             $poBalanceDue = max(0.0, $totalCost - $poAmountPaid);
             $poStatus = ($poBalanceDue <= 0.001) ? 'paid' : (($poAmountPaid > 0) ? 'partially_paid' : 'received');
 
+            // Tax type enum strictly allows only 'intra_state' or 'inter_state'
+            $taxType = in_array($request->tax_type, ['intra_state', 'inter_state']) ? $request->tax_type : 'intra_state';
+
             $poId = DB::table('ms_purchase_orders')->insertGetId([
                 'company_id'   => $companyId,
                 'supplier_id'  => $supplierId,
                 'po_number'    => $invNumber,
                 'bill_type'    => $billType,
                 'order_date'   => $orderDate,
-                'tax_type'     => $billType === 'gst' ? 'intra_state' : 'none',
+                'tax_type'     => $taxType,
                 'subtotal'     => $totalCost,
                 'cgst_amount'  => 0,
                 'sgst_amount'  => 0,
