@@ -440,7 +440,7 @@
             </a>
             @endcanany
 
-            @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('owner') || $u->can('read-mobileshop-procurement') || $u->can('create-mobileshop-procurement')))
+            @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('owner') || $u->hasRole('accessories-staff') || $u->can('read-mobileshop-procurement') || $u->can('create-mobileshop-procurement') || $u->can('read-mobileshop-purchase') || $u->can('read-admin-panel')))
             <a href="{{ route('mobileshop.supplier_debt') }}"
                class="nav-link {{ request()->routeIs('mobileshop.supplier_debt') ? 'active' : '' }}"
                onclick="closeMobileSidebar()"
@@ -540,7 +540,7 @@
                 </a>
                 @endcanany
 
-                @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('owner') || $u->can('read-mobileshop-procurement') || $u->can('create-mobileshop-procurement')))
+                @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('owner') || $u->hasRole('accessories-staff') || $u->can('read-mobileshop-procurement') || $u->can('create-mobileshop-procurement') || $u->can('read-mobileshop-purchase') || $u->can('read-admin-panel')))
                 <a href="{{ route('mobileshop.supplier_debt') }}"
                    class="nav-link {{ request()->routeIs('mobileshop.supplier_debt') ? 'active' : '' }}"
                    style="padding-left:28px; font-size:12px;">

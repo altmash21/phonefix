@@ -1,4 +1,4 @@
-﻿@extends('mobileshop.layout')
+@extends('mobileshop.layout')
 @section('title', 'Supplier Debt & Ledger — PhoneFix Azamgarh')
 @section('page-title', 'Supplier Debt & Ledger')
 
@@ -138,11 +138,11 @@
         </div>
         <div class="sdebt-row">
             <span class="sdebt-row-label">Unpaid PO Balance</span>
-            <span class="sdebt-row-val {{ $outstanding > 0 ? 'negative' : ' }}">₹{{ number_format($outstanding, 2) }}</span>
+            <span class="sdebt-row-val {{ $outstanding > 0 ? 'negative' : '' }}">₹{{ number_format($outstanding, 2) }}</span>
         </div>
         <div class="sdebt-row">
             <span class="sdebt-row-label">Prepaid Wallet (Advance)</span>
-            <span class="sdebt-row-val {{ $wallet > 0 ? 'positive' : ' }}">₹{{ number_format($wallet, 2) }}</span>
+            <span class="sdebt-row-val {{ $wallet > 0 ? 'positive' : '' }}">₹{{ number_format($wallet, 2) }}</span>
         </div>
         <div class="sdebt-row" style="border-top:2px solid #e2e8f0; margin-top:2px; padding-top:9px;">
             <span class="sdebt-row-label" style="font-weight:800; color:#0f172a;">Net Payable</span>
@@ -151,15 +151,15 @@
             </span>
         </div>
         <div class="sdebt-actions">
-            <button onclick="openPaymentModal({{ $s->id }}, '{{ addslashes($s->name) }}', 0, {{ $netPayable }})"
+            <button onclick="openPaymentModal({{ $s->id }}, {{ json_encode($s->name) }}, 0, {{ $netPayable }})"
                     class="btn btn-primary btn-sm" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; font-size:12px;">
                 <i data-lucide="credit-card" style="width:13px;height:13px;"></i> Pay Debt
             </button>
-            <button onclick="openAdvanceModal({{ $s->id }}, '{{ addslashes($s->name) }}')"
+            <button onclick="openAdvanceModal({{ $s->id }}, {{ json_encode($s->name) }})"
                     class="btn btn-outline btn-sm" style="flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; font-size:12px;">
                 <i data-lucide="wallet" style="width:13px;height:13px;"></i> Add Advance
             </button>
-            <button onclick="openEditSupplierModal({{ $s->id }}, '{{ addslashes($s->name) }}', '{{ addslashes($s->phone ?? '') }}', '{{ addslashes($s->gstin ?? '') }}', '{{ addslashes($s->address ?? '') }}', {{ $wallet }})"
+            <button onclick="openEditSupplierModal({{ $s->id }}, {{ json_encode($s->name) }}, {{ json_encode($s->phone ?? '') }}, {{ json_encode($s->gstin ?? '') }}, {{ json_encode($s->address ?? '') }}, {{ $wallet }})"
                     class="btn btn-outline btn-sm" style="display:inline-flex; align-items:center; gap:4px; font-size:12px; padding:6px 10px;">
                 <i data-lucide="edit-2" style="width:13px;height:13px;"></i>
             </button>
@@ -226,7 +226,7 @@
                         @endif
                     </td>
                     <td style="font-size:12px;color:#64748b;font-family:monospace;">{{ $pay->reference_no ?: '—' }}</td>
-                    <td style="font-size:12px;color:#94a3b8;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $pay->remarks ?? ' }}">{{ Str::limit($pay->remarks ?? '—', 40) }}</td>
+                    <td style="font-size:12px;color:#94a3b8;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $pay->remarks ?? '' }}">{{ Str::limit($pay->remarks ?? '—', 40) }}</td>
                 </tr>
                 @endforeach
             </tbody>

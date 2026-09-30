@@ -246,16 +246,16 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:read-mobileshop-procurement')
         ->name('purchase_orders');
     Route::post('purchase-orders/payment', 'MobileShop\PurchaseController@recordSupplierPayment')
-        ->middleware('permission:create-mobileshop-procurement')
+        ->middleware('permission:create-mobileshop-procurement|create-purchase-accessories|read-mobileshop-purchase|read-admin-panel')
         ->name('purchase_orders.payment');
     Route::post('supplier/update', 'MobileShop\PurchaseController@updateSupplier')
-        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel')
+        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel|read-mobileshop-purchase|create-purchase-accessories')
         ->name('supplier.update');
     Route::get('supplier-debt', 'MobileShop\PurchaseController@supplierDebt')
-        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel')
+        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel|read-mobileshop-purchase')
         ->name('supplier_debt');
     Route::post('supplier/store', 'MobileShop\PurchaseController@storeSupplier')
-        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel')
+        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel|read-mobileshop-purchase|create-purchase-accessories')
         ->name('supplier.store');
     Route::get('repairs', 'MobileShop\RepairsController@repairs')
         ->middleware('permission:read-mobileshop-repairs')

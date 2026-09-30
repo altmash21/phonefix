@@ -537,44 +537,52 @@ class PurchaseController extends BaseMobileShopController
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin') ||
             auth()->user()->hasRole('owner') ||
+            auth()->user()->hasRole('accessories-staff') ||
             auth()->user()->can('read-mobileshop-procurement') ||
             auth()->user()->can('create-mobileshop-procurement') ||
+            auth()->user()->can('read-mobileshop-purchase') ||
+            auth()->user()->can('read-mobileshop-dashboard') ||
+            auth()->user()->can('read-admin-panel') ||
             $this->isOwner()
         ), 403, 'Unauthorized.');
 
         $companyId = $this->getCompanyId();
-        $prefix    = DB::getTablePrefix();
 
-        // Suppliers with outstanding balance and advance wallet
+        // 1. Fetch all suppliers for this company
         $suppliers = DB::table('ms_suppliers')
-            ->leftJoin('ms_purchase_orders', function ($j) use ($companyId) {
-                $j->on('ms_suppliers.id', '=', 'ms_purchase_orders.supplier_id')
-                  ->where('ms_purchase_orders.company_id', $companyId)
-                  ->whereNotIn('ms_purchase_orders.status', ['paid', 'cancelled']);
-            })
-            ->leftJoin('ms_supplier_credit_wallets', function ($j) use ($companyId) {
-                $j->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
-                  ->where('ms_supplier_credit_wallets.company_id', $companyId);
-            })
-            ->where('ms_suppliers.company_id', $companyId)
-            ->groupBy(
-                'ms_suppliers.id', 'ms_suppliers.name', 'ms_suppliers.phone',
-                'ms_suppliers.gstin', 'ms_suppliers.address', 'ms_suppliers.notes', 'ms_suppliers.enabled'
-            )
-            ->select(
-                'ms_suppliers.id', 'ms_suppliers.name', 'ms_suppliers.phone',
-                'ms_suppliers.gstin', 'ms_suppliers.address', 'ms_suppliers.notes', 'ms_suppliers.enabled',
-                DB::raw("COALESCE(SUM({$prefix}ms_purchase_orders.balance_due), 0) as outstanding_balance"),
-                DB::raw("COALESCE(MAX({$prefix}ms_supplier_credit_wallets.credit_balance), 0) as advance_balance")
-            )
-            ->orderByRaw("COALESCE(SUM({$prefix}ms_purchase_orders.balance_due), 0) DESC")
-            ->orderBy('ms_suppliers.name')
+            ->where('company_id', $companyId)
+            ->orderBy('name')
             ->get();
+
+        // 2. Fetch outstanding PO balances per supplier safely without multi-table join group issues
+        $poBalances = DB::table('ms_purchase_orders')
+            ->where('company_id', $companyId)
+            ->whereNotIn('status', ['paid', 'cancelled'])
+            ->groupBy('supplier_id')
+            ->select('supplier_id', DB::raw('SUM(balance_due) as total_due'))
+            ->pluck('total_due', 'supplier_id');
+
+        // 3. Fetch credit wallets per supplier safely
+        $wallets = DB::table('ms_supplier_credit_wallets')
+            ->where('company_id', $companyId)
+            ->pluck('credit_balance', 'supplier_id');
+
+        // 4. Attach balances and sort cleanly in memory
+        foreach ($suppliers as $s) {
+            $s->outstanding_balance = (float) ($poBalances[$s->id] ?? 0);
+            $s->advance_balance     = (float) ($wallets[$s->id] ?? 0);
+        }
+
+        // Sort: highest outstanding debt first, then alphabetical by name
+        $suppliers = $suppliers->sortBy([
+            ['outstanding_balance', 'desc'],
+            ['name', 'asc'],
+        ])->values();
 
         $totalOutstanding = (float) $suppliers->sum('outstanding_balance');
         $totalWallets     = (float) $suppliers->sum('advance_balance');
 
-        // Full payment history
+        // Full payment history (capped at 200 records for performance)
         $payments = DB::table('ms_supplier_payments')
             ->join('ms_suppliers', 'ms_supplier_payments.supplier_id', '=', 'ms_suppliers.id')
             ->leftJoin('ms_purchase_orders', 'ms_supplier_payments.purchase_order_id', '=', 'ms_purchase_orders.id')
@@ -585,6 +593,7 @@ class PurchaseController extends BaseMobileShopController
             )
             ->where('ms_supplier_payments.company_id', $companyId)
             ->orderBy('ms_supplier_payments.id', 'desc')
+            ->limit(200)
             ->get();
 
         return view('mobileshop.supplier_debt', compact(
@@ -601,7 +610,11 @@ class PurchaseController extends BaseMobileShopController
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin') ||
             auth()->user()->hasRole('owner') ||
+            auth()->user()->hasRole('accessories-staff') ||
             auth()->user()->can('create-mobileshop-procurement') ||
+            auth()->user()->can('read-mobileshop-procurement') ||
+            auth()->user()->can('read-mobileshop-purchase') ||
+            auth()->user()->can('create-purchase-accessories') ||
             $this->isOwner()
         ), 403, 'Unauthorized.');
 
@@ -646,14 +659,23 @@ class PurchaseController extends BaseMobileShopController
      */
     public function recordSupplierPayment(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->can('create-mobileshop-procurement') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff')), 403, 'Unauthorized action.');
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-mobileshop-procurement') ||
+            auth()->user()->can('create-purchase-accessories') ||
+            auth()->user()->can('read-mobileshop-purchase') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('owner') ||
+            auth()->user()->hasRole('accessories-staff') ||
+            $this->isOwner()
+        ), 403, 'Unauthorized action.');
 
         $result = $this->supplierPaymentService->recordSupplierPayment($this->getCompanyId(), $request);
 
         if (!$result['success']) {
             return redirect()->back()->with('error', $result['message']);
         }
-        return redirect()->route('mobileshop.purchase')->with('success', $result['message']);
+        return redirect()->back()->with('success', $result['message']);
     }
 
     /**
@@ -661,7 +683,15 @@ class PurchaseController extends BaseMobileShopController
      */
     public function updateSupplier(Request $request)
     {
-        abort_unless(auth()->check() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff')), 403, 'Unauthorized action.');
+        abort_unless(auth()->check() && (
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('owner') ||
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->can('create-mobileshop-procurement') ||
+            auth()->user()->can('read-mobileshop-procurement') ||
+            $this->isOwner()
+        ), 403, 'Unauthorized action.');
 
         $result = $this->supplierPaymentService->updateSupplier($this->getCompanyId(), $request);
 
