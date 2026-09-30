@@ -520,11 +520,125 @@ class PurchaseController extends BaseMobileShopController
     }
 
     /**
-     * Supplier Purchase Orders Ledger & Inward Inventory
+     * Supplier Purchase Orders Ledger & Inward Inventory (redirect to main purchase hub)
      */
     public function purchaseOrders()
     {
         return redirect()->route('mobileshop.purchase');
+    }
+
+    /**
+     * Supplier Debt & Ledger Page
+     * Shows all suppliers with outstanding PO balances, advance wallets, net payable, and payment history.
+     */
+    public function supplierDebt(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('owner') ||
+            auth()->user()->can('read-mobileshop-procurement') ||
+            auth()->user()->can('create-mobileshop-procurement') ||
+            $this->isOwner()
+        ), 403, 'Unauthorized.');
+
+        $companyId = $this->getCompanyId();
+        $prefix    = DB::getTablePrefix();
+
+        // Suppliers with outstanding balance and advance wallet
+        $suppliers = DB::table('ms_suppliers')
+            ->leftJoin('ms_purchase_orders', function ($j) use ($companyId) {
+                $j->on('ms_suppliers.id', '=', 'ms_purchase_orders.supplier_id')
+                  ->where('ms_purchase_orders.company_id', $companyId)
+                  ->whereNotIn('ms_purchase_orders.status', ['paid', 'cancelled']);
+            })
+            ->leftJoin('ms_supplier_credit_wallets', function ($j) use ($companyId) {
+                $j->on('ms_suppliers.id', '=', 'ms_supplier_credit_wallets.supplier_id')
+                  ->where('ms_supplier_credit_wallets.company_id', $companyId);
+            })
+            ->where('ms_suppliers.company_id', $companyId)
+            ->groupBy(
+                'ms_suppliers.id', 'ms_suppliers.name', 'ms_suppliers.phone',
+                'ms_suppliers.gstin', 'ms_suppliers.address', 'ms_suppliers.notes', 'ms_suppliers.enabled'
+            )
+            ->select(
+                'ms_suppliers.id', 'ms_suppliers.name', 'ms_suppliers.phone',
+                'ms_suppliers.gstin', 'ms_suppliers.address', 'ms_suppliers.notes', 'ms_suppliers.enabled',
+                DB::raw("COALESCE(SUM({$prefix}ms_purchase_orders.balance_due), 0) as outstanding_balance"),
+                DB::raw("COALESCE(MAX({$prefix}ms_supplier_credit_wallets.credit_balance), 0) as advance_balance")
+            )
+            ->orderByRaw("COALESCE(SUM({$prefix}ms_purchase_orders.balance_due), 0) DESC")
+            ->orderBy('ms_suppliers.name')
+            ->get();
+
+        $totalOutstanding = (float) $suppliers->sum('outstanding_balance');
+        $totalWallets     = (float) $suppliers->sum('advance_balance');
+
+        // Full payment history
+        $payments = DB::table('ms_supplier_payments')
+            ->join('ms_suppliers', 'ms_supplier_payments.supplier_id', '=', 'ms_suppliers.id')
+            ->leftJoin('ms_purchase_orders', 'ms_supplier_payments.purchase_order_id', '=', 'ms_purchase_orders.id')
+            ->select(
+                'ms_supplier_payments.*',
+                'ms_suppliers.name as supplier_name',
+                'ms_purchase_orders.po_number'
+            )
+            ->where('ms_supplier_payments.company_id', $companyId)
+            ->orderBy('ms_supplier_payments.id', 'desc')
+            ->get();
+
+        return view('mobileshop.supplier_debt', compact(
+            'suppliers', 'totalOutstanding', 'totalWallets', 'payments'
+        ));
+    }
+
+    /**
+     * Store a new supplier manually (from Supplier Debt page)
+     */
+    public function storeSupplier(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('owner') ||
+            auth()->user()->can('create-mobileshop-procurement') ||
+            $this->isOwner()
+        ), 403, 'Unauthorized.');
+
+        $request->validate([
+            'name'    => 'required|string|max:191',
+            'phone'   => 'nullable|string|max:20',
+            'gstin'   => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'notes'   => 'nullable|string|max:500',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        // Prevent duplicate supplier names within same company
+        $exists = DB::table('ms_suppliers')
+            ->where('company_id', $companyId)
+            ->where('name', trim($request->name))
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()->withInput()->with('error', "Supplier '{$request->name}' already exists.");
+        }
+
+        DB::table('ms_suppliers')->insert([
+            'company_id'  => $companyId,
+            'name'        => trim($request->name),
+            'phone'       => $request->phone ?? '0000000000',
+            'gstin'       => $request->gstin,
+            'address'     => $request->address,
+            'notes'       => $request->notes,
+            'enabled'     => true,
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        return redirect()->route('mobileshop.supplier_debt', ['company_id' => $companyId])
+            ->with('success', "Supplier '{$request->name}' added successfully.");
     }
 
     /**

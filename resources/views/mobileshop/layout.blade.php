@@ -434,11 +434,20 @@
 
             @canany(['read-mobileshop-purchase', 'create-purchase-accessories', 'create-purchase-covers', 'create-purchase-phones', 'create-purchase-secondhand', 'read-admin-panel'])
             <a href="{{ route('mobileshop.purchase') }}"
-               class="nav-link {{ request()->routeIs('mobileshop.purchase*') ? 'active' : '' }}"
+               class="nav-link {{ request()->routeIs('mobileshop.purchase*') && !request()->routeIs('mobileshop.supplier_debt') ? 'active' : '' }}"
                onclick="closeMobileSidebar()">
                 <i data-lucide="truck"></i> Purchase
             </a>
             @endcanany
+
+            @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('owner') || $u->can('read-mobileshop-procurement') || $u->can('create-mobileshop-procurement')))
+            <a href="{{ route('mobileshop.supplier_debt') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.supplier_debt') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()"
+               style="padding-left:28px; font-size:12px;">
+                <i data-lucide="credit-card"></i> Supplier Debt
+            </a>
+            @endif
 
             @canany(['read-mobileshop-sales', 'sell-mobileshop-accessories', 'create-sale-accessories', 'create-sale-covers', 'create-sale-phones', 'read-mobileshop-accessories', 'read-admin-panel'])
             <a href="{{ route('mobileshop.sales') }}"
@@ -525,11 +534,20 @@
 
                 @canany(['read-mobileshop-purchase', 'create-purchase-accessories', 'create-purchase-covers', 'create-purchase-phones', 'create-purchase-secondhand', 'read-admin-panel'])
                 <a href="{{ route('mobileshop.purchase') }}"
-                   class="nav-link {{ request()->routeIs('mobileshop.purchase*') ? 'active' : '' }}">
+                   class="nav-link {{ request()->routeIs('mobileshop.purchase*') && !request()->routeIs('mobileshop.supplier_debt') ? 'active' : '' }}">
                     <i data-lucide="truck"></i>
                     Purchase
                 </a>
                 @endcanany
+
+                @if($u && ($u->hasRole('admin') || $u->hasRole('store-admin') || $u->hasRole('owner') || $u->can('read-mobileshop-procurement') || $u->can('create-mobileshop-procurement')))
+                <a href="{{ route('mobileshop.supplier_debt') }}"
+                   class="nav-link {{ request()->routeIs('mobileshop.supplier_debt') ? 'active' : '' }}"
+                   style="padding-left:28px; font-size:12px;">
+                    <i data-lucide="credit-card"></i>
+                    Supplier Debt
+                </a>
+                @endif
 
                 @canany(['read-mobileshop-sales', 'sell-mobileshop-accessories', 'create-sale-accessories', 'create-sale-covers', 'create-sale-phones', 'read-mobileshop-accessories', 'read-admin-panel'])
                 <a href="{{ route('mobileshop.sales') }}"

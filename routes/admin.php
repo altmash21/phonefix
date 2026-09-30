@@ -251,6 +251,12 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('supplier/update', 'MobileShop\PurchaseController@updateSupplier')
         ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel')
         ->name('supplier.update');
+    Route::get('supplier-debt', 'MobileShop\PurchaseController@supplierDebt')
+        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel')
+        ->name('supplier_debt');
+    Route::post('supplier/store', 'MobileShop\PurchaseController@storeSupplier')
+        ->middleware('permission:read-mobileshop-procurement|create-mobileshop-procurement|read-mobileshop-masters|read-admin-panel')
+        ->name('supplier.store');
     Route::get('repairs', 'MobileShop\RepairsController@repairs')
         ->middleware('permission:read-mobileshop-repairs')
         ->name('repairs');
