@@ -11,11 +11,11 @@ class GeminiDocumentScannerService
     /**
      * Resolve the active Gemini API key from config, env, or store settings.
      */
-    public function getApiKey(): string
+    public function getGeminiApiKey(): string
     {
         $key = config('services.gemini.key');
         if (empty($key)) {
-            $key = env('GEMINI_API_KEY') ?: (env('GOOGLE_API_KEY') ?: env('GEMINI_KEY'));
+            $key = env('GEMINI_API_KEY') ?: (getenv('GEMINI_API_KEY') ?: (env('GOOGLE_API_KEY') ?: getenv('GOOGLE_API_KEY')));
         }
         if (empty($key) && function_exists('setting')) {
             $key = setting('mobileshop.gemini_api_key', '');
@@ -24,20 +24,57 @@ class GeminiDocumentScannerService
     }
 
     /**
-     * Send payload to Gemini API with automatic model fallback (2.0-flash -> 1.5-flash).
+     * Resolve the active Groq API key from config, env, or store settings.
+     */
+    public function getGroqApiKey(): string
+    {
+        $key = config('services.groq.key');
+        if (empty($key)) {
+            $key = env('GROQ_API_KEY') ?: (getenv('GROQ_API_KEY') ?: (env('GROQ_KEY') ?: getenv('GROQ_KEY')));
+        }
+        if (empty($key) && function_exists('setting')) {
+            $key = setting('mobileshop.groq_api_key', '');
+        }
+        return (string) $key;
+    }
+
+    /**
+     * Resolve the active OpenAI API key from config, env, or store settings.
+     */
+    public function getOpenAiApiKey(): string
+    {
+        $key = config('services.openai.key');
+        if (empty($key)) {
+            $key = env('OPENAI_API_KEY') ?: getenv('OPENAI_API_KEY');
+        }
+        if (empty($key) && function_exists('setting')) {
+            $key = setting('mobileshop.openai_api_key', '');
+        }
+        return (string) $key;
+    }
+
+    /**
+     * Backward-compatible key resolver.
+     */
+    public function getApiKey(): string
+    {
+        return $this->getGeminiApiKey();
+    }
+
+    /**
+     * Entry point: routes through multi-provider failover pipeline.
      */
     public function callGemini(string $prompt, $file): array
     {
-        $apiKey = $this->getApiKey();
-        if (empty($apiKey)) {
-            return [
-                'success' => false,
-                'no_key'  => true,
-                'message' => 'GEMINI_API_KEY is not configured in .env or settings.',
-            ];
-        }
+        return $this->callAiScanner($prompt, $file);
+    }
 
-        // Extract base64 and mime type
+    /**
+     * Multi-provider OCR orchestrator with automatic failover (Gemini -> Groq -> OpenAI).
+     */
+    public function callAiScanner(string $prompt, $file): array
+    {
+        // Extract base64 and mime type once
         if ($file instanceof UploadedFile) {
             $mimeType = $file->getMimeType();
             $base64Data = base64_encode(file_get_contents($file->getRealPath()));
@@ -51,14 +88,115 @@ class GeminiDocumentScannerService
             ];
         }
 
-        $primaryModel  = config('services.gemini.model', 'gemini-3.8-flash');
-        $fallbackModel = config('services.gemini.fallback_model', 'gemini-3.6-flash');
+        $orderConfig = config('services.ocr.provider_order', env('OCR_PROVIDER_ORDER', 'gemini,groq,openai'));
+        $providers = array_filter(array_map('trim', explode(',', strtolower($orderConfig))));
+        if (empty($providers)) {
+            $providers = ['gemini', 'groq', 'openai'];
+        }
 
-        $modelsToTry = array_unique([$primaryModel, $fallbackModel, 'gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-flash-latest']);
+        $attempted = [];
+        $errors = [];
+        $anyKeyConfigured = false;
+
+        foreach ($providers as $provider) {
+            if ($provider === 'gemini') {
+                $apiKey = $this->getGeminiApiKey();
+                if (empty($apiKey)) continue;
+                $anyKeyConfigured = true;
+                $attempted[] = 'Gemini';
+
+                $res = $this->callGeminiWithData($prompt, $mimeType, $base64Data);
+                if (!empty($res['success'])) {
+                    if (count($attempted) > 1) {
+                        $res['fallback_triggered'] = true;
+                        Log::info("OCR Failover: Successfully scanned document with Gemini after failover.");
+                    }
+                    return $res;
+                }
+                $errors['gemini'] = $res['message'] ?? 'Gemini request failed';
+                Log::warning("OCR Failover: Gemini failed or overloaded (" . ($res['message'] ?? 'unknown') . "). Attempting next provider in failover queue...");
+            } elseif ($provider === 'groq') {
+                $apiKey = $this->getGroqApiKey();
+                if (empty($apiKey)) continue;
+                $anyKeyConfigured = true;
+                $attempted[] = 'Groq';
+
+                $res = $this->callGroq($prompt, $mimeType, $base64Data);
+                if (!empty($res['success'])) {
+                    if (count($attempted) > 1) {
+                        $res['fallback_triggered'] = true;
+                        Log::info("OCR Failover: Successfully scanned document with Groq Vision after failover.");
+                    }
+                    return $res;
+                }
+                $errors['groq'] = $res['message'] ?? 'Groq request failed';
+                Log::warning("OCR Failover: Groq failed or overloaded (" . ($res['message'] ?? 'unknown') . "). Attempting next provider in failover queue...");
+            } elseif ($provider === 'openai') {
+                $apiKey = $this->getOpenAiApiKey();
+                if (empty($apiKey)) continue;
+                $anyKeyConfigured = true;
+                $attempted[] = 'OpenAI';
+
+                $res = $this->callOpenAi($prompt, $mimeType, $base64Data);
+                if (!empty($res['success'])) {
+                    if (count($attempted) > 1) {
+                        $res['fallback_triggered'] = true;
+                        Log::info("OCR Failover: Successfully scanned document with OpenAI after failover.");
+                    }
+                    return $res;
+                }
+                $errors['openai'] = $res['message'] ?? 'OpenAI request failed';
+                Log::warning("OCR Failover: OpenAI failed (" . ($res['message'] ?? 'unknown') . ").");
+            }
+        }
+
+        if (!$anyKeyConfigured) {
+            return [
+                'success' => false,
+                'no_key'  => true,
+                'message' => 'No OCR API key configured. Please set GEMINI_API_KEY or GROQ_API_KEY in your .env.',
+            ];
+        }
+
+        $errorSummary = [];
+        foreach ($errors as $prov => $msg) {
+            $errorSummary[] = ucfirst($prov) . ": {$msg}";
+        }
+
+        return [
+            'success' => false,
+            'message' => 'All configured OCR providers failed (' . implode('; ', $errorSummary) . ').',
+            'errors'  => $errors,
+        ];
+    }
+
+    /**
+     * Send payload to Gemini API with automatic model fallback (1.5-flash -> 2.0-flash -> 1.5-flash-8b).
+     */
+    public function callGeminiWithData(string $prompt, string $mimeType, string $base64Data): array
+    {
+        $apiKey = $this->getGeminiApiKey();
+        if (empty($apiKey)) {
+            return [
+                'success' => false,
+                'no_key'  => true,
+                'message' => 'GEMINI_API_KEY is not configured in .env or settings.',
+            ];
+        }
+
+        $primaryModel  = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.6-flash'));
+        $fallbackModel = config('services.gemini.fallback_model', env('GEMINI_FALLBACK_MODEL', 'gemini-3.8-flash'));
+
+        $candidateModels = array_unique(array_filter([
+            $primaryModel,
+            $fallbackModel,
+            'gemini-3.6-flash',
+            'gemini-3.8-flash',
+        ]));
+
         $lastError = null;
-        $rawResponse = null;
 
-        foreach ($modelsToTry as $model) {
+        foreach ($candidateModels as $model) {
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . urlencode($apiKey);
 
             $payload = [
@@ -99,15 +237,16 @@ class GeminiDocumentScannerService
 
             if ($curlError) {
                 $lastError = "Network error connecting to Gemini ({$model}): {$curlError}";
+                Log::warning($lastError);
                 continue;
             }
 
             if ($httpCode === 200) {
                 $resData = json_decode($response, true);
                 $rawText = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
-                
+
                 // Clean potential markdown wrap
-                $rawText = preg_replace('/^```json\s*/i', '', trim($rawText));
+                $rawText = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
                 $rawText = preg_replace('/\s*```$/', '', $rawText);
                 $decoded = json_decode($rawText, true);
 
@@ -115,15 +254,16 @@ class GeminiDocumentScannerService
                     return [
                         'success'    => true,
                         'data'       => $decoded,
+                        'provider'   => 'gemini',
                         'model_used' => $model,
                     ];
                 }
-                $lastError = "Could not parse JSON response from {$model}.";
+                $lastError = "Could not parse JSON response from Gemini ({$model}).";
             } else {
                 $errBody = json_decode($response, true);
                 $errMsg = $errBody['error']['message'] ?? "HTTP {$httpCode} error from {$model}";
                 $lastError = $errMsg;
-                Log::warning("Gemini OCR ({$model}) failed with code {$httpCode}: {$errMsg}");
+                Log::warning("Gemini OCR ({$model}) HTTP {$httpCode}: {$errMsg}");
             }
         }
 
@@ -131,6 +271,197 @@ class GeminiDocumentScannerService
             'success' => false,
             'message' => $lastError ?? 'All Gemini models failed to process the document.',
         ];
+    }
+
+    /**
+     * Send payload to Groq Vision API (Llama 3.2 11B / 90B Vision).
+     */
+    public function callGroq(string $prompt, string $mimeType, string $base64Data): array
+    {
+        $apiKey = $this->getGroqApiKey();
+        if (empty($apiKey)) {
+            return [
+                'success' => false,
+                'no_key'  => true,
+                'message' => 'GROQ_API_KEY is not configured in .env or settings.',
+            ];
+        }
+
+        $primaryModel  = config('services.groq.model', env('GROQ_MODEL', 'llama-3.2-11b-vision-preview'));
+        $fallbackModel = config('services.groq.fallback_model', env('GROQ_FALLBACK_MODEL', 'llama-3.2-90b-vision-preview'));
+        $modelsToTry   = array_unique([$primaryModel, $fallbackModel, 'llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview']);
+
+        $lastError = null;
+
+        foreach ($modelsToTry as $model) {
+            $endpoint = "https://api.groq.com/openai/v1/chat/completions";
+
+            $payload = [
+                'model' => $model,
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            [
+                                'type' => 'text',
+                                'text' => $prompt . "\n\nImportant: Output ONLY the strict JSON object without any markdown fences, explanations, or commentary.",
+                            ],
+                            [
+                                'type' => 'image_url',
+                                'image_url' => [
+                                    'url' => "data:{$mimeType};base64,{$base64Data}",
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                'response_format' => [
+                    'type' => 'json_object',
+                ],
+                'temperature' => 0.1,
+                'max_tokens'  => 4096,
+            ];
+
+            $ch = curl_init($endpoint);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . trim($apiKey),
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($curlError) {
+                $lastError = "Network error connecting to Groq ({$model}): {$curlError}";
+                Log::warning($lastError);
+                continue;
+            }
+
+            if ($httpCode === 200) {
+                $resData = json_decode($response, true);
+                $rawText = $resData['choices'][0]['message']['content'] ?? '{}';
+
+                // Clean potential markdown wrap
+                $rawText = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
+                $rawText = preg_replace('/\s*```$/', '', $rawText);
+                $decoded = json_decode($rawText, true);
+
+                if (is_array($decoded)) {
+                    return [
+                        'success'    => true,
+                        'data'       => $decoded,
+                        'provider'   => 'groq',
+                        'model_used' => $model,
+                    ];
+                }
+                $lastError = "Could not parse JSON response from Groq ({$model}).";
+            } else {
+                $errBody = json_decode($response, true);
+                $errMsg  = $errBody['error']['message'] ?? "HTTP {$httpCode} error from Groq ({$model})";
+                $lastError = $errMsg;
+                Log::warning("Groq OCR ({$model}) HTTP {$httpCode}: {$errMsg}");
+            }
+        }
+
+        return [
+            'success' => false,
+            'message' => $lastError ?? 'All Groq vision models failed to process the document.',
+        ];
+    }
+
+    /**
+     * Send payload to OpenAI Vision API (gpt-4o-mini).
+     */
+    public function callOpenAi(string $prompt, string $mimeType, string $base64Data): array
+    {
+        $apiKey = $this->getOpenAiApiKey();
+        if (empty($apiKey)) {
+            return [
+                'success' => false,
+                'no_key'  => true,
+                'message' => 'OPENAI_API_KEY is not configured in .env or settings.',
+            ];
+        }
+
+        $model = config('services.openai.model', env('OPENAI_MODEL', 'gpt-4o-mini'));
+        $endpoint = "https://api.openai.com/v1/chat/completions";
+
+        $payload = [
+            'model' => $model,
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        [
+                            'type' => 'text',
+                            'text' => $prompt,
+                        ],
+                        [
+                            'type' => 'image_url',
+                            'image_url' => [
+                                'url' => "data:{$mimeType};base64,{$base64Data}",
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'response_format' => [
+                'type' => 'json_object',
+            ],
+            'temperature' => 0.1,
+            'max_tokens'  => 4096,
+        ];
+
+        $ch = curl_init($endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . trim($apiKey),
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlError) {
+            return ['success' => false, 'message' => "Network error connecting to OpenAI: {$curlError}"];
+        }
+
+        if ($httpCode === 200) {
+            $resData = json_decode($response, true);
+            $rawText = $resData['choices'][0]['message']['content'] ?? '{}';
+            $rawText = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
+            $rawText = preg_replace('/\s*```$/', '', $rawText);
+            $decoded = json_decode($rawText, true);
+
+            if (is_array($decoded)) {
+                return [
+                    'success'    => true,
+                    'data'       => $decoded,
+                    'provider'   => 'openai',
+                    'model_used' => $model,
+                ];
+            }
+            return ['success' => false, 'message' => 'Could not parse JSON response from OpenAI.'];
+        }
+
+        $errBody = json_decode($response, true);
+        $errMsg  = $errBody['error']['message'] ?? "HTTP {$httpCode} error from OpenAI";
+        return ['success' => false, 'message' => $errMsg];
     }
 
     /**
@@ -284,7 +615,9 @@ PROMPT;
             'data'                => $extracted,
             'matched_device'      => $matchedDevice,
             'matched_provider_id' => $matchedProviderId,
+            'provider'            => $apiResult['provider'] ?? 'gemini',
             'model_used'          => $apiResult['model_used'] ?? null,
+            'fallback_triggered'  => $apiResult['fallback_triggered'] ?? false,
         ]);
     }
 
@@ -511,7 +844,9 @@ PROMPT;
             'success'             => true,
             'data'                => $extracted,
             'matched_supplier_id' => $matchedSupplierId,
+            'provider'            => $apiResult['provider'] ?? 'gemini',
             'model_used'          => $apiResult['model_used'] ?? null,
+            'fallback_triggered'  => $apiResult['fallback_triggered'] ?? false,
         ]);
     }
 

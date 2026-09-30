@@ -36,13 +36,27 @@ return [
 
     'gemini' => [
         'key'            => env('GEMINI_API_KEY', ''),
-        'model'          => env('GEMINI_MODEL', 'gemini-3.8-flash'),
-        'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-3.6-flash'),
+        'model'          => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+        'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-3.8-flash'),
+    ],
+
+    'groq' => [
+        'key'            => env('GROQ_API_KEY', ''),
+        'model'          => env('GROQ_MODEL', 'llama-3.2-11b-vision-preview'),
+        'fallback_model' => env('GROQ_FALLBACK_MODEL', 'llama-3.2-90b-vision-preview'),
+    ],
+
+    'openai' => [
+        'key'   => env('OPENAI_API_KEY', ''),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+    ],
+
+    'ocr' => [
+        'provider_order' => env('OCR_PROVIDER_ORDER', 'gemini,groq,openai'),
     ],
 
     'whatsapp' => [
         'webhook' => env('WA_WEBHOOK'),
         'phone'   => env('WA_PHONE'),
     ],
-
 ];
