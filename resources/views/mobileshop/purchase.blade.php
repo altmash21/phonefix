@@ -433,16 +433,35 @@
                         <input type="number" name="quantity" id="qpCardQty" class="app-input-field" placeholder="Quantity" value="1" min="1" required oninput="recalcQpCardTotal()">
                     </div>
 
-                    <!-- Row 2: Category (No Default) & Purchase Price -->
-                    <div>
-                        <select name="category" id="qpCardCategory" class="app-input-field">
-                            <option value="" selected>Select Category (Optional)</option>
-                            @if(isset($categories) && count($categories) > 0)
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat->slug ?? $cat->name }}">{{ $cat->name }}</option>
-                                @endforeach
-                            @endif
-                        </select>
+                    <!-- Row 2: Category (Searchable & Typeable) & Purchase Price -->
+                    <div class="search-picker-wrapper" id="qpCardCategoryPickerContainer">
+                        <div style="position: relative;">
+                            <input type="text"
+                                   name="category"
+                                   id="qpCardCategory"
+                                   class="app-input-field"
+                                   style="padding-right: 32px;"
+                                   placeholder="Type or search category..."
+                                   autocomplete="off"
+                                   list="qpCategoryDatalist"
+                                   onfocus="onQpCardCategoryFocus(this)"
+                                   oninput="onQpCardCategoryInput(this)">
+                            <datalist id="qpCategoryDatalist">
+                                @if(isset($categories) && count($categories) > 0)
+                                    @foreach($categories as $cat)
+                                        <option value="{{ $cat->name }}">{{ $cat->slug }}</option>
+                                    @endforeach
+                                @endif
+                            </datalist>
+                            <button type="button"
+                                    id="btnQpCardCategoryClear"
+                                    onclick="clearQpCardCategorySelection()"
+                                    title="Clear category"
+                                    style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                        </div>
+                        <div id="qpCardCategoryDropdownList" class="search-picker-dropdown">
+                            <!-- Populated as user types or focuses -->
+                        </div>
                     </div>
 
                     <div>
@@ -1478,12 +1497,10 @@
         }
 
         if (categorySelect && item.category) {
-            for (let i = 0; i < categorySelect.options.length; i++) {
-                if (categorySelect.options[i].value === item.category || categorySelect.options[i].text.toLowerCase() === item.category.toLowerCase()) {
-                    categorySelect.selectedIndex = i;
-                    break;
-                }
-            }
+            const matchedCat = (window.allCategoriesData || []).find(c => (c.slug === item.category || c.name.toLowerCase() === item.category.toLowerCase()));
+            categorySelect.value = matchedCat ? matchedCat.name : item.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const catClear = document.getElementById('btnQpCardCategoryClear');
+            if (catClear) catClear.style.display = 'block';
         }
 
         if (priceInput && parseFloat(item.unit_cost || 0) > 0) {
@@ -1514,6 +1531,103 @@
             dropdown.innerHTML = '';
         }
         recalcQpCardTotal();
+    }
+
+    /* ── Category Search & Autocomplete Handlers ── */
+    function onQpCardCategoryFocus(inputEl) {
+        if (!inputEl.value || inputEl.value.trim().length === 0) {
+            const dropdown = document.getElementById('qpCardCategoryDropdownList');
+            if (!dropdown) return;
+            const allCats = (window.allCategoriesData || []).slice(0, 15);
+            if (allCats.length > 0) {
+                dropdown.innerHTML = allCats.map(cat => {
+                    const safeName = escapeHtml(cat.name);
+                    const safeSlug = escapeHtml(cat.slug || '');
+                    const escapedForJs = cat.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    return `
+                        <div class="search-picker-item" onclick="selectQpCardCategory('${escapedForJs}')">
+                            <span style="font-weight:600; font-size:13px; color:#0f172a;">${safeName}</span>
+                            <span style="font-size:11px; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${safeSlug}</span>
+                        </div>
+                    `;
+                }).join('');
+                dropdown.style.display = 'block';
+            }
+        }
+    }
+
+    function onQpCardCategoryInput(inputEl) {
+        const rawVal = inputEl.value || '';
+        const query = rawVal.trim().toLowerCase();
+        const dropdown = document.getElementById('qpCardCategoryDropdownList');
+        const clearBtn = document.getElementById('btnQpCardCategoryClear');
+
+        if (!dropdown) return;
+
+        if (query.length === 0) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+            if (clearBtn) clearBtn.style.display = 'none';
+            return;
+        }
+
+        if (clearBtn) clearBtn.style.display = 'block';
+
+        const matches = (window.allCategoriesData || []).filter(cat => {
+            const name = (cat.name || '').toLowerCase();
+            const slug = (cat.slug || '').toLowerCase();
+            return name.includes(query) || slug.includes(query);
+        }).slice(0, 15);
+
+        if (matches.length === 0) {
+            dropdown.innerHTML = `
+                <div style="padding: 10px 12px; text-align: center; color: #64748b; font-size: 12px;">
+                    Custom category: "<strong>${escapeHtml(rawVal.trim())}</strong>"
+                </div>
+            `;
+        } else {
+            dropdown.innerHTML = matches.map(cat => {
+                const safeName = escapeHtml(cat.name);
+                const safeSlug = escapeHtml(cat.slug || '');
+                const escapedForJs = cat.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return `
+                    <div class="search-picker-item" onclick="selectQpCardCategory('${escapedForJs}')">
+                        <span style="font-weight:600; font-size:13px; color:#0f172a;">${safeName}</span>
+                        <span style="font-size:11px; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${safeSlug}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        dropdown.style.display = 'block';
+    }
+
+    function selectQpCardCategory(catName) {
+        const input = document.getElementById('qpCardCategory');
+        const clearBtn = document.getElementById('btnQpCardCategoryClear');
+        const dropdown = document.getElementById('qpCardCategoryDropdownList');
+
+        if (input) input.value = catName;
+        if (clearBtn) clearBtn.style.display = 'block';
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+    }
+
+    function clearQpCardCategorySelection() {
+        const input = document.getElementById('qpCardCategory');
+        const clearBtn = document.getElementById('btnQpCardCategoryClear');
+        const dropdown = document.getElementById('qpCardCategoryDropdownList');
+
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
     }
 
     function recalcQpCardTotal() {
@@ -1578,11 +1692,17 @@
         return false;
     }
 
-    // Close item dropdown when clicking outside
+    // Close item and category dropdowns when clicking outside
     document.addEventListener('click', function(e) {
-        const picker = document.getElementById('qpCardItemPickerContainer');
-        if (picker && !picker.contains(e.target)) {
+        const itemPicker = document.getElementById('qpCardItemPickerContainer');
+        if (itemPicker && !itemPicker.contains(e.target)) {
             const dd = document.getElementById('qpCardItemDropdownList');
+            if (dd) dd.style.display = 'none';
+        }
+
+        const catPicker = document.getElementById('qpCardCategoryPickerContainer');
+        if (catPicker && !catPicker.contains(e.target)) {
+            const dd = document.getElementById('qpCardCategoryDropdownList');
             if (dd) dd.style.display = 'none';
         }
     });
