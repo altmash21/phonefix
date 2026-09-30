@@ -13,9 +13,6 @@
 
 @section('page-actions')
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <button type="button" onclick="openQuickPurchaseModal()" class="btn btn-sm" style="color: #fff; background: #10B981; border: 1px solid #059669; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow: 0 2px 6px rgba(16,185,129,0.25); cursor:pointer;">
-            <i data-lucide="zap" style="width:15px;height:15px;"></i> Quick Purchase
-        </button>
         <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-primary btn-sm" style="color: #fff; background: var(--color-primary); border-color: var(--color-primary); font-weight:800; display:inline-flex; align-items:center; gap:6px;">
             <i data-lucide="plus-circle" style="width:15px;height:15px;"></i> + Create Purchase Order / Restock
         </a>
@@ -55,6 +52,161 @@
         gap: 8px;
         margin-bottom: 12px;
     }
+
+    /* ─── QUICK PURCHASE & SEARCH DUAL TOP PANELS (Matched to Sales page) ─── */
+    .quick-purchases-top-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 16px 0 20px 0;
+    }
+    @media (max-width: 900px) {
+        .quick-purchases-top-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .light-purchase-panel {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 16px 20px;
+        color: #0f172a;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .panel-header-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .panel-header-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .panel-header-icon.purchase-icon {
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+    .panel-header-icon.search-icon {
+        background: #f1f5f9;
+        color: #475569;
+    }
+    .panel-header-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        letter-spacing: -0.2px;
+    }
+    .app-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    @media (max-width: 580px) {
+        .app-form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .app-input-field {
+        width: 100%;
+        height: 38px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 13px;
+        color: #0f172a;
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        box-sizing: border-box;
+    }
+    .app-input-field:focus {
+        border-color: #5e6ad2;
+        box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.12);
+    }
+    .app-input-field::placeholder {
+        color: #94a3b8;
+    }
+    .btn-app-primary {
+        background: #5e6ad2;
+        color: #ffffff;
+        border: none;
+        border-radius: 7px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .btn-app-primary:hover {
+        background: #4f5bc2;
+    }
+    .btn-app-primary:active {
+        transform: scale(0.98);
+    }
+    .btn-app-success {
+        background: #10b981;
+        color: #ffffff;
+        border: none;
+        border-radius: 7px;
+        padding: 8px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .btn-app-success:hover {
+        background: #059669;
+    }
+    .btn-app-success:active {
+        transform: scale(0.98);
+    }
+    .search-picker-wrapper {
+        position: relative;
+    }
+    .search-picker-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        margin-top: 4px;
+        max-height: 240px;
+        overflow-y: auto;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .search-picker-item {
+        padding: 8px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.12s ease;
+    }
+    .search-picker-item:last-child {
+        border-bottom: none;
+    }
+    .search-picker-item:hover {
+        background: #f8fafc;
+    }
     @media (max-width: 639px) {
         .modal-form-grid-2,
         .modal-form-grid-3 {
@@ -63,14 +215,12 @@
         }
         /* Mobile Bottom-sheet styling for inline modals */
         #paymentModal,
-        #editSupplierModal,
-        #quickPurchaseModal {
+        #editSupplierModal {
             align-items: flex-end !important;
             padding: 0 !important;
         }
         #paymentModal .card,
-        #editSupplierModal .card,
-        #quickPurchaseModal .card {
+        #editSupplierModal .card {
             max-width: 100% !important;
             width: 100% !important;
             border-radius: 16px 16px 0 0 !important;
@@ -237,6 +387,128 @@
                 @endif
             </div>
             <div class="kpi-num" style="color:#DC2626;">{{ $totalDefectiveQty ?? 0 }} <span style="font-size:12px; font-weight:600; color:#64748B;">Units</span></div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- QUICK PURCHASE & SEARCH DUAL PANELS (BELOW STATS)          -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div class="quick-purchases-top-grid">
+        <!-- 🛒 CARD 1: QUICK ADD PURCHASE -->
+        <div class="light-purchase-panel">
+            <div class="panel-header-box">
+                <div class="panel-header-icon purchase-icon">
+                    <i data-lucide="shopping-bag" style="width:16px;height:16px;"></i>
+                </div>
+                <h3 class="panel-header-title">Add Purchase</h3>
+            </div>
+
+            <form action="{{ route('mobileshop.purchase.quick') }}" method="POST" id="quickPurchaseCardForm" onsubmit="return handleQuickPurchaseCardSubmit(event, this)">
+                @csrf
+                <div class="app-form-grid">
+                    <!-- Row 1: Item Name (Search / Type) & Quantity -->
+                    <div class="search-picker-wrapper" id="qpCardItemPickerContainer">
+                        <div style="position: relative;">
+                            <input type="text"
+                                   name="name"
+                                   id="qpCardItemName"
+                                   class="app-input-field"
+                                   style="padding-right: 32px;"
+                                   placeholder="Type item name to search..."
+                                   autocomplete="off"
+                                   required
+                                   oninput="onQpCardItemInput(this)">
+                            <button type="button"
+                                    id="btnQpCardItemClear"
+                                    onclick="clearQpCardItemSelection()"
+                                    title="Clear item name"
+                                    style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                        </div>
+                        <div id="qpCardItemDropdownList" class="search-picker-dropdown">
+                            <!-- Populated as user types -->
+                        </div>
+                    </div>
+
+                    <div>
+                        <input type="number" name="quantity" id="qpCardQty" class="app-input-field" placeholder="Quantity" value="1" min="1" required oninput="recalcQpCardTotal()">
+                    </div>
+
+                    <!-- Row 2: Category (No Default) & Purchase Price -->
+                    <div>
+                        <select name="category" id="qpCardCategory" class="app-input-field">
+                            <option value="" selected>Select Category (Optional)</option>
+                            @if(isset($categories) && count($categories) > 0)
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->slug ?? $cat->name }}">{{ $cat->name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+
+                    <div>
+                        <input type="number" step="0.01" name="purchase_price" id="qpCardPurchasePrice" class="app-input-field" placeholder="Purchase Price (₹)" min="0" required oninput="recalcQpCardTotal()">
+                    </div>
+
+                    <!-- Row 3: Low Stock Alert & Selling Price (Optional) -->
+                    <div>
+                        <input type="number" name="low_stock" id="qpCardLowStock" class="app-input-field" placeholder="Low Stock Alert (Default: 3)" min="0" value="3">
+                    </div>
+
+                    <div>
+                        <input type="number" step="0.01" name="selling_price" id="qpCardSellingPrice" class="app-input-field" placeholder="Selling Price (Optional)">
+                    </div>
+
+                    <!-- Submit Button & Live Total Badge -->
+                    <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; margin-top: 4px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                        <button type="submit" class="btn-app-primary" id="qpCardSubmitBtn">
+                            <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Purchase
+                        </button>
+                        <div id="qpCardTotalBadge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; border-radius:6px; padding:4px 12px; font-size: 13px; font-weight: 700;">
+                            Total: ₹0.00
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 🔍 CARD 2: SEARCH PURCHASES -->
+        <div class="light-purchase-panel">
+            <div class="panel-header-box">
+                <div class="panel-header-icon search-icon">
+                    <i data-lucide="search" style="width:16px;height:16px;"></i>
+                </div>
+                <h3 class="panel-header-title">Search Purchases</h3>
+            </div>
+
+            <div class="app-form-grid">
+                <!-- Row 1: Search by supplier or PO # & Item name -->
+                <div>
+                    <input type="text" id="filterPoSupplier" class="app-input-field" placeholder="Search by supplier or PO #" oninput="applyCombinedPurchaseFilter()">
+                </div>
+
+                <div>
+                    <input type="text" id="filterPoItem" class="app-input-field" placeholder="Type item to filter (Optional)..." oninput="applyCombinedPurchaseFilter()">
+                </div>
+
+                <!-- Row 2: Date From & Date To -->
+                <div>
+                    <input type="date" id="filterPoFromDate" class="app-input-field" placeholder="dd-mm-yyyy" onchange="applyCombinedPurchaseFilter()">
+                </div>
+
+                <div>
+                    <input type="date" id="filterPoToDate" class="app-input-field" placeholder="dd-mm-yyyy" onchange="applyCombinedPurchaseFilter()">
+                </div>
+
+                <!-- Action Buttons: Search & Reset -->
+                <div style="grid-column: 1 / -1; display:flex; gap: 10px; align-items:center; margin-top: 4px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                    <button type="button" class="btn-app-primary" onclick="applyCombinedPurchaseFilter()">
+                        <i data-lucide="search" style="width:14px;height:14px;"></i> Search
+                    </button>
+                    <button type="button" class="btn-app-success" onclick="resetCombinedPurchaseFilter()">
+                        <i data-lucide="rotate-cw" style="width:14px;height:14px;"></i> Reset
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -944,119 +1216,6 @@
         </div>
     </div>
 
-    <!-- MODAL: Quick Purchase / Direct Stock Intake (No Supplier Required) -->
-    <div id="quickPurchaseModal" style="display:none; position:fixed; inset:0; z-index:1250; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
-        <div class="card" style="max-width: 480px; width: 100%; box-shadow: 0 20px 30px -10px rgba(0,0,0,0.15); border-radius:14px; background:#fff; overflow:hidden; border:1px solid #E2E8F0;">
-            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; background:#FAFAFA;">
-                <div class="card-title" style="font-weight:800; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
-                    <span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:6px; background:#DCFCE7; color:#16A34A;">
-                        <i data-lucide="zap" style="width:16px;height:16px;"></i>
-                    </span>
-                    <span>Quick Purchase</span>
-                    <span style="font-size:10.5px; background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:4px; font-weight:700;">No Supplier Required</span>
-                </div>
-                <button type="button" onclick="closeQuickPurchaseModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
-            </div>
-            <div class="card-body" style="padding:16px 18px;">
-                <form id="quickPurchaseForm" action="{{ route('mobileshop.purchase.quick') }}" method="POST" onsubmit="return handleQuickPurchaseSubmit(event, this)">
-                    @csrf
-
-                    <!-- 1. Category -->
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                            <span>Category</span>
-                            <span style="font-size:10px; color:#64748B; font-weight:normal;">Auto-matches item type</span>
-                        </label>
-                        <select name="category" id="qpCategory" class="form-control" style="font-size:13px; font-weight:600;">
-                            <option value="">-- Select Category --</option>
-                            @if(isset($categories) && count($categories) > 0)
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat->slug }}">{{ $cat->name }}</option>
-                                @endforeach
-                            @else
-                                <option value="tempered_glass">Tempered Glass</option>
-                                <option value="back_cover">Back Cover & Cases</option>
-                                <option value="charger_cable">Chargers & Cables</option>
-                                <option value="earphones_audio">Earphones & Audio</option>
-                                <option value="folder_display">Folder / Screen Display</option>
-                                <option value="battery">Battery</option>
-                                <option value="charging_port">Charging Pin / Port</option>
-                                <option value="camera_module">Camera Module</option>
-                                <option value="general_accessory">General Accessories</option>
-                            @endif
-                        </select>
-                    </div>
-
-                    <!-- 2. Item Name -->
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">
-                            Item Name <span style="color:#EF4444;">*</span>
-                        </label>
-                        <input type="text" name="name" id="qpName" required placeholder="e.g. 9D Tempered Glass iPhone 15" list="qpItemsDatalist" autocomplete="off" class="form-control" style="font-size:13px; font-weight:600;" oninput="onQpNameChange(this.value)">
-                        <datalist id="qpItemsDatalist">
-                            @if(isset($parts))
-                                @foreach($parts as $p)
-                                    <option value="{{ $p->name }}" data-cat="{{ $p->category }}" data-cost="{{ $p->unit_cost }}" data-alert="{{ $p->min_stock_alert }}"></option>
-                                @endforeach
-                            @endif
-                        </datalist>
-                    </div>
-
-                    <!-- 3. Quantity & Purchase Price Grid -->
-                    <div class="modal-form-grid-2" style="margin-bottom:12px;">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">
-                                Quantity <span style="color:#EF4444;">*</span>
-                            </label>
-                            <div style="display:flex; align-items:center;">
-                                <button type="button" onclick="adjustQpQty(-1)" style="border:1px solid #CBD5E1; background:#F8FAFC; border-radius:6px 0 0 6px; padding:6px 12px; font-weight:800; cursor:pointer;">−</button>
-                                <input type="number" name="quantity" id="qpQty" min="1" value="1" required class="form-control" style="border-radius:0; text-align:center; font-weight:800; font-size:14px;" oninput="updateQpTotal()">
-                                <button type="button" onclick="adjustQpQty(1)" style="border:1px solid #CBD5E1; background:#F8FAFC; border-radius:0 6px 6px 0; padding:6px 12px; font-weight:800; cursor:pointer;">+</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">
-                                Purchase Price (₹) <span style="color:#EF4444;">*</span>
-                            </label>
-                            <input type="number" step="0.01" min="0" name="purchase_price" id="qpPrice" required placeholder="0.00" class="form-control" style="font-size:15px; font-weight:800; color:#4F46E5;" oninput="updateQpTotal()">
-                        </div>
-                    </div>
-
-                    <!-- 4. Low Stock Alert -->
-                    <div class="form-group" style="margin-bottom:14px;">
-                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
-                            <span>Low Stock Alert</span>
-                            <span style="font-size:10px; color:#64748B;">Alerts when stock falls below</span>
-                        </label>
-                        <input type="number" min="0" name="low_stock" id="qpLowStock" value="3" placeholder="3" class="form-control" style="font-size:13px; font-weight:600;">
-                    </div>
-
-                    <!-- 5. Total Cost Preview Pill -->
-                    <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
-                        <div>
-                            <span style="font-size:10px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Total Procurement</span>
-                            <div style="font-size:16px; font-weight:900; color:#15803D; font-family:'JetBrains Mono', monospace;" id="qpTotalPreview">₹0.00</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <span style="font-size:10px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Payment Mode</span>
-                            <div style="font-size:12px; font-weight:800; color:#15803D;">Direct Cash Paid</div>
-                        </div>
-                    </div>
-
-                    <div id="qpErrorBanner" style="display:none; background:#FEE2E2; border:1px solid #FCA5A5; color:#DC2626; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600; margin-bottom:12px;"></div>
-
-                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap:10px; padding-top:12px; border-top:1px solid #E2E8F0;">
-                        <button type="button" onclick="closeQuickPurchaseModal()" class="btn btn-outline" style="font-size:12px; font-weight:600;">Cancel</button>
-                        <button type="submit" id="btnSubmitQuickPurchase" class="btn btn-primary" style="font-size:12px; font-weight:800; background:#10B981; border-color:#059669;">
-                            <i data-lucide="zap" style="width:14px;height:14px;"></i> Complete Quick Purchase
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL: Supplier Payment / Advance / Settlement -->
     <div id="paymentModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
         <div class="card" style="max-width: 460px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
@@ -1239,96 +1398,142 @@
         }
     });
 
-    /* ── Quick Purchase Modal Functions ── */
-    function openQuickPurchaseModal() {
-        const modal = document.getElementById('quickPurchaseModal');
-        if (!modal) return;
-        document.getElementById('quickPurchaseForm').reset();
-        document.getElementById('qpQty').value = '1';
-        document.getElementById('qpLowStock').value = '3';
-        document.getElementById('qpTotalPreview').textContent = '₹0.00';
-        const errBanner = document.getElementById('qpErrorBanner');
-        if (errBanner) errBanner.style.display = 'none';
-        modal.style.display = 'flex';
-        setTimeout(() => {
-            const nameInput = document.getElementById('qpName');
-            if (nameInput) nameInput.focus();
-        }, 50);
-        if (window.lucide) window.lucide.createIcons();
-    }
-    window.openQuickPurchaseModal = openQuickPurchaseModal;
+    /* ── Embedded Quick Purchase & Search Purchases Handlers ── */
+    window.allPartsData = @json($parts ?? []);
+    window.allCategoriesData = @json($categories ?? []);
 
-    function closeQuickPurchaseModal() {
-        const modal = document.getElementById('quickPurchaseModal');
-        if (modal) modal.style.display = 'none';
-    }
-    window.closeQuickPurchaseModal = closeQuickPurchaseModal;
+    function onQpCardItemInput(inputEl) {
+        const rawVal = inputEl.value || '';
+        const query = rawVal.trim().toLowerCase();
+        const dropdown = document.getElementById('qpCardItemDropdownList');
+        const clearBtn = document.getElementById('btnQpCardItemClear');
 
-    function adjustQpQty(delta) {
-        const input = document.getElementById('qpQty');
-        if (!input) return;
-        let v = parseInt(input.value || 1) + delta;
-        if (v < 1) v = 1;
-        input.value = v;
-        updateQpTotal();
-    }
-    window.adjustQpQty = adjustQpQty;
+        if (!dropdown) return;
 
-    function updateQpTotal() {
-        const qty = parseInt(document.getElementById('qpQty')?.value || 1);
-        const price = parseFloat(document.getElementById('qpPrice')?.value || 0);
-        const total = (qty > 0 && price >= 0) ? (qty * price) : 0;
-        const preview = document.getElementById('qpTotalPreview');
-        if (preview) {
-            preview.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-    }
-    window.updateQpTotal = updateQpTotal;
-
-    function onQpNameChange(val) {
-        const datalist = document.getElementById('qpItemsDatalist');
-        if (!datalist || !val) {
-            updateQpTotal();
+        if (query.length === 0) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+            if (clearBtn) clearBtn.style.display = 'none';
+            recalcQpCardTotal();
             return;
         }
-        const trimmed = val.trim().toLowerCase();
-        for (let opt of datalist.options) {
-            if (opt.value && opt.value.trim().toLowerCase() === trimmed) {
-                if (opt.dataset.cat) {
-                    const catSelect = document.getElementById('qpCategory');
-                    if (catSelect) {
-                        for (let i = 0; i < catSelect.options.length; i++) {
-                            if (catSelect.options[i].value === opt.dataset.cat) {
-                                catSelect.selectedIndex = i;
-                                break;
-                            }
-                        }
-                    }
+
+        if (clearBtn) clearBtn.style.display = 'block';
+
+        const matches = (window.allPartsData || []).filter(item => {
+            const name = (item.name || '').toLowerCase();
+            const cat = (item.category || '').toLowerCase();
+            return name.includes(query) || cat.includes(query);
+        }).slice(0, 20);
+
+        if (matches.length === 0) {
+            dropdown.innerHTML = `
+                <div style="padding: 10px 12px; text-align: center; color: #64748b; font-size: 12px;">
+                    New part: "<strong>${escapeHtml(rawVal.trim())}</strong>" (will be added to inventory)
+                </div>
+            `;
+        } else {
+            dropdown.innerHTML = matches.map(item => {
+                const cost = parseFloat(item.unit_cost || 0);
+                const stock = parseInt(item.stock_qty || 0);
+                const safeName = escapeHtml(item.name);
+                const safeCategory = escapeHtml(item.category || 'General');
+                return `
+                    <div class="search-picker-item" onclick="selectQpCardItem(${item.id})">
+                        <div style="display:flex; flex-direction:column; gap:2px; text-align:left; overflow:hidden;">
+                            <span style="font-weight:600; font-size:13px; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${safeName}</span>
+                            <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:#64748b;">
+                                <span style="background:#f1f5f9; padding:1px 5px; border-radius:4px;">${safeCategory}</span>
+                                <span>•</span>
+                                <span>Current Stock: ${stock}</span>
+                            </div>
+                        </div>
+                        <div style="text-align:right; flex-shrink:0; padding-left:10px;">
+                            <div style="font-weight:700; font-size:12.5px; color:#4f46e5;">₹${cost.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        dropdown.style.display = 'block';
+    }
+
+    function selectQpCardItem(id) {
+        const item = (window.allPartsData || []).find(p => String(p.id) === String(id));
+        if (!item) return;
+
+        const input = document.getElementById('qpCardItemName');
+        const clearBtn = document.getElementById('btnQpCardItemClear');
+        const dropdown = document.getElementById('qpCardItemDropdownList');
+        const categorySelect = document.getElementById('qpCardCategory');
+        const priceInput = document.getElementById('qpCardPurchasePrice');
+        const lowStockInput = document.getElementById('qpCardLowStock');
+        const sellPriceInput = document.getElementById('qpCardSellingPrice');
+
+        if (input) input.value = item.name;
+        if (clearBtn) clearBtn.style.display = 'block';
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+
+        if (categorySelect && item.category) {
+            for (let i = 0; i < categorySelect.options.length; i++) {
+                if (categorySelect.options[i].value === item.category || categorySelect.options[i].text.toLowerCase() === item.category.toLowerCase()) {
+                    categorySelect.selectedIndex = i;
+                    break;
                 }
-                const priceEl = document.getElementById('qpPrice');
-                if (opt.dataset.cost && priceEl && !priceEl.value) {
-                    priceEl.value = parseFloat(opt.dataset.cost).toFixed(2);
-                }
-                const alertEl = document.getElementById('qpLowStock');
-                if (opt.dataset.alert && alertEl) {
-                    alertEl.value = opt.dataset.alert;
-                }
-                break;
             }
         }
-        updateQpTotal();
-    }
-    window.onQpNameChange = onQpNameChange;
 
-    async function handleQuickPurchaseSubmit(e, form) {
+        if (priceInput && parseFloat(item.unit_cost || 0) > 0) {
+            priceInput.value = parseFloat(item.unit_cost).toFixed(2);
+        }
+        if (lowStockInput && item.min_stock_alert !== null && item.min_stock_alert !== undefined) {
+            lowStockInput.value = item.min_stock_alert;
+        }
+        if (sellPriceInput && parseFloat(item.selling_price || 0) > 0) {
+            sellPriceInput.value = parseFloat(item.selling_price).toFixed(2);
+        }
+
+        recalcQpCardTotal();
+    }
+
+    function clearQpCardItemSelection() {
+        const input = document.getElementById('qpCardItemName');
+        const clearBtn = document.getElementById('btnQpCardItemClear');
+        const dropdown = document.getElementById('qpCardItemDropdownList');
+
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+        recalcQpCardTotal();
+    }
+
+    function recalcQpCardTotal() {
+        const qty = parseInt(document.getElementById('qpCardQty')?.value || 1);
+        const price = parseFloat(document.getElementById('qpCardPurchasePrice')?.value || 0);
+        const total = (qty > 0 && price >= 0) ? (qty * price) : 0;
+        const badge = document.getElementById('qpCardTotalBadge');
+        if (badge) {
+            badge.textContent = 'Total: ₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    async function handleQuickPurchaseCardSubmit(e, form) {
         e.preventDefault();
-        const btn = document.getElementById('btnSubmitQuickPurchase');
-        const errBanner = document.getElementById('qpErrorBanner');
-        if (errBanner) errBanner.style.display = 'none';
+        const btn = document.getElementById('qpCardSubmitBtn');
+        const origHtml = btn ? btn.innerHTML : '+ Add Purchase';
 
         if (btn) {
             btn.disabled = true;
-            btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:14px;height:14px;"></i> Saving...';
+            btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:14px;height:14px;"></i> Adding...';
             if (window.lucide) window.lucide.createIcons();
         }
 
@@ -1349,24 +1554,153 @@
                 throw new Error(data.message || 'Failed to record Quick Purchase.');
             }
 
-            closeQuickPurchaseModal();
+            // Notification & Refresh
+            if (window.Swal) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Purchase Added!',
+                    text: data.message || 'Stock successfully recorded.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } else {
+                alert(data.message || 'Purchase recorded successfully!');
+            }
             window.location.reload();
         } catch (err) {
-            if (errBanner) {
-                errBanner.textContent = err.message || 'An error occurred while saving.';
-                errBanner.style.display = 'block';
-            } else {
-                alert(err.message || 'An error occurred.');
-            }
+            alert(err.message || 'An error occurred while saving.');
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="zap" style="width:14px;height:14px;"></i> Complete Quick Purchase';
+                btn.innerHTML = origHtml;
                 if (window.lucide) window.lucide.createIcons();
             }
         }
         return false;
     }
-    window.handleQuickPurchaseSubmit = handleQuickPurchaseSubmit;
+
+    // Close item dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const picker = document.getElementById('qpCardItemPickerContainer');
+        if (picker && !picker.contains(e.target)) {
+            const dd = document.getElementById('qpCardItemDropdownList');
+            if (dd) dd.style.display = 'none';
+        }
+    });
+
+    /* ── Combined Search Purchases Filter ── */
+    function applyCombinedPurchaseFilter() {
+        const term = (document.getElementById('purchaseSearchInput')?.value || '').toLowerCase().trim();
+        const supplierTerm = (document.getElementById('filterPoSupplier')?.value || '').toLowerCase().trim();
+        const itemTerm = (document.getElementById('filterPoItem')?.value || '').toLowerCase().trim();
+        const topFrom = document.getElementById('filterPoFromDate')?.value || '';
+        const topTo = document.getElementById('filterPoToDate')?.value || '';
+        const fromDate = topFrom || document.getElementById('purchaseFromDate')?.value || '';
+        const toDate = topTo || document.getElementById('purchaseToDate')?.value || '';
+
+        const clearBtn = document.getElementById('btnClearPurchaseSearch');
+        if (clearBtn) {
+            clearBtn.style.display = term ? 'inline-block' : 'none';
+        }
+
+        let visibleCount = 0;
+
+        // Desktop Table Rows
+        document.querySelectorAll('tr.purchase-invoice-row').forEach(row => {
+            const rowText = row.textContent.toLowerCase();
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
+            const rowType = row.dataset.type || '';
+
+            const matchesType = (activePoTypeFilter === 'all') || (rowType === activePoTypeFilter);
+            const matchesText = !term || rowText.includes(term);
+            const matchesSupplier = !supplierTerm || rowText.includes(supplierTerm);
+            const matchesItem = !itemTerm || rowText.includes(itemTerm);
+            let matchesDate = true;
+
+            if (fromDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
+            }
+            if (toDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
+            }
+
+            const isVisible = matchesType && matchesText && matchesSupplier && matchesItem && matchesDate;
+            row.dataset.mobiHidden = isVisible ? '0' : '1';
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        // Mobile Flat Cards
+        let visibleMobileCount = 0;
+        document.querySelectorAll('.purchase-flat-row').forEach(row => {
+            const rowText = row.textContent.toLowerCase();
+            const rawDate = (row.dataset.date || '').trim();
+            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
+            const rowType = row.dataset.type || '';
+
+            const matchesType = (activePoTypeFilter === 'all') || (rowType === activePoTypeFilter);
+            const matchesText = !term || rowText.includes(term);
+            const matchesSupplier = !supplierTerm || rowText.includes(supplierTerm);
+            const matchesItem = !itemTerm || rowText.includes(itemTerm);
+            let matchesDate = true;
+
+            if (fromDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
+            }
+            if (toDate) {
+                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
+            }
+
+            const isCardVisible = matchesType && matchesText && matchesSupplier && matchesItem && matchesDate;
+            row.dataset.mobiHidden = isCardVisible ? '0' : '1';
+            row.style.display = isCardVisible ? '' : 'none';
+            if (isCardVisible) visibleMobileCount++;
+        });
+
+        // Empty state toggles
+        const emptyRow = document.getElementById('purchaseEmptyFilterRow');
+        if (emptyRow) {
+            emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+        }
+        const mobEmptyRow = document.getElementById('purchaseMobileEmptyFilterRow');
+        if (mobEmptyRow) {
+            mobEmptyRow.style.display = (visibleMobileCount === 0) ? 'block' : 'none';
+        }
+
+        if (window.purchaseInvoicesPager && typeof window.purchaseInvoicesPager.refresh === 'function') {
+            window.purchaseInvoicesPager.refresh(true);
+        }
+
+        const badge = document.getElementById('purchaseVisibleCountBadge');
+        if (badge) {
+            badge.textContent = `${visibleCount} invoices showing`;
+        }
+    }
+
+    function resetCombinedPurchaseFilter() {
+        const fSup = document.getElementById('filterPoSupplier');
+        const fItem = document.getElementById('filterPoItem');
+        const fFrom = document.getElementById('filterPoFromDate');
+        const fTo = document.getElementById('filterPoToDate');
+        if (fSup) fSup.value = '';
+        if (fItem) fItem.value = '';
+        if (fFrom) fFrom.value = '';
+        if (fTo) fTo.value = '';
+
+        applyCombinedPurchaseFilter();
+    }
+
+    // Stubs for backward compatibility
+    function openQuickPurchaseModal() {
+        const el = document.getElementById('qpCardItemName');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.focus();
+        }
+    }
+    function closeQuickPurchaseModal() {}
+    window.openQuickPurchaseModal = openQuickPurchaseModal;
+    window.closeQuickPurchaseModal = closeQuickPurchaseModal;
 
     function openPaymentModal(supplierId, supplierName) {
         const modal = document.getElementById('paymentModal');
@@ -1800,84 +2134,7 @@
     }
 
     function filterPurchaseTables() {
-        const term = (document.getElementById('purchaseSearchInput')?.value || '').toLowerCase().trim();
-        const fromDate = document.getElementById('purchaseFromDate')?.value || '';
-        const toDate = document.getElementById('purchaseToDate')?.value || '';
-
-        const clearBtn = document.getElementById('btnClearPurchaseSearch');
-        if (clearBtn) {
-            clearBtn.style.display = term ? 'inline-block' : 'none';
-        }
-
-        let visibleCount = 0;
-
-        // Desktop Table Rows
-        document.querySelectorAll('tr.purchase-invoice-row').forEach(row => {
-            const rowText = row.textContent.toLowerCase();
-            const rawDate = (row.dataset.date || '').trim();
-            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
-            const rowType = row.dataset.type || '';
-
-            const matchesType = (activePoTypeFilter === 'all') || (rowType === activePoTypeFilter);
-            const matchesText = !term || rowText.includes(term);
-            let matchesDate = true;
-
-            if (fromDate) {
-                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
-            }
-            if (toDate) {
-                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
-            }
-
-            const isVisible = matchesType && matchesText && matchesDate;
-            row.dataset.mobiHidden = isVisible ? '0' : '1';
-            row.style.display = isVisible ? '' : 'none';
-            if (isVisible) visibleCount++;
-        });
-
-        // Mobile Flat Cards
-        let visibleMobileCount = 0;
-        document.querySelectorAll('.purchase-flat-row').forEach(row => {
-            const rowText = row.textContent.toLowerCase();
-            const rawDate = (row.dataset.date || '').trim();
-            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
-            const rowType = row.dataset.type || '';
-
-            const matchesType = (activePoTypeFilter === 'all') || (rowType === activePoTypeFilter);
-            const matchesText = !term || rowText.includes(term);
-            let matchesDate = true;
-
-            if (fromDate) {
-                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
-            }
-            if (toDate) {
-                matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
-            }
-
-            const isCardVisible = matchesType && matchesText && matchesDate;
-            row.dataset.mobiHidden = isCardVisible ? '0' : '1';
-            row.style.display = isCardVisible ? '' : 'none';
-            if (isCardVisible) visibleMobileCount++;
-        });
-
-        // Empty state toggles
-        const emptyRow = document.getElementById('purchaseEmptyFilterRow');
-        if (emptyRow) {
-            emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
-        }
-        const mobEmptyRow = document.getElementById('purchaseMobileEmptyFilterRow');
-        if (mobEmptyRow) {
-            mobEmptyRow.style.display = (visibleMobileCount === 0) ? 'block' : 'none';
-        }
-
-        if (window.purchaseInvoicesPager && typeof window.purchaseInvoicesPager.refresh === 'function') {
-            window.purchaseInvoicesPager.refresh(true);
-        }
-
-        const badge = document.getElementById('purchaseVisibleCountBadge');
-        if (badge) {
-            badge.textContent = `${visibleCount} invoices showing`;
-        }
+        applyCombinedPurchaseFilter();
     }
 
     function initPurchasePage() {
