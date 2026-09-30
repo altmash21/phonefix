@@ -84,6 +84,10 @@ class MobileShopInvoiceResolver
             )
             ->get();
 
+        foreach ($mobileSales as $ms) {
+            $ms->item_name = $ms->particulars;
+        }
+
         // 2. Accessory Sales (Only include sales where a balance was left)
         $accSales = DB::table('ms_accessory_sales')
             ->where('ms_accessory_sales.company_id', $companyId)
@@ -97,13 +101,36 @@ class MobileShopInvoiceResolver
                 'ms_accessory_sales.id',
                 'ms_accessory_sales.created_at',
                 'ms_accessory_sales.invoice_number as ref_no',
-                DB::raw("'Accessory / Parts Counter Bill' as particulars"),
                 'ms_accessory_sales.total_amount as billed_amount',
                 'ms_accessory_sales.amount_paid as paid_amount',
                 'ms_accessory_sales.udhari_amount as due_amount',
                 DB::raw("'accessory_sale' as entry_type")
             )
             ->get();
+
+        if ($accSales->isNotEmpty()) {
+            $saleIds = $accSales->pluck('id')->toArray();
+            $itemsGrouped = DB::table('ms_accessory_sale_items')
+                ->where('company_id', $companyId)
+                ->whereIn('accessory_sale_id', $saleIds)
+                ->select('accessory_sale_id', 'part_name', 'quantity')
+                ->get()
+                ->groupBy('accessory_sale_id');
+
+            foreach ($accSales as $sale) {
+                $items = $itemsGrouped[$sale->id] ?? collect();
+                if ($items->isNotEmpty()) {
+                    $itemNames = $items->map(function ($it) {
+                        return $it->part_name . ($it->quantity > 1 ? " (x{$it->quantity})" : "");
+                    })->implode(', ');
+                    $sale->particulars = $itemNames;
+                    $sale->item_name   = $itemNames;
+                } else {
+                    $sale->particulars = "Accessory Purchase";
+                    $sale->item_name   = "Accessory Purchase";
+                }
+            }
+        }
 
         // 3. Khata Repayments, Old Udhar / Opening Balances & Adjustments
         $khataTxs = DB::table('ms_customer_khata_transactions')
@@ -113,11 +140,13 @@ class MobileShopInvoiceResolver
             ->get()
             ->map(function ($tx) {
                 $isDebit = in_array($tx->type, ['opening_balance', 'old_udhar', 'debit_adjustment']);
+                $itemDesc = $tx->remarks ?: ($isDebit ? 'Old Udhar / Opening Balance' : 'Payment / Settlement Received');
                 return (object) [
                     'id'            => $tx->id,
                     'created_at'    => $tx->created_at,
                     'ref_no'        => $tx->reference_no ?: ('KHATA-' . $tx->id),
-                    'particulars'   => $tx->remarks ?: ($isDebit ? 'Old Udhar / Opening Balance' : 'Payment / Settlement Received'),
+                    'particulars'   => $itemDesc,
+                    'item_name'     => $itemDesc,
                     'billed_amount' => $isDebit ? (float) $tx->amount : 0.00,
                     'paid_amount'   => $isDebit ? 0.00 : (float) $tx->amount,
                     'due_amount'    => $isDebit ? (float) $tx->amount : 0.00,
@@ -152,6 +181,7 @@ class MobileShopInvoiceResolver
                 'datetime'     => date('d M Y, h:i A', strtotime($entry->created_at)),
                 'ref_no'       => $entry->ref_no,
                 'particulars'  => $entry->particulars,
+                'item_name'    => $entry->item_name ?? $entry->particulars,
                 'billed'       => $billed,
                 'paid'         => $paid,
                 'balance_left' => $runningBalance,

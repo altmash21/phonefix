@@ -173,31 +173,49 @@
         <thead>
             <tr>
                 <th class="text-left" style="width: 12%;">Date</th>
-                <th class="text-left" style="width: 38%;">Particulars</th>
+                <th class="text-left" style="width: 40%;">Items Purchased / Particulars</th>
                 <th class="text-right" style="width: 16%;">Total Amount (₹)</th>
-                <th class="text-right" style="width: 17%;">Amount Received (₹)</th>
-                <th class="text-right" style="width: 17%;">Balance (₹)</th>
+                <th class="text-right" style="width: 16%;">Amount Received (₹)</th>
+                <th class="text-right" style="width: 16%;">Balance (₹)</th>
             </tr>
         </thead>
         <tbody>
             @foreach($ledger as $entry)
             @php
-                $isRepayment = $entry->paid > 0;
-                $particularsText = $entry->particulars ?: ($entry->billed > 0 ? 'Bill ' . $entry->ref_no : 'Khata repayment received');
+                $isRepayment = $entry->paid > 0 && $entry->billed <= 0;
+                $itemName = $entry->item_name ?? $entry->particulars;
                 $dateFormatted = date('d/m/Y', strtotime($entry->date));
             @endphp
             <tr>
-                <td class="font-mono" style="color: #4b5563;">{{ $dateFormatted }}</td>
-                <td style="{{ $isRepayment ? 'font-style: italic; color: #4b5563;' : 'font-weight: 500; color: #111827;' }}">
-                    {{ $particularsText }}
+                <td class="font-mono" style="color: #4b5563; vertical-align: top;">{{ $dateFormatted }}</td>
+                <td style="vertical-align: top;">
+                    @if($isRepayment)
+                        <div style="font-weight: bold; color: #16a34a;">
+                            {{ $itemName ?: 'Payment / Settlement Received' }}
+                        </div>
+                        @if(!empty($entry->ref_no))
+                            <div style="font-size: 8.5px; color: #6b7280; font-family: monospace; margin-top: 1px;">
+                                Ref: #{{ $entry->ref_no }}
+                            </div>
+                        @endif
+                    @else
+                        <div style="font-weight: bold; color: #111827; font-size: 10px;">
+                            {{ $itemName ?: 'Counter Purchase' }}
+                        </div>
+                        @if(!empty($entry->ref_no))
+                            <div style="font-size: 8.5px; color: #4338ca; font-family: monospace; font-weight: bold; margin-top: 1px;">
+                                Bill #{{ $entry->ref_no }}
+                            </div>
+                        @endif
+                    @endif
                 </td>
-                <td class="text-right font-mono">
+                <td class="text-right font-mono" style="vertical-align: top;">
                     {{ $entry->billed > 0 ? number_format($entry->billed, 2) : '—' }}
                 </td>
-                <td class="text-right font-mono">
+                <td class="text-right font-mono" style="vertical-align: top; color: #16a34a;">
                     {{ $entry->paid > 0 ? number_format($entry->paid, 2) : '—' }}
                 </td>
-                <td class="text-right font-mono font-bold" style="color: #111827;">
+                <td class="text-right font-mono font-bold" style="color: #111827; vertical-align: top;">
                     {{ number_format($entry->balance_left, 2) }}
                 </td>
             </tr>

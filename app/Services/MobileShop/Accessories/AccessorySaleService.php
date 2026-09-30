@@ -173,15 +173,16 @@ class AccessorySaleService
             // Update Customer Khata if Udhari
             if ($udhariAmount > 0) {
                 DB::table('ms_customers')->where('id', $customer->id)->increment('udhari_balance', $udhariAmount);
-                $newBal = $customer->udhari_balance + $udhariAmount;
+                $itemSummary = collect($lineItemsData)->map(fn($l) => $l['part_name'] . ($l['quantity'] > 1 ? " (x{$l['quantity']})" : ""))->implode(', ');
                 DB::table('ms_customer_khata_transactions')->insert([
                     'company_id'    => $companyId,
                     'customer_id'   => $customer->id,
                     'type'          => 'udhari_sale',
-                    'sale_id'       => null,
+                    'sale_id'       => $saleId,
                     'amount'        => $udhariAmount,
                     'balance_after' => $newBal,
-                    'remarks'       => "Udhari on Accessory Sale #{$invoiceNumber}",
+                    'reference_no'  => $invoiceNumber,
+                    'remarks'       => \Illuminate\Support\Str::limit("{$itemSummary} (Invoice #{$invoiceNumber})", 180),
                     'recorded_by'   => auth()->id(),
                     'created_at'    => now(),
                 ]);
