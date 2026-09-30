@@ -13,6 +13,9 @@
 
 @section('page-actions')
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button type="button" onclick="openQuickPurchaseModal()" class="btn btn-sm" style="color: #fff; background: #10B981; border: 1px solid #059669; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow: 0 2px 6px rgba(16,185,129,0.25); cursor:pointer;">
+            <i data-lucide="zap" style="width:15px;height:15px;"></i> Quick Purchase
+        </button>
         <a href="{{ route('mobileshop.accessories.purchase') }}" class="btn btn-primary btn-sm" style="color: #fff; background: var(--color-primary); border-color: var(--color-primary); font-weight:800; display:inline-flex; align-items:center; gap:6px;">
             <i data-lucide="plus-circle" style="width:15px;height:15px;"></i> + Create Purchase Order / Restock
         </a>
@@ -60,12 +63,14 @@
         }
         /* Mobile Bottom-sheet styling for inline modals */
         #paymentModal,
-        #editSupplierModal {
+        #editSupplierModal,
+        #quickPurchaseModal {
             align-items: flex-end !important;
             padding: 0 !important;
         }
         #paymentModal .card,
-        #editSupplierModal .card {
+        #editSupplierModal .card,
+        #quickPurchaseModal .card {
             max-width: 100% !important;
             width: 100% !important;
             border-radius: 16px 16px 0 0 !important;
@@ -939,6 +944,119 @@
         </div>
     </div>
 
+    <!-- MODAL: Quick Purchase / Direct Stock Intake (No Supplier Required) -->
+    <div id="quickPurchaseModal" style="display:none; position:fixed; inset:0; z-index:1250; background:rgba(15,23,42,0.5); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
+        <div class="card" style="max-width: 480px; width: 100%; box-shadow: 0 20px 30px -10px rgba(0,0,0,0.15); border-radius:14px; background:#fff; overflow:hidden; border:1px solid #E2E8F0;">
+            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; background:#FAFAFA;">
+                <div class="card-title" style="font-weight:800; font-size:15px; color:#0F172A; display:flex; align-items:center; gap:8px;">
+                    <span style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:6px; background:#DCFCE7; color:#16A34A;">
+                        <i data-lucide="zap" style="width:16px;height:16px;"></i>
+                    </span>
+                    <span>Quick Purchase</span>
+                    <span style="font-size:10.5px; background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:4px; font-weight:700;">No Supplier Required</span>
+                </div>
+                <button type="button" onclick="closeQuickPurchaseModal()" class="btn-icon" style="background:none; border:none; font-size:16px; cursor:pointer; color:#64748B;">✕</button>
+            </div>
+            <div class="card-body" style="padding:16px 18px;">
+                <form id="quickPurchaseForm" action="{{ route('mobileshop.purchase.quick') }}" method="POST" onsubmit="return handleQuickPurchaseSubmit(event, this)">
+                    @csrf
+
+                    <!-- 1. Category -->
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+                            <span>Category</span>
+                            <span style="font-size:10px; color:#64748B; font-weight:normal;">Auto-matches item type</span>
+                        </label>
+                        <select name="category" id="qpCategory" class="form-control" style="font-size:13px; font-weight:600;">
+                            <option value="">-- Select Category --</option>
+                            @if(isset($categories) && count($categories) > 0)
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->slug }}">{{ $cat->name }}</option>
+                                @endforeach
+                            @else
+                                <option value="tempered_glass">Tempered Glass</option>
+                                <option value="back_cover">Back Cover & Cases</option>
+                                <option value="charger_cable">Chargers & Cables</option>
+                                <option value="earphones_audio">Earphones & Audio</option>
+                                <option value="folder_display">Folder / Screen Display</option>
+                                <option value="battery">Battery</option>
+                                <option value="charging_port">Charging Pin / Port</option>
+                                <option value="camera_module">Camera Module</option>
+                                <option value="general_accessory">General Accessories</option>
+                            @endif
+                        </select>
+                    </div>
+
+                    <!-- 2. Item Name -->
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">
+                            Item Name <span style="color:#EF4444;">*</span>
+                        </label>
+                        <input type="text" name="name" id="qpName" required placeholder="e.g. 9D Tempered Glass iPhone 15" list="qpItemsDatalist" autocomplete="off" class="form-control" style="font-size:13px; font-weight:600;" oninput="onQpNameChange(this.value)">
+                        <datalist id="qpItemsDatalist">
+                            @if(isset($parts))
+                                @foreach($parts as $p)
+                                    <option value="{{ $p->name }}" data-cat="{{ $p->category }}" data-cost="{{ $p->unit_cost }}" data-alert="{{ $p->min_stock_alert }}"></option>
+                                @endforeach
+                            @endif
+                        </datalist>
+                    </div>
+
+                    <!-- 3. Quantity & Purchase Price Grid -->
+                    <div class="modal-form-grid-2" style="margin-bottom:12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">
+                                Quantity <span style="color:#EF4444;">*</span>
+                            </label>
+                            <div style="display:flex; align-items:center;">
+                                <button type="button" onclick="adjustQpQty(-1)" style="border:1px solid #CBD5E1; background:#F8FAFC; border-radius:6px 0 0 6px; padding:6px 12px; font-weight:800; cursor:pointer;">−</button>
+                                <input type="number" name="quantity" id="qpQty" min="1" value="1" required class="form-control" style="border-radius:0; text-align:center; font-weight:800; font-size:14px;" oninput="updateQpTotal()">
+                                <button type="button" onclick="adjustQpQty(1)" style="border:1px solid #CBD5E1; background:#F8FAFC; border-radius:0 6px 6px 0; padding:6px 12px; font-weight:800; cursor:pointer;">+</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">
+                                Purchase Price (₹) <span style="color:#EF4444;">*</span>
+                            </label>
+                            <input type="number" step="0.01" min="0" name="purchase_price" id="qpPrice" required placeholder="0.00" class="form-control" style="font-size:15px; font-weight:800; color:#4F46E5;" oninput="updateQpTotal()">
+                        </div>
+                    </div>
+
+                    <!-- 4. Low Stock Alert -->
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label class="form-label" style="font-size:12px; font-weight:700; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+                            <span>Low Stock Alert</span>
+                            <span style="font-size:10px; color:#64748B;">Alerts when stock falls below</span>
+                        </label>
+                        <input type="number" min="0" name="low_stock" id="qpLowStock" value="3" placeholder="3" class="form-control" style="font-size:13px; font-weight:600;">
+                    </div>
+
+                    <!-- 5. Total Cost Preview Pill -->
+                    <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <span style="font-size:10px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Total Procurement</span>
+                            <div style="font-size:16px; font-weight:900; color:#15803D; font-family:'JetBrains Mono', monospace;" id="qpTotalPreview">₹0.00</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:10px; color:#166534; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Payment Mode</span>
+                            <div style="font-size:12px; font-weight:800; color:#15803D;">Direct Cash Paid</div>
+                        </div>
+                    </div>
+
+                    <div id="qpErrorBanner" style="display:none; background:#FEE2E2; border:1px solid #FCA5A5; color:#DC2626; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600; margin-bottom:12px;"></div>
+
+                    <div class="modal-sticky-footer" style="display:flex; justify-content:flex-end; gap:10px; padding-top:12px; border-top:1px solid #E2E8F0;">
+                        <button type="button" onclick="closeQuickPurchaseModal()" class="btn btn-outline" style="font-size:12px; font-weight:600;">Cancel</button>
+                        <button type="submit" id="btnSubmitQuickPurchase" class="btn btn-primary" style="font-size:12px; font-weight:800; background:#10B981; border-color:#059669;">
+                            <i data-lucide="zap" style="width:14px;height:14px;"></i> Complete Quick Purchase
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: Supplier Payment / Advance / Settlement -->
     <div id="paymentModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.45); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
         <div class="card" style="max-width: 460px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border-radius:14px; background:#fff;">
@@ -1116,8 +1234,139 @@
         if (e.key === 'Escape') {
             closeViewPurchaseModal();
             closePurchaseFabMenu();
+            closePaymentModal();
+            closeQuickPurchaseModal();
         }
     });
+
+    /* ── Quick Purchase Modal Functions ── */
+    function openQuickPurchaseModal() {
+        const modal = document.getElementById('quickPurchaseModal');
+        if (!modal) return;
+        document.getElementById('quickPurchaseForm').reset();
+        document.getElementById('qpQty').value = '1';
+        document.getElementById('qpLowStock').value = '3';
+        document.getElementById('qpTotalPreview').textContent = '₹0.00';
+        const errBanner = document.getElementById('qpErrorBanner');
+        if (errBanner) errBanner.style.display = 'none';
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            const nameInput = document.getElementById('qpName');
+            if (nameInput) nameInput.focus();
+        }, 50);
+        if (window.lucide) window.lucide.createIcons();
+    }
+    window.openQuickPurchaseModal = openQuickPurchaseModal;
+
+    function closeQuickPurchaseModal() {
+        const modal = document.getElementById('quickPurchaseModal');
+        if (modal) modal.style.display = 'none';
+    }
+    window.closeQuickPurchaseModal = closeQuickPurchaseModal;
+
+    function adjustQpQty(delta) {
+        const input = document.getElementById('qpQty');
+        if (!input) return;
+        let v = parseInt(input.value || 1) + delta;
+        if (v < 1) v = 1;
+        input.value = v;
+        updateQpTotal();
+    }
+    window.adjustQpQty = adjustQpQty;
+
+    function updateQpTotal() {
+        const qty = parseInt(document.getElementById('qpQty')?.value || 1);
+        const price = parseFloat(document.getElementById('qpPrice')?.value || 0);
+        const total = (qty > 0 && price >= 0) ? (qty * price) : 0;
+        const preview = document.getElementById('qpTotalPreview');
+        if (preview) {
+            preview.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+    window.updateQpTotal = updateQpTotal;
+
+    function onQpNameChange(val) {
+        const datalist = document.getElementById('qpItemsDatalist');
+        if (!datalist || !val) {
+            updateQpTotal();
+            return;
+        }
+        const trimmed = val.trim().toLowerCase();
+        for (let opt of datalist.options) {
+            if (opt.value && opt.value.trim().toLowerCase() === trimmed) {
+                if (opt.dataset.cat) {
+                    const catSelect = document.getElementById('qpCategory');
+                    if (catSelect) {
+                        for (let i = 0; i < catSelect.options.length; i++) {
+                            if (catSelect.options[i].value === opt.dataset.cat) {
+                                catSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+                const priceEl = document.getElementById('qpPrice');
+                if (opt.dataset.cost && priceEl && !priceEl.value) {
+                    priceEl.value = parseFloat(opt.dataset.cost).toFixed(2);
+                }
+                const alertEl = document.getElementById('qpLowStock');
+                if (opt.dataset.alert && alertEl) {
+                    alertEl.value = opt.dataset.alert;
+                }
+                break;
+            }
+        }
+        updateQpTotal();
+    }
+    window.onQpNameChange = onQpNameChange;
+
+    async function handleQuickPurchaseSubmit(e, form) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmitQuickPurchase');
+        const errBanner = document.getElementById('qpErrorBanner');
+        if (errBanner) errBanner.style.display = 'none';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width:14px;height:14px;"></i> Saving...';
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        try {
+            const formData = new FormData(form);
+            const resp = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok || !data.success) {
+                throw new Error(data.message || 'Failed to record Quick Purchase.');
+            }
+
+            closeQuickPurchaseModal();
+            window.location.reload();
+        } catch (err) {
+            if (errBanner) {
+                errBanner.textContent = err.message || 'An error occurred while saving.';
+                errBanner.style.display = 'block';
+            } else {
+                alert(err.message || 'An error occurred.');
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="zap" style="width:14px;height:14px;"></i> Complete Quick Purchase';
+                if (window.lucide) window.lucide.createIcons();
+            }
+        }
+        return false;
+    }
+    window.handleQuickPurchaseSubmit = handleQuickPurchaseSubmit;
 
     function openPaymentModal(supplierId, supplierName) {
         const modal = document.getElementById('paymentModal');

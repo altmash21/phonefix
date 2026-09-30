@@ -119,6 +119,8 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
 
 
     // ── PURCHASE ACTIONS (niche-gated) ──
+    Route::post('purchase/quick', 'MobileShop\PurchaseController@quickPurchase')
+        ->name('purchase.quick');
     Route::post('purchase/store', 'MobileShop\PurchaseController@storePurchase')
         ->middleware('permission:create-purchase-accessories|create-purchase-covers')
         ->name('purchase.store');
