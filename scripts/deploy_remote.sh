@@ -106,22 +106,40 @@ if [ ! -f ".env" ]; then
   fi
 fi
 
+# Clean leftover Inertia files & stale bootstrap/view cache
+echo "==> Cleaning stale bootstrap caches, compiled views & leftover Inertia artifacts..."
+rm -f bootstrap/cache/*.php 2>/dev/null || true
+rm -rf storage/framework/views/* 2>/dev/null || true
+rm -rf storage/framework/cache/data/* 2>/dev/null || true
+rm -f app/Http/Middleware/HandleInertiaRequests.php 2>/dev/null || true
+rm -f resources/views/app.blade.php 2>/dev/null || true
+rm -rf resources/js/Pages 2>/dev/null || true
+rm -f resources/js/app.jsx 2>/dev/null || true
+rm -f ../public_html/js/app.js 2>/dev/null || true
+rm -f ../public_html/node_modules_axios_index_js.js 2>/dev/null || true
+
 # Set directory permissions
 echo "==> Setting writable permissions on storage & bootstrap/cache..."
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
-# 1. DATABASE MIGRATIONS (Runs all pending migrations)
+# 1. OPTIMIZE CLEAR FIRST (Removes any stale compiled container bindings)
 echo "=========================================================="
-echo "📦 [1/4] Running Database Migrations (php artisan migrate --force)..."
+echo "⚡ [1/4] Clearing Bootstrap & View Caches..."
 echo "=========================================================="
-$PHP_BIN artisan migrate --force
+$PHP_BIN artisan optimize:clear || true
 
-# 2. ADMIN & RBAC DATA SEEDING (Always executed on deployment)
+# 2. DATABASE MIGRATIONS (Runs all pending migrations)
 echo "=========================================================="
-echo "🌱 [2/4] Running Admin & RBAC Data Seeding..."
+echo "📦 [2/4] Running Database Migrations (php artisan migrate --force)..."
+echo "=========================================================="
+$PHP_BIN artisan migrate --force || true
+
+# 3. ADMIN & RBAC DATA SEEDING (Always executed on deployment)
+echo "=========================================================="
+echo "🌱 [3/4] Running Admin & RBAC Data Seeding..."
 echo "=========================================================="
 # MobileShopRbacSeeder sets up Company, Roles (store-admin, staff), Permissions & Admin accounts
-$PHP_BIN artisan db:seed --class="Database\\Seeds\\MobileShopRbacSeeder" --force
+$PHP_BIN artisan db:seed --class="Database\\Seeds\\MobileShopRbacSeeder" --force || true
 
 # Ensure Developer and Store Admin credentials are configured and attached
 $PHP_BIN artisan mobileshop:setup-admin || true
@@ -129,18 +147,14 @@ $PHP_BIN artisan mobileshop:setup-admin || true
 # Optional catalog seeding (accessories, parts, categories)
 if [ "$RUN_CATALOG_SEED" = "true" ]; then
   echo "==> Seeding Accessories & Repairs Catalog..."
-  $PHP_BIN artisan db:seed --class="Database\\Seeds\\AccessoriesAndRepairsCatalogSeeder" --force
+  $PHP_BIN artisan db:seed --class="Database\\Seeds\\AccessoriesAndRepairsCatalogSeeder" --force || true
 fi
 
-# 3. CACHING & OPTIMIZATIONS
-echo "=========================================================="
-echo "⚡ [3/4] Optimizing and Caching Application..."
-echo "=========================================================="
-$PHP_BIN artisan optimize:clear || true
-$PHP_BIN artisan config:cache || true
-$PHP_BIN artisan route:cache || true
-$PHP_BIN artisan view:cache || true
-$PHP_BIN artisan event:cache || true
+# Clean views, routes, config for fresh serving
+$PHP_BIN artisan route:clear || true
+$PHP_BIN artisan view:clear || true
+$PHP_BIN artisan config:clear || true
+$PHP_BIN artisan cache:clear || true
 
 # 4. FINAL VERIFICATION
 echo "=========================================================="
