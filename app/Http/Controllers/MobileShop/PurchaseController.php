@@ -250,170 +250,185 @@ class PurchaseController extends BaseMobileShopController
             auth()->user()->can('create-mobileshop-accessories') ||
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('store-admin') ||
-            auth()->user()->hasRole('accessories-staff')
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('owner') ||
+            $this->isOwner()
         ), 403, 'Unauthorized action.');
 
-        $request->validate([
-            'name'           => 'required|string|max:150',
-            'category'       => 'nullable|string|max:100',
-            'quantity'       => 'required|integer|min:1',
-            'purchase_price' => 'required|numeric|min:0',
-            'low_stock'      => 'nullable|integer|min:0',
-            'selling_price'  => 'nullable|numeric|min:0',
-        ]);
+        try {
+            $request->validate([
+                'name'           => 'required|string|max:150',
+                'category'       => 'nullable|string|max:100',
+                'quantity'       => 'required|integer|min:1',
+                'purchase_price' => 'required|numeric|min:0',
+                'low_stock'      => 'nullable|integer|min:0',
+                'selling_price'  => 'nullable|numeric|min:0',
+            ]);
 
-        $companyId = $this->getCompanyId();
-        $name = trim($request->input('name'));
-        $qty = max(1, (int) $request->input('quantity', 1));
-        $purchasePrice = (float) $request->input('purchase_price', 0);
-        $lowStock = $request->filled('low_stock') ? max(0, (int) $request->input('low_stock')) : 3;
-        $sellingPrice = $request->filled('selling_price') && (float) $request->input('selling_price') > 0
-            ? (float) $request->input('selling_price')
-            : round($purchasePrice * 1.5, 2);
+            $companyId = $this->getCompanyId();
+            $name = trim($request->input('name'));
+            $qty = max(1, (int) $request->input('quantity', 1));
+            $purchasePrice = (float) $request->input('purchase_price', 0);
+            $lowStock = $request->filled('low_stock') ? max(0, (int) $request->input('low_stock')) : 3;
+            $sellingPrice = $request->filled('selling_price') && (float) $request->input('selling_price') > 0
+                ? (float) $request->input('selling_price')
+                : round($purchasePrice * 1.5, 2);
 
-        $categoryInput = trim($request->input('category', ''));
-        $categoryRow = \App\Services\MobileShop\Accessories\AccessoryCategoryService::resolveCategory($companyId, $categoryInput, $name);
-        $finalCategorySlug = $categoryRow ? $categoryRow->slug : \App\Services\MobileShop\Accessories\AccessoryCategoryService::canonicalSlug($categoryInput, $name);
-        $isGift = ($categoryRow && $categoryRow->is_gift_eligible) ? 1 : 0;
+            $categoryInput = trim($request->input('category', ''));
+            $categoryRow = \App\Services\MobileShop\Accessories\AccessoryCategoryService::resolveCategory($companyId, $categoryInput, $name);
+            $finalCategorySlug = $categoryRow ? $categoryRow->slug : \App\Services\MobileShop\Accessories\AccessoryCategoryService::canonicalSlug($categoryInput, $name);
+            $isGift = ($categoryRow && $categoryRow->is_gift_eligible) ? 1 : 0;
 
-        return DB::transaction(function () use ($companyId, $name, $qty, $purchasePrice, $sellingPrice, $lowStock, $finalCategorySlug, $categoryRow, $isGift, $request) {
-            // 1. Check if part already exists in ms_parts_inventory
-            $existingPart = DB::table('ms_parts_inventory')
-                ->where('company_id', $companyId)
-                ->where('name', $name)
-                ->lockForUpdate()
-                ->first();
+            return DB::transaction(function () use ($companyId, $name, $qty, $purchasePrice, $sellingPrice, $lowStock, $finalCategorySlug, $categoryRow, $isGift, $request) {
+                // 1. Check if part already exists in ms_parts_inventory
+                $existingPart = DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->where('name', $name)
+                    ->lockForUpdate()
+                    ->first();
 
-            if ($existingPart) {
-                $newStock = (int) $existingPart->stock_qty + $qty;
-                $updateData = [
-                    'stock_qty'  => $newStock,
-                    'updated_at' => now(),
-                ];
-                if ($purchasePrice > 0) {
-                    $updateData['unit_cost'] = $purchasePrice;
+                if ($existingPart) {
+                    $newStock = (int) $existingPart->stock_qty + $qty;
+                    $updateData = [
+                        'stock_qty'  => $newStock,
+                        'updated_at' => now(),
+                    ];
+                    if ($purchasePrice > 0) {
+                        $updateData['unit_cost'] = $purchasePrice;
+                    }
+                    if ($sellingPrice > 0 && ($existingPart->selling_price <= 0 || $sellingPrice > $existingPart->selling_price)) {
+                        $updateData['selling_price'] = $sellingPrice;
+                    }
+                    if ($lowStock !== null) {
+                        $updateData['min_stock_alert'] = $lowStock;
+                    }
+                    if ($finalCategorySlug && ($existingPart->category === 'general_accessory' || empty($existingPart->category))) {
+                        $updateData['category'] = $finalCategorySlug;
+                        $updateData['category_id'] = $categoryRow?->id ?? $existingPart->category_id;
+                    }
+
+                    DB::table('ms_parts_inventory')->where('id', $existingPart->id)->update($updateData);
+                    $partId = $existingPart->id;
+                } else {
+                    $partId = DB::table('ms_parts_inventory')->insertGetId([
+                        'company_id'       => $companyId,
+                        'name'             => $name,
+                        'category'         => $finalCategorySlug ?: 'general_accessory',
+                        'category_id'      => $categoryRow?->id,
+                        'brand'            => 'Universal',
+                        'compatible_model' => 'Universal',
+                        'display_type'     => 'na',
+                        'hsn_code'         => '85177090',
+                        'unit_cost'        => $purchasePrice,
+                        'selling_price'    => $sellingPrice,
+                        'stock_qty'        => $qty,
+                        'min_stock_alert'  => $lowStock,
+                        'is_gift_eligible' => $isGift,
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                    $newStock = $qty;
                 }
-                if ($sellingPrice > 0 && ($existingPart->selling_price <= 0 || $sellingPrice > $existingPart->selling_price)) {
-                    $updateData['selling_price'] = $sellingPrice;
-                }
-                if ($lowStock !== null) {
-                    $updateData['min_stock_alert'] = $lowStock;
-                }
-                if ($finalCategorySlug && ($existingPart->category === 'general_accessory' || empty($existingPart->category))) {
-                    $updateData['category'] = $finalCategorySlug;
-                    $updateData['category_id'] = $categoryRow?->id ?? $existingPart->category_id;
-                }
 
-                DB::table('ms_parts_inventory')->where('id', $existingPart->id)->update($updateData);
-                $partId = $existingPart->id;
-            } else {
-                $partId = DB::table('ms_parts_inventory')->insertGetId([
-                    'company_id'       => $companyId,
-                    'name'             => $name,
-                    'category'         => $finalCategorySlug ?: 'general_accessory',
-                    'category_id'      => $categoryRow?->id,
-                    'brand'            => 'Universal',
-                    'compatible_model' => 'Universal',
-                    'display_type'     => 'Normal',
-                    'hsn_code'         => '85177090',
-                    'unit_cost'        => $purchasePrice,
-                    'selling_price'    => $sellingPrice,
-                    'stock_qty'        => $qty,
-                    'min_stock_alert'  => $lowStock,
-                    'is_gift_eligible' => $isGift,
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
+                // 2. Record inventory movement history
+                DB::table('ms_parts_inventory_history')->insert([
+                    'part_id'       => $partId,
+                    'type'          => 'addition',
+                    'quantity'      => $qty,
+                    'balance_after' => $newStock,
+                    'reference'     => 'Quick Purchase Intake',
+                    'user_id'       => auth()->id(),
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
                 ]);
-                $newStock = $qty;
-            }
 
-            // 2. Record inventory movement history
-            DB::table('ms_parts_inventory_history')->insert([
-                'part_id'       => $partId,
-                'type'          => 'addition',
-                'quantity'      => $qty,
-                'balance_after' => $newStock,
-                'reference'     => 'Quick Purchase Intake',
-                'user_id'       => auth()->id(),
-                'created_at'    => now(),
-                'updated_at'    => now(),
-            ]);
+                // 3. Resolve or create direct purchase supplier (no supplier info needed from user!)
+                $supplier = DB::table('ms_suppliers')
+                    ->where('company_id', $companyId)
+                    ->where(function ($q) {
+                        $q->where('name', 'Direct Purchase')
+                          ->orWhere('name', 'Direct / Counter Purchase')
+                          ->orWhere('name', 'General Supplier');
+                    })
+                    ->first();
 
-            // 3. Resolve or create direct purchase supplier (no supplier info needed from user!)
-            $supplier = DB::table('ms_suppliers')
-                ->where('company_id', $companyId)
-                ->where(function ($q) {
-                    $q->where('name', 'Direct Purchase')
-                      ->orWhere('name', 'Direct / Counter Purchase')
-                      ->orWhere('name', 'General Supplier');
-                })
-                ->first();
+                if (!$supplier) {
+                    $supplierId = DB::table('ms_suppliers')->insertGetId([
+                        'company_id' => $companyId,
+                        'name'       => 'Direct Purchase',
+                        'phone'      => '9999999999',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    $supplierId = $supplier->id;
+                }
 
-            if (!$supplier) {
-                $supplierId = DB::table('ms_suppliers')->insertGetId([
-                    'company_id' => $companyId,
-                    'name'       => 'Direct Purchase',
-                    'phone'      => '9999999999',
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                // 4. Generate PO Number matching INV-% for uniform tracking
+                $totalAmount = round($purchasePrice * $qty, 2);
+                $poNumber = 'INV-QP-' . date('Ymd') . '-' . str_pad(DB::table('ms_purchase_orders')->where('company_id', $companyId)->count() + 1, 4, '0', STR_PAD_LEFT);
+                $counter = 1;
+                $basePoNum = $poNumber;
+                while (DB::table('ms_purchase_orders')->where('company_id', $companyId)->where('po_number', $poNumber)->exists()) {
+                    $poNumber = $basePoNum . '-' . $counter++;
+                }
+
+                $poId = DB::table('ms_purchase_orders')->insertGetId([
+                    'company_id'   => $companyId,
+                    'supplier_id'  => $supplierId,
+                    'po_number'    => $poNumber,
+                    'order_date'   => now()->toDateString(),
+                    'tax_type'     => 'intra_state',
+                    'subtotal'     => $totalAmount,
+                    'total_amount' => $totalAmount,
+                    'amount_paid'  => $totalAmount,
+                    'balance_due'  => 0.00,
+                    'status'       => 'paid',
+                    'created_by'   => auth()->id(),
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
                 ]);
-            } else {
-                $supplierId = $supplier->id;
-            }
 
-            // 4. Generate PO Number matching INV-% for uniform tracking
-            $totalAmount = round($purchasePrice * $qty, 2);
-            $poNumber = 'INV-QP-' . date('Ymd') . '-' . str_pad(DB::table('ms_purchase_orders')->where('company_id', $companyId)->count() + 1, 4, '0', STR_PAD_LEFT);
-            $counter = 1;
-            $basePoNum = $poNumber;
-            while (DB::table('ms_purchase_orders')->where('company_id', $companyId)->where('po_number', $poNumber)->exists()) {
-                $poNumber = $basePoNum . '-' . $counter++;
-            }
+                DB::table('ms_purchase_order_items')->insert([
+                    'purchase_order_id' => $poId,
+                    'brand'             => 'Universal',
+                    'model'             => $name,
+                    'variant'           => $finalCategorySlug ?: 'General',
+                    'hsn_code'          => '85177090',
+                    'qty'               => $qty,
+                    'qty_received'      => $qty,
+                    'unit_cost'         => $purchasePrice,
+                    'tax_rate'          => 0.00,
+                    'line_total'        => $totalAmount,
+                ]);
 
-            $poId = DB::table('ms_purchase_orders')->insertGetId([
-                'company_id'   => $companyId,
-                'supplier_id'  => $supplierId,
-                'po_number'    => $poNumber,
-                'order_date'   => now()->toDateString(),
-                'tax_type'     => 'intra_state',
-                'subtotal'     => $totalAmount,
-                'total_amount' => $totalAmount,
-                'amount_paid'  => $totalAmount,
-                'balance_due'  => 0.00,
-                'status'       => 'paid',
-                'created_by'   => auth()->id(),
-                'created_at'   => now(),
-                'updated_at'   => now(),
-            ]);
+                $msg = "Quick Purchase recorded: {$qty}x {$name} (₹" . number_format($totalAmount, 2) . ") added to inventory!";
 
-            DB::table('ms_purchase_order_items')->insert([
-                'purchase_order_id' => $poId,
-                'brand'             => 'Universal',
-                'model'             => $name,
-                'variant'           => $finalCategorySlug ?: 'General',
-                'hsn_code'          => '85177090',
-                'qty'               => $qty,
-                'qty_received'      => $qty,
-                'unit_cost'         => $purchasePrice,
-                'tax_rate'          => 0.00,
-                'line_total'        => $totalAmount,
-            ]);
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success'   => true,
+                        'message'   => $msg,
+                        'part_id'   => $partId,
+                        'po_id'     => $poId,
+                        'po_number' => $poNumber,
+                        'new_stock' => $newStock,
+                    ]);
+                }
 
-            $msg = "Quick Purchase recorded: {$qty}x {$name} (₹" . number_format($totalAmount, 2) . ") added to inventory!";
-
+                return redirect()->route('mobileshop.purchase')->with('success', $msg);
+            });
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            $msg = collect($ve->errors())->flatten()->first() ?: 'Validation failed.';
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success'   => true,
-                    'message'   => $msg,
-                    'part_id'   => $partId,
-                    'po_id'     => $poId,
-                    'po_number' => $poNumber,
-                    'new_stock' => $newStock,
-                ]);
+                return response()->json(['success' => false, 'message' => $msg, 'errors' => $ve->errors()], 422);
             }
-
-            return redirect()->route('mobileshop.purchase')->with('success', $msg);
-        });
+            return redirect()->back()->withInput()->with('error', $msg);
+        } catch (\Throwable $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
     }
 
     /**

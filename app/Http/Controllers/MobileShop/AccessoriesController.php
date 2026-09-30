@@ -301,18 +301,33 @@ class AccessoriesController extends BaseMobileShopController
             auth()->user()->hasRole('admin') || 
             auth()->user()->hasRole('store-admin') || 
             auth()->user()->hasRole('accessories-staff') || 
-            auth()->user()->hasRole('accessories-manager')
+            auth()->user()->hasRole('accessories-manager') ||
+            auth()->user()->hasRole('owner') ||
+            $this->isOwner()
         ), 403, 'Unauthorized action.');
 
-        $result = $this->saleService->sellAccessory($this->getCompanyId(), $request, $this->getStoreStateCode());
+        try {
+            $result = $this->saleService->sellAccessory($this->getCompanyId(), $request, $this->getStoreStateCode());
 
-        if (!empty($result['is_duplicate'])) {
+            if (!empty($result['is_duplicate'])) {
+                return redirect()->route('mobileshop.accessories.invoice', ['id' => $result['sale_id']])
+                    ->with('success', "Accessory sale invoice #{$result['invoice_number']} already processed.");
+            }
+
             return redirect()->route('mobileshop.accessories.invoice', ['id' => $result['sale_id']])
-                ->with('success', "Accessory sale invoice #{$result['invoice_number']} already processed.");
+                ->with('success', "Accessory sale #{$result['invoice_number']} successfully recorded!");
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            $firstError = collect($ve->errors())->flatten()->first() ?: 'Invalid sale inputs.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $firstError, 'errors' => $ve->errors()], 422);
+            }
+            return redirect()->back()->withInput()->with('error', $firstError);
+        } catch (\Throwable $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
-
-        return redirect()->route('mobileshop.accessories.invoice', ['id' => $result['sale_id']])
-            ->with('success', "Accessory sale #{$result['invoice_number']} successfully recorded!");
     }
 
     /**

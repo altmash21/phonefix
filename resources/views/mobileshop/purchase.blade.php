@@ -403,7 +403,7 @@
                 <h3 class="panel-header-title">Add Purchase</h3>
             </div>
 
-            <form action="{{ route('mobileshop.purchase.quick') }}" method="POST" id="quickPurchaseCardForm" onsubmit="return handleQuickPurchaseCardSubmit(event, this)">
+            <form action="{{ route('mobileshop.purchase.quick', ['company_id' => company_id()]) }}" method="POST" id="quickPurchaseCardForm" onsubmit="return handleQuickPurchaseCardSubmit(event, this)">
                 @csrf
                 <div class="app-form-grid">
                     <!-- Row 1: Item Name (Search / Type) & Quantity -->
@@ -1662,7 +1662,18 @@
                 body: formData
             });
 
-            const data = await resp.json();
+            let data = {};
+            const contentType = resp.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                data = await resp.json();
+            } else {
+                const text = await resp.text();
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { success: resp.ok, message: resp.ok ? 'Purchase recorded successfully!' : ('Server error: ' + resp.status) };
+                }
+            }
 
             if (!resp.ok || !data.success) {
                 throw new Error(data.message || 'Failed to record Quick Purchase.');

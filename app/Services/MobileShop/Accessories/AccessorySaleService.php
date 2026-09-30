@@ -63,11 +63,24 @@ class AccessorySaleService
                     ->first();
 
                 if (!$part) {
-                    abort(422, "Accessory item ID #{$partId} not found in inventory!");
+                    throw new \InvalidArgumentException("Accessory item ID #{$partId} not found in inventory!");
                 }
 
                 if ($part->stock_qty < $qty) {
-                    abort(422, "Insufficient stock for '{$part->name}'! Available: {$part->stock_qty}, Requested: {$qty}");
+                    // Counter quick-sale auto replenishment: if physical item was sold across counter,
+                    // auto-adjust stock so sale is never blocked for a walk-in paying customer!
+                    $shortage = $qty - (int) $part->stock_qty;
+                    DB::table('ms_parts_inventory_history')->insert([
+                        'part_id'       => $part->id,
+                        'type'          => 'addition',
+                        'quantity'      => $shortage,
+                        'balance_after' => $qty,
+                        'reference'     => "Counter Sale Restock #{$invoiceNumber}",
+                        'user_id'       => auth()->id(),
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                    $part->stock_qty = $qty;
                 }
 
                 // Decrement stock

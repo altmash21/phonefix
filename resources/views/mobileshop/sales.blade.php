@@ -373,7 +373,7 @@
                 <h3 class="panel-header-title">Add Sale</h3>
             </div>
 
-            <form action="{{ route('mobileshop.sales.store') }}" method="POST" id="quickSaleForm" onsubmit="return validateQuickSaleForm(event)">
+            <form action="{{ route('mobileshop.sales.store', ['company_id' => company_id()]) }}" method="POST" id="quickSaleForm" onsubmit="return validateQuickSaleForm(event)">
                 @csrf
                 <input type="hidden" name="sale_type" value="accessory">
                 <input type="hidden" name="amount_paid" id="quickSaleAmountPaid" value="0">
@@ -384,12 +384,14 @@
                         <div style="position: relative;">
                             <input type="text"
                                    id="quickItemSearchInput"
+                                   name="item_name"
                                    class="app-input-field"
                                    style="padding-right: 34px;"
                                    placeholder="Type item name to search..."
                                    autocomplete="off"
+                                   required
                                    oninput="onQuickItemSearchInput(this)">
-                            <input type="hidden" name="part_id" id="quickSalePartId" required>
+                            <input type="hidden" name="part_id" id="quickSalePartId">
                             <button type="button"
                                     id="btnQuickItemClear"
                                     onclick="clearQuickItemSelection()"
@@ -2338,28 +2340,23 @@
 
     function validateQuickSaleForm(e) {
         const partId = document.getElementById('quickSalePartId')?.value;
-        if (!partId) {
-            alert('Please search and select an item to sell.');
+        const itemName = (document.getElementById('quickItemSearchInput')?.value || '').trim();
+        if (!partId && !itemName) {
+            alert('Please search or enter an item name to sell.');
             const searchInput = document.getElementById('quickItemSearchInput');
             if (searchInput) searchInput.focus();
             if (e) e.preventDefault();
             return false;
         }
 
-        const custName = (document.getElementById('quickSaleCustName')?.value || '').trim();
-        if (!custName) {
-            alert('Please enter a customer name.');
-            document.getElementById('quickSaleCustName')?.focus();
-            if (e) e.preventDefault();
-            return false;
+        const custNameInput = document.getElementById('quickSaleCustName');
+        if (custNameInput && !custNameInput.value.trim()) {
+            custNameInput.value = 'Walk-in Customer';
         }
 
-        const custPhone = (document.getElementById('quickSaleCustPhone')?.value || '').trim();
-        if (!custPhone) {
-            alert('Please enter a customer mobile number.');
-            document.getElementById('quickSaleCustPhone')?.focus();
-            if (e) e.preventDefault();
-            return false;
+        const custPhoneInput = document.getElementById('quickSaleCustPhone');
+        if (custPhoneInput && !custPhoneInput.value.trim()) {
+            custPhoneInput.value = '9999999999';
         }
 
         const total = getQuickSaleCurrentTotal();
@@ -2367,7 +2364,7 @@
         const amountPaidInput = document.getElementById('quickSaleAmountPaid');
 
         if (mode === 'cash' || mode === 'upi' || mode === 'cash+upi') {
-            if (amountPaidInput) amountPaidInput.value = total.toFixed(2);
+            if (amountPaidInput) amountPaidInput.value = (total > 0 ? total : 0).toFixed(2);
         } else if (mode === 'udhari') {
             if (amountPaidInput) amountPaidInput.value = '0';
         } else if (mode === 'cash+udhari') {

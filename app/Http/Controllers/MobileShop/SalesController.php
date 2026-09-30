@@ -267,8 +267,40 @@ class SalesController extends BaseMobileShopController
     public function storeSale(Request $request)
     {
         // Support Quick Sale single-item direct submission from sales page
-        if ($request->filled('part_id') && !$request->has('items')) {
-            $partId = (int) $request->input('part_id');
+        $partId = (int) $request->input('part_id');
+        $itemName = trim((string) ($request->input('item_name') ?? $request->input('name') ?? ''));
+
+        // If part_id is empty, resolve by item name or auto-register in inventory
+        if (!$partId && !empty($itemName)) {
+            $companyId = $this->getCompanyId();
+            $existing = DB::table('ms_parts_inventory')
+                ->where('company_id', $companyId)
+                ->where('name', $itemName)
+                ->first();
+            if ($existing) {
+                $partId = (int) $existing->id;
+            } else {
+                $customPrice = (float) ($request->input('custom_price') ?: 0);
+                $partId = DB::table('ms_parts_inventory')->insertGetId([
+                    'company_id'       => $companyId,
+                    'name'             => $itemName,
+                    'category'         => 'general_accessory',
+                    'brand'            => 'Universal',
+                    'compatible_model' => 'Universal',
+                    'display_type'     => 'na',
+                    'hsn_code'         => '85177090',
+                    'unit_cost'        => 0.00,
+                    'selling_price'    => $customPrice,
+                    'stock_qty'        => max(10, (int) $request->input('quantity', 1)),
+                    'min_stock_alert'  => 3,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ]);
+            }
+            $request->merge(['part_id' => $partId]);
+        }
+
+        if ($partId > 0 && !$request->has('items')) {
             $qty = max(1, (int) ($request->input('quantity', 1) ?: 1));
             
             // Get item price if custom_price not provided
@@ -287,7 +319,7 @@ class SalesController extends BaseMobileShopController
             $mode = $request->input('payment_mode', 'cash');
 
             // Determine amount_paid
-            if ($request->filled('amount_paid')) {
+            if ($request->filled('amount_paid') && (float)$request->input('amount_paid') > 0) {
                 $amountPaid = (float) $request->input('amount_paid');
             } elseif ($mode === 'udhari') {
                 $amountPaid = 0.00;
@@ -307,7 +339,7 @@ class SalesController extends BaseMobileShopController
 
             $phone = trim((string) $request->input('customer_phone', ''));
             if (empty($phone)) {
-                $phone = '0000000000';
+                $phone = '9999999999';
             }
             $name = trim((string) $request->input('customer_name', ''));
             if (empty($name)) {
