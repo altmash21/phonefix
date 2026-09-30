@@ -37,13 +37,13 @@ return [
     'gemini' => [
         'key'            => env('GEMINI_API_KEY', ''),
         'model'          => env('GEMINI_MODEL', 'gemini-3.6-flash'),
-        'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-3.8-flash'),
+        'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash'),
     ],
 
     'groq' => [
         'key'            => env('GROQ_API_KEY', ''),
-        'model'          => env('GROQ_MODEL', 'llama-3.2-11b-vision-preview'),
-        'fallback_model' => env('GROQ_FALLBACK_MODEL', 'llama-3.2-90b-vision-preview'),
+        'model'          => env('GROQ_MODEL', 'qwen/qwen3.8-27b'),
+        'fallback_model' => env('GROQ_FALLBACK_MODEL', 'qwen/qwen3.6-27b'),
     ],
 
     'openai' => [

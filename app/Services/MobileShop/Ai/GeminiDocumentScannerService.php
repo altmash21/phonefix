@@ -185,14 +185,15 @@ class GeminiDocumentScannerService
         }
 
         $primaryModel  = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.6-flash'));
-        $fallbackModel = config('services.gemini.fallback_model', env('GEMINI_FALLBACK_MODEL', 'gemini-3.8-flash'));
+        $fallbackModel = config('services.gemini.fallback_model', env('GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash'));
 
-        $candidateModels = array_unique(array_filter([
+        $candidateModels = array_values(array_unique(array_filter([
             $primaryModel,
             $fallbackModel,
             'gemini-3.6-flash',
+            'gemini-3.5-flash',
             'gemini-3.8-flash',
-        ]));
+        ])));
 
         $lastError = null;
 
@@ -274,7 +275,7 @@ class GeminiDocumentScannerService
     }
 
     /**
-     * Send payload to Groq Vision API (Llama 3.2 11B / 90B Vision).
+     * Send payload to Groq Vision API (Qwen 3.8 / 3.6 27B Vision with auto-discovery).
      */
     public function callGroq(string $prompt, string $mimeType, string $base64Data): array
     {
@@ -287,13 +288,21 @@ class GeminiDocumentScannerService
             ];
         }
 
-        $primaryModel  = config('services.groq.model', env('GROQ_MODEL', 'llama-3.2-11b-vision-preview'));
-        $fallbackModel = config('services.groq.fallback_model', env('GROQ_FALLBACK_MODEL', 'llama-3.2-90b-vision-preview'));
-        $modelsToTry   = array_unique([$primaryModel, $fallbackModel, 'llama-3.2-11b-vision-preview', 'llama-3.2-90b-vision-preview']);
+        $primaryModel  = config('services.groq.model', env('GROQ_MODEL', 'qwen/qwen3.8-27b'));
+        $fallbackModel = config('services.groq.fallback_model', env('GROQ_FALLBACK_MODEL', 'qwen/qwen3.6-27b'));
+        $modelsToTry   = array_values(array_unique(array_filter([
+            $primaryModel,
+            $fallbackModel,
+            'qwen/qwen3.8-27b',
+            'qwen/qwen3.6-27b',
+            'meta-llama/llama-4-scout-17b-16e-instruct',
+        ])));
 
         $lastError = null;
+        $attemptedDiscovery = false;
 
-        foreach ($modelsToTry as $model) {
+        for ($i = 0; $i < count($modelsToTry); $i++) {
+            $model = $modelsToTry[$i];
             $endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
             $payload = [
@@ -368,6 +377,16 @@ class GeminiDocumentScannerService
                 $errMsg  = $errBody['error']['message'] ?? "HTTP {$httpCode} error from Groq ({$model})";
                 $lastError = $errMsg;
                 Log::warning("Groq OCR ({$model}) HTTP {$httpCode}: {$errMsg}");
+
+                // If model is decommissioned or not found, try to auto-discover an active vision model
+                if (!$attemptedDiscovery && preg_match('/decommissioned|no longer supported|model_not_found|does not exist|not found/i', $errMsg)) {
+                    $attemptedDiscovery = true;
+                    $discoveredModel = $this->discoverActiveGroqVisionModel($apiKey);
+                    if ($discoveredModel && !in_array($discoveredModel, $modelsToTry)) {
+                        Log::info("Groq OCR: Auto-discovered active vision model '{$discoveredModel}'. Retrying...");
+                        $modelsToTry[] = $discoveredModel;
+                    }
+                }
             }
         }
 
@@ -375,6 +394,45 @@ class GeminiDocumentScannerService
             'success' => false,
             'message' => $lastError ?? 'All Groq vision models failed to process the document.',
         ];
+    }
+
+    /**
+     * Dynamically query Groq API to discover an active vision / multimodal model.
+     */
+    public function discoverActiveGroqVisionModel(string $apiKey): ?string
+    {
+        try {
+            $ch = curl_init("https://api.groq.com/openai/v1/models");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . trim($apiKey),
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            $res = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $res) {
+                $json = json_decode($res, true);
+                if (!empty($json['data']) && is_array($json['data'])) {
+                    foreach ($json['data'] as $m) {
+                        $id = $m['id'] ?? '';
+                        if (preg_match('/qwen.*(vision|27b|32b|72b|vl)|llama.*vision|scout/i', $id)) {
+                            if (isset($m['active']) && !$m['active']) {
+                                continue;
+                            }
+                            return $id;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Failed to auto-discover Groq vision model: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**
