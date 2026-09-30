@@ -926,7 +926,7 @@
     }
 
     function formatCategoryLabel(slug) {
-        if (!slug) return 'General Accessories 🎁';
+        if (!slug) return '';
         const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
         const found = cats.find(c => c && (c.slug === slug || canonicalizeCategory(c.slug) === slug));
         if (found) return found.name || found.slug;
@@ -1085,6 +1085,10 @@
         const text = (String(cat || '') + ' ' + String(name || '')).toLowerCase().trim();
         const c = String(cat || '').toLowerCase().trim().replace(/[-\s]/g, '_');
 
+        if (!text && !c) {
+            return '';
+        }
+
         if (/folder|display|screen|lcd|oled|tft|combo|touch\s*display/.test(text) || c === 'display_folder' || c === 'folder_display') {
             return 'folder_display';
         }
@@ -1118,7 +1122,7 @@
         if (/camera|lens|camera\s*glass|camera\s*module/.test(text) || c === 'camera_module') {
             return 'camera_module';
         }
-        return c || 'general_accessory';
+        return c || '';
     }
     window.canonicalizeCategory = canonicalizeCategory;
 
@@ -1697,9 +1701,13 @@
                     selectCategoryOption(idx, exact.slug, exact.name);
                 } else if (!currentSlug) {
                     const auto = canonicalizeCategory('', typed);
-                    const found = cats.find(c => c && c.slug === auto);
-                    selectCategoryOption(idx, auto, found ? found.name : formatCategoryLabel(auto));
+                    if (auto) {
+                        const found = cats.find(c => c && c.slug === auto);
+                        selectCategoryOption(idx, auto, found ? found.name : formatCategoryLabel(auto));
+                    }
                 }
+            } else {
+                clearCategoryItem(idx);
             }
         }, 180);
     }
@@ -1840,6 +1848,10 @@
         const clearBtn = document.getElementById(`catClearBtn_${idx}`);
         if (clearBtn) clearBtn.style.display = 'none';
 
+        const mobileBadge = document.getElementById(`mobileCardCatLabel_${idx}`);
+        if (mobileBadge) mobileBadge.textContent = '';
+
+        onBulkCategoryChange(idx, '');
         openCategoryCombobox(idx);
     }
     window.clearCategoryItem = clearCategoryItem;
@@ -1869,10 +1881,10 @@
             row.className = 'batch-item-row batch-grid-row';
             row.id = `bulk-row-${idx}`;
 
-            const targetCat = canonicalizeCategory(itemData?.category, itemData?.name) || 'tempered_glass';
+            const targetCat = itemData ? (canonicalizeCategory(itemData?.category, itemData?.name) || '') : '';
             const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
-            const foundCat = cats.find(c => c && (c.slug === targetCat || canonicalizeCategory(c.slug) === targetCat || canonicalizeCategory(c.name) === targetCat));
-            const selectedCatName = foundCat ? (foundCat.name || foundCat.slug) : formatCategoryLabel(targetCat);
+            const foundCat = targetCat ? cats.find(c => c && (c.slug === targetCat || canonicalizeCategory(c.slug) === targetCat || canonicalizeCategory(c.name) === targetCat)) : null;
+            const selectedCatName = foundCat ? (foundCat.name || foundCat.slug) : (targetCat ? formatCategoryLabel(targetCat) : '');
 
             // Check if itemData matches an existing part in inventory
             const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
@@ -1896,7 +1908,7 @@
             const qtyVal = itemData?.qty || 1;
             const costVal = itemData?.unit_cost ? parseFloat(itemData.unit_cost).toFixed(2) : (selectedPart?.unit_cost ? parseFloat(selectedPart.unit_cost).toFixed(2) : '0.00');
             const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (selectedPart?.selling_price ? parseFloat(selectedPart.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2));
-            const isGiftChecked = (itemData?.is_gift_eligible || targetCat === 'tempered_glass' || targetCat === 'back_cover' || targetCat === 'charger_cable' || targetCat === 'earphones_audio' || targetCat === 'general_accessory') ? 'checked' : '';
+            const isGiftChecked = (itemData?.is_gift_eligible || (targetCat && (targetCat === 'tempered_glass' || targetCat === 'back_cover' || targetCat === 'charger_cable' || targetCat === 'earphones_audio' || targetCat === 'general_accessory'))) ? 'checked' : '';
             const lineTotal = (qtyVal * parseFloat(costVal));
             const detectedBrand = guessBrand(nameVal || '') || brandVal;
             const isFolder = (targetCat === 'folder_display');
@@ -1914,7 +1926,7 @@
                 <div class="mobile-card-top">
                     <div style="display:flex; align-items:center; gap:6px;">
                         <span class="mobile-row-badge">#${idx}</span>
-                        <span style="font-size:11px; font-weight:700; color:#64748B;" id="mobileCardCatLabel_${idx}">${escapeHtml(selectedCatName)}</span>
+                        <span style="font-size:11px; font-weight:700; color:#64748B;" id="mobileCardCatLabel_${idx}">${selectedCatName ? escapeHtml(selectedCatName) : ''}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:6px;">
                         <button type="button" class="btn-ghost-add" onclick="addBulkRowAndFocus()" title="Add another item row (+)">
@@ -1937,7 +1949,7 @@
                     <label class="mobile-card-label">Category</label>
                     <div style="position:relative; display:flex; align-items:center;">
                         <input type="text" id="catSearchInput_${idx}" class="restock-input search-combobox-input cat-search-input"
-                            value="${escapeHtml(selectedCatName)}" placeholder="Category"
+                            value="${selectedCatName ? escapeHtml(selectedCatName) : ''}" placeholder="Category"
                             autocomplete="off"
                             onfocus="openCategoryCombobox(${idx})"
                             onclick="openCategoryCombobox(${idx})"
@@ -1949,7 +1961,7 @@
                             style="${selectedCatName ? 'display:flex;' : 'display:none;'}"
                             title="Clear category">✕</button>
                     </div>
-                    <input type="hidden" name="items[${idx}][category]" id="catValue_${idx}" value="${escapeHtml(targetCat)}">
+                    <input type="hidden" name="items[${idx}][category]" id="catValue_${idx}" value="${targetCat ? escapeHtml(targetCat) : ''}">
                     <div id="catComboboxMenu_${idx}" class="combobox-menu category-combobox-menu" style="display:none;"></div>
                 </div>
 
