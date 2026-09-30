@@ -8,6 +8,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#5E6AD2">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ asset('public/img/pwa/icon-192x192.png') }}">
+    <meta name="apple-mobile-web-app-title" content="PhoneFix Admin">
+    <meta name="application-name" content="PhoneFix Admin">
     <base href="{{ config('app.url') . '/' }}">
     <title>@yield('title', 'PhoneFix Azamgarh — Mobile Shop ERP')</title>
 
@@ -350,6 +354,13 @@
         </a>
 
         <div class="topbar-right">
+            <!-- Download Admin Shortcut Button (Desktop & Mobile) -->
+            <button type="button" class="btn-app-shortcut no-print" onclick="openAdminShortcutModal()" title="Download / Install Admin Panel Shortcut (Desktop & Mobile)">
+                <i data-lucide="download" style="width:13px;height:13px; color:#4F46E5;"></i>
+                <span class="shortcut-text">Install App</span>
+                <span class="shortcut-badge">Free</span>
+            </button>
+
             @if(Auth::check())
                 @php
                     $u = Auth::user();
@@ -423,6 +434,19 @@
             </div>
             <button type="button" class="mobile-sidebar-drawer-close" onclick="closeMobileSidebar()" aria-label="Close menu">×</button>
         </div>
+
+        <!-- Mobile Shortcut Download Banner -->
+        <div class="mobile-shortcut-banner no-print" onclick="closeMobileSidebar(); openAdminShortcutModal();" title="Install Admin App / Shortcut">
+            <div style="width:28px;height:28px;border-radius:7px;background:#4F46E5;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="download" style="width:14px;height:14px;"></i>
+            </div>
+            <div style="flex:1;">
+                <div style="font-weight:700;font-size:12px;color:#1E293B;">Install Admin App</div>
+                <div style="font-size:10.5px;color:#64748B;">Add 1-tap shortcut to Home screen</div>
+            </div>
+            <i data-lucide="chevron-right" style="width:13px;height:13px;color:#94A3B8;"></i>
+        </div>
+
         <nav class="sidebar-nav">
             @canany(['read-mobileshop-dashboard', 'read-admin-panel'])
             <a href="{{ route('mobileshop.dashboard') }}"
@@ -721,5 +745,6 @@
         });
     })();
     </script>
+    @include('mobileshop.partials.shortcut_modal')
 </body>
 </html>

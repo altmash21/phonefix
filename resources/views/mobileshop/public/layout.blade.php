@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>@yield('title', store_name() . ' — Mobile Accessories & Express Repair Lab')</title>
     <meta name="description" content="@yield('meta_description', 'Official mobile accessories, fast chargers, tempered glass, OEM batteries, and certified express phone repair in ' . store_city() . '.')">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ asset('public/img/pwa/icon-192x192.png') }}">
+    <meta name="apple-mobile-web-app-title" content="PhoneFix Admin">
+    <meta name="application-name" content="PhoneFix Admin">
 
     <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -380,7 +384,13 @@
             </div>
 
             <!-- Right: Login & Track Repair Buttons (Flush to right end) -->
-            <div class="flex items-center gap-2.5 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                <!-- Admin Shortcut Download Button -->
+                <button type="button" onclick="openAdminShortcutModal()" class="cal-btn-secondary text-[13px] font-semibold h-10 px-3 sm:px-3.5 rounded-lg inline-flex items-center gap-1.5 border border-[#e5e7eb] text-[#111111] hover:bg-[#f8f9fa] transition-colors" title="Download Admin Panel Shortcut for Desktop & Mobile">
+                    <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span class="hidden sm:inline">Admin App</span>
+                    <span class="sm:hidden">App</span>
+                </button>
                 @auth
                     <a href="{{ route('mobileshop.dashboard', ['company_id' => auth()->user()?->company_id ?? session('company_id') ?? 1]) }}" class="cal-btn-secondary text-[13px] font-semibold h-10 px-3.5 sm:px-4 rounded-lg inline-flex items-center gap-2 border border-[#e5e7eb] text-[#111111] hover:bg-[#f8f9fa] transition-colors" title="Console Dashboard">
                         <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
@@ -421,6 +431,10 @@
             <a href="{{ route('public.about') }}" class="block px-3 py-2 rounded-md hover:bg-[#f8f9fa] transition-colors {{ request()->routeIs('public.about') ? 'font-semibold bg-[#f8f9fa]' : '' }}">About Lab</a>
             <a href="{{ route('public.contact') }}" class="block px-3 py-2 rounded-md hover:bg-[#f8f9fa] transition-colors {{ request()->routeIs('public.contact') ? 'font-semibold bg-[#f8f9fa]' : '' }}">Contact Desk</a>
             <div class="pt-3 border-t border-[#f3f4f6] flex flex-col gap-2">
+                <button type="button" onclick="openAdminShortcutModal()" class="cal-btn-secondary w-full text-center flex items-center justify-center gap-2 h-10 rounded-lg border border-[#e5e7eb] text-[#111111] hover:bg-[#f8f9fa]">
+                    <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download Admin Shortcut / App</span>
+                </button>
                 @auth
                     <a href="{{ route('mobileshop.dashboard', ['company_id' => auth()->user()?->company_id ?? session('company_id') ?? 1]) }}" class="cal-btn-secondary w-full text-center flex items-center justify-center gap-2 h-10 rounded-lg border border-[#e5e7eb] text-[#111111] hover:bg-[#f8f9fa]">
                         <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
@@ -553,5 +567,6 @@
         });
     </script>
     @stack('scripts')
+    @include('mobileshop.partials.shortcut_modal')
 </body>
 </html>

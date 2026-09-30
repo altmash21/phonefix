@@ -1,0 +1,67 @@
+{
+    "name": "PhoneFix Azamgarh — Admin Console",
+    "short_name": "PhoneFix Admin",
+    "description": "PhoneFix Azamgarh Retail ERP & Service Admin Console",
+    "start_url": "/1/mobileshop",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#FFFFFF",
+    "theme_color": "#5E6AD2",
+    "icons": [
+        {
+            "src": "/img/pwa/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/img/pwa/icon-192x192-maskable.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/img/pwa/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/img/pwa/icon-512x512-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Counter POS",
+            "short_name": "POS",
+            "description": "Retail Accessories Counter POS",
+            "url": "/1/mobileshop/accessories/pos",
+            "icons": [{ "src": "/img/pwa/icon-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Restock & Purchase",
+            "short_name": "Restock",
+            "description": "Accessories & Stock Intake",
+            "url": "/1/mobileshop/accessories/purchase",
+            "icons": [{ "src": "/img/pwa/icon-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Khata Ledger",
+            "short_name": "Khata",
+            "description": "Customer Udhar & Khata Ledger",
+            "url": "/1/mobileshop/khata",
+            "icons": [{ "src": "/img/pwa/icon-192x192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Repair Desk",
+            "short_name": "Repairs",
+            "description": "Lab Repair Job Sheets",
+            "url": "/1/mobileshop/repairs",
+            "icons": [{ "src": "/img/pwa/icon-192x192.png", "sizes": "192x192" }]
+        }
+    ]
+}

@@ -55,6 +55,8 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('/', 'MobileShop\DashboardController@dashboard')
         ->middleware('permission:read-mobileshop-dashboard')
         ->name('dashboard');
+    Route::get('download-shortcut', 'MobileShop\DashboardController@downloadShortcut')
+        ->name('download_shortcut');
 
     Route::get('purchase', 'MobileShop\PurchaseController@purchaseHub')
         ->middleware('permission:read-mobileshop-purchase')

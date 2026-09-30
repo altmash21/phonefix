@@ -448,4 +448,22 @@ class DashboardController extends BaseMobileShopController
             'recentSales', 'activeRepairs', 'analytics'
         ));
     }
+
+    /**
+     * Download native Windows Desktop shortcut file (.url).
+     */
+    public function downloadShortcut(Request $request)
+    {
+        $companyId = $this->getCompanyId();
+        $adminUrl  = url("/{$companyId}/mobileshop");
+        $iconUrl   = url('public/img/favicon.ico');
+
+        $content = "[InternetShortcut]\r\nURL={$adminUrl}\r\nIconIndex=0\r\nIconFile={$iconUrl}\r\nHotKey=0\r\n";
+
+        return response($content, 200, [
+            'Content-Type'        => 'application/x-mswinurl; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="PhoneFix-Admin-Console.url"',
+            'Cache-Control'       => 'no-store, no-cache, must-revalidate',
+        ]);
+    }
 }
