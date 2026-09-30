@@ -184,7 +184,7 @@
             @php
                 $isRepayment = $entry->paid > 0 && $entry->billed <= 0;
                 $itemName = $entry->item_name ?? $entry->particulars;
-                $dateFormatted = date('d/m/Y', strtotime($entry->date));
+                $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
             @endphp
             <tr>
                 <td class="font-mono" style="color: #4b5563; vertical-align: top;">{{ $dateFormatted }}</td>

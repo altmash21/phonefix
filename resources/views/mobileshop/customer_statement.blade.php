@@ -71,10 +71,10 @@
         <a href="{{ route('mobileshop.khata.customer_statement_pdf', ['id' => $customer->id]) }}" class="btn btn-primary btn-sm" style="font-weight:700; background:#5E6AD2;">
             <i data-lucide="download" style="width:13px;height:13px;"></i> Download PDF
         </a>
-        <a href="{{ $waStatementUrl }}" target="_blank" class="btn btn-sm" style="font-weight:700; background:#25D366; color:#ffffff; display:inline-flex; align-items:center; gap:6px; border:none; box-shadow:0 2px 5px rgba(37,211,102,0.3);">
-            <svg style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-            Send on WhatsApp
-        </a>
+        <button type="button" id="btnSendWaPdf" onclick="shareStatementPdfWhatsApp()" class="btn btn-sm" style="font-weight:700; background:#25D366; color:#ffffff; display:inline-flex; align-items:center; gap:6px; border:none; box-shadow:0 2px 5px rgba(37,211,102,0.3); cursor:pointer;">
+            <svg id="waBtnIcon" style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+            <span id="waBtnLabel">Send on WhatsApp</span>
+        </button>
         <a href="{{ route('mobileshop.khata') }}" class="btn btn-outline btn-sm" style="font-weight:700;">
             <i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Back to Khata Hub
         </a>
@@ -140,7 +140,7 @@
                 @php
                     $isRepayment = $entry->paid > 0 && $entry->billed <= 0;
                     $itemName = $entry->item_name ?? $entry->particulars;
-                    $dateFormatted = date('d/m/Y', strtotime($entry->date));
+                    $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
                 @endphp
                 <tr style="border-bottom: 1px solid #E5E7EB;">
                     <td style="padding: 9px 6px; color: #4B5563; font-family: monospace; font-size: 12px; vertical-align: top;">
@@ -222,6 +222,33 @@
         </div>
 
 </div>
+
+<!-- DESKTOP WHATSAPP GUIDANCE MODAL -->
+<div id="waDesktopModal" class="no-print" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#ffffff; border-radius:14px; max-width:480px; width:100%; padding:24px 26px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #E2E8F0; text-align:center;">
+        <div style="width:52px; height:52px; border-radius:50%; background:#DCFCE7; color:#16A34A; display:flex; align-items:center; justify-content:center; margin:0 auto 14px;">
+            <svg style="width:28px;height:28px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+        </div>
+        <h3 style="font-size:16px; font-weight:800; color:#0F172A; margin-bottom:6px;">PDF Statement Downloaded</h3>
+        <p style="font-size:13px; color:#475569; line-height:1.5; margin-bottom:14px;">
+            The PDF file <strong id="waModalFilename" style="color:#0F172A; word-break:break-all;">Statement.pdf</strong> has been downloaded to your computer and WhatsApp Web is opened.
+        </p>
+        <div style="background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:8px; padding:12px 14px; font-size:12px; color:#334155; text-align:left; margin-bottom:18px; line-height:1.6;">
+            <strong>👉 Send the actual PDF on WhatsApp:</strong><br>
+            1. Switch to the WhatsApp Web tab.<br>
+            2. Simply <strong>drag & drop</strong> the downloaded PDF into the chat window (or click <strong>📎 &gt; Document</strong>).<br>
+            3. Press <strong>Enter</strong> to send the PDF file!
+        </div>
+        <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button type="button" onclick="openWaAgain()" class="btn btn-sm" style="font-weight:700; background:#25D366; color:#ffffff; border:none; padding:7px 16px; border-radius:7px; cursor:pointer;">
+                Open WhatsApp Web Again
+            </button>
+            <button type="button" onclick="closeDesktopWaGuide()" class="btn btn-outline btn-sm" style="font-weight:700; padding:7px 16px; border-radius:7px; cursor:pointer;">
+                Got it
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('styles')
@@ -244,4 +271,100 @@
         }
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    let activeWaTargetUrl = '';
+
+    async function shareStatementPdfWhatsApp() {
+        const btn = document.getElementById('btnSendWaPdf');
+        const label = document.getElementById('waBtnLabel');
+        const originalLabel = 'Send on WhatsApp';
+        const pdfUrl = "{{ route('mobileshop.khata.customer_statement_pdf', ['id' => $customer->id]) }}";
+        const customerPhone = "{{ $cleanPhone }}";
+        const customerName = "{{ addslashes($customer->name) }}";
+        const filename = "Statement-{{ \Illuminate\Support\Str::slug($customer->name, '_') }}.pdf";
+        const waTextUrl = "{{ $waStatementUrl }}";
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (btn) btn.disabled = true;
+        if (label) label.textContent = 'Preparing PDF...';
+
+        try {
+            const resp = await fetch(pdfUrl);
+            if (!resp.ok) throw new Error('PDF generation request failed.');
+            const blob = await resp.blob();
+            const file = new File([blob], filename, { type: 'application/pdf' });
+
+            // 1. Mobile & Web Share API Level 2 (Direct PDF file attachment)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                if (label) label.textContent = 'Opening WhatsApp...';
+                await navigator.share({
+                    title: 'Statement of Account - ' + customerName,
+                    text: 'Statement of Account for ' + customerName + ' from {{ addslashes($storeName) }}. Balance Due: ₹{{ number_format($closingBalance, 2) }}',
+                    files: [file]
+                });
+                if (label) label.textContent = 'Shared on WhatsApp';
+                setTimeout(() => {
+                    if (label) label.textContent = originalLabel;
+                    if (btn) btn.disabled = false;
+                }, 2000);
+                return;
+            }
+
+            // 2. Desktop Fallback:
+            // Download the actual PDF file so user has it ready
+            const downloadUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 4000);
+
+            // Open WhatsApp Web with the chat preloaded
+            activeWaTargetUrl = customerPhone
+                ? (isMobile ? 'https://wa.me/' + customerPhone : 'https://web.whatsapp.com/send?phone=' + customerPhone)
+                : 'https://web.whatsapp.com/';
+            window.open(activeWaTargetUrl, '_blank');
+
+            // Show instructional modal on screen
+            showDesktopWaGuide(filename);
+
+        } catch (err) {
+            console.warn('PDF share handling notice:', err);
+            // If user simply closed the share sheet, do not navigate away
+            if (err.name !== 'AbortError') {
+                window.open(waTextUrl, '_blank');
+            }
+        } finally {
+            if (btn) btn.disabled = false;
+            if (label && label.textContent !== 'Shared on WhatsApp') {
+                label.textContent = originalLabel;
+            }
+        }
+    }
+
+    function showDesktopWaGuide(fname) {
+        const modal = document.getElementById('waDesktopModal');
+        const fnameEl = document.getElementById('waModalFilename');
+        if (fnameEl && fname) fnameEl.textContent = fname;
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeDesktopWaGuide() {
+        const modal = document.getElementById('waDesktopModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function openWaAgain() {
+        if (activeWaTargetUrl) {
+            window.open(activeWaTargetUrl, '_blank');
+        } else {
+            window.open('https://web.whatsapp.com/', '_blank');
+        }
+    }
+</script>
 @endpush
