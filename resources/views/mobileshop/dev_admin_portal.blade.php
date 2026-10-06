@@ -445,18 +445,18 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-rose-900/60 pb-5">
                 <div>
                     <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                        Irreversible Action &bull; Handover Ready
+                        Irreversible Action &bull; 100% Brand New To Ship
                     </span>
                     <h3 class="text-xl font-black text-rose-100 tracking-tight mt-2 flex items-center gap-2">
-                        <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Client Delivery & Database Clean Reset
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Client Delivery & Complete Wipe Reset
                     </h3>
                     <p class="text-xs text-rose-200/80 mt-1 max-w-3xl">
-                        Designed specifically for client handover. Clears all test invoices, purchases, IMEI stock entries, customer khata ledger lines, repair jobs, and login tokens, restoring sequence numbers back to <span class="font-mono font-bold text-white">#0001</span>.
+                        Designed specifically for client handover. Wipes <strong>everything</strong>: all phone & accessories stock, all suppliers, purchase orders, goods receipts, sales invoices, customer khata ledger lines, expenses, and repair tickets, restoring sequence numbers back to <span class="font-mono font-bold text-white">#0001</span>.
                     </p>
                 </div>
                 <div class="shrink-0">
                     <button type="button" onclick="openResetModal()" class="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold tracking-wide uppercase transition shadow-xl shadow-rose-600/40 flex items-center gap-2">
-                        <i class="fa-solid fa-broom"></i> Reset Database For Handover
+                        <i class="fa-solid fa-broom"></i> Wipe Everything & Ship Brand New
                     </button>
                 </div>
             </div>
@@ -466,35 +466,42 @@
                 <!-- Cleared -->
                 <div class="p-4 rounded-xl bg-rose-950/40 border border-rose-800/40 space-y-3">
                     <h4 class="font-bold text-rose-200 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-circle-xmark text-rose-400"></i> Wiped Clean For Delivery
+                        <i class="fa-solid fa-circle-xmark text-rose-400"></i> Wiped Clean For Delivery (Brand New To Ship)
                     </h4>
                     <ul class="space-y-1.5 text-rose-300/90 list-disc list-inside">
-                        <li>All customer sales invoices & credit notes</li>
-                        <li>All vendor purchase orders & goods receipt notes</li>
-                        <li>All phone IMEI items (new & second-hand inventory)</li>
-                        <li>All customer khata debit/credit ledger transactions</li>
-                        <li>Customer EMI payment installments & down-payments</li>
-                        <li>Repair service desk work orders & diagnosis logs</li>
-                        <li>Customer phone advance balance pools reset to ₹0</li>
-                        <li>Supplier ledger balances & advance pools reset to ₹0</li>
-                        <li>All invoice & GRN serial counters reset to start at #0001</li>
-                        <li>Test invite registration tokens & OTP reset requests</li>
+                        <li><strong>All Stock:</strong> Mobile phones (new & secondhand), accessories catalog, spare parts, promotional gifts & defective items</li>
+                        <li><strong>All Suppliers:</strong> Supplier profiles, purchase orders (POs), goods receipt notes (GRNs), and supplier payment records</li>
+                        <li><strong>All Commercial Sales:</strong> Phone sales invoices, accessory POS bills, gift allocations & sales return credit notes</li>
+                        <li><strong>All Customers & Khata:</strong> Customer profiles, udhari debit/credit ledger transactions & outstanding dues</li>
+                        <li><strong>All Store Expenses:</strong> Daily operational expense records & vouchers</li>
+                        <li><strong>Repair Service Desk:</strong> Repair job tickets, diagnosis histories & spare parts billed</li>
+                        <li><strong>EMI Data:</strong> Customer installment deduction logs & advance pool balances reset to ₹0.00</li>
+                        <li><strong>Counters & Serials:</strong> All invoice, purchase order, GRN & ticket counters reset to start at #0001</li>
+                        <li><strong>Uploaded Attachments:</strong> Uploaded phone photos, box photos, and test attachments</li>
+                        <li><strong>System Sessions:</strong> Test invite onboarding tokens, login sessions & password reset OTPs</li>
                     </ul>
                 </div>
 
                 <!-- Preserved -->
                 <div class="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/40 space-y-3">
                     <h4 class="font-bold text-emerald-200 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-circle-check text-emerald-400"></i> Intact & Preserved
+                        <i class="fa-solid fa-circle-check text-emerald-400"></i> Intact & Preserved For Handover
                     </h4>
                     <ul class="space-y-1.5 text-emerald-300/90 list-disc list-inside">
-                        <li>Super Admin and Store Administrator accounts</li>
-                        <li>Staff roles, designations, and permissions matrix</li>
-                        <li>Master catalog definitions (brands, categories, accessories masters)</li>
-                        <li>Company profile, tax rates, GSTIN configuration & settings</li>
+                        <li>Super Admin, Store Administrator & Developer account credentials</li>
+                        <li>Staff roles, permissions matrix, and access security settings</li>
+                        <li>Master catalog categories (parts & accessories category taxonomy)</li>
+                        <li>Company profile, legal business details, tax rates & GSTIN configurations</li>
                         <li>Store branding, logo assets, and custom theme presets</li>
                         <li><strong class="text-white">Pre-Reset Safety Snapshot:</strong> An emergency full SQL backup is generated automatically before tables are purged!</li>
                     </ul>
+                </div>
+            <!-- CLI Command Alternative -->
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-rose-900/40 font-mono text-[11px] text-slate-400">
+                <span class="text-rose-400 block font-semibold mb-1"><i class="fa-solid fa-terminal mr-1"></i> Artisan CLI Handover Command:</span>
+                <div class="flex items-center justify-between bg-slate-900 px-2.5 py-1.5 rounded border border-slate-800">
+                    <span class="text-slate-300">php artisan mobileshop:clean-database</span>
+                    <button onclick="navigator.clipboard.writeText('php artisan mobileshop:clean-database --force')" title="Copy Command with --force" class="text-slate-500 hover:text-slate-300"><i class="fa-regular fa-copy"></i></button>
                 </div>
             </div>
         </div>
@@ -521,7 +528,7 @@
                 </div>
 
                 <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-                    <p><i class="fa-solid fa-info-circle text-indigo-400 mr-1"></i> Includes all 79 tables, schemas, indexes, and current records.</p>
+                    <p><i class="fa-solid fa-info-circle text-indigo-400 mr-1"></i> Includes all tables, schemas, indexes, and current records.</p>
                     <p><i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Dumper engine: Native mysqldump (with PDO fallback).</p>
                 </div>
 
@@ -543,7 +550,7 @@
         <div class="bg-slate-900 border border-rose-700/60 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
             <div class="flex items-center justify-between pb-3 border-b border-rose-900/60">
                 <h3 class="text-base font-black text-rose-300 flex items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Confirm Client Handover Reset
+                    <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Wipe Everything & Ship Brand New
                 </h3>
                 <button type="button" onclick="closeResetModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -552,18 +559,29 @@
                 @csrf
                 
                 <div class="p-4 rounded-xl bg-rose-950/40 border border-rose-800/40 text-xs text-rose-200 space-y-2">
-                    <p class="font-bold text-rose-100">⚠️ WARNING: This will purge all transaction data across 23 tables!</p>
-                    <p class="text-rose-300/80">To proceed, you must type <strong class="font-mono text-white bg-rose-900/60 px-1.5 py-0.5 rounded">RESET</strong> into the confirmation box below.</p>
+                    <p class="font-bold text-rose-100 flex items-center gap-2">
+                        <i class="fa-solid fa-fire text-rose-400"></i> ⚠️ PURGING ALL STOCK, SUPPLIERS, AND TRANSACTIONAL DATA!
+                    </p>
+                    <p class="text-rose-300/80 leading-relaxed">
+                        This action completely wipes <strong>all inventory stock</strong> (phones, accessories, parts), <strong>all suppliers</strong>, <strong>all purchase orders</strong>, <strong>all sales invoices</strong>, <strong>all customer khatas</strong>, and <strong>expenses</strong>, resetting all serial counters to <strong>#0001</strong> to deliver a 100% brand-new, zero-state shop to the client.
+                    </p>
+                    <p class="text-rose-200 pt-1">
+                        To proceed, type <strong class="font-mono text-white bg-rose-900/60 px-1.5 py-0.5 rounded">RESET</strong> into the confirmation box below.
+                    </p>
                 </div>
 
                 <div class="space-y-2">
+                    <label class="flex items-center gap-2 text-xs text-rose-300/90 font-medium">
+                        <input type="checkbox" name="wipe_all" value="1" checked disabled class="rounded bg-slate-950 border-rose-700 text-rose-600 focus:ring-0">
+                        <span>Wipe all stock (Phones & Accessories) & all supplier accounts</span>
+                    </label>
                     <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                         <input type="checkbox" name="reset_sequences" value="1" checked class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
-                        <span>Reset all invoice & GRN counters back to start (<span class="font-mono text-indigo-300">#0001</span>)</span>
+                        <span>Reset all invoice, PO & GRN counters back to start (<span class="font-mono text-indigo-300">#0001</span>)</span>
                     </label>
                     <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                         <input type="checkbox" name="clean_media" value="1" checked class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
-                        <span>Purge temporary uploaded receipt/test attachment files</span>
+                        <span>Purge temporary uploaded receipt & test device photos</span>
                     </label>
                     <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                         <input type="checkbox" name="preserve_staff" value="1" checked class="rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-0">
@@ -580,7 +598,7 @@
                     <button type="button" onclick="closeResetModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-slate-800/60">Cancel</button>
                     <button type="submit" id="resetSubmitBtn" class="px-5 py-2.5 rounded-xl text-xs font-extrabold text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/40 flex items-center gap-2">
                         <span id="resetSpinner" class="hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
-                        <span id="resetBtnText">Execute Handover Reset</span>
+                        <span id="resetBtnText">Wipe Everything & Deliver</span>
                     </button>
                 </div>
             </form>

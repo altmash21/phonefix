@@ -307,6 +307,8 @@ class SuperAdminDevPortalController extends Controller
         }
 
         $options = [
+            'wipe_stock'      => true,
+            'wipe_suppliers'  => true,
             'clean_media'     => $request->boolean('clean_media', true),
             'reset_sequences' => $request->boolean('reset_sequences', true),
             'preserve_staff'  => $request->boolean('preserve_staff', true),
@@ -315,7 +317,7 @@ class SuperAdminDevPortalController extends Controller
         $result = DatabaseBackupService::resetDatabaseForClientHandover($options);
 
         if ($result['success']) {
-            $msg = "Database successfully reset for fresh client delivery! Total records wiped: " . ($result['total_records'] ?? 0) . ". Pre-reset snapshot saved: " . ($result['snapshot'] ?? 'N/A');
+            $msg = "Database successfully wiped clean for fresh client delivery! All stock, suppliers, purchases, sales, and ledgers have been purged (Total records wiped: " . ($result['total_records'] ?? 0) . "). Pre-reset backup saved: " . ($result['snapshot'] ?? 'N/A') . ". System is brand new to ship!";
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([

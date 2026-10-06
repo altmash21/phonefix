@@ -270,15 +270,15 @@ class DatabaseBackupService
         }
 
         // Safe table row counts
-        $deviceCountNew      = self::safeCount('ms_mobile_devices', ['device_type' => 'new']);
-        $deviceCountUsed     = self::safeCount('ms_mobile_devices', ['device_type' => 'secondhand']);
+        $deviceCountNew      = self::safeCount('ms_mobile_devices', ['type' => 'new']);
+        $deviceCountUsed     = self::safeCount('ms_mobile_devices', ['type' => 'second_hand']);
         $deviceCountTotal    = self::safeCount('ms_mobile_devices');
         $partsItemCount      = self::safeCount('ms_parts_inventory');
         $categoryCount       = self::safeCount('ms_part_categories');
         $phoneSalesCount     = self::safeCount('ms_mobile_sales');
         $accessorySalesCount = self::safeCount('ms_accessory_sales');
         $purchaseCount       = self::safeCount('ms_purchase_orders');
-        $repairCount         = self::safeCount('ms_repairs');
+        $repairCount         = self::safeCount('ms_repair_tickets');
         $customerCount       = self::safeCount('ms_customers');
         $khataTransCount     = self::safeCount('ms_customer_khata_transactions');
         $emiProviderCount    = self::safeCount('ms_emi_providers');
@@ -292,7 +292,7 @@ class DatabaseBackupService
         $accessoryRevenue = self::safeSum('ms_accessory_sales', 'total_amount');
         $grossRevenue     = $phoneRevenue + $accessoryRevenue;
         $purchaseSpend    = self::safeSum('ms_purchase_orders', 'total_amount');
-        $customerKhataDue = self::safeSum('ms_customers', 'khata_balance');
+        $customerKhataDue = self::safeSum('ms_customers', 'udhari_balance');
 
         // Detailed row counts for all MobileShop tables
         $tablesList = DB::select('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"');
@@ -444,106 +444,172 @@ class DatabaseBackupService
         // Step 1: Automatic emergency backup snapshot before doing anything destructive
         $snapshot = self::createBackup('PRE-RESET-SNAPSHOT');
 
-        // Step 2: Wipe transactional tables with foreign key checks disabled
+        // Step 2: Disable foreign key checks for clean truncation
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
+        // Comprehensive list of all transactional, stock, supplier, and operational tables to wipe
         $tablesToWipe = [
-            'ms_accessory_sale_items',
-            'ms_accessory_sales',
-            'ms_mobile_sales',
-            'ms_purchase_order_items',
-            'ms_purchase_orders',
-            'ms_goods_receipt_items',
-            'ms_goods_receipts',
-            'ms_customer_khata_transactions',
-            'ms_customers',
-            'ms_sale_gifts',
-            'ms_sales_returns',
-            'ms_stock_audit_log',
-            'ms_parts_inventory_history',
-            'ms_repair_ticket_parts',
-            'ms_repair_tickets',
-            'ms_otp_tokens',
-            'ms_password_reset_otps',
-            'ms_login_sessions',
-            'ms_employee_invites',
-            'ms_supplier_credit_transactions',
-            'ms_supplier_payments',
-            'ms_sync_offsets',
-            'ms_sync_queue',
-        ];
+            // ── 1. Physical Stock & Inventory (ALL Stock) ──
+            'ms_mobile_devices',               // All phones (brand new, secondhand, buybacks)
+            'ms_parts_inventory',              // All accessories & spare parts catalog stock
+            'ms_parts_inventory_history',      // Stock ledger history & intake records
+            'ms_gifts',                        // Promotional gift inventory items
+            'ms_sale_gifts',                   // Promo gift allocations on sales
+            'ms_defective_items',              // Defective, returned & scrapped items
+            'ms_stock_audit_log',              // Physical stock audit trail
 
-        // Optional inventory devices wipe
-        if (!empty($options['wipe_inventory'])) {
-            $tablesToWipe[] = 'ms_mobile_devices';
-            $tablesToWipe[] = 'ms_parts_inventory';
-        }
+            // ── 2. Suppliers & Procurement (ALL Suppliers) ──
+            'ms_suppliers',                    // All vendor and supplier profiles
+            'ms_supplier_credit_wallets',      // Supplier credit advance wallets
+            'ms_supplier_credit_transactions', // Supplier credit ledger transactions
+            'ms_supplier_payments',            // Payment records to suppliers
+            'ms_purchase_orders',              // All purchase orders (POs)
+            'ms_purchase_order_items',         // Purchase order line items
+            'ms_goods_receipts',               // Goods receipt notes (GRNs)
+            'ms_goods_receipt_items',          // GRN line items
+
+            // ── 3. Customers & Khata (Udhari Ledger) ──
+            'ms_customers',                    // All customer accounts
+            'ms_customer_khata_transactions',  // All customer khata debit/credit ledger lines
+
+            // ── 4. Commercial Sales, Invoices & Returns ──
+            'ms_mobile_sales',                 // All mobile phone sales invoices
+            'ms_accessory_sales',              // All accessory sales invoices
+            'ms_accessory_sale_items',         // Accessory invoice line items
+            'ms_sales_returns',                // All sales return credit notes
+
+            // ── 5. Store Expenses ──
+            'ms_expenses',                     // All daily store expense vouchers
+
+            // ── 6. Repair Service Desk ──
+            'ms_repair_tickets',               // All repair job cards & service tickets
+            'ms_repair_ticket_parts',          // Spare parts billed in repair tickets
+
+            // ── 7. EMI Transactions ──
+            'ms_emi_provider_transactions',    // EMI installment deduction & downpayment logs
+
+            // ── 8. Operational Sessions, Tokens & Queues ──
+            'ms_otp_tokens',                   // OTP verification tokens
+            'ms_password_reset_otps',          // Password reset OTPs
+            'ms_login_sessions',               // Active user login sessions
+            'ms_employee_invites',             // Employee onboarding invite tokens
+            'ms_sync_offsets',                 // Offline sync offsets
+            'ms_sync_queue',                   // Offline sync pending queue
+            'ms_pending_jobs',                 // Background worker pending jobs
+        ];
 
         $wipedCounts = [];
         foreach ($tablesToWipe as $tbl) {
             try {
                 if (DB::getSchemaBuilder()->hasTable($tbl)) {
-                    $rows = DB::table($tbl)->count();
-                    DB::table($tbl)->truncate();
+                    $rows = (int) DB::table($tbl)->count();
+                    try {
+                        DB::table($tbl)->truncate();
+                    } catch (\Throwable $te) {
+                        // Fallback to delete if truncate is blocked by engine constraints
+                        DB::table($tbl)->delete();
+                    }
                     $wipedCounts[$tbl] = $rows;
                 }
             } catch (\Throwable $e) {
-                Log::warning("Could not truncate {$tbl}: " . $e->getMessage());
+                Log::warning("Could not wipe {$tbl}: " . $e->getMessage());
             }
         }
 
-        // Step 3: Reset invoice sequence counters back to start fresh at #0001
+        // Step 3: Reset invoice and sequence counters back to start fresh at #0001
         try {
             if (DB::getSchemaBuilder()->hasTable('ms_invoice_sequences')) {
-                DB::table('ms_invoice_sequences')->update([
-                    'current_number' => 0,
-                    'updated_at'     => now(),
-                ]);
+                try {
+                    DB::table('ms_invoice_sequences')->truncate();
+                } catch (\Throwable) {
+                    DB::table('ms_invoice_sequences')->update([
+                        'current_sequence' => 0,
+                        'updated_at'       => now(),
+                    ]);
+                }
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+            Log::warning("Could not reset ms_invoice_sequences: " . $e->getMessage());
+        }
 
-        // Step 4: Reset advance wallets on Suppliers and advance pools on EMI providers to 0.00
+        // Step 4: Reset advance balance pools on EMI providers to 0.00
         try {
             if (DB::getSchemaBuilder()->hasTable('ms_emi_providers')) {
                 DB::table('ms_emi_providers')->update(['advance_balance' => 0.00, 'updated_at' => now()]);
             }
-            if (DB::getSchemaBuilder()->hasTable('ms_suppliers')) {
-                DB::table('ms_suppliers')->update(['credit_balance' => 0.00, 'updated_at' => now()]);
-            }
-            if (DB::getSchemaBuilder()->hasTable('ms_supplier_credit_wallets')) {
-                DB::table('ms_supplier_credit_wallets')->truncate();
-            }
         } catch (\Throwable $e) {}
 
-        // Step 5: (Optional) Remove demo staff accounts, preserving primary Super Admin
+        // Step 5: Clean temporary uploaded media (device photos, box images, attachment proofs)
+        $cleanedFilesCount = 0;
+        if (!isset($options['clean_media']) || !empty($options['clean_media'])) {
+            try {
+                $uploadPath = public_path('uploads/mobiles');
+                if (File::isDirectory($uploadPath)) {
+                    $files = File::files($uploadPath);
+                    foreach ($files as $file) {
+                        if ($file->getFilename() !== '.gitkeep') {
+                            if (@File::delete($file->getRealPath())) {
+                                $cleanedFilesCount++;
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Could not clean uploaded media: " . $e->getMessage());
+            }
+        }
+
+        // Step 6: (Optional) Remove demo staff accounts, strictly preserving Super Admin and Developer accounts
         if (!empty($options['wipe_staff'])) {
             try {
-                $superAdmin = DB::table('users')->where('email', 'admin@mobitrack.local')->first()
-                           ?? DB::table('users')->orderBy('id')->first();
+                $preserveEmails = [
+                    'admin@mobitrack.local',
+                    'admin@phonefixazamgarh.com',
+                    'altmash@mobitrack.local',
+                    'altmash@phonefixazamgarh.com',
+                ];
 
-                if ($superAdmin) {
-                    $otherUsers = DB::table('users')->where('id', '!=', $superAdmin->id)->pluck('id');
-                    DB::table('user_roles')->whereIn('user_id', $otherUsers)->delete();
-                    DB::table('user_companies')->whereIn('user_id', $otherUsers)->delete();
-                    DB::table('users')->whereIn('id', $otherUsers)->delete();
+                $keepUsers = DB::table('users')
+                    ->whereIn('email', $preserveEmails)
+                    ->orWhere('id', 16)
+                    ->pluck('id')
+                    ->toArray();
+
+                if (empty($keepUsers)) {
+                    $firstAdmin = DB::table('users')->orderBy('id')->first();
+                    if ($firstAdmin) {
+                        $keepUsers[] = $firstAdmin->id;
+                    }
                 }
-            } catch (\Throwable $e) {}
+
+                if (!empty($keepUsers)) {
+                    $otherUsers = DB::table('users')->whereNotIn('id', $keepUsers)->pluck('id');
+                    if ($otherUsers->isNotEmpty()) {
+                        DB::table('user_roles')->whereIn('user_id', $otherUsers)->delete();
+                        DB::table('user_companies')->whereIn('user_id', $otherUsers)->delete();
+                        DB::table('users')->whereIn('id', $otherUsers)->delete();
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Could not prune staff accounts: " . $e->getMessage());
+            }
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // Step 6: Clear caches
+        // Step 7: Clear all application, route, and view caches
         try {
             \Illuminate\Support\Facades\Artisan::call('cache:clear');
             \Illuminate\Support\Facades\Artisan::call('view:clear');
         } catch (\Throwable $e) {}
 
         return [
-            'success'       => true,
-            'snapshot'      => $snapshot['filename'] ?? 'unknown',
-            'wiped_tables'  => $wipedCounts,
-            'total_records' => array_sum($wipedCounts),
-            'message'       => 'Database successfully reset to pristine production state! Ready for client handover.',
+            'success'             => true,
+            'snapshot'            => $snapshot['filename'] ?? 'unknown',
+            'wiped_tables'        => $wipedCounts,
+            'total_records'       => array_sum($wipedCounts),
+            'cleaned_media_files' => $cleanedFilesCount,
+            'message'             => 'Database successfully wiped clean! All stock, all suppliers, all purchase orders, all sales invoices, and customer khata ledgers have been purged. Sequences reset to #0001 — Brand new to ship!',
         ];
     }
 
