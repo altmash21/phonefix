@@ -1235,7 +1235,7 @@
             // Prominent "Add as New Item" banner at the top
             const newNameText = query.trim();
             html += `
-                <div class="combobox-new-option" onmousedown="chooseAsNewItem(${idx}, '${escapeHtml(newNameText)}')">
+                <div class="combobox-new-option" onmousedown="event.preventDefault(); chooseAsNewItem(${idx}, '${escapeHtml(newNameText)}')">
                     <div style="display:flex; align-items:center; gap:8px; min-width:0;">
                         <span style="font-size:14px;">✨</span>
                         <div style="min-width:0;">
@@ -1270,7 +1270,7 @@
         } else {
             // Query is empty: offer both options
             html += `
-                <div class="combobox-new-option" onmousedown="focusAndTypeNew(${idx})">
+                <div class="combobox-new-option" onmousedown="event.preventDefault(); focusAndTypeNew(${idx})">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:14px;">✨</span>
                         <div>
@@ -1296,7 +1296,7 @@
 
                 html += `
                     <div class="combobox-item" data-id="${p.id}" data-idx="${itemIdx}"
-                        onmousedown="selectExistingPart(${idx}, ${p.id})">
+                        onmousedown="event.preventDefault(); selectExistingPart(${idx}, ${p.id})">
                         <div style="min-width:0; flex:1;">
                             <div class="combobox-item-name">${escapeHtml(p.name)}</div>
                             <div class="combobox-item-sub">
@@ -1317,8 +1317,16 @@
         menuEl.innerHTML = html;
     }
 
+    const itemBlurTimers = {};
+    const categoryBlurTimers = {};
+
     /* ── Open / Show Combobox ── */
     function openCombobox(idx) {
+        if (itemBlurTimers[idx]) {
+            clearTimeout(itemBlurTimers[idx]);
+            delete itemBlurTimers[idx];
+        }
+
         document.querySelectorAll('.combobox-menu').forEach(m => {
             if (m.id !== `comboboxMenu_${idx}`) m.style.display = 'none';
         });
@@ -1337,7 +1345,16 @@
 
     /* ── On Combobox Blur (Auto-detect First Time vs Existing) ── */
     function onComboboxBlur(idx) {
-        setTimeout(() => {
+        if (itemBlurTimers[idx]) {
+            clearTimeout(itemBlurTimers[idx]);
+        }
+
+        itemBlurTimers[idx] = setTimeout(() => {
+            const wrap = document.getElementById(`comboboxWrap_${idx}`);
+            if (wrap && wrap.contains(document.activeElement)) {
+                return;
+            }
+
             const menuEl = document.getElementById(`comboboxMenu_${idx}`);
             if (menuEl) menuEl.style.display = 'none';
 
@@ -1362,7 +1379,7 @@
                 renderStockBadge(idx, null);
                 updateBulkRowTotal(idx);
             }
-        }, 180);
+        }, 200);
     }
     window.onComboboxBlur = onComboboxBlur;
 
@@ -1426,6 +1443,11 @@
 
     /* ── Clear Selected Item ── */
     function clearComboboxItem(idx) {
+        if (itemBlurTimers[idx]) {
+            clearTimeout(itemBlurTimers[idx]);
+            delete itemBlurTimers[idx];
+        }
+
         const searchInput = document.getElementById(`searchInput_${idx}`);
         if (searchInput) {
             searchInput.value = '';
@@ -1445,6 +1467,11 @@
 
     /* ── Select Existing Part from Dropdown ── */
     function selectExistingPart(idx, partId) {
+        if (itemBlurTimers[idx]) {
+            clearTimeout(itemBlurTimers[idx]);
+            delete itemBlurTimers[idx];
+        }
+
         const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
         const p = parts.find(item => item && String(item.id) === String(partId));
         if (!p) return;
@@ -1495,6 +1522,11 @@
 
     /* ── Choose as New Product ── */
     function chooseAsNewItem(idx, customName) {
+        if (itemBlurTimers[idx]) {
+            clearTimeout(itemBlurTimers[idx]);
+            delete itemBlurTimers[idx];
+        }
+
         const searchInput = document.getElementById(`searchInput_${idx}`);
         const rawName = (customName !== undefined && customName !== null && customName.trim() !== '')
             ? customName.trim()
@@ -1656,7 +1688,7 @@
                     data-slug="${escapeHtml(c.slug)}"
                     data-name="${escapeHtml(c.name)}"
                     data-idx="${itemIdx}"
-                    onmousedown="selectCategoryOption(${idx}, '${escapeHtml(c.slug)}', '${escapeHtml(c.name)}')">
+                    onmousedown="event.preventDefault(); selectCategoryOption(${idx}, '${escapeHtml(c.slug)}', '${escapeHtml(c.name)}', true);">
                     <div style="font-weight:700; color:#0F172A; font-size:11.5px;">${escapeHtml(c.name)}</div>
                     ${isSelected ? '<span style="font-size:10px; background:#DCFCE7; color:#15803D; font-weight:800; padding:1px 6px; border-radius:4px;">Selected</span>' : ''}
                 </div>
@@ -1668,6 +1700,11 @@
 
     /* ── Open / Show Category Combobox (One List at Once) ── */
     function openCategoryCombobox(idx) {
+        if (categoryBlurTimers[idx]) {
+            clearTimeout(categoryBlurTimers[idx]);
+            delete categoryBlurTimers[idx];
+        }
+
         // Enforce ONE LIST AT ONCE: close all other open comboboxes everywhere!
         document.querySelectorAll('.combobox-menu').forEach(m => {
             if (m.id !== `catComboboxMenu_${idx}`) m.style.display = 'none';
@@ -1686,7 +1723,16 @@
 
     /* ── On Category Blur ── */
     function onCategoryComboboxBlur(idx) {
-        setTimeout(() => {
+        if (categoryBlurTimers[idx]) {
+            clearTimeout(categoryBlurTimers[idx]);
+        }
+
+        categoryBlurTimers[idx] = setTimeout(() => {
+            const wrap = document.getElementById(`catComboboxWrap_${idx}`);
+            if (wrap && wrap.contains(document.activeElement)) {
+                return;
+            }
+
             const menuEl = document.getElementById(`catComboboxMenu_${idx}`);
             if (menuEl) menuEl.style.display = 'none';
 
@@ -1698,18 +1744,25 @@
                 const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
                 const exact = cats.find(c => c && (c.name.toLowerCase() === typed.toLowerCase() || c.slug.toLowerCase() === typed.toLowerCase()));
                 if (exact) {
-                    selectCategoryOption(idx, exact.slug, exact.name);
+                    selectCategoryOption(idx, exact.slug, exact.name, false);
                 } else if (!currentSlug) {
                     const auto = canonicalizeCategory('', typed);
                     if (auto) {
                         const found = cats.find(c => c && c.slug === auto);
-                        selectCategoryOption(idx, auto, found ? found.name : formatCategoryLabel(auto));
+                        selectCategoryOption(idx, auto, found ? found.name : formatCategoryLabel(auto), false);
                     }
                 }
             } else {
-                clearCategoryItem(idx);
+                // Safely clear category without focusing or re-opening the menu!
+                const valInput = document.getElementById(`catValue_${idx}`);
+                if (valInput) valInput.value = '';
+                const clearBtn = document.getElementById(`catClearBtn_${idx}`);
+                if (clearBtn) clearBtn.style.display = 'none';
+                const mobileBadge = document.getElementById(`mobileCardCatLabel_${idx}`);
+                if (mobileBadge) mobileBadge.textContent = '';
+                onBulkCategoryChange(idx, '');
             }
-        }, 180);
+        }, 200);
     }
     window.onCategoryComboboxBlur = onCategoryComboboxBlur;
 
@@ -1773,7 +1826,7 @@
                 if (activeItem) {
                     const slug = activeItem.getAttribute('data-slug');
                     const name = activeItem.getAttribute('data-name');
-                    selectCategoryOption(idx, slug, name);
+                    selectCategoryOption(idx, slug, name, true);
                     return;
                 }
             }
@@ -1783,7 +1836,7 @@
                 const auto = canonicalizeCategory('', typed);
                 const cats = Array.isArray(catalogCategories) ? catalogCategories : Object.values(catalogCategories || {});
                 const found = cats.find(c => c && c.slug === auto);
-                selectCategoryOption(idx, auto, found ? found.name : formatCategoryLabel(auto));
+                selectCategoryOption(idx, auto, found ? found.name : formatCategoryLabel(auto), true);
             }
             if (menuEl) menuEl.style.display = 'none';
             const searchInput = document.getElementById(`searchInput_${idx}`);
@@ -1797,7 +1850,7 @@
                 if (activeItem) {
                     const slug = activeItem.getAttribute('data-slug');
                     const name = activeItem.getAttribute('data-name');
-                    selectCategoryOption(idx, slug, name);
+                    selectCategoryOption(idx, slug, name, true);
                 }
                 menuEl.style.display = 'none';
             }
@@ -1812,7 +1865,12 @@
     window.onCategoryComboboxKeydown = onCategoryComboboxKeydown;
 
     /* ── Select Category Option ── */
-    function selectCategoryOption(idx, slug, name) {
+    function selectCategoryOption(idx, slug, name, autoAdvance = true) {
+        if (categoryBlurTimers[idx]) {
+            clearTimeout(categoryBlurTimers[idx]);
+            delete categoryBlurTimers[idx];
+        }
+
         const valInput = document.getElementById(`catValue_${idx}`);
         if (valInput) valInput.value = slug;
 
@@ -1827,16 +1885,23 @@
 
         onBulkCategoryChange(idx, slug);
 
-        // Auto-focus next field: Item Name Combobox
-        const itemInput = document.getElementById(`searchInput_${idx}`);
-        if (itemInput) {
-            setTimeout(() => itemInput.focus(), 30);
+        // Auto-focus next field only when explicitly requested
+        if (autoAdvance) {
+            const itemInput = document.getElementById(`searchInput_${idx}`);
+            if (itemInput) {
+                setTimeout(() => itemInput.focus(), 40);
+            }
         }
     }
     window.selectCategoryOption = selectCategoryOption;
 
     /* ── Clear Category Item ── */
     function clearCategoryItem(idx) {
+        if (categoryBlurTimers[idx]) {
+            clearTimeout(categoryBlurTimers[idx]);
+            delete categoryBlurTimers[idx];
+        }
+
         const searchInput = document.getElementById(`catSearchInput_${idx}`);
         if (searchInput) {
             searchInput.value = '';
@@ -1962,7 +2027,7 @@
                             title="Clear category">✕</button>
                     </div>
                     <input type="hidden" name="items[${idx}][category]" id="catValue_${idx}" value="${targetCat ? escapeHtml(targetCat) : ''}">
-                    <div id="catComboboxMenu_${idx}" class="combobox-menu category-combobox-menu" style="display:none;"></div>
+                    <div id="catComboboxMenu_${idx}" class="combobox-menu category-combobox-menu" style="display:none;" onmousedown="event.preventDefault()"></div>
                 </div>
 
                 <!-- 2. SEARCHABLE DROPDOWN (COMBOBOX) -->
@@ -1987,7 +2052,7 @@
                     </div>
 
                     <!-- Floating Dropdown Menu -->
-                    <div id="comboboxMenu_${idx}" class="combobox-menu" style="display:none;"></div>
+                    <div id="comboboxMenu_${idx}" class="combobox-menu" style="display:none;" onmousedown="event.preventDefault()"></div>
 
                     <!-- Stock Status Badge -->
                     <div id="stockBadge_${idx}" style="margin-top:3px;"></div>
