@@ -2442,6 +2442,7 @@
 
             const nameVal = escapeHtml(itemData?.name || selectedPart?.name || '');
             const brandVal = escapeHtml(itemData?.brand || selectedPart?.brand || '');
+            const modelVal = escapeHtml(itemData?.compatible_model || itemData?.model || selectedPart?.compatible_model || '');
             const rawFolderDt = (itemData?.display_type || selectedPart?.display_type || 'Normal').trim();
             let folderType = 'Normal';
             let folderLabel = 'Normal';
@@ -2666,6 +2667,7 @@
             console.error('addBulkRow failed:', err);
         }
     }
+    window.addBulkRow = addBulkRow;
 
     function applyFolderQualityToRow(idx, dtRaw) {
         const valInput = document.getElementById(`displayTypeVal_${idx}`);
@@ -2716,6 +2718,7 @@
             addBulkRow();
         }
     }
+    window.addMultipleRows = addMultipleRows;
 
     function removeBulkRow(idx) {
         const row = document.getElementById(`bulk-row-${idx}`);
@@ -2725,6 +2728,7 @@
             validateAllRowsInstant();
         }
     }
+    window.removeBulkRow = removeBulkRow;
 
     function clearAllRows() {
         if (confirm('Are you sure you want to clear all items in the batch?')) {
@@ -2735,6 +2739,7 @@
             validateAllRowsInstant();
         }
     }
+    window.clearAllRows = clearAllRows;
 
     function onBulkCategoryChange(idx, val) {
         const canonicalVal = canonicalizeCategory(val);
