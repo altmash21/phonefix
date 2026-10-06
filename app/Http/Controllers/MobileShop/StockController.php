@@ -359,7 +359,7 @@ class StockController extends BaseMobileShopController
             'model' => 'required|string|max:100',
             'imei_1' => 'required|string|max:30',
             'purchase_cost' => 'required|numeric|min:0',
-            'selling_price' => 'required|numeric|min:1',
+            'selling_price' => 'required|numeric|min:0',
         ]);
 
         $companyId = $this->getCompanyId();

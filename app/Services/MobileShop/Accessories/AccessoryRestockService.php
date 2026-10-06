@@ -40,6 +40,15 @@ class AccessoryRestockService
             default                           => (in_array($rawDisplayType, $validDisplayTypes) ? $rawDisplayType : 'na'),
         };
 
+        $cleanPartName = trim($request->name);
+        if ($finalCategorySlug === 'folder_display') {
+            $stripped = trim(preg_replace('/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/i', ' ', $cleanPartName));
+            $stripped = trim(preg_replace('/\s{2,}/', ' ', $stripped));
+            if (!empty($stripped)) {
+                $cleanPartName = $stripped;
+            }
+        }
+
         $partId = DB::table('ms_parts_inventory')->insertGetId([
             'company_id'       => $companyId,
             'category'         => $finalCategorySlug,
@@ -50,7 +59,7 @@ class AccessoryRestockService
             'display_type'     => $displayType,
             'description'      => $request->description,
             'hsn_code'         => $request->hsn_code ?? '85177090',
-            'name'             => $request->name,
+            'name'             => $cleanPartName,
             'unit_cost'        => (float) $request->unit_cost,
             'selling_price'    => (float) $request->selling_price,
             'stock_qty'        => (int) $request->stock_qty,
@@ -125,6 +134,13 @@ class AccessoryRestockService
                 $sellingPrice = (float) ($item['selling_price'] ?? ($unitCost > 0 ? round($unitCost * 1.5, 2) : 0));
                 $partName = trim($item['name']);
                 $categorySlug = $item['category'] ?? 'tempered_glass';
+                if ($categorySlug === 'folder_display') {
+                    $cleanedName = trim(preg_replace('/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/i', ' ', $partName));
+                    $cleanedName = trim(preg_replace('/\s{2,}/', ' ', $cleanedName));
+                    if (!empty($cleanedName)) {
+                        $partName = $cleanedName;
+                    }
+                }
                 $brand = $item['brand'] ?? 'Universal';
                 $model = $item['compatible_model'] ?? 'Universal';
                 $isGift = !empty($item['is_gift_eligible']) ? 1 : 0;

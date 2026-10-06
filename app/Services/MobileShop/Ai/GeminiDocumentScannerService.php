@@ -786,7 +786,7 @@ Extract all supplier information and individual line items into a STRICT JSON ob
       "display_type": "OG / Normal (for display folders)",
       "brand": "Brand name (e.g. Realme, Samsung, Xiaomi, Vivo, Oppo, Apple, OnePlus, Infinix, Narzo, Universal)",
       "model": "Model name (e.g. C55 / C65, A53, Note 7, A57 New, Y20, C11, Narzo 30 Pro)",
-      "name": "Full descriptive name (e.g. Realme C55 / C65 HD+ OG Display Folder, Samsung A53 HD+ Display Folder)",
+      "name": "Clean product name / model ONLY (e.g. Realme C55 / C65, Samsung A53, Infinix Hot 10 Play). DO NOT append 'Display Folder', 'Folder', 'Combo', or category name if category is folder_display.",
       "qty": 10,
       "unit_cost": 0.00,
       "selling_price": 0.00,
@@ -815,8 +815,9 @@ Rules:
    - "back_panel": Mobile back housing, body glass, rear panel.
    - "camera_module": Camera lens, camera glass, camera module.
    - "general_accessory": Other accessories.
-5. All numeric monetary fields must be numbers (e.g. 620.00).
+5. All numeric monetary fields must be numbers (e.g. 620.00). Both unit_cost and selling_price CAN be 0.00 (e.g. for free or zero-cost items).
 6. If supplier_phone contains +91 or spaces, clean to digits.
+7. For items categorized as 'folder_display', do NOT include words like 'Display Folder', 'Folder', 'Combo', 'Display', 'Screen', or 'LCD' in the 'name' field. The 'name' must be strictly the device / model name (e.g. 'Infinix X6517', 'Infinix Hot 10 Play', 'Realme C55 / C65') because category already defines it.
 PROMPT;
 
         $apiResult = $this->callGemini($prompt, $file);
@@ -908,6 +909,18 @@ PROMPT;
                 if ($it['item_type'] === 'accessory') {
                     // Normalize category to standard database slug
                     $it['category'] = self::normalizeCategorySlug($it['category'] ?? '', $it['name'] ?? '');
+
+                    // Strip redundant category terms from display folder name and model
+                    if ($it['category'] === 'folder_display') {
+                        if (!empty($it['name'])) {
+                            $it['name'] = trim(preg_replace('/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/i', ' ', $it['name']));
+                            $it['name'] = trim(preg_replace('/\s{2,}/', ' ', $it['name']));
+                        }
+                        if (!empty($it['model'])) {
+                            $it['model'] = trim(preg_replace('/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/i', ' ', $it['model']));
+                            $it['model'] = trim(preg_replace('/\s{2,}/', ' ', $it['model']));
+                        }
+                    }
 
                     if (!empty($it['brand']) && strtolower($it['brand']) === 'other') {
                         $it['brand'] = '';

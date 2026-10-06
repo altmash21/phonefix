@@ -1342,6 +1342,20 @@
     }
     window.canonicalizeCategory = canonicalizeCategory;
 
+    /* ── Clean redundant category terms from product name (e.g. remove Display Folder from Infinix X6517) ── */
+    function cleanItemNameForCategory(name, cat) {
+        if (!name) return '';
+        let cleaned = String(name).trim();
+        const c = canonicalizeCategory(cat, name);
+        if (c === 'folder_display' || c === 'display_folder') {
+            // Strip out display folder / combo redundant phrases
+            cleaned = cleaned.replace(/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/gi, ' ');
+            cleaned = cleaned.replace(/[\s\-_/]+$/, '').replace(/^[\s\-_/]+/, '').replace(/\s{2,}/g, ' ').trim();
+        }
+        return cleaned || String(name).trim();
+    }
+    window.cleanItemNameForCategory = cleanItemNameForCategory;
+
     let bulkRowIndex = 0;
 
     // Auto-detect brand from item name text
@@ -2440,9 +2454,15 @@
                 }
             }
 
-            const nameVal = escapeHtml(itemData?.name || selectedPart?.name || '');
+            let rawItemName = itemData?.name || selectedPart?.name || '';
+            let rawModel = itemData?.compatible_model || itemData?.model || selectedPart?.compatible_model || '';
+            if (targetCat === 'folder_display' || targetCat === 'display_folder') {
+                rawItemName = cleanItemNameForCategory(rawItemName, targetCat);
+                rawModel = cleanItemNameForCategory(rawModel, targetCat);
+            }
+            const nameVal = escapeHtml(rawItemName);
             const brandVal = escapeHtml(itemData?.brand || selectedPart?.brand || '');
-            const modelVal = escapeHtml(itemData?.compatible_model || itemData?.model || selectedPart?.compatible_model || '');
+            const modelVal = escapeHtml(rawModel);
             const rawFolderDt = (itemData?.display_type || selectedPart?.display_type || 'Normal').trim();
             let folderType = 'Normal';
             let folderLabel = 'Normal';
@@ -2749,6 +2769,25 @@
             qualityToggle.classList.toggle('visible', canonicalVal === 'folder_display' || val === 'display_folder');
         }
 
+        // Clean redundant 'Display Folder' from item name when category is display folder
+        if (canonicalVal === 'folder_display' || val === 'display_folder') {
+            const nameInput = document.getElementById(`name_${idx}`);
+            const searchInput = document.getElementById(`searchInput_${idx}`);
+            if (nameInput && nameInput.value) {
+                const cleaned = cleanItemNameForCategory(nameInput.value, canonicalVal);
+                if (cleaned && cleaned !== nameInput.value) {
+                    nameInput.value = cleaned;
+                    if (searchInput) searchInput.value = cleaned;
+                }
+            } else if (searchInput && searchInput.value) {
+                const cleaned = cleanItemNameForCategory(searchInput.value, canonicalVal);
+                if (cleaned && cleaned !== searchInput.value) {
+                    searchInput.value = cleaned;
+                    if (nameInput) nameInput.value = cleaned;
+                }
+            }
+        }
+
         const giftEl = document.getElementById(`gift_${idx}`);
         if (giftEl) {
             const isGift = (
@@ -2901,7 +2940,7 @@
         const priceWarn = document.getElementById(`priceWarning_${idx}`);
 
         // Pristine empty row
-        const isPristine = (!name && (!rawCost || cost === 0) && (!rawPrice || price === 0));
+        const isPristine = (!name && (!rawCost || rawCost === '') && (!rawPrice || rawPrice === ''));
         if (isPristine) {
             rowEl.className = rowEl.className.replace(/row-state-\w+/g, '').trim() + ' row-state-pristine';
             if (warnBox) { warnBox.style.display = 'none'; warnBox.innerHTML = ''; }
@@ -2933,18 +2972,15 @@
             if (qtyInput) qtyInput.style.borderColor = '';
         }
 
-        // Check 3: Negative / Zero Cost
+        // Check 3: Negative Cost (Cost CAN be 0.00)
         if (isNaN(cost) || cost < 0) {
             errorMsg = errorMsg || '❌ Cost cannot be negative';
             if (costInput) costInput.style.borderColor = '#DC2626';
-        } else if (cost === 0 && name) {
-            warningMsg = '⚠️ Buy cost is ₹0.00';
-            if (costInput) costInput.style.borderColor = '#F59E0B';
         } else {
             if (costInput) costInput.style.borderColor = '';
         }
 
-        // Check 4: Negative / Loss Price
+        // Check 4: Negative Price & Loss Margin (Sell price CAN be 0.00)
         if (isNaN(price) || price < 0) {
             errorMsg = errorMsg || '❌ Sell price cannot be negative';
             if (priceInput) priceInput.style.borderColor = '#DC2626';
@@ -2955,13 +2991,6 @@
             if (priceInput) {
                 priceInput.style.borderColor = '#DC2626';
                 priceInput.style.background = '#FEF2F2';
-            }
-        } else if (price === 0 && name && cost > 0) {
-            priceMsg = '⚠️ Sell is ₹0';
-            warningMsg = warningMsg || '⚠️ Selling price is ₹0.00';
-            if (priceInput) {
-                priceInput.style.borderColor = '#F59E0B';
-                priceInput.style.background = '#FFFBEB';
             }
         } else {
             if (priceInput) {
@@ -3004,7 +3033,8 @@
             } else {
                 const margin = (price > 0 && cost > 0) ? Math.round(((price - cost) / price) * 100) : 0;
                 const profit = (price - cost).toFixed(2);
-                warnBox.innerHTML = `<span class="instant-row-badge badge-ok">✅ Ready • Margin: +₹${profit} (${margin}%)</span>`;
+                const infoText = (price > 0 && cost > 0) ? `• Margin: +₹${profit} (${margin}%)` : '';
+                warnBox.innerHTML = `<span class="instant-row-badge badge-ok">✅ Ready ${infoText}</span>`;
                 warnBox.style.display = 'inline-block';
             }
         }
@@ -3444,7 +3474,8 @@
         items.forEach(it => {
             const rawName = it.name || it.model || 'Item';
             const cat = canonicalizeCategory(it.category, rawName);
-            const nameLower = rawName.toLowerCase();
+            const cleanedName = cleanItemNameForCategory(rawName, cat);
+            const nameLower = cleanedName.toLowerCase();
 
             let displayType = 'Normal';
             if (/hd\+|\bhd plus\b|\bhdplus\b/i.test(nameLower) || (it.display_type && (it.display_type.toLowerCase() === 'hd_plus' || it.display_type.toUpperCase() === 'HD+'))) {
@@ -3456,7 +3487,7 @@
             const qty = parseInt(it.qty) || 1;
             const cost = parseFloat(it.unit_cost) || 0;
             let sellingPrice = parseFloat(it.selling_price) || 0;
-            if (sellingPrice <= cost) {
+            if (sellingPrice < cost && cost > 0) {
                 if (cat === 'folder_display' || cat === 'display_folder') {
                     sellingPrice = cost + 250;
                 } else if (cat === 'tempered_glass' || cat === 'back_cover' || cat === 'back_cover_case') {
@@ -3466,11 +3497,11 @@
                 }
             }
 
-            const brand = it.brand || guessBrand(rawName);
-            const model = it.model || it.compatible_model || '';
+            const brand = it.brand || guessBrand(cleanedName);
+            const model = cleanItemNameForCategory(it.model || it.compatible_model || '', cat);
 
             addBulkRow({
-                name: rawName,
+                name: cleanedName,
                 category: cat,
                 brand: brand,
                 compatible_model: model,
