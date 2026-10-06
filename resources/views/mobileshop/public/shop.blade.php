@@ -139,11 +139,21 @@
                     </div>
                     @endif
 
-                    @if(!empty($item->display_type))
+                    @if(!empty($item->display_type) && $item->display_type !== 'na')
                     <div class="mt-2">
-                        <span class="text-[11px] font-medium text-[#111111] bg-[#f5f5f5] px-2 py-0.5 rounded inline-block">
-                            {{ $item->display_type }}
-                        </span>
+                        @if(in_array(strtolower($item->display_type), ['hd_plus', 'hd+']))
+                            <span class="text-[10.5px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block">
+                                HD+ ⚡
+                            </span>
+                        @elseif(in_array(strtolower($item->display_type), ['original_oem', 'og']))
+                            <span class="text-[10.5px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-block">
+                                OG ✨
+                            </span>
+                        @else
+                            <span class="text-[11px] font-medium text-[#111111] bg-[#f5f5f5] px-2 py-0.5 rounded inline-block">
+                                {{ ucwords(str_replace('_', ' ', $item->display_type)) }}
+                            </span>
+                        @endif
                     </div>
                     @endif
 

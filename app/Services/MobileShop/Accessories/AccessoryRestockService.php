@@ -30,8 +30,15 @@ class AccessoryRestockService
         $isGift = $request->has('is_gift_eligible') ? 1 : ($categoryRow ? ($categoryRow->is_gift_eligible ? 1 : 0) : 0);
 
         $rawDisplayType = strtolower(trim((string) ($request->display_type ?? 'na')));
-        $validDisplayTypes = ['original_oem', 'oled', 'in_cell', 'tft', 'na'];
-        $displayType = in_array($rawDisplayType, $validDisplayTypes) ? $rawDisplayType : 'na';
+        $validDisplayTypes = ['original_oem', 'hd_plus', 'oled', 'in_cell', 'tft', 'na'];
+        $displayType = match($rawDisplayType) {
+            'og', 'original', 'original_oem'  => 'original_oem',
+            'hd+', 'hd_plus', 'hd plus', 'hd' => 'hd_plus',
+            'oled'                            => 'oled',
+            'in_cell', 'incell'               => 'in_cell',
+            'tft'                             => 'tft',
+            default                           => (in_array($rawDisplayType, $validDisplayTypes) ? $rawDisplayType : 'na'),
+        };
 
         $partId = DB::table('ms_parts_inventory')->insertGetId([
             'company_id'       => $companyId,
@@ -148,6 +155,21 @@ class AccessoryRestockService
                     if (!empty($model) && $model !== 'Universal') {
                         $updateData['compatible_model'] = $model;
                     }
+                    if (!empty($item['display_type']) && $item['display_type'] !== 'na') {
+                        $rawDt = strtolower(trim((string) $item['display_type']));
+                        $validDisplayTypes = ['original_oem', 'hd_plus', 'oled', 'in_cell', 'tft', 'na'];
+                        $dt = match($rawDt) {
+                            'og', 'original', 'original_oem'  => 'original_oem',
+                            'hd+', 'hd_plus', 'hd plus', 'hd' => 'hd_plus',
+                            'oled'                            => 'oled',
+                            'in_cell', 'incell'               => 'in_cell',
+                            'tft'                             => 'tft',
+                            default                           => (in_array($rawDt, $validDisplayTypes) ? $rawDt : null),
+                        };
+                        if ($dt) {
+                            $updateData['display_type'] = $dt;
+                        }
+                    }
 
                     DB::table('ms_parts_inventory')->where('id', $part->id)->update($updateData);
 
@@ -168,8 +190,15 @@ class AccessoryRestockService
                     $finalCategorySlug = $categoryRow ? $categoryRow->slug : AccessoryCategoryService::canonicalSlug($categorySlug, $partName);
 
                     $rawDisplayType = strtolower(trim((string) ($item['display_type'] ?? 'na')));
-                    $validDisplayTypes = ['original_oem', 'oled', 'in_cell', 'tft', 'na'];
-                    $displayType = in_array($rawDisplayType, $validDisplayTypes) ? $rawDisplayType : 'na';
+                    $validDisplayTypes = ['original_oem', 'hd_plus', 'oled', 'in_cell', 'tft', 'na'];
+                    $displayType = match($rawDisplayType) {
+                        'og', 'original', 'original_oem'  => 'original_oem',
+                        'hd+', 'hd_plus', 'hd plus', 'hd' => 'hd_plus',
+                        'oled'                            => 'oled',
+                        'in_cell', 'incell'               => 'in_cell',
+                        'tft'                             => 'tft',
+                        default                           => (in_array($rawDisplayType, $validDisplayTypes) ? $rawDisplayType : 'na'),
+                    };
 
                     $newPartId = DB::table('ms_parts_inventory')->insertGetId([
                         'company_id'       => $companyId,

@@ -175,7 +175,15 @@ class StockController extends BaseMobileShopController
                 $updateData['compatible_model'] = trim($request->input('compatible_model', ''));
             }
             if ($request->filled('display_type')) {
-                $updateData['display_type'] = $request->input('display_type');
+                $rawDisp = strtolower(trim((string) $request->input('display_type')));
+                $updateData['display_type'] = match($rawDisp) {
+                    'og', 'original', 'original_oem'  => 'original_oem',
+                    'hd+', 'hd_plus', 'hd plus', 'hd' => 'hd_plus',
+                    'oled'                            => 'oled',
+                    'in_cell', 'incell'               => 'in_cell',
+                    'tft'                             => 'tft',
+                    default                           => $rawDisp,
+                };
             }
             if ($request->filled('unit_cost')) {
                 $updateData['unit_cost'] = max(0, (float) $request->input('unit_cost'));

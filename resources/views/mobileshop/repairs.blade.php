@@ -741,8 +741,17 @@ function performRepairPartsSearch(query) {
 
         var html = '';
         data.parts.forEach(function(p) {
-            var outOfStock = p.stock_qty <= 0;
-            var qualityBadge = p.display_type ? '<span class="badge ' + (p.display_type === 'OG' ? 'badge-purple' : 'badge-blue') + '" style="font-size:9.5px; padding:1px 5px; margin-left:4px;">' + p.display_type + '</span>' : '';
+            var dtLower = (p.display_type || '').toLowerCase();
+            var badgeStyle = 'background:#F1F5F9; color:#475569; border:1px solid #CBD5E1;';
+            var badgeText = p.display_type;
+            if (dtLower === 'og' || dtLower === 'original_oem') {
+                badgeStyle = 'background:#EDE9FE; color:#6D28D9; border:1px solid #C4B5FD;';
+                badgeText = 'OG ✨';
+            } else if (dtLower === 'hd+' || dtLower === 'hd_plus') {
+                badgeStyle = 'background:#FEF3C7; color:#92400E; border:1px solid #FCD34D;';
+                badgeText = 'HD+ ⚡';
+            }
+            var qualityBadge = (p.display_type && p.display_type !== 'na') ? '<span style="font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:4px; margin-left:5px; ' + badgeStyle + '">' + badgeText + '</span>' : '';
             var brandModel = [p.brand, p.compatible_model].filter(Boolean).join(' ');
             var jsonStr = JSON.stringify(p).replace(/"/g, '&quot;');
 

@@ -176,11 +176,24 @@
                                 <div style="font-weight:700; color:#0F172A; font-size:12px;">{{ $part->brand ?: 'Universal' }}</div>
                                 <div style="font-size:11px; color:#64748B;">{{ $part->compatible_model ?: 'Universal / Multi-Model' }}</div>
                             </td>
-                            <td style="text-align:center;">
-                                @if($part->display_type && $part->display_type !== 'na')
-                                    <span class="badge {{ strtolower($part->display_type) === 'og' ? 'badge-blue' : 'badge-gray' }}" style="font-size:10px; font-weight:800;">
-                                        {{ strtoupper($part->display_type) }}
-                                    </span>
+                            <td style="text-align:center;" id="partQualityCell_{{ $part->id }}">
+                                @php
+                                    $dispRaw = strtolower(trim((string) ($part->display_type ?? '')));
+                                @endphp
+                                @if(!empty($dispRaw) && $dispRaw !== 'na' && $dispRaw !== 'normal')
+                                    @if(in_array($dispRaw, ['og', 'original_oem']))
+                                        <span class="badge badge-blue" style="font-size:10px; font-weight:800;">OG ✨</span>
+                                    @elseif(in_array($dispRaw, ['hd_plus', 'hd+', 'hd plus', 'hd']))
+                                        <span class="badge" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D; font-size:10px; font-weight:800;">HD+ ⚡</span>
+                                    @elseif($dispRaw === 'oled')
+                                        <span class="badge badge-purple" style="font-size:10px; font-weight:800;">OLED</span>
+                                    @elseif(in_array($dispRaw, ['in_cell', 'incell']))
+                                        <span class="badge badge-blue" style="font-size:10px; font-weight:800;">IN-CELL</span>
+                                    @elseif($dispRaw === 'tft')
+                                        <span class="badge badge-gray" style="font-size:10px; font-weight:800;">TFT</span>
+                                    @else
+                                        <span class="badge badge-gray" style="font-size:10px; font-weight:800;">{{ strtoupper(str_replace('_', ' ', $dispRaw)) }}</span>
+                                    @endif
                                 @else
                                     <span style="color:#94A3B8; font-size:11px;">Standard</span>
                                 @endif
@@ -408,6 +421,7 @@
                             <select name="display_type" id="editItemDisplayType" class="form-control" style="font-size:12.5px;">
                                 <option value="na">Standard / Non-Display</option>
                                 <option value="original_oem">OG / Original OEM ✨</option>
+                                <option value="hd_plus">HD+ (High Definition Plus) ⚡</option>
                                 <option value="oled">OLED Screen</option>
                                 <option value="in_cell">In-Cell Screen</option>
                                 <option value="tft">TFT Screen</option>
@@ -1570,7 +1584,15 @@
         document.getElementById('editItemCategory').value = item.category || 'general_accessory';
         document.getElementById('editItemBrand').value = (item.brand && item.brand !== 'Universal') ? item.brand : (item.brand || 'Universal');
         document.getElementById('editItemModel').value = item.model || '';
-        document.getElementById('editItemDisplayType').value = item.display_type || 'na';
+        
+        const dt = (item.display_type || 'na').toLowerCase();
+        if (dt === 'og' || dt === 'original_oem') {
+            document.getElementById('editItemDisplayType').value = 'original_oem';
+        } else if (dt === 'hd+' || dt === 'hd_plus' || dt === 'hd plus' || dt === 'hd') {
+            document.getElementById('editItemDisplayType').value = 'hd_plus';
+        } else {
+            document.getElementById('editItemDisplayType').value = dt;
+        }
         
         originalStockCount = parseInt(item.stock) || 0;
         document.getElementById('editItemStockQty').value = originalStockCount;
@@ -1728,6 +1750,24 @@
                     if (brandDiv) brandDiv.textContent = item.brand || 'Universal';
                     const modelDiv = dRow.querySelector('td:nth-child(3) div:nth-child(2)');
                     if (modelDiv) modelDiv.textContent = item.compatible_model || 'Universal / Multi-Model';
+
+                    const qCell = document.getElementById(`partQualityCell_${item.id}`);
+                    if (qCell) {
+                        const rawDisp = (item.display_type || 'na').toLowerCase();
+                        if (rawDisp === 'og' || rawDisp === 'original_oem') {
+                            qCell.innerHTML = '<span class="badge badge-blue" style="font-size:10px; font-weight:800;">OG ✨</span>';
+                        } else if (rawDisp === 'hd_plus' || rawDisp === 'hd+' || rawDisp === 'hd') {
+                            qCell.innerHTML = '<span class="badge" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D; font-size:10px; font-weight:800;">HD+ ⚡</span>';
+                        } else if (rawDisp === 'oled') {
+                            qCell.innerHTML = '<span class="badge badge-purple" style="font-size:10px; font-weight:800;">OLED</span>';
+                        } else if (rawDisp === 'in_cell' || rawDisp === 'incell') {
+                            qCell.innerHTML = '<span class="badge badge-blue" style="font-size:10px; font-weight:800;">IN-CELL</span>';
+                        } else if (rawDisp === 'tft') {
+                            qCell.innerHTML = '<span class="badge badge-gray" style="font-size:10px; font-weight:800;">TFT</span>';
+                        } else {
+                            qCell.innerHTML = '<span style="color:#94A3B8; font-size:11px;">Standard</span>';
+                        }
+                    }
 
                     const stockCell = document.getElementById(`partStockCell_${item.id}`);
                     if (stockCell) {

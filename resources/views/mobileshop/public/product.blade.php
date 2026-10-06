@@ -170,10 +170,18 @@
                             <span class="col-span-2 text-[#111111] font-semibold">{{ $product->compatible_model }}</span>
                         </div>
                         @endif
-                        @if(!empty($product->display_type))
+                        @if(!empty($product->display_type) && $product->display_type !== 'na')
                         <div class="grid grid-cols-3 p-3">
                             <span class="text-[#6b7280] font-medium">Display Tier</span>
-                            <span class="col-span-2 text-[#111111] font-semibold">{{ $product->display_type }}</span>
+                            <span class="col-span-2 text-[#111111] font-semibold">
+                                @if(in_array(strtolower($product->display_type), ['hd_plus', 'hd+']))
+                                    <span class="inline-flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">HD+ High Definition ⚡</span>
+                                @elseif(in_array(strtolower($product->display_type), ['original_oem', 'og']))
+                                    <span class="inline-flex items-center gap-1 text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">Original OEM (OG) ✨</span>
+                                @else
+                                    {{ ucwords(str_replace('_', ' ', $product->display_type)) }}
+                                @endif
+                            </span>
                         </div>
                         @endif
                         @if(!empty($product->hsn_code))

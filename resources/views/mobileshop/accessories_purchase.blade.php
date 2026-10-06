@@ -164,23 +164,37 @@
         min-width: 0;
     }
 
-    /* ── Quality OG / Normal Inline Pill ── */
+    /* ── Quality OG / HD+ / Normal Inline Pill ── */
     .quality-toggle-pill {
         display: none;
         align-items: center;
-        gap: 3px;
-        padding: 2px 6px;
-        background: #FEF3C7;
-        border: 1px solid #FCD34D;
+        gap: 4px;
+        padding: 2px 7px;
         border-radius: 4px;
-        font-size: 10px;
+        font-size: 10.5px;
         font-weight: 800;
-        color: #92400E;
         cursor: pointer;
         margin-top: 3px;
+        transition: all 0.15s ease;
+        user-select: none;
     }
     .quality-toggle-pill.visible {
         display: inline-flex;
+    }
+    .quality-toggle-pill.quality-pill-normal {
+        background: #F1F5F9;
+        border: 1px solid #CBD5E1;
+        color: #475569;
+    }
+    .quality-toggle-pill.quality-pill-hd {
+        background: #FEF3C7;
+        border: 1px solid #FCD34D;
+        color: #92400E;
+    }
+    .quality-toggle-pill.quality-pill-og {
+        background: #EDE9FE;
+        border: 1px solid #C4B5FD;
+        color: #6D28D9;
     }
 
     .category-combobox-menu {
@@ -656,6 +670,17 @@
                             <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:3px;">Fits Brand / Model</label>
                             <input type="text" name="compatible_model" id="quickEditModel" class="restock-input" placeholder="e.g. Universal / iPhone 15">
                         </div>
+                    </div>
+
+                    <div>
+                        <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:3px;">Display / Folder Quality Tier</label>
+                        <select name="display_type" id="quickEditDisplayType" class="restock-input" style="font-weight:600;">
+                            <option value="na">Standard / Normal Screen</option>
+                            <option value="hd_plus">HD+ (High Definition Plus) ⚡</option>
+                            <option value="original_oem">OG ✨ (Original OEM Screen)</option>
+                            <option value="oled">OLED Screen</option>
+                            <option value="in_cell">In-Cell LCD</option>
+                        </select>
                     </div>
 
                     <!-- Hero Stock Qty Box -->
@@ -1346,6 +1371,18 @@
         document.getElementById('quickEditPrice').value = parseFloat(p.selling_price || 0).toFixed(2);
         document.getElementById('quickEditReason').value = '';
 
+        const dtSelect = document.getElementById('quickEditDisplayType');
+        if (dtSelect) {
+            const rawDt = (p.display_type || 'na').toLowerCase();
+            if (rawDt === 'hd+' || rawDt === 'hd_plus') {
+                dtSelect.value = 'hd_plus';
+            } else if (rawDt === 'og' || rawDt === 'original_oem') {
+                dtSelect.value = 'original_oem';
+            } else {
+                dtSelect.value = p.display_type || 'na';
+            }
+        }
+
         document.getElementById('quickEditModalTitle').textContent = `Edit Stock — ${p.name}`;
         const errBox = document.getElementById('quickEditError');
         if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
@@ -1466,6 +1503,10 @@
 
                     const modelInput = document.getElementById(`model_${idx}`);
                     if (modelInput && updated.compatible_model) modelInput.value = updated.compatible_model;
+
+                    if (updated.display_type) {
+                        applyFolderQualityToRow(idx, updated.display_type);
+                    }
 
                     // Refresh stock badge
                     renderStockBadge(idx, updated.stock_qty, false);
@@ -1814,9 +1855,7 @@
         if (p.compatible_model) document.getElementById(`model_${idx}`).value = p.compatible_model;
 
         if (p.display_type) {
-            document.getElementById(`displayTypeVal_${idx}`).value = p.display_type;
-            const qLbl = document.getElementById(`qualityLabel_${idx}`);
-            if (qLbl) qLbl.textContent = p.display_type === 'OG' ? 'OG ✨' : 'Normal';
+            applyFolderQualityToRow(idx, p.display_type);
         }
 
         if (p.description) document.getElementById(`desc_${idx}`).value = p.description;
@@ -2335,8 +2374,20 @@
 
             const nameVal = escapeHtml(itemData?.name || selectedPart?.name || '');
             const brandVal = escapeHtml(itemData?.brand || selectedPart?.brand || '');
-            const modelVal = escapeHtml(itemData?.compatible_model || itemData?.model || selectedPart?.compatible_model || '');
-            const folderType = ((itemData?.display_type || selectedPart?.display_type || 'Normal').toUpperCase() === 'OG') ? 'OG' : 'Normal';
+            const rawFolderDt = (itemData?.display_type || selectedPart?.display_type || 'Normal').trim();
+            let folderType = 'Normal';
+            let folderLabel = 'Normal';
+            let folderClass = 'quality-pill-normal';
+            const fLower = rawFolderDt.toLowerCase();
+            if (fLower === 'hd+' || fLower === 'hd_plus') {
+                folderType = 'HD+';
+                folderLabel = 'HD+ ⚡';
+                folderClass = 'quality-pill-hd';
+            } else if (fLower === 'og' || fLower === 'original_oem') {
+                folderType = 'OG';
+                folderLabel = 'OG ✨';
+                folderClass = 'quality-pill-og';
+            }
             const descVal = escapeHtml(itemData?.description || selectedPart?.description || '');
             const alertVal = itemData?.min_stock_alert !== undefined ? itemData.min_stock_alert : (selectedPart?.min_stock_alert ?? 3);
             const qtyVal = itemData?.qty || 1;
@@ -2426,9 +2477,9 @@
                     <!-- Stock Status Badge -->
                     <div id="stockBadge_${idx}" style="margin-top:3px;"></div>
 
-                    <!-- OG / Normal folder quality switch pill -->
-                    <div class="quality-toggle-pill ${isFolder ? 'visible' : ''}" id="qualityToggle_${idx}" onclick="toggleFolderQuality(${idx})">
-                        <span>Quality:</span> <strong id="qualityLabel_${idx}">${folderType} ✨</strong>
+                    <!-- Quality tier switch pill (Normal -> HD+ -> OG) -->
+                    <div class="quality-toggle-pill ${folderClass} ${isFolder ? 'visible' : ''}" id="qualityToggle_${idx}" onclick="toggleFolderQuality(${idx})" title="Click to cycle quality: Normal &rarr; HD+ ⚡ &rarr; OG ✨">
+                        <span>Quality:</span> <strong id="qualityLabel_${idx}">${folderLabel}</strong>
                     </div>
                 </div>
 
@@ -2544,19 +2595,49 @@
         }
     }
 
-    function toggleFolderQuality(idx) {
+    function applyFolderQualityToRow(idx, dtRaw) {
         const valInput = document.getElementById(`displayTypeVal_${idx}`);
         const labelEl = document.getElementById(`qualityLabel_${idx}`);
+        const togglePill = document.getElementById(`qualityToggle_${idx}`);
         if (!valInput || !labelEl) return;
 
-        if (valInput.value === 'OG') {
-            valInput.value = 'Normal';
-            labelEl.textContent = 'Normal';
-        } else {
+        const lower = (dtRaw || '').toLowerCase().trim();
+        if (lower === 'hd+' || lower === 'hd_plus') {
+            valInput.value = 'HD+';
+            labelEl.textContent = 'HD+ ⚡';
+            if (togglePill) {
+                togglePill.className = 'quality-toggle-pill quality-pill-hd visible';
+            }
+        } else if (lower === 'og' || lower === 'original_oem') {
             valInput.value = 'OG';
             labelEl.textContent = 'OG ✨';
+            if (togglePill) {
+                togglePill.className = 'quality-toggle-pill quality-pill-og visible';
+            }
+        } else {
+            valInput.value = 'Normal';
+            labelEl.textContent = 'Normal';
+            if (togglePill) {
+                togglePill.className = 'quality-toggle-pill quality-pill-normal visible';
+            }
         }
     }
+    window.applyFolderQualityToRow = applyFolderQualityToRow;
+
+    function toggleFolderQuality(idx) {
+        const valInput = document.getElementById(`displayTypeVal_${idx}`);
+        if (!valInput) return;
+
+        const current = (valInput.value || '').toUpperCase();
+        if (current === 'NORMAL' || current === 'NA' || !current) {
+            applyFolderQualityToRow(idx, 'HD+');
+        } else if (current === 'HD+' || current === 'HD_PLUS') {
+            applyFolderQualityToRow(idx, 'OG');
+        } else {
+            applyFolderQualityToRow(idx, 'Normal');
+        }
+    }
+    window.toggleFolderQuality = toggleFolderQuality;
 
     function addMultipleRows(count = 5) {
         for (let i = 0; i < count; i++) {
@@ -2976,8 +3057,12 @@
             const cat = canonicalizeCategory(it.category, rawName);
             const nameLower = rawName.toLowerCase();
 
-            const isOg = /og\b|\boriginal/i.test(nameLower) || (it.display_type && it.display_type.toUpperCase() === 'OG');
-            const displayType = isOg ? 'OG' : 'Normal';
+            let displayType = 'Normal';
+            if (/hd\+|\bhd plus\b|\bhdplus\b/i.test(nameLower) || (it.display_type && (it.display_type.toLowerCase() === 'hd_plus' || it.display_type.toUpperCase() === 'HD+'))) {
+                displayType = 'HD+';
+            } else if (/og\b|\boriginal/i.test(nameLower) || (it.display_type && (it.display_type.toUpperCase() === 'OG' || it.display_type.toLowerCase() === 'original_oem'))) {
+                displayType = 'OG';
+            }
 
             const qty = parseInt(it.qty) || 1;
             const cost = parseFloat(it.unit_cost) || 0;
@@ -3036,6 +3121,7 @@
             { name: '9D Super Clear Tempered Glass (iPhone 14/15)', category: 'tempered_glass', brand: 'Apple', compatible_model: 'iPhone 14 / 15', qty: 50, unit_cost: 22.00, selling_price: 149.00, is_gift_eligible: 1 },
             { name: 'Matte Smoke Anti-Drop Bumper Case (Galaxy S24)', category: 'back_cover', brand: 'Samsung', compatible_model: 'Galaxy S24', qty: 25, unit_cost: 45.00, selling_price: 199.00, is_gift_eligible: 1 },
             { name: 'Original OLED Display Screen Folder (iPhone 14)', category: 'folder_display', brand: 'Apple', compatible_model: 'iPhone 14', display_type: 'OG', qty: 5, unit_cost: 1650.00, selling_price: 2499.00, is_gift_eligible: 0 },
+            { name: 'HD+ High Definition Folder Combo (Redmi Note 12)', category: 'folder_display', brand: 'Xiaomi', compatible_model: 'Redmi Note 12 5G', display_type: 'HD+', qty: 10, unit_cost: 850.00, selling_price: 1499.00, is_gift_eligible: 0 },
             { name: 'Samsung Galaxy A54 Front Outer Glass with OCA', category: 'front_glass', brand: 'Samsung', compatible_model: 'Galaxy A54', qty: 15, unit_cost: 110.00, selling_price: 399.00, is_gift_eligible: 0 },
             { name: 'Type-C 65W Braided Fast Charging Cable (1.5m)', category: 'charger_cable', brand: 'Universal', compatible_model: 'Universal Type-C', qty: 30, unit_cost: 38.00, selling_price: 199.00, is_gift_eligible: 1 },
             { name: 'Universal Type-C Charging Pin Connector Jack', category: 'charging_port', brand: 'Universal', compatible_model: 'Type-C All Devices', qty: 40, unit_cost: 12.00, selling_price: 99.00, is_gift_eligible: 0 },
