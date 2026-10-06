@@ -253,7 +253,8 @@
         .mobile-card-top,
         .mobile-card-label,
         .mobile-card-footer,
-        .mobile-sticky-footer {
+        .mobile-sticky-footer,
+        .mobile-add-row-bar {
             display: none !important;
         }
 
@@ -506,9 +507,14 @@
         .stepper-input {
             font-size: 14px !important;
         }
+        .btn-ghost-add,
         .btn-ghost-delete {
             width: 36px;
             height: 36px;
+        }
+
+        .mobile-add-row-bar {
+            display: block !important;
         }
 
         /* Mobile metric columns */
@@ -709,6 +715,17 @@
             <div id="bulkTableBody" class="batch-items-container">
                 <!-- Rows injected dynamically by JS -->
             </div>
+
+            <!-- Mobile-only Add Row Bar below cards -->
+            <div class="mobile-add-row-bar" style="display:none; padding:10px 14px; background:#F8FAFC; border-top:1px dashed #E2E8F0;">
+                <button type="button" onclick="addBulkRowAndFocus()" class="btn btn-outline" style="width:100%; height:42px; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-weight:700; font-size:13px; border-radius:8px; border:1.5px dashed #6366F1; color:#4F46E5; background:#EEF2FF;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>+ Add Another Item Row</span>
+                </button>
+            </div>
         </div>
 
         <!-- ─── DESKTOP SUMMARY & SUPPLIER SETTLEMENT CARD ─── -->
@@ -873,9 +890,17 @@
                 <div style="font-size:16px; font-weight:900; color:#4F46E5; font-family:'JetBrains Mono', monospace; line-height:1.2;" id="mobileStickyTotal">₹0.00</div>
                 <div style="font-size:10px; font-weight:700; color:#059669;" id="mobileStickySettlement">Paid: ₹0.00</div>
             </div>
-            <button type="submit" class="btn btn-primary" id="btnMobileSubmitRestock" style="height:44px; padding:0 16px; font-size:13px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35); flex-shrink:0;">
-                <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Purchase &amp; Settle
-            </button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button type="button" onclick="addBulkRowAndFocus()" class="btn btn-outline" style="height:44px; width:44px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; border:1.5px solid #6366F1; color:#4F46E5; background:#EEF2FF; flex-shrink:0;" title="Add Row (+)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+                <button type="submit" class="btn btn-primary" id="btnMobileSubmitRestock" style="height:44px; padding:0 16px; font-size:13px; font-weight:800; border-radius:8px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(94, 106, 210, 0.35); flex-shrink:0;">
+                    <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Purchase &amp; Settle
+                </button>
+            </div>
         </div>
 
     </form>
@@ -1925,12 +1950,16 @@
     function addBulkRowAndFocus() {
         addBulkRow();
         setTimeout(() => {
+            const newRow = document.getElementById(`bulk-row-${bulkRowIndex}`);
+            if (newRow && window.innerWidth < 880) {
+                newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
             const newCatInput = document.getElementById(`catSearchInput_${bulkRowIndex}`);
             if (newCatInput) {
                 newCatInput.focus();
                 newCatInput.select();
             }
-        }, 50);
+        }, 60);
     }
     window.addBulkRowAndFocus = addBulkRowAndFocus;
 
@@ -2677,11 +2706,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize 3 starter rows if table is empty
+        // Initialize 1 starter row if table is empty
         const tbody = document.getElementById('bulkTableBody');
         if (tbody && tbody.querySelectorAll('.batch-item-row').length === 0) {
-            addBulkRow();
-            addBulkRow();
             addBulkRow();
         }
     });
