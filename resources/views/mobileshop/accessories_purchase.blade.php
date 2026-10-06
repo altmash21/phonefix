@@ -1260,7 +1260,9 @@
             // Prominent "Add as New Item" banner at the top
             const newNameText = query.trim();
             html += `
-                <div class="combobox-new-option" onmousedown="event.preventDefault(); chooseAsNewItem(${idx}, '${escapeHtml(newNameText)}')">
+                <div class="combobox-new-option"
+                    onmousedown="event.preventDefault(); chooseAsNewItem(${idx}, '${escapeHtml(newNameText)}');"
+                    onclick="chooseAsNewItem(${idx}, '${escapeHtml(newNameText)}');">
                     <div style="display:flex; align-items:center; gap:8px; min-width:0;">
                         <span style="font-size:14px;">✨</span>
                         <div style="min-width:0;">
@@ -1295,7 +1297,9 @@
         } else {
             // Query is empty: offer both options
             html += `
-                <div class="combobox-new-option" onmousedown="event.preventDefault(); focusAndTypeNew(${idx})">
+                <div class="combobox-new-option"
+                    onmousedown="event.preventDefault(); focusAndTypeNew(${idx});"
+                    onclick="focusAndTypeNew(${idx});">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:14px;">✨</span>
                         <div>
@@ -1321,7 +1325,8 @@
 
                 html += `
                     <div class="combobox-item" data-id="${p.id}" data-idx="${itemIdx}"
-                        onmousedown="event.preventDefault(); selectExistingPart(${idx}, ${p.id})">
+                        onmousedown="event.preventDefault(); selectExistingPart(${idx}, ${p.id});"
+                        onclick="selectExistingPart(${idx}, ${p.id});">
                         <div style="min-width:0; flex:1;">
                             <div class="combobox-item-name">${escapeHtml(p.name)}</div>
                             <div class="combobox-item-sub">
@@ -1344,6 +1349,7 @@
 
     const itemBlurTimers = {};
     const categoryBlurTimers = {};
+    const isMenuInteracting = {};
 
     /* ── Open / Show Combobox ── */
     function openCombobox(idx) {
@@ -1375,6 +1381,10 @@
         }
 
         itemBlurTimers[idx] = setTimeout(() => {
+            if (isMenuInteracting[`item_${idx}`]) {
+                return;
+            }
+
             const wrap = document.getElementById(`comboboxWrap_${idx}`);
             if (wrap && wrap.contains(document.activeElement)) {
                 return;
@@ -1635,9 +1645,24 @@
         if (e.key === 'Enter') {
             e.preventDefault(); // Prevent unintentional form submission!
             if (isMenuOpen) {
-                const activeItem = menuEl.querySelector('.combobox-item.active, .combobox-new-option.active');
-                if (activeItem) {
-                    activeItem.click();
+                const activeExisting = menuEl.querySelector('.combobox-item.active');
+                if (activeExisting) {
+                    const partId = activeExisting.getAttribute('data-id');
+                    if (partId) {
+                        selectExistingPart(idx, partId);
+                        if (menuEl) menuEl.style.display = 'none';
+                        const nextEl = document.getElementById(`desc_${idx}`) || document.getElementById(`qty_${idx}`);
+                        if (nextEl) nextEl.focus();
+                        return;
+                    }
+                }
+                const activeNew = menuEl.querySelector('.combobox-new-option.active');
+                if (activeNew) {
+                    const input = document.getElementById(`searchInput_${idx}`);
+                    chooseAsNewItem(idx, input ? input.value : '');
+                    if (menuEl) menuEl.style.display = 'none';
+                    const nextEl = document.getElementById(`desc_${idx}`) || document.getElementById(`qty_${idx}`);
+                    if (nextEl) nextEl.focus();
                     return;
                 }
             }
@@ -1659,7 +1684,16 @@
         }
 
         if (e.key === 'Tab') {
-            if (menuEl) menuEl.style.display = 'none';
+            if (isMenuOpen) {
+                const activeExisting = menuEl.querySelector('.combobox-item.active');
+                if (activeExisting) {
+                    const partId = activeExisting.getAttribute('data-id');
+                    if (partId) {
+                        selectExistingPart(idx, partId);
+                    }
+                }
+                menuEl.style.display = 'none';
+            }
             return;
         }
 
@@ -1674,6 +1708,7 @@
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.combobox-wrapper')) {
             document.querySelectorAll('.combobox-menu').forEach(m => m.style.display = 'none');
+            Object.keys(isMenuInteracting).forEach(k => isMenuInteracting[k] = false);
         }
     });
 
@@ -1707,13 +1742,14 @@
         let html = '';
         matches.forEach((c, itemIdx) => {
             const isSelected = (c.slug === currentSlug);
-            const isActive = (itemIdx === 0);
+            const isActive = currentSlug ? isSelected : (itemIdx === 0);
             html += `
                 <div class="combobox-item ${isActive ? 'active' : ''}"
                     data-slug="${escapeHtml(c.slug)}"
                     data-name="${escapeHtml(c.name)}"
                     data-idx="${itemIdx}"
-                    onmousedown="event.preventDefault(); selectCategoryOption(${idx}, '${escapeHtml(c.slug)}', '${escapeHtml(c.name)}', true);">
+                    onmousedown="event.preventDefault(); selectCategoryOption(${idx}, '${escapeHtml(c.slug)}', '${escapeHtml(c.name)}', true);"
+                    onclick="selectCategoryOption(${idx}, '${escapeHtml(c.slug)}', '${escapeHtml(c.name)}', true);">
                     <div style="font-weight:700; color:#0F172A; font-size:11.5px;">${escapeHtml(c.name)}</div>
                     ${isSelected ? '<span style="font-size:10px; background:#DCFCE7; color:#15803D; font-weight:800; padding:1px 6px; border-radius:4px;">Selected</span>' : ''}
                 </div>
@@ -1724,7 +1760,7 @@
     }
 
     /* ── Open / Show Category Combobox (One List at Once) ── */
-    function openCategoryCombobox(idx) {
+    function openCategoryCombobox(idx, forceFullList = true) {
         if (categoryBlurTimers[idx]) {
             clearTimeout(categoryBlurTimers[idx]);
             delete categoryBlurTimers[idx];
@@ -1736,10 +1772,17 @@
         });
 
         const input = document.getElementById(`catSearchInput_${idx}`);
-        renderCategoryMenu(idx, input ? input.value : '');
+        const query = forceFullList ? '' : (input ? input.value : '');
+        renderCategoryMenu(idx, query);
 
         const menuEl = document.getElementById(`catComboboxMenu_${idx}`);
-        if (menuEl) menuEl.style.display = 'block';
+        if (menuEl) {
+            menuEl.style.display = 'block';
+            const activeItem = menuEl.querySelector('.combobox-item.active') || menuEl.querySelector('.combobox-item');
+            if (activeItem) {
+                activeItem.scrollIntoView({ block: 'nearest' });
+            }
+        }
 
         const clearBtn = document.getElementById(`catClearBtn_${idx}`);
         if (clearBtn) clearBtn.style.display = (input && input.value) ? 'flex' : 'none';
@@ -1753,6 +1796,10 @@
         }
 
         categoryBlurTimers[idx] = setTimeout(() => {
+            if (isMenuInteracting[`cat_${idx}`]) {
+                return;
+            }
+
             const wrap = document.getElementById(`catComboboxWrap_${idx}`);
             if (wrap && wrap.contains(document.activeElement)) {
                 return;
@@ -1778,7 +1825,6 @@
                     }
                 }
             } else {
-                // Safely clear category without focusing or re-opening the menu!
                 const valInput = document.getElementById(`catValue_${idx}`);
                 if (valInput) valInput.value = '';
                 const clearBtn = document.getElementById(`catClearBtn_${idx}`);
@@ -1787,7 +1833,7 @@
                 if (mobileBadge) mobileBadge.textContent = '';
                 onBulkCategoryChange(idx, '');
             }
-        }, 200);
+        }, 220);
     }
     window.onCategoryComboboxBlur = onCategoryComboboxBlur;
 
@@ -1809,38 +1855,54 @@
         const isMenuOpen = menuEl && menuEl.style.display !== 'none';
 
         if (e.key === 'ArrowDown') {
+            e.preventDefault();
             if (!isMenuOpen) {
-                openCategoryCombobox(idx);
-                e.preventDefault();
+                openCategoryCombobox(idx, true);
                 return;
             }
             const items = menuEl.querySelectorAll('.combobox-item');
             if (items.length === 0) return;
-            e.preventDefault();
             let activeIdx = -1;
             items.forEach((it, i) => {
                 if (it.classList.contains('active')) activeIdx = i;
             });
             if (activeIdx >= 0) items[activeIdx].classList.remove('active');
             activeIdx = (activeIdx + 1) % items.length;
-            items[activeIdx].classList.add('active');
-            items[activeIdx].scrollIntoView({ block: 'nearest' });
+            const nextItem = items[activeIdx];
+            nextItem.classList.add('active');
+            nextItem.scrollIntoView({ block: 'nearest' });
+
+            const previewName = nextItem.getAttribute('data-name');
+            const input = document.getElementById(`catSearchInput_${idx}`);
+            if (input && previewName) {
+                input.value = previewName;
+            }
             return;
         }
 
         if (e.key === 'ArrowUp') {
-            if (!isMenuOpen) return;
+            e.preventDefault();
+            if (!isMenuOpen) {
+                openCategoryCombobox(idx, true);
+                return;
+            }
             const items = menuEl.querySelectorAll('.combobox-item');
             if (items.length === 0) return;
-            e.preventDefault();
             let activeIdx = -1;
             items.forEach((it, i) => {
                 if (it.classList.contains('active')) activeIdx = i;
             });
             if (activeIdx >= 0) items[activeIdx].classList.remove('active');
             activeIdx = (activeIdx - 1 + items.length) % items.length;
-            items[activeIdx].classList.add('active');
-            items[activeIdx].scrollIntoView({ block: 'nearest' });
+            const prevItem = items[activeIdx];
+            prevItem.classList.add('active');
+            prevItem.scrollIntoView({ block: 'nearest' });
+
+            const previewName = prevItem.getAttribute('data-name');
+            const input = document.getElementById(`catSearchInput_${idx}`);
+            if (input && previewName) {
+                input.value = previewName;
+            }
             return;
         }
 
@@ -1851,8 +1913,10 @@
                 if (activeItem) {
                     const slug = activeItem.getAttribute('data-slug');
                     const name = activeItem.getAttribute('data-name');
-                    selectCategoryOption(idx, slug, name, true);
-                    return;
+                    if (slug && name) {
+                        selectCategoryOption(idx, slug, name, true);
+                        return;
+                    }
                 }
             }
             const input = document.getElementById(`catSearchInput_${idx}`);
@@ -1875,7 +1939,9 @@
                 if (activeItem) {
                     const slug = activeItem.getAttribute('data-slug');
                     const name = activeItem.getAttribute('data-name');
-                    selectCategoryOption(idx, slug, name, true);
+                    if (slug && name) {
+                        selectCategoryOption(idx, slug, name, false);
+                    }
                 }
                 menuEl.style.display = 'none';
             }
@@ -2056,7 +2122,7 @@
                             title="Clear category">✕</button>
                     </div>
                     <input type="hidden" name="items[${idx}][category]" id="catValue_${idx}" value="${targetCat ? escapeHtml(targetCat) : ''}">
-                    <div id="catComboboxMenu_${idx}" class="combobox-menu category-combobox-menu" style="display:none;" onmousedown="event.preventDefault()"></div>
+                    <div id="catComboboxMenu_${idx}" class="combobox-menu category-combobox-menu" style="display:none;" tabindex="-1" onmousedown="event.preventDefault()" onmouseenter="isMenuInteracting['cat_${idx}'] = true" onmouseleave="isMenuInteracting['cat_${idx}'] = false"></div>
                 </div>
 
                 <!-- 2. SEARCHABLE DROPDOWN (COMBOBOX) -->
@@ -2081,7 +2147,7 @@
                     </div>
 
                     <!-- Floating Dropdown Menu -->
-                    <div id="comboboxMenu_${idx}" class="combobox-menu" style="display:none;" onmousedown="event.preventDefault()"></div>
+                    <div id="comboboxMenu_${idx}" class="combobox-menu" style="display:none;" tabindex="-1" onmousedown="event.preventDefault()" onmouseenter="isMenuInteracting['item_${idx}'] = true" onmouseleave="isMenuInteracting['item_${idx}'] = false"></div>
 
                     <!-- Stock Status Badge -->
                     <div id="stockBadge_${idx}" style="margin-top:3px;"></div>
