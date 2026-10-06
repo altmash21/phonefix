@@ -197,6 +197,58 @@
         color: #6D28D9;
     }
 
+    /* ── Live Row Health & Instant Warning States ── */
+    .batch-item-row {
+        border-left: 3.5px solid #CBD5E1;
+        transition: border-color 0.18s ease, background-color 0.18s ease;
+    }
+    .batch-item-row.row-state-valid {
+        border-left: 3.5px solid #10B981 !important;
+    }
+    .batch-item-row.row-state-warning {
+        border-left: 3.5px solid #F59E0B !important;
+        background: #FFFDF5 !important;
+    }
+    .batch-item-row.row-state-error {
+        border-left: 3.5px solid #EF4444 !important;
+        background: #FFF5F5 !important;
+    }
+    .batch-item-row.row-state-pristine {
+        border-left: 3.5px solid #CBD5E1 !important;
+    }
+
+    .instant-row-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: -0.1px;
+    }
+    .instant-row-badge.badge-err {
+        background: #FEE2E2;
+        color: #991B1B;
+        border: 1px solid #FCA5A5;
+        animation: pulseWarning 1.6s ease-in-out infinite;
+    }
+    .instant-row-badge.badge-warn {
+        background: #FEF3C7;
+        color: #92400E;
+        border: 1px solid #FCD34D;
+    }
+    .instant-row-badge.badge-ok {
+        background: #DCFCE7;
+        color: #15803D;
+        border: 1px solid #86EFAC;
+    }
+    @keyframes pulseWarning {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.85; transform: scale(0.99); }
+    }
+
     .category-combobox-menu {
         min-width: 240px !important;
         max-width: 340px !important;
@@ -794,9 +846,12 @@
         <div class="card" style="border-radius:8px; border:1px solid #E2E8F0; background:#FFFFFF; overflow:visible; margin-bottom:12px;">
             <!-- Header Toolbar -->
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; border-bottom:1px solid #E2E8F0; padding:8px 14px; background:#FAFAFA;">
-                <div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#1E293B;">
-                    <i data-lucide="layers" style="width:14px;height:14px; color:var(--color-primary);"></i>
-                    Batch Items &mdash; <span id="bulkRowCount" style="color:var(--color-primary); font-weight:800;">0</span> rows
+                <div style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#1E293B; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="layers" style="width:14px;height:14px; color:var(--color-primary);"></i>
+                        Batch Items &mdash; <span id="bulkRowCount" style="color:var(--color-primary); font-weight:800;">0</span> rows
+                    </div>
+                    <div id="batchHealthSummary" style="display:inline-flex; align-items:center;"></div>
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
                     <button type="button" onclick="addBulkRowAndFocus()" class="btn btn-primary btn-sm" style="font-weight:700; font-size:11.5px; padding:4px 10px; border-radius:6px;">
@@ -2494,6 +2549,9 @@
                     <div class="quality-toggle-pill ${folderClass} ${isFolder ? 'visible' : ''}" id="qualityToggle_${idx}" onclick="toggleFolderQuality(${idx})" title="Click to cycle quality: Normal &rarr; HD+ ⚡ &rarr; OG ✨">
                         <span>Quality:</span> <strong id="qualityLabel_${idx}">${folderLabel}</strong>
                     </div>
+
+                    <!-- Instant Row Warning / Health Badge -->
+                    <div id="rowWarning_${idx}" style="margin-top:3px; display:none;"></div>
                 </div>
 
                 <!-- 3. DESCRIPTION / SPECS -->
@@ -2537,6 +2595,7 @@
                             value="${priceVal}" min="0" required
                             class="bulk-num-input restock-input num-field sell-field"
                             oninput="updateBulkRowTotal(${idx})">
+                        <div id="priceWarning_${idx}" style="font-size:9.5px; font-weight:800; text-align:center; margin-top:2px; display:none;"></div>
                     </div>
 
                     <!-- Alert -->
@@ -2663,6 +2722,7 @@
         if (row) {
             row.remove();
             updateBulkSummary();
+            validateAllRowsInstant();
         }
     }
 
@@ -2672,6 +2732,7 @@
             bulkRowIndex = 0;
             addBulkRow();
             updateBulkSummary();
+            validateAllRowsInstant();
         }
     }
 
@@ -2743,34 +2804,220 @@
             }
         }
 
-        // Real-time Loss / Margin warning
+        updateBulkSummary();
+        validateAllRowsInstant();
+    }
+    window.updateBulkRowTotal = updateBulkRowTotal;
+
+    /* ── Live Row Health & Instant Row Validation Engine ── */
+    function validateAllRowsInstant() {
+        const rows = document.querySelectorAll('#bulkTableBody .batch-item-row');
+        let errorCount = 0;
+        let warningCount = 0;
+        let validCount = 0;
+        let firstErrorRowId = null;
+
+        // Build name map to catch instant duplicates across batch
+        const nameMap = {};
+        rows.forEach(r => {
+            const idMatch = r.id.match(/\d+$/);
+            if (!idMatch) return;
+            const i = parseInt(idMatch[0]);
+            const nameVal = (document.getElementById(`name_${i}`)?.value || document.getElementById(`searchInput_${i}`)?.value || '').trim().toLowerCase();
+            if (nameVal) {
+                nameMap[nameVal] = nameMap[nameVal] || [];
+                nameMap[nameVal].push(i);
+            }
+        });
+
+        rows.forEach(r => {
+            const idMatch = r.id.match(/\d+$/);
+            if (!idMatch) return;
+            const i = parseInt(idMatch[0]);
+            const res = validateRowInstant(i, nameMap);
+            if (res.status === 'error') {
+                errorCount++;
+                if (!firstErrorRowId) firstErrorRowId = r.id;
+            } else if (res.status === 'warning') {
+                warningCount++;
+            } else if (res.status === 'valid') {
+                validCount++;
+            }
+        });
+
+        // Update header toolbar badge
+        const healthEl = document.getElementById('batchHealthSummary');
+        if (healthEl) {
+            if (errorCount > 0) {
+                healthEl.innerHTML = `
+                    <span style="background:#FEE2E2; color:#B91C1C; border:1px solid #FCA5A5; padding:2px 8px; border-radius:12px; font-size:10.5px; font-weight:800; cursor:pointer;" onclick="const el=document.getElementById('${firstErrorRowId}'); if(el){ el.scrollIntoView({behavior:'smooth', block:'center'}); el.querySelector('input')?.focus(); }" title="Click to jump straight to first problem row">
+                        ❌ ${errorCount} row${errorCount > 1 ? 's have' : ' has'} errors (Click to fix)
+                    </span>
+                `;
+            } else if (warningCount > 0) {
+                healthEl.innerHTML = `
+                    <span style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D; padding:2px 8px; border-radius:12px; font-size:10.5px; font-weight:800;" title="Loss or Duplicate notice">
+                        ⚠️ ${warningCount} row notice${warningCount > 1 ? 's' : ''} (Check pricing / duplicates)
+                    </span>
+                `;
+            } else if (validCount > 0) {
+                healthEl.innerHTML = `
+                    <span style="background:#DCFCE7; color:#15803D; border:1px solid #86EFAC; padding:2px 8px; border-radius:12px; font-size:10.5px; font-weight:800;">
+                        ✅ All ${validCount} items verified
+                    </span>
+                `;
+            } else {
+                healthEl.innerHTML = '';
+            }
+        }
+    }
+    window.validateAllRowsInstant = validateAllRowsInstant;
+
+    function validateRowInstant(idx, nameMap = null) {
+        const rowEl = document.getElementById(`bulk-row-${idx}`);
+        if (!rowEl) return { status: 'pristine' };
+
+        const nameInput = document.getElementById(`name_${idx}`);
+        const searchInput = document.getElementById(`searchInput_${idx}`);
+        const name = (nameInput?.value || searchInput?.value || '').trim();
+
+        const qtyInput = document.getElementById(`qty_${idx}`);
+        const qty = parseInt(qtyInput?.value || 0);
+
+        const costInput = document.getElementById(`cost_${idx}`);
+        const rawCost = costInput ? costInput.value : '';
+        const cost = parseFloat(rawCost || 0);
+
         const priceInput = document.getElementById(`price_${idx}`);
-        if (priceInput) {
-            if (cost > 0 && sell > 0 && sell < cost) {
+        const rawPrice = priceInput ? priceInput.value : '';
+        const price = parseFloat(rawPrice || 0);
+
+        const warnBox = document.getElementById(`rowWarning_${idx}`);
+        const priceWarn = document.getElementById(`priceWarning_${idx}`);
+
+        // Pristine empty row
+        const isPristine = (!name && (!rawCost || cost === 0) && (!rawPrice || price === 0));
+        if (isPristine) {
+            rowEl.className = rowEl.className.replace(/row-state-\w+/g, '').trim() + ' row-state-pristine';
+            if (warnBox) { warnBox.style.display = 'none'; warnBox.innerHTML = ''; }
+            if (priceWarn) { priceWarn.style.display = 'none'; priceWarn.innerHTML = ''; }
+            if (searchInput) searchInput.style.borderColor = '';
+            if (qtyInput) qtyInput.style.borderColor = '';
+            if (costInput) costInput.style.borderColor = '';
+            if (priceInput) { priceInput.style.borderColor = ''; priceInput.style.background = ''; }
+            return { status: 'pristine' };
+        }
+
+        let errorMsg = null;
+        let warningMsg = null;
+        let priceMsg = null;
+
+        // Check 1: Missing Item Name
+        if (!name) {
+            errorMsg = '❌ Item name required';
+            if (searchInput) searchInput.style.borderColor = '#DC2626';
+        } else {
+            if (searchInput) searchInput.style.borderColor = '';
+        }
+
+        // Check 2: Invalid Qty
+        if (isNaN(qty) || qty < 1) {
+            errorMsg = errorMsg || '❌ Qty must be at least 1';
+            if (qtyInput) qtyInput.style.borderColor = '#DC2626';
+        } else {
+            if (qtyInput) qtyInput.style.borderColor = '';
+        }
+
+        // Check 3: Negative / Zero Cost
+        if (isNaN(cost) || cost < 0) {
+            errorMsg = errorMsg || '❌ Cost cannot be negative';
+            if (costInput) costInput.style.borderColor = '#DC2626';
+        } else if (cost === 0 && name) {
+            warningMsg = '⚠️ Buy cost is ₹0.00';
+            if (costInput) costInput.style.borderColor = '#F59E0B';
+        } else {
+            if (costInput) costInput.style.borderColor = '';
+        }
+
+        // Check 4: Negative / Loss Price
+        if (isNaN(price) || price < 0) {
+            errorMsg = errorMsg || '❌ Sell price cannot be negative';
+            if (priceInput) priceInput.style.borderColor = '#DC2626';
+        } else if (cost > 0 && price > 0 && price < cost) {
+            const lossPerUnit = (cost - price).toFixed(2);
+            priceMsg = `⚠️ Loss: -₹${lossPerUnit}/pc`;
+            warningMsg = warningMsg || `⚠️ Selling at Loss (-₹${lossPerUnit} / unit: Sell ₹${price.toFixed(2)} < Cost ₹${cost.toFixed(2)})`;
+            if (priceInput) {
                 priceInput.style.borderColor = '#DC2626';
                 priceInput.style.background = '#FEF2F2';
-                priceInput.title = `⚠️ Selling at Loss: ₹${(cost - sell).toFixed(2)} loss per unit (Sell ₹${sell.toFixed(2)} < Cost ₹${cost.toFixed(2)})`;
-            } else {
+            }
+        } else if (price === 0 && name && cost > 0) {
+            priceMsg = '⚠️ Sell is ₹0';
+            warningMsg = warningMsg || '⚠️ Selling price is ₹0.00';
+            if (priceInput) {
+                priceInput.style.borderColor = '#F59E0B';
+                priceInput.style.background = '#FFFBEB';
+            }
+        } else {
+            if (priceInput) {
                 priceInput.style.borderColor = '';
                 priceInput.style.background = '';
-                priceInput.title = '';
             }
         }
 
-        // Real-time Qty warning
-        const qtyInput = document.getElementById(`qty_${idx}`);
-        if (qtyInput) {
-            if (qty <= 0) {
-                qtyInput.style.borderColor = '#DC2626';
-                qtyInput.title = 'Quantity must be at least 1';
+        // Check 5: Duplicate Items in same batch
+        if (name && nameMap) {
+            const lowerName = name.toLowerCase();
+            const matches = nameMap[lowerName] || [];
+            if (matches.length > 1) {
+                const otherIdxs = matches.filter(id => id !== idx);
+                if (otherIdxs.length > 0) {
+                    warningMsg = `⚠️ Duplicate: Also in Row #${otherIdxs.join(', #')}`;
+                }
+            }
+        }
+
+        // Render Price Warning
+        if (priceWarn) {
+            if (priceMsg) {
+                priceWarn.innerHTML = `<span style="color:#DC2626; font-size:9.5px; font-weight:800; display:block; line-height:1.2;">${priceMsg}</span>`;
+                priceWarn.style.display = 'block';
             } else {
-                qtyInput.style.borderColor = '';
-                qtyInput.title = '';
+                priceWarn.style.display = 'none';
+                priceWarn.innerHTML = '';
             }
         }
 
-        updateBulkSummary();
+        // Render Row Warning Box
+        if (warnBox) {
+            if (errorMsg) {
+                warnBox.innerHTML = `<span class="instant-row-badge badge-err">${errorMsg}</span>`;
+                warnBox.style.display = 'inline-block';
+            } else if (warningMsg) {
+                warnBox.innerHTML = `<span class="instant-row-badge badge-warn">${warningMsg}</span>`;
+                warnBox.style.display = 'inline-block';
+            } else {
+                const margin = (price > 0 && cost > 0) ? Math.round(((price - cost) / price) * 100) : 0;
+                const profit = (price - cost).toFixed(2);
+                warnBox.innerHTML = `<span class="instant-row-badge badge-ok">✅ Ready • Margin: +₹${profit} (${margin}%)</span>`;
+                warnBox.style.display = 'inline-block';
+            }
+        }
+
+        // Apply row border state
+        rowEl.className = rowEl.className.replace(/row-state-\w+/g, '').trim();
+        if (errorMsg) {
+            rowEl.className += ' row-state-error';
+            return { status: 'error', message: errorMsg };
+        } else if (warningMsg) {
+            rowEl.className += ' row-state-warning';
+            return { status: 'warning', message: warningMsg };
+        } else {
+            rowEl.className += ' row-state-valid';
+            return { status: 'valid' };
+        }
     }
+    window.validateRowInstant = validateRowInstant;
 
     function adjustBulkQty(idx, delta) {
         const input = document.getElementById(`qty_${idx}`);
