@@ -593,6 +593,19 @@
             <i data-lucide="alert-circle" style="width:18px;height:18px; flex-shrink:0;"></i> {{ session('error') }}
         </div>
     @endif
+    @if(isset($errors) && $errors->any())
+        <div class="flash-error" style="border-radius:10px; padding: 14px 18px; margin-bottom: 12px; background:#FEF2F2; border:1.5px solid #FCA5A5; color:#991B1B;">
+            <div style="display:flex; align-items:center; gap:8px; font-weight:800; font-size:13px; margin-bottom:6px;">
+                <i data-lucide="alert-triangle" style="width:18px;height:18px; color:#DC2626; flex-shrink:0;"></i>
+                <span>Cannot Process Restock — Please correct the following:</span>
+            </div>
+            <ul style="margin:0; padding-left:22px; font-size:12px; line-height:1.6; font-weight:600;">
+                @foreach($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- AI INVOICE SCANNER — COMPACT OCR TOOLBAR -->
@@ -2730,6 +2743,32 @@
             }
         }
 
+        // Real-time Loss / Margin warning
+        const priceInput = document.getElementById(`price_${idx}`);
+        if (priceInput) {
+            if (cost > 0 && sell > 0 && sell < cost) {
+                priceInput.style.borderColor = '#DC2626';
+                priceInput.style.background = '#FEF2F2';
+                priceInput.title = `⚠️ Selling at Loss: ₹${(cost - sell).toFixed(2)} loss per unit (Sell ₹${sell.toFixed(2)} < Cost ₹${cost.toFixed(2)})`;
+            } else {
+                priceInput.style.borderColor = '';
+                priceInput.style.background = '';
+                priceInput.title = '';
+            }
+        }
+
+        // Real-time Qty warning
+        const qtyInput = document.getElementById(`qty_${idx}`);
+        if (qtyInput) {
+            if (qty <= 0) {
+                qtyInput.style.borderColor = '#DC2626';
+                qtyInput.title = 'Quantity must be at least 1';
+            } else {
+                qtyInput.style.borderColor = '';
+                qtyInput.title = '';
+            }
+        }
+
         updateBulkSummary();
     }
 
@@ -2887,24 +2926,116 @@
     function validateAndSubmitBulkRestock(form) {
         const rows = document.querySelectorAll('#bulkTableBody .batch-item-row');
         if (rows.length === 0) {
-            alert('Please add at least 1 item to the batch restock.');
+            alert('⚠️ Please add at least 1 item to the batch intake.');
             return false;
         }
 
-        let hasValidItems = false;
-        for (let r of rows) {
-            const name = r.querySelector('input[name*="[name]"]')?.value.trim();
-            const qty = parseInt(r.querySelector('input[name*="[qty]"]')?.value || 0);
-            if (name && qty > 0) {
-                hasValidItems = true;
-                break;
+        let filledRows = [];
+        let trailingEmptyCount = 0;
+
+        // 1. Separate completely empty rows from active rows
+        rows.forEach((r, idx) => {
+            const nameInput = r.querySelector('input[name*="[name]"]');
+            const searchInput = r.querySelector('.search-combobox-input');
+            const rawName = (nameInput?.value || searchInput?.value || '').trim();
+            const costVal = parseFloat(r.querySelector('input[name*="[unit_cost]"]')?.value || 0);
+            const partId = r.querySelector('input[name*="[part_id]"]')?.value;
+
+            // Row is completely empty/untouched if name, partId, and cost are all blank/zero
+            if (!rawName && !partId && (!costVal || isNaN(costVal) || costVal === 0)) {
+                // If there are other filled rows, safely prune this unused blank row
+                r.remove();
+                trailingEmptyCount++;
+            } else {
+                filledRows.push({ row: r, displayIndex: filledRows.length + 1 });
+            }
+        });
+
+        if (filledRows.length === 0) {
+            // Re-add one fresh blank row so user can start typing
+            addBulkRow();
+            alert('⚠️ Please enter at least 1 valid product item name, quantity, and cost.');
+            return false;
+        }
+
+        // 2. Validate every active filled row
+        for (let item of filledRows) {
+            const r = item.row;
+            const rowNum = item.displayIndex;
+            const nameInput = r.querySelector('input[name*="[name]"]');
+            const searchInput = r.querySelector('.search-combobox-input');
+            const name = (nameInput?.value || searchInput?.value || '').trim();
+
+            const qtyInput = r.querySelector('input[name*="[qty]"]');
+            const qty = parseInt(qtyInput?.value || 0);
+
+            const costInput = r.querySelector('input[name*="[unit_cost]"]');
+            const cost = parseFloat(costInput?.value || 0);
+
+            const priceInput = r.querySelector('input[name*="[selling_price]"]');
+            const sell = parseFloat(priceInput?.value || 0);
+
+            // Validate Name
+            if (!name) {
+                r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                r.style.boxShadow = '0 0 0 3px rgba(220, 38, 38, 0.4)';
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.style.borderColor = '#DC2626';
+                }
+                alert(`⚠️ Item Name Missing on Row #${rowNum}:\nPlease pick an existing inventory item or type a product name.`);
+                return false;
+            }
+
+            // Validate Quantity
+            if (isNaN(qty) || qty < 1) {
+                r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (qtyInput) {
+                    qtyInput.focus();
+                    qtyInput.style.borderColor = '#DC2626';
+                }
+                alert(`⚠️ Invalid Quantity on Row #${rowNum} ("${name}"):\nQuantity must be at least 1 unit (currently: ${qtyInput?.value || 0}).`);
+                return false;
+            }
+
+            // Validate Unit Cost
+            if (isNaN(cost) || cost < 0) {
+                r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (costInput) {
+                    costInput.focus();
+                    costInput.style.borderColor = '#DC2626';
+                }
+                alert(`⚠️ Invalid Buy Cost on Row #${rowNum} ("${name}"):\nCost price cannot be negative.`);
+                return false;
+            }
+
+            // Validate Selling Price
+            if (!isNaN(sell) && sell < 0) {
+                r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (priceInput) {
+                    priceInput.focus();
+                    priceInput.style.borderColor = '#DC2626';
+                }
+                alert(`⚠️ Invalid Retail Price on Row #${rowNum} ("${name}"):\nSelling price cannot be negative.`);
+                return false;
+            }
+
+            // Margin / Loss Warning: sell < cost
+            if (cost > 0 && sell > 0 && sell < cost) {
+                const proceedLoss = confirm(`⚠️ PRICING WARNING on Row #${rowNum} ("${name}"):\n\nRetail Selling Price (₹${sell.toFixed(2)}) is LESS than Buy Cost (₹${cost.toFixed(2)}).\nThis item will incur a loss of ₹${(cost - sell).toFixed(2)} per unit.\n\nDo you want to proceed with this price? Click OK to proceed, or Cancel to correct.`);
+                if (!proceedLoss) {
+                    r.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (priceInput) {
+                        priceInput.focus();
+                        priceInput.select();
+                    }
+                    return false;
+                }
             }
         }
 
-        if (!hasValidItems) {
-            alert('Please specify at least one valid item name and quantity.');
-            return false;
-        }
+        // Re-calculate totals
+        updateBulkSummary();
 
         const btn = document.getElementById('btnSubmitBulkRestock');
         if (btn) {

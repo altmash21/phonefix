@@ -78,6 +78,17 @@ class AccessoryRestockService
      */
     public function bulkRestock(int $companyId, Request $request): array
     {
+        // Filter out completely empty un-filled placeholder rows
+        if ($request->has('items') && is_array($request->items)) {
+            $filteredItems = array_values(array_filter($request->items, function ($it) {
+                $name = trim($it['name'] ?? '');
+                $partId = $it['part_id'] ?? null;
+                $cost = (float) ($it['unit_cost'] ?? 0);
+                return !empty($name) || !empty($partId) || $cost > 0;
+            }));
+            $request->merge(['items' => $filteredItems]);
+        }
+
         $request->validate([
             'items'                 => 'required|array|min:1',
             'items.*.name'          => 'required|string|max:150',
@@ -86,6 +97,15 @@ class AccessoryRestockService
             'items.*.selling_price' => 'nullable|numeric|min:0',
             'amount_paid'           => 'nullable|numeric|min:0',
             'payment_mode'          => 'nullable|string|in:cash,bank_transfer,cheque,upi',
+        ], [
+            'items.required'             => 'Please add at least one item to the batch intake.',
+            'items.min'                  => 'Please add at least one item to the batch intake.',
+            'items.*.name.required'      => 'Item name is required for all entered rows.',
+            'items.*.qty.required'       => 'Quantity is required.',
+            'items.*.qty.min'            => 'Quantity must be at least 1 unit.',
+            'items.*.unit_cost.required' => 'Unit cost is required.',
+            'items.*.unit_cost.min'      => 'Unit cost cannot be negative.',
+            'items.*.selling_price.min'  => 'Selling price cannot be negative.',
         ]);
 
         $supplierRef = trim(($request->supplier_name ? $request->supplier_name . ' ' : '') . ($request->invoice_no ? '#' . $request->invoice_no : 'Shipment Intake'));
