@@ -817,7 +817,7 @@ Rules:
    - "general_accessory": Other accessories.
 5. All numeric monetary fields must be numbers (e.g. 620.00). Both unit_cost and selling_price CAN be 0.00 (e.g. for free or zero-cost items).
 6. If supplier_phone contains +91 or spaces, clean to digits.
-7. For items categorized as 'folder_display', do NOT include words like 'Display Folder', 'Folder', 'Combo', 'Display', 'Screen', or 'LCD' in the 'name' field. The 'name' must be strictly the device / model name (e.g. 'Infinix X6517', 'Infinix Hot 10 Play', 'Realme C55 / C65') because category already defines it.
+7. In the 'name' field, the brand name MUST ALWAYS be included before the model (e.g. 'Infinix X6517', 'Infinix Hot 10 Play', 'Realme C55 / C65', 'Samsung A53'). Never output just the bare model like 'X6517'. For items categorized as 'folder_display', do NOT include words like 'Display Folder', 'Folder', 'Combo', 'Display', 'Screen', or 'LCD' in the 'name' field (e.g. output 'Infinix X6517', NOT 'Infinix X6517 Display Folder').
 PROMPT;
 
         $apiResult = $this->callGemini($prompt, $file);
@@ -938,7 +938,43 @@ PROMPT;
                         elseif (preg_match('/\b(oppo|reno)\b/', $nm)) $it['brand'] = 'Oppo';
                         elseif (preg_match('/\b(apple|iphone)\b/', $nm)) $it['brand'] = 'Apple';
                         elseif (preg_match('/\b(oneplus)\b/', $nm)) $it['brand'] = 'OnePlus';
-                        elseif (preg_match('/\b(infinix)\b/', $nm)) $it['brand'] = 'Infinix';
+                        elseif (preg_match('/\b(infinix)\b|\bx\d{3,4}\b|\bhot\s*\d|\bsmart\s*\d|\bzero\s*\d/', $nm)) $it['brand'] = 'Infinix';
+                        elseif (preg_match('/\b(tecno|pova|camon|spark)\b/', $nm)) $it['brand'] = 'Tecno';
+                        elseif (preg_match('/\b(itel)\b/', $nm)) $it['brand'] = 'Itel';
+                        elseif (preg_match('/\b(motorola|moto)\b/', $nm)) $it['brand'] = 'Motorola';
+                    }
+
+                    if (empty($it['brand']) && !empty($it['model'])) {
+                        $md = strtolower($it['model']);
+                        if (preg_match('/\b(realme|rlm|narzo)\b/', $md)) $it['brand'] = 'Realme';
+                        elseif (preg_match('/\b(samsung|galaxy)\b/', $md)) $it['brand'] = 'Samsung';
+                        elseif (preg_match('/\b(redmi|xiaomi|mi|poco)\b/', $md)) $it['brand'] = 'Xiaomi';
+                        elseif (preg_match('/\b(vivo|iqoo)\b/', $md)) $it['brand'] = 'Vivo';
+                        elseif (preg_match('/\b(oppo|reno)\b/', $md)) $it['brand'] = 'Oppo';
+                        elseif (preg_match('/\b(apple|iphone)\b/', $md)) $it['brand'] = 'Apple';
+                        elseif (preg_match('/\b(oneplus)\b/', $md)) $it['brand'] = 'OnePlus';
+                        elseif (preg_match('/\b(infinix)\b|\bx\d{3,4}\b|\bhot\s*\d|\bsmart\s*\d|\bzero\s*\d/', $md)) $it['brand'] = 'Infinix';
+                        elseif (preg_match('/\b(tecno|pova|camon|spark)\b/', $md)) $it['brand'] = 'Tecno';
+                        elseif (preg_match('/\b(itel)\b/', $md)) $it['brand'] = 'Itel';
+                        elseif (preg_match('/\b(motorola|moto)\b/', $md)) $it['brand'] = 'Motorola';
+                    }
+
+                    // Always ensure brand is present in the item name
+                    if (!empty($it['brand']) && $it['brand'] !== 'Universal' && !empty($it['name'])) {
+                        $brandWord = $it['brand'];
+                        if (!preg_match('/\b' . preg_quote($brandWord, '/') . '\b/i', $it['name'])) {
+                            $aliasMatched = false;
+                            $bLower = strtolower($brandWord);
+                            if ($bLower === 'apple' && preg_match('/\biphone\b/i', $it['name'])) $aliasMatched = true;
+                            if ($bLower === 'xiaomi' && preg_match('/\b(?:redmi|poco|mi)\b/i', $it['name'])) $aliasMatched = true;
+                            if ($bLower === 'vivo' && preg_match('/\biqoo\b/i', $it['name'])) $aliasMatched = true;
+                            if ($bLower === 'oppo' && preg_match('/\breno\b/i', $it['name'])) $aliasMatched = true;
+                            if ($bLower === 'realme' && preg_match('/\bnarzo\b/i', $it['name'])) $aliasMatched = true;
+
+                            if (!$aliasMatched) {
+                                $it['name'] = trim($brandWord . ' ' . $it['name']);
+                            }
+                        }
                     }
                 }
             }

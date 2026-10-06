@@ -1342,8 +1342,60 @@
     }
     window.canonicalizeCategory = canonicalizeCategory;
 
-    /* ── Clean redundant category terms from product name (e.g. remove Display Folder from Infinix X6517) ── */
-    function cleanItemNameForCategory(name, cat) {
+    /* ── Auto-detect brand from item name text or model code ── */
+    function guessBrand(name) {
+        const n = (name || '').toLowerCase();
+        if (/iphone|apple/.test(n))                                                    return 'Apple';
+        if (/galaxy|samsung|\bs\d{2}\b|\ba\d{2}\b|\bm\d{2}\b|\bf\d{2}\b/.test(n))     return 'Samsung';
+        if (/redmi|poco|xiaomi|\bnote\s*\d/.test(n))                                   return 'Xiaomi';
+        if (/vivo|iqoo|\by\d{2}\b|\bv\d{2}\b|\bt\d\b/.test(n))                        return 'Vivo';
+        if (/oppo|reno|\ba\d{2}\b/.test(n))                                            return 'Oppo';
+        if (/realme|narzo|\bc\d{2}\b|\bgt\b/.test(n))                                  return 'Realme';
+        if (/oneplus|\bnord\b/.test(n))                                                return 'OnePlus';
+        if (/moto|motorola|\bg\d{2}\b|\be\d{2}\b/.test(n))                             return 'Motorola';
+        if (/pixel|google/.test(n))                                                    return 'Google';
+        if (/infinix|\bx\d{3,4}\b|\bhot\s*\d|\bsmart\s*\d|\bzero\s*\d/.test(n))       return 'Infinix';
+        if (/tecno|pova|camon|\bspark\s*\d/.test(n))                                   return 'Tecno';
+        if (/itel|\ba\d{2}\b|\bp\d{2}\b/.test(n))                                      return 'Itel';
+        if (/nokia/.test(n))                                                           return 'Nokia';
+        return 'Universal';
+    }
+    window.guessBrand = guessBrand;
+
+    /* ── Ensure Brand Name is included in Item Name field ── */
+    function ensureBrandInItemName(name, brand) {
+        if (!name) return '';
+        let cleanName = String(name).trim();
+        let targetBrand = brand;
+
+        if (!targetBrand || targetBrand === 'Universal' || targetBrand.toLowerCase() === 'other') {
+            const detected = guessBrand(cleanName);
+            if (detected && detected !== 'Universal') {
+                targetBrand = detected;
+            } else {
+                return cleanName;
+            }
+        }
+
+        const escBrand = targetBrand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (new RegExp('\\b' + escBrand + '\\b', 'i').test(cleanName)) {
+            return cleanName;
+        }
+
+        // Special brand aliases
+        const bLower = targetBrand.toLowerCase();
+        if (bLower === 'apple' && /\biphone\b/i.test(cleanName)) return cleanName;
+        if (bLower === 'xiaomi' && /\b(?:redmi|poco|mi)\b/i.test(cleanName)) return cleanName;
+        if (bLower === 'vivo' && /\biqoo\b/i.test(cleanName)) return cleanName;
+        if (bLower === 'oppo' && /\breno\b/i.test(cleanName)) return cleanName;
+        if (bLower === 'realme' && /\bnarzo\b/i.test(cleanName)) return cleanName;
+
+        return `${targetBrand} ${cleanName}`.trim();
+    }
+    window.ensureBrandInItemName = ensureBrandInItemName;
+
+    /* ── Clean redundant category terms from product name & ensure brand is present ── */
+    function cleanItemNameForCategory(name, cat, brand) {
         if (!name) return '';
         let cleaned = String(name).trim();
         const c = canonicalizeCategory(cat, name);
@@ -1352,26 +1404,19 @@
             cleaned = cleaned.replace(/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/gi, ' ');
             cleaned = cleaned.replace(/[\s\-_/]+$/, '').replace(/^[\s\-_/]+/, '').replace(/\s{2,}/g, ' ').trim();
         }
+        if (brand && brand !== 'Universal') {
+            cleaned = ensureBrandInItemName(cleaned, brand);
+        } else {
+            const detected = guessBrand(cleaned);
+            if (detected && detected !== 'Universal') {
+                cleaned = ensureBrandInItemName(cleaned, detected);
+            }
+        }
         return cleaned || String(name).trim();
     }
     window.cleanItemNameForCategory = cleanItemNameForCategory;
 
     let bulkRowIndex = 0;
-
-    // Auto-detect brand from item name text
-    function guessBrand(name) {
-        const n = (name || '').toLowerCase();
-        if (/iphone|apple/.test(n))                  return 'Apple';
-        if (/galaxy|samsung|s\d{2}\b|\ba\d{2}/.test(n)) return 'Samsung';
-        if (/redmi|poco|xiaomi|\bnote\s*\d/.test(n)) return 'Xiaomi';
-        if (/vivo|iqoo/.test(n))                     return 'Vivo';
-        if (/oppo|reno/.test(n))                     return 'Oppo';
-        if (/realme|narzo/.test(n))                  return 'Realme';
-        if (/oneplus/.test(n))                       return 'OnePlus';
-        if (/moto|motorola/.test(n))                 return 'Motorola';
-        if (/pixel|google/.test(n))                  return 'Google';
-        return 'Universal';
-    }
 
     /* ── Focus and Start Typing Brand New Item ── */
     function focusAndTypeNew(idx) {
@@ -1908,9 +1953,15 @@
         const p = parts.find(item => item && String(item.id) === String(partId));
         if (!p) return;
 
+        const detectedB = (p.brand && p.brand !== 'Universal') ? p.brand : guessBrand(p.name);
+        let partDisplayName = p.name;
+        if (detectedB && detectedB !== 'Universal') {
+            partDisplayName = ensureBrandInItemName(partDisplayName, detectedB);
+        }
+
         const searchInput = document.getElementById(`searchInput_${idx}`);
-        if (searchInput) searchInput.value = p.name;
-        document.getElementById(`name_${idx}`).value = p.name;
+        if (searchInput) searchInput.value = partDisplayName;
+        document.getElementById(`name_${idx}`).value = partDisplayName;
         document.getElementById(`partId_${idx}`).value = p.id;
 
         const clearBtn = document.getElementById(`clearBtn_${idx}`);
@@ -1932,8 +1983,7 @@
             onBulkCategoryChange(idx, targetCat);
         }
 
-        const detectedB = guessBrand(p.name);
-        document.getElementById(`brand_${idx}`).value = (p.brand && p.brand !== 'Universal') ? p.brand : (detectedB || 'Universal');
+        document.getElementById(`brand_${idx}`).value = (detectedB || 'Universal');
         if (p.compatible_model) document.getElementById(`model_${idx}`).value = p.compatible_model;
 
         if (p.display_type) {
@@ -1958,9 +2008,39 @@
         }
 
         const searchInput = document.getElementById(`searchInput_${idx}`);
-        const rawName = (customName !== undefined && customName !== null && customName.trim() !== '')
+        let rawName = (customName !== undefined && customName !== null && customName.trim() !== '')
             ? customName.trim()
             : (searchInput?.value.trim() || 'New Item');
+
+        const catVal = document.getElementById(`catValue_${idx}`)?.value || '';
+        const brandEl = document.getElementById(`brand_${idx}`);
+        let currentBrand = brandEl ? brandEl.value : '';
+
+        // If category is display folder, strip redundant folder terms
+        if (catVal === 'folder_display' || catVal === 'display_folder') {
+            rawName = cleanItemNameForCategory(rawName, catVal, currentBrand);
+        }
+
+        // Auto-detect brand & category if not already set, and ensure brand in item name
+        if (rawName && rawName !== 'New Item') {
+            const detectedB = guessBrand(rawName);
+            if (detectedB && detectedB !== 'Universal') {
+                currentBrand = detectedB;
+                if (brandEl) brandEl.value = detectedB;
+            }
+            if (currentBrand && currentBrand !== 'Universal') {
+                rawName = ensureBrandInItemName(rawName, currentBrand);
+            }
+
+            const autoCat = canonicalizeCategory(catVal, rawName);
+            const catValEl = document.getElementById(`catValue_${idx}`);
+            const catSearchEl = document.getElementById(`catSearchInput_${idx}`);
+            if (catValEl && !catValEl.value && autoCat && autoCat !== 'general_accessory') {
+                catValEl.value = autoCat;
+                if (catSearchEl) catSearchEl.value = formatCategoryLabel(autoCat);
+                onBulkCategoryChange(idx, autoCat);
+            }
+        }
 
         if (searchInput) searchInput.value = rawName;
         document.getElementById(`name_${idx}`).value = rawName;
@@ -1971,25 +2051,6 @@
 
         const menuEl = document.getElementById(`comboboxMenu_${idx}`);
         if (menuEl) menuEl.style.display = 'none';
-
-        // Auto-detect brand & category if not already set
-        if (rawName && rawName !== 'New Item') {
-            const detectedB = guessBrand(rawName);
-            const brandEl = document.getElementById(`brand_${idx}`);
-            if (brandEl && detectedB !== 'Universal') brandEl.value = detectedB;
-
-            const autoCat = canonicalizeCategory('', rawName);
-            const selectEl = document.getElementById(`catSelect_${idx}`);
-            if (selectEl && autoCat && autoCat !== 'general_accessory') {
-                for (let i = 0; i < selectEl.options.length; i++) {
-                    const optVal = selectEl.options[i].value;
-                    if (optVal === autoCat || canonicalizeCategory(optVal) === autoCat) {
-                        selectEl.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-        }
 
         renderStockBadge(idx, 0, true);
         updateBulkRowTotal(idx);
@@ -2456,12 +2517,20 @@
 
             let rawItemName = itemData?.name || selectedPart?.name || '';
             let rawModel = itemData?.compatible_model || itemData?.model || selectedPart?.compatible_model || '';
+            let brandCandidate = itemData?.brand || selectedPart?.brand || '';
+            if (brandCandidate === 'Universal') brandCandidate = '';
+
+            const detectedBrand = brandCandidate || guessBrand(rawItemName) || guessBrand(rawModel) || 'Universal';
+
             if (targetCat === 'folder_display' || targetCat === 'display_folder') {
-                rawItemName = cleanItemNameForCategory(rawItemName, targetCat);
+                rawItemName = cleanItemNameForCategory(rawItemName, targetCat, detectedBrand);
                 rawModel = cleanItemNameForCategory(rawModel, targetCat);
+            } else if (detectedBrand && detectedBrand !== 'Universal') {
+                rawItemName = ensureBrandInItemName(rawItemName, detectedBrand);
             }
+
             const nameVal = escapeHtml(rawItemName);
-            const brandVal = escapeHtml(itemData?.brand || selectedPart?.brand || '');
+            const brandVal = escapeHtml(detectedBrand);
             const modelVal = escapeHtml(rawModel);
             const rawFolderDt = (itemData?.display_type || selectedPart?.display_type || 'Normal').trim();
             let folderType = 'Normal';
@@ -2484,7 +2553,6 @@
             const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (selectedPart?.selling_price ? parseFloat(selectedPart.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2));
             const isGiftChecked = (itemData?.is_gift_eligible || (targetCat && (targetCat === 'tempered_glass' || targetCat === 'back_cover' || targetCat === 'charger_cable' || targetCat === 'earphones_audio' || targetCat === 'general_accessory'))) ? 'checked' : '';
             const lineTotal = (qtyVal * parseFloat(costVal));
-            const detectedBrand = guessBrand(nameVal || '') || brandVal;
             const isFolder = (targetCat === 'folder_display');
 
             row.innerHTML = `
@@ -3474,7 +3542,11 @@
         items.forEach(it => {
             const rawName = it.name || it.model || 'Item';
             const cat = canonicalizeCategory(it.category, rawName);
-            const cleanedName = cleanItemNameForCategory(rawName, cat);
+            const rawBrand = it.brand || guessBrand(rawName) || guessBrand(it.model || '');
+            let cleanedName = cleanItemNameForCategory(rawName, cat, rawBrand);
+            if (rawBrand && rawBrand !== 'Universal') {
+                cleanedName = ensureBrandInItemName(cleanedName, rawBrand);
+            }
             const nameLower = cleanedName.toLowerCase();
 
             let displayType = 'Normal';
@@ -3497,7 +3569,7 @@
                 }
             }
 
-            const brand = it.brand || guessBrand(cleanedName);
+            const brand = (rawBrand && rawBrand !== 'Universal') ? rawBrand : (guessBrand(cleanedName) || 'Universal');
             const model = cleanItemNameForCategory(it.model || it.compatible_model || '', cat);
 
             addBulkRow({

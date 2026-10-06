@@ -41,11 +41,17 @@ class AccessoryRestockService
         };
 
         $cleanPartName = trim($request->name);
+        $brand = $request->brand ?: 'Universal';
         if ($finalCategorySlug === 'folder_display') {
             $stripped = trim(preg_replace('/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/i', ' ', $cleanPartName));
             $stripped = trim(preg_replace('/\s{2,}/', ' ', $stripped));
             if (!empty($stripped)) {
                 $cleanPartName = $stripped;
+            }
+        }
+        if (!empty($brand) && $brand !== 'Universal' && strtolower($brand) !== 'other') {
+            if (!preg_match('/\b' . preg_quote($brand, '/') . '\b/i', $cleanPartName)) {
+                $cleanPartName = trim($brand . ' ' . $cleanPartName);
             }
         }
 
@@ -54,7 +60,7 @@ class AccessoryRestockService
             'category'         => $finalCategorySlug,
             'category_id'      => $categoryRow?->id,
             'is_gift_eligible' => $isGift,
-            'brand'            => $request->brand ?: 'Universal',
+            'brand'            => $brand,
             'compatible_model' => $request->compatible_model ?: 'Universal / Multi-Model',
             'display_type'     => $displayType,
             'description'      => $request->description,
@@ -142,6 +148,11 @@ class AccessoryRestockService
                     }
                 }
                 $brand = $item['brand'] ?? 'Universal';
+                if (!empty($brand) && $brand !== 'Universal' && strtolower($brand) !== 'other') {
+                    if (!preg_match('/\b' . preg_quote($brand, '/') . '\b/i', $partName)) {
+                        $partName = trim($brand . ' ' . $partName);
+                    }
+                }
                 $model = $item['compatible_model'] ?? 'Universal';
                 $isGift = !empty($item['is_gift_eligible']) ? 1 : 0;
                 $partId = !empty($item['part_id']) ? (int) $item['part_id'] : null;
