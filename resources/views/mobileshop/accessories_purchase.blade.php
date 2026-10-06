@@ -3097,6 +3097,9 @@
         const btnClearAll = document.getElementById('btnLblClearAll');
         if (btnClearAll) btnClearAll.textContent = formatCurrency(effectiveBillCost + outBal);
 
+        const paidInput = document.getElementById('bulkAmountPaid');
+        const rawPaidStr = paidInput ? (paidInput.value !== '' ? paidInput.value.trim() : '') : '';
+
         // If user hasn't explicitly entered anything or input is untouched, default to effectiveBillCost
         let actualPaid = (rawPaidStr !== '' && rawPaidStr !== null && !isNaN(parseFloat(rawPaidStr)))
             ? parseFloat(rawPaidStr)
@@ -3141,12 +3144,12 @@
                 pill.style.background = '#FFFBEB';
                 pill.style.color = '#B45309';
                 pill.innerHTML = `🟡 <strong>Partial Payment (₹${actualPaid.toFixed(2)})</strong>: Remaining invoice due ₹${due.toFixed(2)} added to supplier debt`;
-            } else if (Math.abs(actualPaid - totalCost) < 0.01) {
+            } else if (Math.abs(actualPaid - effectiveBillCost) < 0.01) {
                 pill.style.background = '#ECFDF5';
                 pill.style.color = '#047857';
-                pill.innerHTML = `✅ <strong>Invoice Paid in Full (₹${totalCost.toFixed(2)})</strong>: Supplier balance unaffected`;
+                pill.innerHTML = `✅ <strong>Invoice Paid in Full (₹${effectiveBillCost.toFixed(2)})</strong>: Supplier balance unaffected`;
             } else {
-                const excess = actualPaid - totalCost;
+                const excess = actualPaid - effectiveBillCost;
                 if (outBal > 0) {
                     const cleared = Math.min(excess, outBal);
                     const remainingDue = Math.max(0, outBal - cleared);
@@ -3399,6 +3402,9 @@
             const suppInput = document.getElementById('bulkSupplierName');
             if (suppInput) {
                 suppInput.value = ocrData.supplier_name;
+                if (typeof onSupplierSelected === 'function') {
+                    onSupplierSelected();
+                }
             }
         }
 
