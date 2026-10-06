@@ -1097,17 +1097,29 @@ class PurchaseController extends BaseMobileShopController
         }
 
         // Check if any mobile devices from this PO have already been sold
-        $soldDevices = DB::table('ms_mobile_devices')
+        $deviceIds = DB::table('ms_mobile_devices')
             ->where('company_id', $companyId)
             ->where('purchase_order_id', $po->id)
-            ->where(function($q) {
-                $q->where('status', 'sold')
-                  ->orWhereNotNull('sale_id');
-            })
-            ->count();
+            ->pluck('id');
 
-        if ($soldDevices > 0) {
-            return redirect()->back()->with('error', "Cannot delete purchase #{$po->po_number}: {$soldDevices} device(s) from this purchase order have already been sold to customers. Please void the customer sale first.");
+        $soldDevicesCount = 0;
+        if ($deviceIds->isNotEmpty()) {
+            $soldByStatus = DB::table('ms_mobile_devices')
+                ->whereIn('id', $deviceIds)
+                ->where('status', 'sold')
+                ->count();
+
+            $soldInSales = DB::table('ms_mobile_sales')
+                ->where('company_id', $companyId)
+                ->whereIn('device_id', $deviceIds)
+                ->where('status', '!=', 'cancelled')
+                ->count();
+
+            $soldDevicesCount = max($soldByStatus, $soldInSales);
+        }
+
+        if ($soldDevicesCount > 0) {
+            return redirect()->back()->with('error', "Cannot delete purchase #{$po->po_number}: {$soldDevicesCount} device(s) from this purchase order have already been sold to customers. Please void the customer sale first.");
         }
 
         return DB::transaction(function () use ($companyId, $po) {
