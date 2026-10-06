@@ -291,14 +291,25 @@ class AccessoriesController extends BaseMobileShopController
 
             return $this->safeRedirect($request, 'mobileshop.accessories.purchase', [], 'success', $msg);
         } catch (\Illuminate\Validation\ValidationException $ve) {
+            $errList = [];
+            foreach ($ve->errors() as $messages) {
+                foreach ((array) $messages as $m) {
+                    $errList[] = $m;
+                }
+            }
+            $joinedError = implode('; ', array_unique($errList));
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation error: ' . implode('; ', array_map(fn($errs) => implode(', ', $errs), $ve->errors())),
+                    'message' => 'Validation error: ' . $joinedError,
                     'errors'  => $ve->errors(),
                 ], 422);
             }
-            return redirect()->back()->withErrors($ve->errors())->withInput()->with('error', 'Please correct the highlighted errors.');
+            return redirect()->back()
+                ->withErrors($ve->errors())
+                ->withInput()
+                ->with('error', 'Cannot process restock: ' . ($joinedError ?: 'Please correct the highlighted errors.'));
         } catch (\Throwable $e) {
             Log::error("Bulk Restock Error: " . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),

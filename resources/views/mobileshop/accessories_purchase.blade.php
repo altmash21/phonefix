@@ -3286,20 +3286,40 @@
         let filledRows = [];
         let trailingEmptyCount = 0;
 
-        // 1. Separate completely empty rows from active rows
+        // 1. Sync fields and separate completely empty rows from active rows
         rows.forEach((r, idx) => {
             const nameInput = r.querySelector('input[name*="[name]"]');
             const searchInput = r.querySelector('.search-combobox-input');
             const rawName = (nameInput?.value || searchInput?.value || '').trim();
-            const costVal = parseFloat(r.querySelector('input[name*="[unit_cost]"]')?.value || 0);
             const partId = r.querySelector('input[name*="[part_id]"]')?.value;
+            const costVal = parseFloat(r.querySelector('input[name*="[unit_cost]"]')?.value || 0);
 
-            // Row is completely empty/untouched if name, partId, and cost are all blank/zero
-            if (!rawName && !partId && (!costVal || isNaN(costVal) || costVal === 0)) {
-                // If there are other filled rows, safely prune this unused blank row
+            // Row is completely un-entered if name and partId are both missing
+            if (!rawName && !partId) {
                 r.remove();
                 trailingEmptyCount++;
             } else {
+                // Explicitly sync text into submitted name input
+                if (nameInput) nameInput.value = rawName;
+                if (searchInput) searchInput.value = rawName;
+
+                // Explicitly sync category
+                const catValEl = r.querySelector('input[name*="[category]"]');
+                const catSearchEl = r.querySelector('.cat-search-input');
+                if (catValEl && (!catValEl.value || catValEl.value === '')) {
+                    const guessedCat = canonicalizeCategory('', catSearchEl?.value || rawName);
+                    catValEl.value = guessedCat || 'general_accessory';
+                }
+
+                // Explicitly sync brand
+                const brandEl = r.querySelector('input[name*="[brand]"]');
+                if (brandEl && (!brandEl.value || brandEl.value === 'Universal')) {
+                    const detectedB = guessBrand(rawName);
+                    if (detectedB && detectedB !== 'Universal') {
+                        brandEl.value = detectedB;
+                    }
+                }
+
                 filledRows.push({ row: r, displayIndex: filledRows.length + 1 });
             }
         });
@@ -3351,7 +3371,7 @@
                 return false;
             }
 
-            // Validate Unit Cost
+            // Validate Unit Cost (Cost CAN be 0.00)
             if (isNaN(cost) || cost < 0) {
                 r.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 if (costInput) {
@@ -3362,7 +3382,7 @@
                 return false;
             }
 
-            // Validate Selling Price
+            // Validate Selling Price (Price CAN be 0.00)
             if (!isNaN(sell) && sell < 0) {
                 r.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 if (priceInput) {
@@ -3373,7 +3393,7 @@
                 return false;
             }
 
-            // Margin / Loss Warning: sell < cost
+            // Margin / Loss Warning: sell < cost (only when cost > 0 and sell > 0)
             if (cost > 0 && sell > 0 && sell < cost) {
                 const proceedLoss = confirm(`⚠️ PRICING WARNING on Row #${rowNum} ("${name}"):\n\nRetail Selling Price (₹${sell.toFixed(2)}) is LESS than Buy Cost (₹${cost.toFixed(2)}).\nThis item will incur a loss of ₹${(cost - sell).toFixed(2)} per unit.\n\nDo you want to proceed with this price? Click OK to proceed, or Cancel to correct.`);
                 if (!proceedLoss) {
@@ -3390,16 +3410,20 @@
         // Re-calculate totals
         updateBulkSummary();
 
-        const btn = document.getElementById('btnSubmitBulkRestock');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<i data-lucide="loader-2" style="width:16px;height:16px;" class="spin"></i> Processing Batch Restock...';
-        }
-        const mobBtn = document.getElementById('btnMobileSubmitRestock');
-        if (mobBtn) {
-            mobBtn.disabled = true;
-            mobBtn.innerHTML = '<i data-lucide="loader-2" style="width:16px;height:16px;" class="spin"></i> Processing...';
-        }
+        // Prevent double submit without aborting native form submission
+        setTimeout(() => {
+            const btn = document.getElementById('btnSubmitBulkRestock');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader-2" style="width:16px;height:16px;" class="spin"></i> Processing Batch Restock...';
+            }
+            const mobBtn = document.getElementById('btnMobileSubmitRestock');
+            if (mobBtn) {
+                mobBtn.disabled = true;
+                mobBtn.innerHTML = '<i data-lucide="loader-2" style="width:16px;height:16px;" class="spin"></i> Processing...';
+            }
+        }, 50);
+
         return true;
     }
 

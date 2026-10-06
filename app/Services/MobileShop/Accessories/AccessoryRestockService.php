@@ -55,7 +55,7 @@ class AccessoryRestockService
             }
         }
 
-        $partId = DB::table('ms_parts_inventory')->insertGetId([
+        $insertPartData = [
             'company_id'       => $companyId,
             'category'         => $finalCategorySlug,
             'category_id'      => $categoryRow?->id,
@@ -72,7 +72,18 @@ class AccessoryRestockService
             'min_stock_alert'  => $request->min_stock_alert !== null ? (int) $request->min_stock_alert : 3,
             'created_at'       => now(),
             'updated_at'       => now(),
-        ]);
+        ];
+
+        try {
+            $partId = DB::table('ms_parts_inventory')->insertGetId($insertPartData);
+        } catch (\Illuminate\Database\QueryException $qe) {
+            if (str_contains($qe->getMessage(), 'display_type') || str_contains($qe->getMessage(), 'Data truncated')) {
+                $insertPartData['display_type'] = 'na';
+                $partId = DB::table('ms_parts_inventory')->insertGetId($insertPartData);
+            } else {
+                throw $qe;
+            }
+        }
 
         DB::table('ms_parts_inventory_history')->insert([
             'part_id'       => $partId,
@@ -93,14 +104,54 @@ class AccessoryRestockService
      */
     public function bulkRestock(int $companyId, Request $request): array
     {
-        // Filter out completely empty un-filled placeholder rows
+        // Self-healing database integrity check for ms_parts_inventory column widening
+        static $schemaChecked = false;
+        if (!$schemaChecked) {
+            try {
+                $p = DB::getTablePrefix();
+                DB::statement("ALTER TABLE `{$p}ms_parts_inventory` MODIFY COLUMN `display_type` VARCHAR(50) NOT NULL DEFAULT 'na'");
+            } catch (\Throwable $e) {}
+            try {
+                $p = DB::getTablePrefix();
+                DB::statement("ALTER TABLE `{$p}ms_parts_inventory` MODIFY COLUMN `category` VARCHAR(50) NOT NULL DEFAULT 'general_accessory'");
+            } catch (\Throwable $e) {}
+            $schemaChecked = true;
+        }
+
+        // Filter out completely empty un-filled placeholder rows and resolve missing names from part_id
         if ($request->has('items') && is_array($request->items)) {
-            $filteredItems = array_values(array_filter($request->items, function ($it) {
+            $filteredItems = [];
+            foreach ($request->items as $it) {
+                if (!is_array($it)) continue;
                 $name = trim($it['name'] ?? '');
-                $partId = $it['part_id'] ?? null;
-                $cost = (float) ($it['unit_cost'] ?? 0);
-                return !empty($name) || !empty($partId) || $cost > 0;
-            }));
+                $partId = !empty($it['part_id']) ? (int) $it['part_id'] : null;
+
+                // If name is missing but part_id is present, resolve name from existing part
+                if (empty($name) && $partId) {
+                    $existingPart = DB::table('ms_parts_inventory')
+                        ->where('company_id', $companyId)
+                        ->where('id', $partId)
+                        ->first();
+                    if ($existingPart) {
+                        $it['name'] = $existingPart->name;
+                        $name = $existingPart->name;
+                    }
+                }
+
+                // If name is still empty, skip this incomplete placeholder row!
+                if (empty($name)) {
+                    continue;
+                }
+
+                // Ensure non-negative numbers
+                $it['qty'] = max(1, (int) ($it['qty'] ?? 1));
+                $it['unit_cost'] = max(0.0, (float) ($it['unit_cost'] ?? 0));
+                if (isset($it['selling_price']) && $it['selling_price'] !== null && $it['selling_price'] !== '') {
+                    $it['selling_price'] = max(0.0, (float) $it['selling_price']);
+                }
+
+                $filteredItems[] = $it;
+            }
             $request->merge(['items' => $filteredItems]);
         }
 
@@ -218,7 +269,16 @@ class AccessoryRestockService
                         }
                     }
 
-                    DB::table('ms_parts_inventory')->where('id', $part->id)->update($updateData);
+                    try {
+                        DB::table('ms_parts_inventory')->where('id', $part->id)->update($updateData);
+                    } catch (\Illuminate\Database\QueryException $qe) {
+                        if (isset($updateData['display_type']) && (str_contains($qe->getMessage(), 'display_type') || str_contains($qe->getMessage(), 'Data truncated'))) {
+                            $updateData['display_type'] = 'na';
+                            DB::table('ms_parts_inventory')->where('id', $part->id)->update($updateData);
+                        } else {
+                            throw $qe;
+                        }
+                    }
 
                     DB::table('ms_parts_inventory_history')->insert([
                         'part_id'       => $part->id,
@@ -247,7 +307,7 @@ class AccessoryRestockService
                         default                           => (in_array($rawDisplayType, $validDisplayTypes) ? $rawDisplayType : 'na'),
                     };
 
-                    $newPartId = DB::table('ms_parts_inventory')->insertGetId([
+                    $insertNewPartData = [
                         'company_id'       => $companyId,
                         'name'             => $partName,
                         'category'         => $finalCategorySlug,
@@ -264,7 +324,18 @@ class AccessoryRestockService
                         'is_gift_eligible' => $isGift || ($categoryRow && $categoryRow->is_gift_eligible ? 1 : 0),
                         'created_at'       => now(),
                         'updated_at'       => now(),
-                    ]);
+                    ];
+
+                    try {
+                        $newPartId = DB::table('ms_parts_inventory')->insertGetId($insertNewPartData);
+                    } catch (\Illuminate\Database\QueryException $qe) {
+                        if (str_contains($qe->getMessage(), 'display_type') || str_contains($qe->getMessage(), 'Data truncated')) {
+                            $insertNewPartData['display_type'] = 'na';
+                            $newPartId = DB::table('ms_parts_inventory')->insertGetId($insertNewPartData);
+                        } else {
+                            throw $qe;
+                        }
+                    }
 
                     DB::table('ms_parts_inventory_history')->insert([
                         'part_id'       => $newPartId,
