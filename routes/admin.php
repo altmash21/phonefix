@@ -126,6 +126,12 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('purchase/store', 'MobileShop\PurchaseController@storePurchase')
         ->middleware('permission:create-purchase-accessories|create-purchase-covers')
         ->name('purchase.store');
+    Route::post('purchase/update', 'MobileShop\PurchaseController@updatePurchase')
+        ->middleware('permission:create-purchase-accessories|create-purchase-covers|read-mobileshop-purchase')
+        ->name('purchase.update');
+    Route::post('purchase/delete', 'MobileShop\PurchaseController@deletePurchase')
+        ->middleware('permission:create-purchase-accessories|create-purchase-covers|read-mobileshop-purchase')
+        ->name('purchase.delete');
     Route::post('purchase/defect', 'MobileShop\PurchaseController@recordPurchaseDefect')
         ->name('purchase.defect');
     Route::post('defective-items/{id}/status', 'MobileShop\PurchaseController@updateDefectiveStatus')

@@ -937,5 +937,255 @@ class PurchaseController extends BaseMobileShopController
         $label = $statusLabels[$newStatus] ?? $newStatus;
         return redirect()->back()->with('success', "Defective item #{$id} updated to '{$label}'.");
     }
+
+    /**
+     * Update an existing Purchase Order invoice
+     */
+    public function updatePurchase(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-purchase-accessories') ||
+            auth()->user()->can('create-purchase-covers') ||
+            auth()->user()->can('create-purchase-phones') ||
+            auth()->user()->can('read-mobileshop-purchase') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin')
+        ), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'purchase_id'   => 'required|integer',
+            'po_number'     => 'required|string|max:100',
+            'order_date'    => 'required|date',
+            'supplier_name' => 'nullable|string|max:150',
+            'supplier_id'   => 'nullable|integer',
+            'bill_type'     => 'nullable|in:gst,non_gst',
+            'total_amount'  => 'required|numeric|min:0',
+            'amount_paid'   => 'required|numeric|min:0',
+        ]);
+
+        $companyId = $this->getCompanyId();
+        $po = DB::table('ms_purchase_orders')
+            ->where('company_id', $companyId)
+            ->where('id', $request->purchase_id)
+            ->first();
+
+        if (!$po) {
+            return redirect()->back()->with('error', 'Purchase invoice not found.');
+        }
+
+        // Check po_number duplicate if changed
+        $cleanPoNum = trim($request->po_number);
+        $duplicate = DB::table('ms_purchase_orders')
+            ->where('company_id', $companyId)
+            ->where('po_number', $cleanPoNum)
+            ->where('id', '!=', $po->id)
+            ->exists();
+
+        if ($duplicate) {
+            return redirect()->back()->with('error', "Invoice/PO # '{$cleanPoNum}' is already used by another purchase record.");
+        }
+
+        return DB::transaction(function () use ($request, $companyId, $po, $cleanPoNum) {
+            // Resolve supplier
+            $supplierId = $po->supplier_id;
+            if ($request->filled('supplier_id') && (int)$request->supplier_id > 0) {
+                $supplierId = (int)$request->supplier_id;
+            } elseif ($request->filled('supplier_name')) {
+                $sName = trim($request->supplier_name);
+                $existingSupplier = DB::table('ms_suppliers')
+                    ->where('company_id', $companyId)
+                    ->where('name', $sName)
+                    ->first();
+                if ($existingSupplier) {
+                    $supplierId = $existingSupplier->id;
+                } else {
+                    $supplierId = DB::table('ms_suppliers')->insertGetId([
+                        'company_id' => $companyId,
+                        'name'       => $sName,
+                        'phone'      => $request->supplier_phone ?? null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            $totalAmount = round((float) $request->total_amount, 2);
+            $amountPaid = min(round((float) $request->amount_paid, 2), $totalAmount);
+            $balanceDue = max(0.00, $totalAmount - $amountPaid);
+            $status = ($balanceDue <= 0.001) ? 'paid' : (($amountPaid > 0) ? 'partially_paid' : 'received');
+            $billType = $request->bill_type ?: ($po->bill_type ?? 'gst');
+
+            DB::table('ms_purchase_orders')->where('id', $po->id)->update([
+                'supplier_id'  => $supplierId,
+                'po_number'    => $cleanPoNum,
+                'order_date'   => $request->order_date,
+                'bill_type'    => $billType,
+                'subtotal'     => $totalAmount,
+                'total_amount' => $totalAmount,
+                'amount_paid'  => $amountPaid,
+                'balance_due'  => $balanceDue,
+                'status'       => $status,
+                'updated_at'   => now(),
+            ]);
+
+            // Sync supplier payments
+            $existingPayment = DB::table('ms_supplier_payments')
+                ->where('company_id', $companyId)
+                ->where('purchase_order_id', $po->id)
+                ->first();
+
+            if ($amountPaid > 0) {
+                if ($existingPayment) {
+                    DB::table('ms_supplier_payments')->where('id', $existingPayment->id)->update([
+                        'supplier_id'  => $supplierId,
+                        'amount'       => $amountPaid,
+                        'payment_date' => $request->order_date,
+                        'reference_no' => $cleanPoNum,
+                        'updated_at'   => now(),
+                    ]);
+                } else {
+                    DB::table('ms_supplier_payments')->insert([
+                        'company_id'        => $companyId,
+                        'supplier_id'       => $supplierId,
+                        'purchase_order_id' => $po->id,
+                        'amount'            => $amountPaid,
+                        'payment_date'      => $request->order_date,
+                        'mode'              => 'cash',
+                        'reference_no'      => $cleanPoNum,
+                        'remarks'           => "Payment on Purchase #{$cleanPoNum}",
+                        'recorded_by'       => auth()->id(),
+                        'created_at'        => now(),
+                        'updated_at'        => now(),
+                    ]);
+                }
+            } else {
+                if ($existingPayment) {
+                    DB::table('ms_supplier_payments')->where('id', $existingPayment->id)->delete();
+                }
+            }
+
+            return redirect()->back()->with('success', "Purchase invoice #{$cleanPoNum} updated successfully.");
+        });
+    }
+
+    /**
+     * Delete a Purchase Order and reverse inwarded stock
+     */
+    public function deletePurchase(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-purchase-accessories') ||
+            auth()->user()->can('create-purchase-covers') ||
+            auth()->user()->can('create-purchase-phones') ||
+            auth()->user()->can('read-mobileshop-purchase') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin')
+        ), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'purchase_id' => 'required|integer',
+        ]);
+
+        $companyId = $this->getCompanyId();
+        $po = DB::table('ms_purchase_orders')
+            ->where('company_id', $companyId)
+            ->where('id', $request->purchase_id)
+            ->first();
+
+        if (!$po) {
+            return redirect()->back()->with('error', 'Purchase invoice not found.');
+        }
+
+        // Check if any mobile devices from this PO have already been sold
+        $soldDevices = DB::table('ms_mobile_devices')
+            ->where('company_id', $companyId)
+            ->where('purchase_order_id', $po->id)
+            ->where(function($q) {
+                $q->where('status', 'sold')
+                  ->orWhereNotNull('sale_id');
+            })
+            ->count();
+
+        if ($soldDevices > 0) {
+            return redirect()->back()->with('error', "Cannot delete purchase #{$po->po_number}: {$soldDevices} device(s) from this purchase order have already been sold to customers. Please void the customer sale first.");
+        }
+
+        return DB::transaction(function () use ($companyId, $po) {
+            // 1. Delete unsold mobile devices linked to this PO
+            DB::table('ms_mobile_devices')
+                ->where('company_id', $companyId)
+                ->where('purchase_order_id', $po->id)
+                ->delete();
+
+            // 2. Reverse stock in ms_parts_inventory for line items
+            $lineItems = DB::table('ms_purchase_order_items')
+                ->where('purchase_order_id', $po->id)
+                ->get();
+
+            foreach ($lineItems as $item) {
+                $qty = (int) ($item->qty ?? 1);
+                $itemName = trim($item->model ?? '');
+                $itemBrand = trim($item->brand ?? '');
+
+                // Try to find the matching part by name
+                $part = DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->where(function($q) use ($itemName, $itemBrand) {
+                        $q->where('name', $itemName)
+                          ->orWhere('name', trim($itemBrand . ' ' . $itemName));
+                    })
+                    ->first();
+
+                if ($part) {
+                    $newStock = max(0, (int)$part->stock_qty - $qty);
+                    DB::table('ms_parts_inventory')->where('id', $part->id)->update([
+                        'stock_qty'  => $newStock,
+                        'updated_at' => now(),
+                    ]);
+
+                    DB::table('ms_parts_inventory_history')->insert([
+                        'part_id'       => $part->id,
+                        'type'          => 'deduction',
+                        'quantity'      => $qty,
+                        'balance_after' => $newStock,
+                        'reference'     => "DELETED PURCHASE #{$po->po_number}: Stock reversed by " . (auth()->user()?->name ?? 'Admin'),
+                        'user_id'       => auth()->id(),
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }
+            }
+
+            // 3. Delete defective item logs linked to this PO
+            DB::table('ms_defective_items')
+                ->where('company_id', $companyId)
+                ->where('purchase_order_id', $po->id)
+                ->delete();
+
+            // 4. Delete goods receipts linked to this PO
+            $grnIds = DB::table('ms_goods_receipts')
+                ->where('company_id', $companyId)
+                ->where('purchase_order_id', $po->id)
+                ->pluck('id');
+            if ($grnIds->isNotEmpty()) {
+                DB::table('ms_goods_receipt_items')->whereIn('goods_receipt_id', $grnIds)->delete();
+                DB::table('ms_goods_receipts')->whereIn('id', $grnIds)->delete();
+            }
+
+            // 5. Delete supplier payments linked to this PO
+            DB::table('ms_supplier_payments')
+                ->where('company_id', $companyId)
+                ->where('purchase_order_id', $po->id)
+                ->delete();
+
+            // 6. Delete PO items
+            DB::table('ms_purchase_order_items')->where('purchase_order_id', $po->id)->delete();
+
+            // 7. Delete PO
+            DB::table('ms_purchase_orders')->where('id', $po->id)->delete();
+
+            return redirect()->back()->with('success', "Purchase invoice #{$po->po_number} and associated stock have been deleted successfully.");
+        });
+    }
 }
 

@@ -328,6 +328,61 @@
             display: none !important;
         }
     }
+
+    /* Floating 3-Dot Context Menu for Purchases */
+    #purchaseFloatingMenu {
+        position: fixed;
+        z-index: 1250;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+        min-width: 220px;
+        padding: 6px;
+        display: none;
+        animation: purchaseMenuPop 0.12s ease-out;
+    }
+    @keyframes purchaseMenuPop {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .purchase-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #334155;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        text-align: left;
+        cursor: pointer;
+        text-decoration: none;
+        box-sizing: border-box;
+        transition: background 0.12s ease, color 0.12s ease;
+    }
+    .purchase-dropdown-item:hover {
+        background: #F8FAFC;
+        color: #0F172A;
+    }
+    .purchase-dropdown-item.text-danger {
+        color: #DC2626;
+    }
+    .purchase-dropdown-item.text-danger:hover {
+        background: #FEF2F2;
+        color: #B91C1C;
+    }
+    .purchase-dots-btn {
+        transition: all 0.15s ease;
+    }
+    .purchase-dots-btn:hover {
+        background: #F1F5F9;
+        color: #0F172A;
+        border-color: #94A3B8;
+    }
 </style>
 @endpush
 
@@ -667,19 +722,13 @@
                                             onclick="openViewPurchaseModal(this)">
                                         <i data-lucide="eye" style="width:13px;height:13px;"></i> View Items
                                     </button>
-                                    <button type="button" class="btn btn-outline btn-sm" style="padding:4px 9px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:4px; color:#DC2626; border-color:#FECACA; background:#FEF2F2;"
+                                    <button type="button" class="btn btn-outline btn-sm purchase-dots-btn" style="padding:4px 8px; font-size:11px; color:#475569; border-color:#CBD5E1; cursor:pointer;"
                                             data-invoice='@json($inv)'
                                             data-items='@json($inv->items)'
-                                            onclick="openPurchaseDefectModal(this)"
-                                            title="Record Defective Item / Return to Supplier">
-                                        <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i> Return / Defect
+                                            onclick="openPurchaseActionMenu(event, this)"
+                                            title="More Options">
+                                        <i data-lucide="more-vertical" style="width:14px;height:14px;"></i>
                                     </button>
-                                    <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:11px; font-weight:700; color:#475569; border-color:#CBD5E1;" title="Print Full Purchase Invoice">
-                                        <i data-lucide="printer" style="width:13px;height:13px;"></i>
-                                    </a>
-                                    <a href="{{ route('mobileshop.purchase.invoice.pdf', ['id' => $inv->id]) }}" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:11px; font-weight:700; color:#D97706; border-color:#FDE68A; background:#FFFBEB;" title="Download Purchase Order PDF">
-                                        <i data-lucide="download" style="width:13px;height:13px;"></i> PDF
-                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -765,27 +814,21 @@
                                     <strong>{{ $inv->item_count }} {{ Str::plural('Item', $inv->item_count) }} ({{ $inv->total_units }}u)</strong>
                                     • {{ $itemPreviews ?: 'Standard stock' }}
                                 </div>
-                                <div class="row-actions">
-                                    <button type="button" class="compact-action-btn"
+                                <div class="row-actions" style="display:inline-flex; align-items:center; gap:6px;">
+                                    <button type="button" class="compact-action-btn" style="color:var(--brand-700); border-color:#CBD5E1; font-weight:700; font-size:11px; padding:4px 9px; display:inline-flex; align-items:center; gap:4px;"
                                             data-invoice='@json($inv)'
                                             data-items='@json($inv->items)'
                                             onclick="openViewPurchaseModal(this)"
                                             title="View Line Items">
-                                        <i data-lucide="eye" style="width:15px;height:15px;"></i>
+                                        <i data-lucide="eye" style="width:14px;height:14px;"></i> View
                                     </button>
-                                    <button type="button" class="compact-action-btn" style="color:#DC2626; border-color:#FECACA; background:#FEF2F2;"
+                                    <button type="button" class="compact-action-btn purchase-dots-btn" style="padding:4px 8px; color:#475569; border-color:#CBD5E1;"
                                             data-invoice='@json($inv)'
                                             data-items='@json($inv->items)'
-                                            onclick="openPurchaseDefectModal(this)"
-                                            title="Record Defective / Return Items">
-                                        <i data-lucide="alert-triangle" style="width:14px;height:14px;"></i>
+                                            onclick="openPurchaseActionMenu(event, this)"
+                                            title="More Options">
+                                        <i data-lucide="more-vertical" style="width:15px;height:15px;"></i>
                                     </button>
-                                    <a href="{{ route('mobileshop.purchase.invoice', ['id' => $inv->id]) }}" class="compact-action-btn" title="Print Invoice">
-                                        <i data-lucide="printer" style="width:15px;height:15px;"></i>
-                                    </a>
-                                    <a href="{{ route('mobileshop.purchase.invoice.pdf', ['id' => $inv->id]) }}" class="compact-action-btn" title="Download PDF" style="color:#D97706;">
-                                        <i data-lucide="download" style="width:15px;height:15px;"></i>
-                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -1353,6 +1396,157 @@
 
 
 
+    <!-- Floating 3-Dot Context Menu for Purchases -->
+    <div id="purchaseFloatingMenu">
+        <div style="padding: 6px 12px 6px 12px; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; border-bottom:1px solid #F1F5F9; margin-bottom:4px;" id="purchaseMenuTitle">
+            Purchase Actions
+        </div>
+        <button type="button" class="purchase-dropdown-item" onclick="triggerPurchaseEdit()">
+            <i data-lucide="edit-3" style="width:14px;height:14px;color:#4F46E5;"></i>
+            <span>Edit Purchase Details</span>
+        </button>
+        <button type="button" class="purchase-dropdown-item" onclick="triggerPurchaseDefect()">
+            <i data-lucide="alert-triangle" style="width:14px;height:14px;color:#EA580C;"></i>
+            <span>Return / Defect to Vendor</span>
+        </button>
+        <a href="#" id="menuPrintInvoiceLink" target="_blank" class="purchase-dropdown-item">
+            <i data-lucide="printer" style="width:14px;height:14px;color:#475569;"></i>
+            <span>Print Full Invoice</span>
+        </a>
+        <a href="#" id="menuDownloadPdfLink" target="_blank" class="purchase-dropdown-item">
+            <i data-lucide="download" style="width:14px;height:14px;color:#D97706;"></i>
+            <span>Download Invoice PDF</span>
+        </a>
+        <div style="height:1px; background:#F1F5F9; margin:4px 0;"></div>
+        <button type="button" class="purchase-dropdown-item text-danger" onclick="triggerPurchaseDelete()">
+            <i data-lucide="trash-2" style="width:14px;height:14px;color:#DC2626;"></i>
+            <span>Delete Purchase Invoice</span>
+        </button>
+    </div>
+
+    <!-- MODAL: Edit Purchase Order -->
+    <div id="editPurchaseModal" style="display:none; position:fixed; inset:0; z-index:1220; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
+        <div class="card" style="max-width: 520px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; background:#fff; overflow:hidden;">
+            <div class="card-header" style="background:#EEF2FF; border-bottom:1px solid #E0E7FF; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; border-radius:8px; background:#E0E7FF; color:#4F46E5; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i data-lucide="edit-3" style="width:18px;height:18px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:15px; font-weight:800; color:#1E1B4B;">Edit Purchase Invoice</h3>
+                        <div id="lblEditPurchasePoNum" style="font-size:11.5px; color:#4338CA; font-weight:600; margin-top:2px;">#PO-RECORD</div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEditPurchaseModal()" style="border:none; background:transparent; font-size:18px; color:#64748B; cursor:pointer; padding:4px;">✕</button>
+            </div>
+
+            <form action="{{ route('mobileshop.purchase.update') }}" method="POST" id="editPurchaseForm">
+                @csrf
+                <input type="hidden" name="purchase_id" id="editPurchaseId" value="">
+
+                <div class="card-body" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Invoice / PO # *</label>
+                            <input type="text" name="po_number" id="editPoNumber" required class="form-control" style="font-weight:700; font-family:monospace; font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Purchase Date *</label>
+                            <input type="date" name="order_date" id="editOrderDate" required class="form-control" style="font-size:13px;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Supplier / Vendor Name</label>
+                        <input type="text" name="supplier_name" id="editSupplierNameField" list="purchaseSuppliersDatalist" class="form-control" placeholder="Vendor / Distributor Name" style="font-size:13px;">
+                        <datalist id="purchaseSuppliersDatalist">
+                            @foreach($suppliers as $s)
+                                <option value="{{ $s->name }}">{{ $s->phone ?: '' }}</option>
+                            @endforeach
+                        </datalist>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Bill / Tax Type</label>
+                            <select name="bill_type" id="editBillType" class="form-control" style="font-size:13px; font-weight:600;">
+                                <option value="gst">GST Tax Invoice</option>
+                                <option value="non_gst">Non-GST / Cash Bill</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Total Bill Amount (₹) *</label>
+                            <input type="number" step="0.01" min="0" name="total_amount" id="editTotalAmount" required oninput="recalcEditBalanceDue()" class="form-control" style="font-size:14px; font-weight:800; color:#0F172A;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Amount Paid (₹) *</label>
+                            <input type="number" step="0.01" min="0" name="amount_paid" id="editAmountPaid" required oninput="recalcEditBalanceDue()" class="form-control" style="font-size:14px; font-weight:800; color:#15803D;">
+                        </div>
+                        <div>
+                            <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Calculated Supplier Due</label>
+                            <div id="lblEditBalanceDue" style="padding:8px 12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; font-size:14px; font-weight:800; color:#B91C1C;">
+                                ₹0.00
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding:14px 20px; border-top:1px solid #E2E8F0; background:#F8FAFC; display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" onclick="closeEditPurchaseModal()" class="btn btn-outline" style="font-size:12px; font-weight:700; padding:6px 14px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="font-size:12px; font-weight:800; padding:6px 18px; border-radius:6px; background:#4F46E5;">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Delete Purchase Order Confirmation -->
+    <div id="deletePurchaseModal" style="display:none; position:fixed; inset:0; z-index:1220; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:16px;">
+        <div class="card" style="max-width: 440px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; background:#fff; overflow:hidden;">
+            <div class="card-header" style="background:#FEF2F2; border-bottom:1px solid #FECACA; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; border-radius:8px; background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i data-lucide="trash-2" style="width:18px;height:18px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:15px; font-weight:800; color:#991B1B;">Delete Purchase Invoice?</h3>
+                        <div id="lblDeletePoNum" style="font-size:11.5px; color:#B91C1C; font-weight:600; margin-top:2px;">#PO-RECORD</div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDeletePurchaseModal()" style="border:none; background:transparent; font-size:18px; color:#991B1B; cursor:pointer; padding:4px;">✕</button>
+            </div>
+
+            <form action="{{ route('mobileshop.purchase.delete') }}" method="POST" id="deletePurchaseForm">
+                @csrf
+                <input type="hidden" name="purchase_id" id="deletePurchaseId" value="">
+
+                <div class="card-body" style="padding:20px; display:flex; flex-direction:column; gap:12px;">
+                    <p style="font-size:13px; color:#334155; line-height:1.5; margin:0;">
+                        Are you sure you want to delete purchase invoice <strong id="lblDeletePoNumBold" style="color:#0F172A;"></strong> from <strong id="lblDeleteSupplierName" style="color:#0F172A;"></strong>?
+                    </p>
+
+                    <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:10px 12px; font-size:11.5px; color:#92400E; line-height:1.4;">
+                        <div style="font-weight:800; margin-bottom:2px; display:flex; align-items:center; gap:4px;">
+                            <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i> Inventory Stock & Accounting Reversal:
+                        </div>
+                        Any unsold devices and spare parts acquired under this purchase will be automatically deducted from current stock. Payment records for this purchase will be cleared.
+                    </div>
+                </div>
+
+                <div style="padding:14px 20px; border-top:1px solid #E2E8F0; background:#F8FAFC; display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" onclick="closeDeletePurchaseModal()" class="btn btn-outline" style="font-size:12px; font-weight:700; padding:6px 14px;">Cancel</button>
+                    <button type="submit" class="btn" style="background:#DC2626; color:#fff; border:none; font-size:12px; font-weight:800; padding:6px 18px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="trash-2" style="width:14px;height:14px;"></i> Confirm Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -1414,6 +1608,9 @@
             closePurchaseFabMenu();
             closePaymentModal();
             closeQuickPurchaseModal();
+            closeEditPurchaseModal();
+            closeDeletePurchaseModal();
+            closePurchaseActionMenu();
         }
     });
 
@@ -2264,8 +2461,145 @@
         filterPurchaseTables();
     }
 
-    function filterPurchaseTables() {
-        applyCombinedPurchaseFilter();
+    /* ── Purchase 3-Dot Action Menu & Modal Handlers ── */
+    let activePurchaseInvoice = null;
+    let activePurchaseItems = [];
+
+    function openPurchaseActionMenu(event, btn) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        try {
+            activePurchaseInvoice = JSON.parse(btn.getAttribute('data-invoice') || '{}');
+            activePurchaseItems = JSON.parse(btn.getAttribute('data-items') || '[]');
+        } catch(e) {
+            activePurchaseInvoice = {};
+            activePurchaseItems = [];
+        }
+
+        const menu = document.getElementById('purchaseFloatingMenu');
+        if (!menu) return;
+
+        const titleEl = document.getElementById('purchaseMenuTitle');
+        if (titleEl) {
+            titleEl.textContent = '#' + (activePurchaseInvoice.po_number || 'PO-RECORD');
+        }
+
+        const printLink = document.getElementById('menuPrintInvoiceLink');
+        if (printLink && activePurchaseInvoice.id) {
+            printLink.href = `/${companyId}/mobileshop/invoice/purchase/${activePurchaseInvoice.id}`;
+        }
+
+        const pdfLink = document.getElementById('menuDownloadPdfLink');
+        if (pdfLink && activePurchaseInvoice.id) {
+            pdfLink.href = `/${companyId}/mobileshop/invoice/purchase/${activePurchaseInvoice.id}/pdf`;
+        }
+
+        // Position menu near button
+        const btnRect = btn.getBoundingClientRect();
+        const menuWidth = 220;
+        const menuHeight = 210;
+
+        let left = btnRect.right - menuWidth;
+        let top = btnRect.bottom + 6;
+
+        if (top + menuHeight > window.innerHeight) {
+            top = Math.max(10, btnRect.top - menuHeight - 6);
+        }
+        if (left < 10) {
+            left = 10;
+        }
+
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+        menu.style.display = 'block';
+
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    function closePurchaseActionMenu() {
+        const menu = document.getElementById('purchaseFloatingMenu');
+        if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('purchaseFloatingMenu');
+        if (menu && menu.style.display !== 'none' && !e.target.closest('#purchaseFloatingMenu') && !e.target.closest('.purchase-dots-btn')) {
+            closePurchaseActionMenu();
+        }
+    });
+
+    function triggerPurchaseEdit() {
+        closePurchaseActionMenu();
+        if (!activePurchaseInvoice) return;
+        openEditPurchaseModal(activePurchaseInvoice);
+    }
+
+    function triggerPurchaseDefect() {
+        closePurchaseActionMenu();
+        if (!activePurchaseInvoice) return;
+        const dummyBtn = document.createElement('button');
+        dummyBtn.setAttribute('data-invoice', JSON.stringify(activePurchaseInvoice));
+        dummyBtn.setAttribute('data-items', JSON.stringify(activePurchaseItems));
+        openPurchaseDefectModal(dummyBtn);
+    }
+
+    function triggerPurchaseDelete() {
+        closePurchaseActionMenu();
+        if (!activePurchaseInvoice) return;
+        openDeletePurchaseModal(activePurchaseInvoice);
+    }
+
+    function openEditPurchaseModal(inv) {
+        document.getElementById('editPurchaseId').value = inv.id || '';
+        document.getElementById('lblEditPurchasePoNum').textContent = '#' + (inv.po_number || 'PO-RECORD');
+        document.getElementById('editPoNumber').value = inv.po_number || '';
+        
+        let d = inv.order_date || '';
+        if (d && d.length >= 10) d = d.substring(0, 10);
+        document.getElementById('editOrderDate').value = d;
+
+        document.getElementById('editSupplierNameField').value = inv.supplier_name || '';
+        document.getElementById('editBillType').value = inv.bill_type || 'gst';
+        document.getElementById('editTotalAmount').value = parseFloat(inv.total_amount || 0).toFixed(2);
+        document.getElementById('editAmountPaid').value = parseFloat(inv.amount_paid || 0).toFixed(2);
+        
+        recalcEditBalanceDue();
+        document.getElementById('editPurchaseModal').style.display = 'flex';
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    function closeEditPurchaseModal() {
+        document.getElementById('editPurchaseModal').style.display = 'none';
+    }
+
+    function recalcEditBalanceDue() {
+        const total = parseFloat(document.getElementById('editTotalAmount')?.value || 0);
+        const paid = parseFloat(document.getElementById('editAmountPaid')?.value || 0);
+        const due = Math.max(0, total - paid);
+        const dueEl = document.getElementById('lblEditBalanceDue');
+        if (dueEl) {
+            dueEl.textContent = '₹' + due.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            dueEl.style.color = due > 0 ? '#B91C1C' : '#15803D';
+        }
+    }
+
+    function openDeletePurchaseModal(inv) {
+        document.getElementById('deletePurchaseId').value = inv.id || '';
+        document.getElementById('lblDeletePoNum').textContent = '#' + (inv.po_number || 'PO-RECORD');
+        document.getElementById('lblDeletePoNumBold').textContent = '#' + (inv.po_number || 'PO-RECORD');
+        document.getElementById('lblDeleteSupplierName').textContent = inv.supplier_name || 'Vendor';
+
+        document.getElementById('deletePurchaseModal').style.display = 'flex';
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+    }
+
+    function closeDeletePurchaseModal() {
+        document.getElementById('deletePurchaseModal').style.display = 'none';
     }
 
     function initPurchasePage() {
