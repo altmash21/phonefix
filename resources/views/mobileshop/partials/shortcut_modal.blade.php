@@ -477,7 +477,7 @@
     window.downloadDesktopShortcutFile = function() {
         var companyId = '{{ session("company_id", 1) }}';
         var adminUrl = window.location.origin + '/' + companyId + '/mobileshop';
-        var iconUrl = window.location.origin + '/public/img/favicon.ico';
+        var iconUrl = window.location.origin + '/public/img/phonefix-icon.ico';
 
         var fileContent = "[InternetShortcut]\r\n" +
                           "URL=" + adminUrl + "\r\n" +

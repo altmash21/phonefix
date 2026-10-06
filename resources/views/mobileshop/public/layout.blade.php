@@ -6,9 +6,12 @@
     <title>@yield('title', store_name() . ' — Mobile Accessories & Express Repair Lab')</title>
     <meta name="description" content="@yield('meta_description', 'Official mobile accessories, fast chargers, tempered glass, OEM batteries, and certified express phone repair in ' . store_city() . '.')">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <link rel="apple-touch-icon" href="{{ asset('public/img/pwa/icon-192x192.png') }}">
-    <meta name="apple-mobile-web-app-title" content="PhoneFix Admin">
-    <meta name="application-name" content="PhoneFix Admin">
+    <link rel="icon" type="image/x-icon" href="{{ asset('public/img/favicon.ico') }}?v=2">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('public/img/phonefix-logo.svg') }}?v=2">
+    <link rel="shortcut icon" href="{{ asset('public/img/favicon.ico') }}?v=2">
+    <link rel="apple-touch-icon" href="{{ asset('public/img/pwa/icon-192x192.png') }}?v=2">
+    <meta name="apple-mobile-web-app-title" content="PhoneFix Azamgarh">
+    <meta name="application-name" content="PhoneFix Azamgarh">
 
     <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -1,1 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000.14"><defs><style>.cls-1{fill:#6da252;}</style></defs><title>Asset 3</title><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><path class="cls-1" d="M292.3,726.77a306.59,306.59,0,0,1-99.57-215.22H0C3.23,655.16,67,783.81,166.8,873Z"/><path class="cls-1" d="M499.93,0C228,0,6.8,217,0,487.29H192.78c6.7-163.86,141.65-294.63,307.15-294.63,169.78,0,307.42,137.63,307.42,307.41C807.35,614.28,745.06,714,652.61,767L743.31,937C896.44,851.54,1000,687.89,1000,500.07,1000,223.89,776.11,0,499.93,0"/><path class="cls-1" d="M631.11,778.16a307.73,307.73,0,0,1-320.3-35.72L185.27,888.74a500.46,500.46,0,0,0,536.58,59.57Z"/><rect class="cls-1" x="807.35" y="500.07" width="192.65" height="500.07"/></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="pfGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#7C3AED" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B" />
+      <stop offset="100%" stop-color="#312E81" />
+    </linearGradient>
+  </defs>
+  <!-- Background Squircle -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#pfGrad)"/>
+  <rect x="24" y="24" width="464" height="232" rx="112" fill="url(#glowGrad)"/>
+  <!-- Phone Body -->
+  <rect x="156" y="96" width="200" height="320" rx="36" fill="#FFFFFF" />
+  <!-- Phone Screen -->
+  <rect x="174" y="138" width="164" height="228" rx="16" fill="url(#screenGrad)" />
+  <!-- Screen Letter 'P' -->
+  <path d="M214 175 H260 C279 175 294 188 294 206 C294 224 279 237 260 237 H236 V285 H214 V175 Z M236 195 V217 H258 C266 217 272 212 272 206 C272 200 266 195 258 195 H236 Z" fill="#6366F1" />
+  <!-- Fix checkmark badge -->
+  <circle cx="286" cy="268" r="16" fill="#10B981" />
+  <path d="M279 268 L284 273 L293 263" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <!-- Speaker & Home Bar -->
+  <rect x="231" y="116" width="50" height="6" rx="3" fill="#CBD5E1" />
+  <rect x="236" y="384" width="40" height="6" rx="3" fill="#CBD5E1" />
+</svg>

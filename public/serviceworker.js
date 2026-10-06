@@ -1,4 +1,4 @@
-var staticCacheName = 'pwa-v4-network-first';
+var staticCacheName = 'pwa-v5-phonefix';
 
 var filesToCache = [
     '/manifest.json',
@@ -40,14 +40,16 @@ var filesToCache = [
     '/akaunting-js/swiper-bundle.min.js',
     '/fonts/MaterialIcons-Regular.woff',
     '/fonts/MaterialIcons-Regular.woff2',
+    '/favicon.ico',
     '/img/favicon.ico',
+    '/img/phonefix-icon.ico',
+    '/img/phonefix-logo.svg',
     '/img/akaunting-logo-gold.png',
     '/img/akaunting-logo-green.svg',
     '/img/akaunting-logo-horizontal.svg',
     '/img/akaunting-logo-purple.svg',
     '/img/akaunting-logo-white.svg',
     '/img/akaunting-logo-wild-blue.png',
-    '/img/akaunting-loading.gif',
     '/img/pwa/icon-192x192.png',
     '/img/pwa/icon-192x192-maskable.png',
     '/img/pwa/icon-512x512.png',

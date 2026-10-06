@@ -1,29 +1,17 @@
 {
-    "name": "Akaunting",
-    "short_name": "Akaunting",
-    "description": "Free invoicing and accounting software for small businesses and freelancers.",
+    "name": "PhoneFix Azamgarh ERP",
+    "short_name": "PhoneFix",
+    "description": "PhoneFix Azamgarh — Mobile Shop Retail, Inventory & Service Console",
     "categories": [
-        "finance",
-        "business"
+        "business",
+        "utilities"
     ],
     "start_url": ".?utm_source=pwa",
     "display": "standalone",
-    "theme_color": "#ffffff",
+    "theme_color": "#5E6AD2",
     "background_color": "#ffffff",
     "orientation": "any",
-    "android_package_name": "com.akaunting.akaunting",
-    "prefer_related_applications": true,
-    "related_applications": [
-        {
-            "id": "com.akaunting.akaunting",
-            "platform": "play",
-            "url": "https://play.google.com/store/apps/details?id=com.akaunting.akaunting"
-        },
-        {
-            "platform": "itunes",
-            "url": "https://apps.apple.com/us/app/akaunting/id1573240410"
-        }
-    ],
+    "prefer_related_applications": false,
     "splash": {
         "640x1136":  "public/img/pwa/splash-640x1136.png",
         "750x1334":  "public/img/pwa/splash-750x1334.png",

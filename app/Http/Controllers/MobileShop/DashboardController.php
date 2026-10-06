@@ -456,7 +456,7 @@ class DashboardController extends BaseMobileShopController
     {
         $companyId = $this->getCompanyId();
         $adminUrl  = url("/{$companyId}/mobileshop");
-        $iconUrl   = url('public/img/favicon.ico');
+        $iconUrl   = url('public/img/phonefix-icon.ico');
 
         $content = "[InternetShortcut]\r\nURL={$adminUrl}\r\nIconIndex=0\r\nIconFile={$iconUrl}\r\nHotKey=0\r\n";
 

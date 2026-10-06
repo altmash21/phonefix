@@ -9,7 +9,10 @@
     <meta name="theme-color" content="#5E6AD2">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <link rel="apple-touch-icon" href="{{ asset('public/img/pwa/icon-192x192.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('public/img/favicon.ico') }}?v=2">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('public/img/phonefix-logo.svg') }}?v=2">
+    <link rel="shortcut icon" href="{{ asset('public/img/favicon.ico') }}?v=2">
+    <link rel="apple-touch-icon" href="{{ asset('public/img/pwa/icon-192x192.png') }}?v=2">
     <meta name="apple-mobile-web-app-title" content="PhoneFix Admin">
     <meta name="application-name" content="PhoneFix Admin">
     <base href="{{ config('app.url') . '/' }}">
