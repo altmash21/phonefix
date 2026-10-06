@@ -201,6 +201,27 @@
                             <td style="text-align:center; white-space:nowrap;">
                                 <button type="button" 
                                         class="btn btn-outline btn-xs" 
+                                        title="Edit Stock Item" 
+                                        style="color:#4F46E5; border-color:#C7D2FE; background:#EEF2FF; padding:3px 7px; margin-right:4px;"
+                                        onclick="openEditStockModal({
+                                            type: 'part',
+                                            id: {{ $part->id }},
+                                            name: '{{ addslashes($part->name) }}',
+                                            category: '{{ addslashes($part->category) }}',
+                                            brand: '{{ addslashes($part->brand ?: 'Universal') }}',
+                                            model: '{{ addslashes($part->compatible_model ?: '') }}',
+                                            display_type: '{{ addslashes($part->display_type ?: 'na') }}',
+                                            stock: {{ (int)$part->stock_qty }},
+                                            cost: {{ (float)$part->unit_cost }},
+                                            price: {{ (float)$part->selling_price }},
+                                            alert: {{ (int)($part->min_stock_alert ?? 3) }},
+                                            hsn: '{{ addslashes($part->hsn_code ?: '85177090') }}',
+                                            desc: '{{ addslashes($part->description ?? '') }}'
+                                        })">
+                                    <i data-lucide="edit-3" style="width:13px;height:13px;"></i>
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-outline btn-xs" 
                                         title="View Inventory History" 
                                         style="padding:3px 7px; margin-right:4px;"
                                         onclick="openStockHistoryModal({
@@ -276,8 +297,17 @@
                                     type: 'part',
                                     id: {{ $part->id }},
                                     name: '{{ addslashes($part->name) }}',
+                                    category: '{{ addslashes($part->category) }}',
+                                    brand: '{{ addslashes($part->brand ?: 'Universal') }}',
+                                    model: '{{ addslashes($part->compatible_model ?: '') }}',
+                                    display_type: '{{ addslashes($part->display_type ?: 'na') }}',
                                     subtext: '{{ addslashes($part->compatible_model ?: 'Universal') }} • {{ strtoupper($part->category) }}',
                                     stock: {{ (int)$part->stock_qty }},
+                                    cost: {{ (float)$part->unit_cost }},
+                                    price: {{ (float)$part->selling_price }},
+                                    alert: {{ (int)($part->min_stock_alert ?? 3) }},
+                                    hsn: '{{ addslashes($part->hsn_code ?: '85177090') }}',
+                                    desc: '{{ addslashes($part->description ?? '') }}',
                                     is_sold: 0,
                                     is_phone: 0
                                 })">
@@ -295,6 +325,10 @@
         <div style="padding: 6px 12px 4px 12px; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; border-bottom:1px solid #F1F5F9; margin-bottom:4px;" id="menuItemTitle">
             Stock Actions
         </div>
+        <button type="button" class="stock-dropdown-item" id="menuEditBtn" onclick="triggerStockEdit()">
+            <i data-lucide="edit-3" style="width:15px;height:15px;color:#4F46E5;"></i>
+            <span>Edit Stock Details</span>
+        </button>
         <button type="button" class="stock-dropdown-item" id="menuPhotoBtn" onclick="triggerStockPhotoAction()">
             <i data-lucide="camera" style="width:15px;height:15px;color:#10B981;"></i>
             <span>View / Upload Photo</span>
@@ -307,6 +341,176 @@
             <i data-lucide="trash-2" style="width:15px;height:15px;color:#DC2626;"></i>
             <span id="menuDeleteBtnText">Delete Item</span>
         </button>
+    </div>
+
+    <!-- ════ EDIT STOCK ITEM & INVENTORY COUNT MODAL ════ -->
+    <div id="editStockModal" style="display:none; position:fixed; inset:0; z-index:1220; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:16px;">
+        <div class="card" style="max-width:680px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); max-height:92vh; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; margin:0; border:1px solid #334155;">
+            <!-- Header -->
+            <div class="card-header" style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); color:#fff; border-bottom:1px solid #334155; padding:16px 20px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:38px; height:38px; border-radius:8px; background:rgba(99,102,241,0.25); color:#818CF8; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i data-lucide="edit-3" style="width:20px;height:20px;"></i>
+                    </div>
+                    <div>
+                        <div class="card-title" style="color:#fff; font-size:16px; margin:0; font-weight:800;" id="editModalTitle">Edit Stock Item</div>
+                        <div class="card-subtitle" style="color:#94A3B8; font-size:11.5px; margin-top:2px;" id="editModalSubtitle">Update inventory quantity, pricing, and catalog specifications</div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEditStockModal()" style="background:transparent; border:none; color:#94A3B8; font-size:22px; cursor:pointer; padding:4px 8px; line-height:1; border-radius:6px;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94A3B8'">✕</button>
+            </div>
+
+            <!-- Body -->
+            <form id="editStockForm" onsubmit="submitEditStockForm(event)" style="display:flex; flex-direction:column; flex:1; overflow-y:auto; margin:0;">
+                @csrf
+                <input type="hidden" name="item_id" id="editItemId" value="">
+                <input type="hidden" name="item_type" id="editItemType" value="part">
+
+                <div style="padding:20px; display:flex; flex-direction:column; gap:14px; background:#FFFFFF;">
+                    <!-- Alert/Error container inside modal -->
+                    <div id="editStockError" style="display:none; padding:10px 14px; border-radius:8px; background:#FEF2F2; border:1px solid #FCA5A5; color:#DC2626; font-size:12px; font-weight:600;"></div>
+
+                    <!-- 1. Item Name -->
+                    <div>
+                        <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">
+                            Item Name <span style="color:#EF4444;">*</span>
+                        </label>
+                        <input type="text" name="name" id="editItemName" required class="form-control" style="font-weight:700; font-size:13px; color:#0F172A;" placeholder="e.g. 9D Tempered Glass iPhone 15">
+                    </div>
+
+                    <!-- 2. Category & Display Type (Grid) -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                        <div>
+                            <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">Category</label>
+                            <select name="category" id="editItemCategory" class="form-control" style="font-size:12.5px; font-weight:600;">
+                                @if(isset($categories) && count($categories) > 0)
+                                    @foreach($categories as $c)
+                                        <option value="{{ $c->slug }}">{{ $c->name }}</option>
+                                    @endforeach
+                                @else
+                                    <option value="general_accessory">General Accessory</option>
+                                    <option value="tempered_glass">Tempered Glass</option>
+                                    <option value="back_cover">Back Cover / Case</option>
+                                    <option value="folder_display">Folder / Combo Screen</option>
+                                    <option value="battery">Battery</option>
+                                    <option value="charging_port">Charging Port / Pin</option>
+                                    <option value="front_glass">Front Outer Glass</option>
+                                    <option value="charger_cable">Charger & Cable</option>
+                                    <option value="earphones_audio">Earphones & Audio</option>
+                                    <option value="camera_module">Camera Module</option>
+                                    <option value="ic_chip">IC / Motherboard Chip</option>
+                                @endif
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">Quality / Display Type</label>
+                            <select name="display_type" id="editItemDisplayType" class="form-control" style="font-size:12.5px;">
+                                <option value="na">Standard / Non-Display</option>
+                                <option value="original_oem">OG / Original OEM ✨</option>
+                                <option value="oled">OLED Screen</option>
+                                <option value="in_cell">In-Cell Screen</option>
+                                <option value="tft">TFT Screen</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 3. Brand & Compatible Model -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                        <div>
+                            <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">Fits Brand</label>
+                            <input type="text" name="brand" id="editItemBrand" class="form-control" placeholder="Universal or Brand">
+                        </div>
+
+                        <div>
+                            <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">Compatible Model / SKU</label>
+                            <input type="text" name="compatible_model" id="editItemModel" class="form-control" placeholder="e.g. iPhone 15 / Universal">
+                        </div>
+                    </div>
+
+                    <!-- 4. INVENTORY STOCK COUNT (HERO BOX) -->
+                    <div style="background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="font-size:12px; font-weight:800; color:#166534; text-transform:uppercase; letter-spacing:0.5px; margin:0;">
+                                <i data-lucide="boxes" style="width:14px;height:14px;display:inline-block;vertical-align:text-bottom;"></i> In-Stock Quantity (Physical Count)
+                            </label>
+                            <span id="editStockDiffBadge" style="font-size:11px; font-weight:700; color:#15803D; background:#DCFCE7; padding:2px 8px; border-radius:9999px;">
+                                No change (0)
+                            </span>
+                        </div>
+
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button type="button" onclick="adjustEditStockQty(-5)" class="btn btn-outline btn-xs" style="font-weight:800; border-color:#86EFAC; color:#166534; background:#FFFFFF; padding:6px 10px;">-5</button>
+                            <button type="button" onclick="adjustEditStockQty(-1)" class="btn btn-outline btn-xs" style="font-weight:800; border-color:#86EFAC; color:#166534; background:#FFFFFF; padding:6px 10px;">-1</button>
+                            
+                            <input type="number" name="stock_qty" id="editItemStockQty" min="0" step="1" required 
+                                   class="form-control" 
+                                   style="text-align:center; font-size:18px; font-weight:900; color:#166534; font-family:'JetBrains Mono', monospace; width:120px; background:#FFFFFF; border:2px solid #22C55E;"
+                                   oninput="onEditStockQtyChanged()">
+
+                            <button type="button" onclick="adjustEditStockQty(1)" class="btn btn-outline btn-xs" style="font-weight:800; border-color:#86EFAC; color:#166534; background:#FFFFFF; padding:6px 10px;">+1</button>
+                            <button type="button" onclick="adjustEditStockQty(5)" class="btn btn-outline btn-xs" style="font-weight:800; border-color:#86EFAC; color:#166534; background:#FFFFFF; padding:6px 10px;">+5</button>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px; color:#15803D;">
+                            <span>Original count in system: <strong id="editStockOriginalVal">0</strong> units</span>
+                            <span>Min Alert: &le; <input type="number" name="min_stock_alert" id="editItemAlert" min="0" step="1" style="width:50px; font-size:11px; font-weight:800; padding:2px 4px; border:1px solid #86EFAC; border-radius:4px; text-align:center;"></span>
+                        </div>
+                    </div>
+
+                    <!-- 5. PRICING & MARGIN (Grid) -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
+                        <div>
+                            <label style="display:block; font-size:11.5px; font-weight:700; color:#475569; margin-bottom:4px;">
+                                Buy Cost (₹)
+                            </label>
+                            <div style="position:relative;">
+                                <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); font-weight:700; color:#64748B;">₹</span>
+                                <input type="number" name="unit_cost" id="editItemCost" min="0" step="0.01" class="form-control" style="padding-left:22px; font-weight:800; color:#0F172A;" oninput="calculateEditMargin()">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <label style="font-size:11.5px; font-weight:700; color:#15803D; margin:0;">Retail Price (₹)</label>
+                                <span id="editMarginBadge" style="font-size:10px; font-weight:800; color:#15803D; background:#DCFCE7; padding:1px 6px; border-radius:4px;">Margin: 0%</span>
+                            </div>
+                            <div style="position:relative;">
+                                <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); font-weight:700; color:#15803D;">₹</span>
+                                <input type="number" name="selling_price" id="editItemPrice" min="0" step="0.01" class="form-control" style="padding-left:22px; font-weight:800; color:#15803D;" oninput="calculateEditMargin()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Adjustment Reason & HSN -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+                        <div>
+                            <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">Adjustment Reason / Note</label>
+                            <input type="text" name="adjustment_reason" id="editItemReason" class="form-control" placeholder="e.g. Physical stock recount">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">HSN / SAC Code</label>
+                            <input type="text" name="hsn_code" id="editItemHsn" class="form-control" placeholder="85177090">
+                        </div>
+                    </div>
+
+                    <!-- 7. Description / Specs -->
+                    <div>
+                        <label style="display:block; font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">Description / Specs</label>
+                        <textarea name="description" id="editItemDesc" rows="2" class="form-control" placeholder="Optional notes, warranty, or rack location"></textarea>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div style="padding:14px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
+                    <button type="button" onclick="closeEditStockModal()" class="btn btn-outline" style="font-size:12px; font-weight:700;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveStockEdit" style="font-size:12px; font-weight:800; background:#4F46E5; border-color:#4F46E5; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="check" style="width:14px;height:14px;"></i>
+                        <span id="btnSaveStockEditText">Save Stock Changes</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Stock History Timeline Modal -->
@@ -1332,6 +1536,13 @@
         }
     }
 
+    function triggerStockEdit() {
+        closeStockActionMenu();
+        if (currentStockActionItem) {
+            openEditStockModal(currentStockActionItem);
+        }
+    }
+
     function triggerStockHistory() {
         closeStockActionMenu();
         if (currentStockActionItem) {
@@ -1344,6 +1555,236 @@
         if (currentStockActionItem) {
             openDeleteStockModal(currentStockActionItem);
         }
+    }
+
+    // ── EDIT STOCK MODAL LOGIC ──
+    let originalStockCount = 0;
+
+    function openEditStockModal(item) {
+        const modal = document.getElementById('editStockModal');
+        if (!modal) return;
+
+        document.getElementById('editItemId').value = item.id;
+        document.getElementById('editItemType').value = item.type || 'part';
+        document.getElementById('editItemName').value = item.name || '';
+        document.getElementById('editItemCategory').value = item.category || 'general_accessory';
+        document.getElementById('editItemBrand').value = (item.brand && item.brand !== 'Universal') ? item.brand : (item.brand || 'Universal');
+        document.getElementById('editItemModel').value = item.model || '';
+        document.getElementById('editItemDisplayType').value = item.display_type || 'na';
+        
+        originalStockCount = parseInt(item.stock) || 0;
+        document.getElementById('editItemStockQty').value = originalStockCount;
+        document.getElementById('editStockOriginalVal').textContent = originalStockCount;
+        
+        document.getElementById('editItemCost').value = parseFloat(item.cost || 0).toFixed(2);
+        document.getElementById('editItemPrice').value = parseFloat(item.price || 0).toFixed(2);
+        document.getElementById('editItemAlert').value = parseInt(item.alert) || 3;
+        document.getElementById('editItemHsn').value = item.hsn || '85177090';
+        document.getElementById('editItemDesc').value = item.desc || '';
+        document.getElementById('editItemReason').value = '';
+
+        document.getElementById('editModalTitle').textContent = `Edit Stock — ${item.name}`;
+        document.getElementById('editModalSubtitle').textContent = `SKU: ${item.model || 'Universal'} • ${item.category ? item.category.replace(/_/g, ' ').toUpperCase() : 'GENERAL'}`;
+
+        const errBox = document.getElementById('editStockError');
+        if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+
+        onEditStockQtyChanged();
+        calculateEditMargin();
+
+        modal.style.display = 'flex';
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeEditStockModal() {
+        const modal = document.getElementById('editStockModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function adjustEditStockQty(delta) {
+        const inEl = document.getElementById('editItemStockQty');
+        if (!inEl) return;
+        const current = parseInt(inEl.value) || 0;
+        inEl.value = Math.max(0, current + delta);
+        onEditStockQtyChanged();
+    }
+
+    function onEditStockQtyChanged() {
+        const inEl = document.getElementById('editItemStockQty');
+        const badge = document.getElementById('editStockDiffBadge');
+        if (!inEl || !badge) return;
+
+        const val = parseInt(inEl.value) || 0;
+        const diff = val - originalStockCount;
+
+        if (diff === 0) {
+            badge.textContent = 'No change (0)';
+            badge.style.color = '#15803D';
+            badge.style.background = '#DCFCE7';
+        } else if (diff > 0) {
+            badge.textContent = `+${diff} units (Stock Inward)`;
+            badge.style.color = '#15803D';
+            badge.style.background = '#DCFCE7';
+        } else {
+            badge.textContent = `${diff} units (Stock Reduction)`;
+            badge.style.color = '#DC2626';
+            badge.style.background = '#FEE2E2';
+        }
+    }
+
+    function calculateEditMargin() {
+        const costEl = document.getElementById('editItemCost');
+        const priceEl = document.getElementById('editItemPrice');
+        const badge = document.getElementById('editMarginBadge');
+        if (!costEl || !priceEl || !badge) return;
+
+        const cost = parseFloat(costEl.value) || 0;
+        const price = parseFloat(priceEl.value) || 0;
+
+        if (cost > 0 && price > 0) {
+            const margin = Math.round(((price - cost) / cost) * 100);
+            badge.textContent = `Margin: ${margin}% (₹${(price - cost).toFixed(2)})`;
+            badge.style.color = margin >= 0 ? '#15803D' : '#DC2626';
+            badge.style.background = margin >= 0 ? '#DCFCE7' : '#FEE2E2';
+        } else {
+            badge.textContent = 'Margin: 0%';
+            badge.style.color = '#64748B';
+            badge.style.background = '#F1F5F9';
+        }
+    }
+
+    function submitEditStockForm(e) {
+        e.preventDefault();
+        const form = document.getElementById('editStockForm');
+        const itemId = document.getElementById('editItemId').value;
+        const errBox = document.getElementById('editStockError');
+        const btn = document.getElementById('btnSaveStockEdit');
+        const btnText = document.getElementById('btnSaveStockEditText');
+
+        if (!itemId) return;
+
+        btn.disabled = true;
+        btnText.textContent = 'Saving...';
+        if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+
+        const formData = new FormData(form);
+        const updateUrlTemplate = "{{ route('mobileshop.stock.update', ['id' => ':id'], false) }}";
+        const updateUrl = updateUrlTemplate.replace(':id', encodeURIComponent(itemId));
+
+        fetch(updateUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btnText.textContent = 'Save Stock Changes';
+
+            if (!data.success) {
+                if (errBox) {
+                    errBox.style.display = 'block';
+                    errBox.textContent = data.message || 'Failed to update stock item.';
+                }
+                return;
+            }
+
+            // Close modal
+            closeEditStockModal();
+
+            if (window.showToast) {
+                window.showToast(data.message || 'Stock updated successfully!', 'success');
+            } else {
+                alert(data.message || 'Stock updated successfully!');
+            }
+
+            const item = data.item;
+            if (item) {
+                // Update Desktop row
+                const dRow = document.getElementById(`stockRow_part_${item.id}`);
+                if (dRow) {
+                    dRow.dataset.stock = item.stock_qty;
+                    dRow.dataset.price = item.selling_price;
+                    dRow.dataset.cost = item.unit_cost;
+                    dRow.dataset.name = item.name;
+                    dRow.dataset.category = item.category;
+                    dRow.dataset.model = item.compatible_model || 'Universal';
+                    dRow.dataset.alert = item.min_stock_alert;
+
+                    const isLow = parseInt(item.stock_qty) <= parseInt(item.min_stock_alert || 3);
+                    dRow.dataset.low = isLow ? '1' : '0';
+
+                    // Update cells
+                    const nameDiv = dRow.querySelector('td:nth-child(1) div:first-child');
+                    if (nameDiv) nameDiv.textContent = item.name;
+
+                    const catBadge = dRow.querySelector('td:nth-child(2) span');
+                    if (catBadge) catBadge.textContent = (item.category || '').replace(/_/g, ' ');
+
+                    const brandDiv = dRow.querySelector('td:nth-child(3) div:first-child');
+                    if (brandDiv) brandDiv.textContent = item.brand || 'Universal';
+                    const modelDiv = dRow.querySelector('td:nth-child(3) div:nth-child(2)');
+                    if (modelDiv) modelDiv.textContent = item.compatible_model || 'Universal / Multi-Model';
+
+                    const stockCell = document.getElementById(`partStockCell_${item.id}`);
+                    if (stockCell) {
+                        const qty = parseInt(item.stock_qty) || 0;
+                        const alertLvl = parseInt(item.min_stock_alert) || 3;
+                        if (qty <= 0) {
+                            stockCell.innerHTML = '<span class="badge badge-gray">0 units</span>';
+                        } else if (qty <= alertLvl) {
+                            stockCell.innerHTML = `<span class="badge badge-red" style="font-weight:900;">⚠️ ${qty} units</span><div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; ${alertLvl}</div>`;
+                        } else {
+                            stockCell.innerHTML = `<span class="badge badge-green">${qty} units</span><div style="font-size:10px; color:#64748B; margin-top:2px;">Min: ${alertLvl}</div>`;
+                        }
+                    }
+
+                    const costCell = dRow.querySelector('td:nth-child(6)');
+                    if (costCell) costCell.textContent = '₹' + parseFloat(item.unit_cost || 0).toFixed(2);
+
+                    const priceCell = dRow.querySelector('td:nth-child(7)');
+                    if (priceCell) priceCell.textContent = '₹' + parseFloat(item.selling_price || 0).toFixed(2);
+                }
+
+                // Update Mobile card
+                const mCard = document.getElementById(`stockCard_part_${item.id}`);
+                if (mCard) {
+                    mCard.dataset.low = (parseInt(item.stock_qty) <= parseInt(item.min_stock_alert || 3)) ? '1' : '0';
+                    mCard.dataset.search = `${(item.name || '').toLowerCase()} ${(item.category || '').toLowerCase()} ${(item.compatible_model || '').toLowerCase()}`;
+
+                    const mName = mCard.querySelector('div[style*="font-weight:800"]');
+                    if (mName) mName.textContent = item.name;
+
+                    const mPrice = mCard.querySelector('div[style*="font-weight:900"]');
+                    if (mPrice) mPrice.textContent = '₹' + Math.round(parseFloat(item.selling_price || 0));
+
+                    const mBadge = document.getElementById(`partStockBadgeMobile_${item.id}`);
+                    if (mBadge) {
+                        const qty = parseInt(item.stock_qty) || 0;
+                        if (qty <= 0) {
+                            mBadge.innerHTML = '<span class="badge badge-gray" style="font-size:10px; padding:1px 6px;">0 left</span>';
+                        } else if (qty <= 3) {
+                            mBadge.innerHTML = `<span class="badge badge-red" style="font-size:10px; padding:1px 6px;">⚠️ ${qty} left</span>`;
+                        } else {
+                            mBadge.innerHTML = `<span class="badge badge-green" style="font-size:10px; padding:1px 6px;">${qty} in stock</span>`;
+                        }
+                    }
+                }
+
+                filterStockRows();
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btnText.textContent = 'Save Stock Changes';
+            if (errBox) {
+                errBox.style.display = 'block';
+                errBox.textContent = 'Network or server error: ' + err.message;
+            }
+        });
     }
 
     // ── STOCK HISTORY MODAL ──

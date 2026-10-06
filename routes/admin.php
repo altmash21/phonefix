@@ -142,8 +142,12 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->name('stock.store');
 
     Route::post('stock/{id}/update', 'MobileShop\StockController@updateStock')
-        ->middleware('permission:manage-stock-accessories|manage-stock-covers|manage-stock-repairs')
+        ->middleware('permission:manage-stock-accessories|manage-stock-covers|manage-stock-repairs|manage-stock-phones|manage-stock-secondhand')
         ->name('stock.update');
+
+    Route::get('stock/{id}/details', 'MobileShop\StockController@getStockDetails')
+        ->middleware('permission:read-mobileshop-stock|read-mobileshop-accessories|manage-stock-accessories|manage-stock-covers|manage-stock-repairs|manage-stock-phones|manage-stock-secondhand')
+        ->name('stock.details');
 
     Route::get('stock/history/{type}/{id}', 'MobileShop\StockController@getStockHistory')
         ->middleware('permission:read-mobileshop-stock|read-mobileshop-accessories|read-mobileshop-reports')

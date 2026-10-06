@@ -9,6 +9,7 @@ use App\Services\MobileShop\Common\MobileShopOtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class StockController extends BaseMobileShopController
@@ -132,33 +133,149 @@ class StockController extends BaseMobileShopController
 
     /**
      * Unified Stock Update
+     * Supports full editing of accessories/parts (including direct stock quantity adjustment
+     * with ledger audit trail) and mobile devices.
      */
     public function updateStock(Request $request, $id)
     {
         $companyId = $this->getCompanyId();
-        if ($request->input('item_type') === 'part') {
+        $itemType  = $request->input('item_type');
+
+        // Check if item is a part in ms_parts_inventory
+        $part = null;
+        if ($itemType === 'part' || !$itemType) {
             $part = DB::table('ms_parts_inventory')->where('company_id', $companyId)->where('id', $id)->first();
-            if (!$part) {
-                return redirect()->back()->with('error', 'Part not found.');
-            }
-            DB::table('ms_parts_inventory')->where('id', $id)->update([
-                'selling_price'   => $request->filled('selling_price') ? (float) $request->selling_price : $part->selling_price,
-                'min_stock_alert' => $request->filled('min_stock_alert') ? (int) $request->min_stock_alert : $part->min_stock_alert,
-                'updated_at'      => now(),
-            ]);
-            return redirect()->back()->with('success', "Stock item '{$part->name}' updated.");
         }
 
+        if ($part || $itemType === 'part') {
+            if (!$part) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Part not found in inventory.'], 404);
+                }
+                return redirect()->back()->with('error', 'Part not found in inventory.');
+            }
+
+            $oldStock = (int) $part->stock_qty;
+            $newStock = $request->has('stock_qty') ? max(0, (int) $request->input('stock_qty')) : $oldStock;
+
+            $updateData = [
+                'updated_at' => now(),
+            ];
+
+            if ($request->filled('name')) {
+                $updateData['name'] = trim($request->input('name'));
+            }
+            if ($request->filled('category')) {
+                $updateData['category'] = trim($request->input('category'));
+            }
+            if ($request->has('brand')) {
+                $updateData['brand'] = trim($request->input('brand', 'Universal')) ?: 'Universal';
+            }
+            if ($request->has('compatible_model')) {
+                $updateData['compatible_model'] = trim($request->input('compatible_model', ''));
+            }
+            if ($request->filled('display_type')) {
+                $updateData['display_type'] = $request->input('display_type');
+            }
+            if ($request->filled('unit_cost')) {
+                $updateData['unit_cost'] = max(0, (float) $request->input('unit_cost'));
+            }
+            if ($request->filled('selling_price')) {
+                $updateData['selling_price'] = max(0, (float) $request->input('selling_price'));
+            }
+            if ($request->has('stock_qty')) {
+                $updateData['stock_qty'] = $newStock;
+            }
+            if ($request->filled('min_stock_alert')) {
+                $updateData['min_stock_alert'] = max(0, (int) $request->input('min_stock_alert'));
+            }
+            if ($request->has('description')) {
+                $updateData['description'] = $request->input('description');
+            }
+            if ($request->has('hsn_code')) {
+                $updateData['hsn_code'] = trim($request->input('hsn_code')) ?: '85177090';
+            }
+
+            DB::table('ms_parts_inventory')->where('id', $id)->update($updateData);
+
+            // If stock count changed, record audit ledger entries
+            if ($request->has('stock_qty') && $newStock !== $oldStock) {
+                $diff = $newStock - $oldStock;
+                $diffType = $diff > 0 ? 'addition' : 'deduction';
+                $reason = $request->input('adjustment_reason', 'Stock count manual edit');
+                $userName = auth()->user()->name ?? 'Staff';
+
+                // 1. ms_parts_inventory_history
+                if (Schema::hasTable('ms_parts_inventory_history')) {
+                    DB::table('ms_parts_inventory_history')->insert([
+                        'part_id'       => $id,
+                        'type'          => $diffType,
+                        'quantity'      => abs($diff),
+                        'balance_after' => $newStock,
+                        'reference'     => "Manual adjustment: {$oldStock} -> {$newStock} by {$userName} ({$reason})",
+                        'user_id'       => auth()->id(),
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }
+
+                // 2. ms_stock_audit_log
+                if (Schema::hasTable('ms_stock_audit_log')) {
+                    DB::table('ms_stock_audit_log')->insert([
+                        'company_id'    => $companyId,
+                        'item_type'     => 'part',
+                        'item_id'       => $id,
+                        'action'        => 'adjustment',
+                        'quantity'      => abs($diff),
+                        'balance_after' => $newStock,
+                        'reason'        => "Stock count changed from {$oldStock} to {$newStock} by {$userName}. {$reason}",
+                        'user_id'       => auth()->id(),
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ]);
+                }
+            }
+
+            $freshPart = DB::table('ms_parts_inventory')->where('id', $id)->first();
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Stock item '{$freshPart->name}' updated successfully.",
+                    'item'    => $freshPart,
+                ]);
+            }
+
+            return redirect()->back()->with('success', "Stock item '{$freshPart->name}' updated successfully.");
+        }
+
+        // Mobile Device Branch
         $device = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('id', $id)->first();
         if (!$device) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Mobile device not found.'], 404);
+            }
             return redirect()->back()->with('error', 'Mobile device not found.');
         }
 
         $updateData = [
-            'selling_price' => $request->filled('selling_price') ? (float) $request->selling_price : $device->selling_price,
-            'status'        => $request->filled('status') ? $request->status : $device->status,
-            'updated_at'    => now(),
+            'updated_at' => now(),
         ];
+
+        if ($request->filled('brand')) $updateData['brand'] = $request->input('brand');
+        if ($request->filled('model')) $updateData['model'] = $request->input('model');
+        if ($request->has('color')) $updateData['color'] = $request->input('color');
+        if ($request->has('ram')) $updateData['ram'] = $request->input('ram');
+        if ($request->has('storage')) $updateData['storage'] = $request->input('storage');
+        if ($request->filled('imei_1')) $updateData['imei_1'] = $request->input('imei_1');
+        if ($request->has('imei_2')) $updateData['imei_2'] = $request->input('imei_2');
+        if ($request->filled('purchase_cost')) $updateData['purchase_cost'] = (float) $request->input('purchase_cost');
+        if ($request->filled('selling_price')) $updateData['selling_price'] = (float) $request->input('selling_price');
+        if ($request->filled('status')) $updateData['status'] = $request->input('status');
+        if ($request->filled('condition_grade')) $updateData['condition_grade'] = $request->input('condition_grade');
+        if ($request->has('battery_health')) $updateData['battery_health'] = $request->input('battery_health');
+        if ($request->has('checklist_notes')) $updateData['checklist_notes'] = $request->input('checklist_notes');
+        if ($request->filled('min_stock_alert')) $updateData['min_stock_alert'] = (int) $request->input('min_stock_alert');
 
         $prefix = $device->type === 'second_hand' ? 'sh' : 'new';
         if ($request->hasFile('photo')) {
@@ -178,7 +295,40 @@ class StockController extends BaseMobileShopController
         }
 
         DB::table('ms_mobile_devices')->where('id', $id)->update($updateData);
-        return redirect()->back()->with('success', "Device {$device->brand} {$device->model} updated.");
+        $freshDevice = DB::table('ms_mobile_devices')->where('id', $id)->first();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Device {$freshDevice->brand} {$freshDevice->model} updated successfully.",
+                'item'    => $freshDevice,
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Device {$freshDevice->brand} {$freshDevice->model} updated.");
+    }
+
+    /**
+     * Get single stock item details (JSON endpoint)
+     */
+    public function getStockDetails($id, Request $request)
+    {
+        $companyId = $this->getCompanyId();
+        $type = $request->input('type', 'part');
+
+        if ($type === 'part') {
+            $part = DB::table('ms_parts_inventory')->where('company_id', $companyId)->where('id', $id)->first();
+            if (!$part) {
+                return response()->json(['success' => false, 'message' => 'Part not found in inventory'], 404);
+            }
+            return response()->json(['success' => true, 'item' => $part]);
+        }
+
+        $device = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('id', $id)->first();
+        if (!$device) {
+            return response()->json(['success' => false, 'message' => 'Mobile device not found'], 404);
+        }
+        return response()->json(['success' => true, 'item' => $device]);
     }
 
     /**
