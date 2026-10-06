@@ -171,7 +171,7 @@ class GeminiDocumentScannerService
     }
 
     /**
-     * Send payload to Gemini API with automatic model fallback (1.5-flash -> 2.0-flash -> 1.5-flash-8b).
+     * Send payload to Gemini API with automatic model fallback (3.5-flash-lite -> 3.6-flash -> flash-latest -> high throughput queue).
      */
     public function callGeminiWithData(string $prompt, string $mimeType, string $base64Data): array
     {
@@ -184,18 +184,35 @@ class GeminiDocumentScannerService
             ];
         }
 
-        $primaryModel  = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.6-flash'));
-        $fallbackModel = config('services.gemini.fallback_model', env('GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash'));
+        $primaryModel  = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-3.5-flash-lite'));
+        $fallbackModel = config('services.gemini.fallback_model', env('GEMINI_FALLBACK_MODEL', 'gemini-3.6-flash'));
 
+        // High-availability queue: prioritizes ultra-fast flash-lite to prevent 503 high-demand surges
         $candidateModels = array_values(array_unique(array_filter([
             $primaryModel,
-            $fallbackModel,
+            'gemini-3.5-flash-lite',
+            'gemini-flash-lite-latest',
             'gemini-3.6-flash',
-            'gemini-3.5-flash',
+            'gemini-flash-latest',
+            $fallbackModel,
+            'gemini-3.1-flash-lite',
+            'gemini-3.1-flash-lite-preview',
+            'gemini-3-flash-preview',
             'gemini-3.8-flash',
+            'gemini-3.7-flash',
+            'gemini-3.5-flash',
         ])));
 
+        if (function_exists('setting')) {
+            $settingModel = setting('mobileshop.gemini_model');
+            if (!empty($settingModel)) {
+                array_unshift($candidateModels, $settingModel);
+                $candidateModels = array_values(array_unique($candidateModels));
+            }
+        }
+
         $lastError = null;
+        $attemptErrors = [];
 
         foreach ($candidateModels as $model) {
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . urlencode($apiKey);
@@ -238,6 +255,7 @@ class GeminiDocumentScannerService
 
             if ($curlError) {
                 $lastError = "Network error connecting to Gemini ({$model}): {$curlError}";
+                $attemptErrors[$model] = $lastError;
                 Log::warning($lastError);
                 continue;
             }
@@ -260,22 +278,25 @@ class GeminiDocumentScannerService
                     ];
                 }
                 $lastError = "Could not parse JSON response from Gemini ({$model}).";
+                $attemptErrors[$model] = $lastError;
             } else {
                 $errBody = json_decode($response, true);
                 $errMsg = $errBody['error']['message'] ?? "HTTP {$httpCode} error from {$model}";
                 $lastError = $errMsg;
-                Log::warning("Gemini OCR ({$model}) HTTP {$httpCode}: {$errMsg}");
+                $attemptErrors[$model] = $errMsg;
+                Log::warning("Gemini OCR ({$model}) HTTP {$httpCode}: {$errMsg}. Attempting next model in candidate queue...");
             }
         }
 
         return [
             'success' => false,
             'message' => $lastError ?? 'All Gemini models failed to process the document.',
+            'errors'  => $attemptErrors,
         ];
     }
 
     /**
-     * Send payload to Groq Vision API (Qwen 3.8 / 3.6 27B Vision with auto-discovery).
+     * Send payload to Groq Vision API (Qwen 3.8 27B Vision with auto-discovery and resilient fallback).
      */
     public function callGroq(string $prompt, string $mimeType, string $base64Data): array
     {
@@ -288,21 +309,55 @@ class GeminiDocumentScannerService
             ];
         }
 
+        // Groq Vision requires standard image format (JPEG, PNG, WEBP, GIF); does not accept PDF binaries directly
+        if (str_contains(strtolower($mimeType), 'pdf')) {
+            return [
+                'success' => false,
+                'message' => 'Groq Vision does not support raw PDF files directly. Please upload a JPG or PNG image, or use Gemini for PDF scanning.',
+            ];
+        }
+
+        // Auto-discover active vision models on Groq
+        $discoveredModels = $this->discoverActiveGroqVisionModels($apiKey);
+
         $primaryModel  = config('services.groq.model', env('GROQ_MODEL', 'qwen/qwen3.8-27b'));
-        $fallbackModel = config('services.groq.fallback_model', env('GROQ_FALLBACK_MODEL', 'qwen/qwen3.6-27b'));
-        $modelsToTry   = array_values(array_unique(array_filter([
-            $primaryModel,
-            $fallbackModel,
-            'qwen/qwen3.8-27b',
-            'qwen/qwen3.6-27b',
+        $fallbackModel = config('services.groq.fallback_model', env('GROQ_FALLBACK_MODEL', 'llama-3.2-11b-vision-preview'));
+
+        // Filter out non-existent / hallucinated model IDs
+        $disallowed = [
             'meta-llama/llama-4-scout-17b-16e-instruct',
-        ])));
+            'qwen/qwen3.6-27b',
+        ];
+        if (in_array($primaryModel, $disallowed)) {
+            $primaryModel = 'qwen/qwen3.8-27b';
+        }
+        if (in_array($fallbackModel, $disallowed)) {
+            $fallbackModel = null;
+        }
+
+        $modelsToTry = array_values(array_unique(array_filter(array_merge(
+            $discoveredModels,
+            [
+                $primaryModel,
+                'qwen/qwen3.8-27b',
+                $fallbackModel,
+                'llama-3.2-11b-vision-preview',
+                'llama-3.2-90b-vision-preview',
+            ]
+        ))));
+
+        if (function_exists('setting')) {
+            $settingGroqModel = setting('mobileshop.groq_model');
+            if (!empty($settingGroqModel) && !in_array($settingGroqModel, $disallowed)) {
+                array_unshift($modelsToTry, $settingGroqModel);
+                $modelsToTry = array_values(array_unique($modelsToTry));
+            }
+        }
 
         $lastError = null;
-        $attemptedDiscovery = false;
+        $attemptErrors = [];
 
-        for ($i = 0; $i < count($modelsToTry); $i++) {
-            $model = $modelsToTry[$i];
+        foreach ($modelsToTry as $model) {
             $endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
             $payload = [
@@ -350,6 +405,7 @@ class GeminiDocumentScannerService
 
             if ($curlError) {
                 $lastError = "Network error connecting to Groq ({$model}): {$curlError}";
+                $attemptErrors[$model] = $lastError;
                 Log::warning($lastError);
                 continue;
             }
@@ -372,42 +428,36 @@ class GeminiDocumentScannerService
                     ];
                 }
                 $lastError = "Could not parse JSON response from Groq ({$model}).";
+                $attemptErrors[$model] = $lastError;
             } else {
                 $errBody = json_decode($response, true);
                 $errMsg  = $errBody['error']['message'] ?? "HTTP {$httpCode} error from Groq ({$model})";
                 $lastError = $errMsg;
-                Log::warning("Groq OCR ({$model}) HTTP {$httpCode}: {$errMsg}");
-
-                // If model is decommissioned or not found, try to auto-discover an active vision model
-                if (!$attemptedDiscovery && preg_match('/decommissioned|no longer supported|model_not_found|does not exist|not found/i', $errMsg)) {
-                    $attemptedDiscovery = true;
-                    $discoveredModel = $this->discoverActiveGroqVisionModel($apiKey);
-                    if ($discoveredModel && !in_array($discoveredModel, $modelsToTry)) {
-                        Log::info("Groq OCR: Auto-discovered active vision model '{$discoveredModel}'. Retrying...");
-                        $modelsToTry[] = $discoveredModel;
-                    }
-                }
+                $attemptErrors[$model] = $errMsg;
+                Log::warning("Groq OCR ({$model}) HTTP {$httpCode}: {$errMsg}. Attempting next vision model...");
             }
         }
 
         return [
             'success' => false,
             'message' => $lastError ?? 'All Groq vision models failed to process the document.',
+            'errors'  => $attemptErrors,
         ];
     }
 
     /**
-     * Dynamically query Groq API to discover an active vision / multimodal model.
+     * Dynamically query Groq API to discover active vision / multimodal models.
      */
-    public function discoverActiveGroqVisionModel(string $apiKey): ?string
+    public function discoverActiveGroqVisionModels(string $apiKey): array
     {
+        $discovered = [];
         try {
             $ch = curl_init("https://api.groq.com/openai/v1/models");
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Authorization: Bearer ' . trim($apiKey),
             ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             $res = curl_exec($ch);
@@ -419,11 +469,12 @@ class GeminiDocumentScannerService
                 if (!empty($json['data']) && is_array($json['data'])) {
                     foreach ($json['data'] as $m) {
                         $id = $m['id'] ?? '';
-                        if (preg_match('/qwen.*(vision|27b|32b|72b|vl)|llama.*vision|scout/i', $id)) {
-                            if (isset($m['active']) && !$m['active']) {
-                                continue;
-                            }
-                            return $id;
+                        if (isset($m['active']) && !$m['active']) {
+                            continue;
+                        }
+                        // Detect vision / multimodal models on Groq
+                        if (preg_match('/qwen.*(?:vision|27b|vl)|llama.*vision/i', $id)) {
+                            $discovered[] = $id;
                         }
                     }
                 }
@@ -432,7 +483,16 @@ class GeminiDocumentScannerService
             Log::warning("Failed to auto-discover Groq vision model: " . $e->getMessage());
         }
 
-        return null;
+        return $discovered;
+    }
+
+    /**
+     * Backward compatibility helper for single model discovery.
+     */
+    public function discoverActiveGroqVisionModel(string $apiKey): ?string
+    {
+        $models = $this->discoverActiveGroqVisionModels($apiKey);
+        return $models[0] ?? null;
     }
 
     /**
