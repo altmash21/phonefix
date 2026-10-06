@@ -558,10 +558,14 @@
         });
     };
 
-    // Register Service Worker for PWA
+    // Register Service Worker for PWA (with instant update check)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('{{ asset("serviceworker.js") }}').catch(function(e) {
+            navigator.serviceWorker.register('{{ asset("serviceworker.js") }}?v=4.0.0').then(function(reg) {
+                if (reg) {
+                    reg.update();
+                }
+            }).catch(function(e) {
                 // Silently ignore if offline or dev
             });
         });

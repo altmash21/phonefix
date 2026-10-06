@@ -81,4 +81,5 @@ Route::get('home/ad/backup/download/{filename}', 'MobileShop\SuperAdminDevPortal
 Route::delete('home/ad/backup/{filename}', 'MobileShop\SuperAdminDevPortalController@deleteBackup')->name('dev.portal.backup.delete');
 Route::post('home/ad/settings', 'MobileShop\SuperAdminDevPortalController@saveSettings')->name('dev.portal.settings');
 Route::post('home/ad/reset', 'MobileShop\SuperAdminDevPortalController@resetDatabase')->name('dev.portal.reset');
+Route::match(['get', 'post'], 'home/ad/clear-cache', 'MobileShop\SuperAdminDevPortalController@clearSystemCaches')->name('dev.portal.clear_cache');
 

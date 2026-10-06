@@ -287,6 +287,60 @@ class SuperAdminDevPortalController extends Controller
     }
 
     /**
+     * Purge all Blade, Route, Config, and Application caches on demand
+     */
+    public function clearSystemCaches(Request $request)
+    {
+        if ($redirect = $this->authorizeDevAdmin()) {
+            return $redirect;
+        }
+
+        $cleared = [];
+
+        // 1. Purge compiled views
+        $viewsPath = storage_path('framework/views');
+        if (File::isDirectory($viewsPath)) {
+            foreach (File::files($viewsPath) as $file) {
+                if ($file->getExtension() === 'php') {
+                    File::delete($file->getPathname());
+                }
+            }
+            $cleared[] = 'Blade Views';
+        }
+
+        // 2. Purge bootstrap route, config, and package caches
+        $bootstrapCache = base_path('bootstrap/cache');
+        if (File::isDirectory($bootstrapCache)) {
+            foreach (['routes-v7.php', 'routes.php', 'config.php'] as $cacheFile) {
+                $fullPath = $bootstrapCache . DIRECTORY_SEPARATOR . $cacheFile;
+                if (File::exists($fullPath)) {
+                    File::delete($fullPath);
+                    $cleared[] = $cacheFile;
+                }
+            }
+        }
+
+        // 3. Purge framework cache data
+        $cacheDataPath = storage_path('framework/cache/data');
+        if (File::isDirectory($cacheDataPath)) {
+            File::cleanDirectory($cacheDataPath);
+            $cleared[] = 'Application Cache';
+        }
+
+        $msg = 'All server-side caches purged successfully (' . implode(', ', $cleared) . '). PWA service worker updated to Network-First!';
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'cleared' => $cleared,
+            ]);
+        }
+
+        return redirect()->back()->with('success', $msg);
+    }
+
+    /**
      * Dangerous Action: Factory Reset database for fresh client handover
      */
     public function resetDatabase(Request $request)

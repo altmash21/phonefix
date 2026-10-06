@@ -1,10 +1,7 @@
-var staticCacheName = 'pwa-v2';
+var staticCacheName = 'pwa-v4-network-first';
 
 var filesToCache = [
-    '/',
-    '/index.php',
     '/manifest.json',
-    '/serviceworker.js',
     '/money.json',
     '/shortcuts-config.json',
     '/css/app.css',
@@ -67,51 +64,91 @@ var filesToCache = [
     '/css/fonts/element-icons.woff'
 ];
 
-// Cache on install
+// Cache on install & force immediate takeover
 self.addEventListener('install', function(event) {
-    this.skipWaiting();
+    self.skipWaiting();
     event.waitUntil(
-        caches.open(staticCacheName)
-            .then(function(cache) {
-                return cache.addAll(filesToCache);
-            })
+        caches.open(staticCacheName).then(function(cache) {
+            return cache.addAll(filesToCache).catch(function(err) {
+                console.warn('[PWA] Pre-cache partial fail, continuing:', err);
+            });
+        })
     );
 });
 
-// Clear old caches on activate
+// Clear ALL old caches on activate immediately
 self.addEventListener('activate', function(event) {
     event.waitUntil(
         caches.keys().then(function(cacheNames) {
             return Promise.all(
-                cacheNames
-                    .filter(function(cacheName) {
-                        return cacheName.startsWith('pwa-') && cacheName !== staticCacheName;
-                    })
-                    .map(function(cacheName) {
+                cacheNames.map(function(cacheName) {
+                    if (cacheName !== staticCacheName) {
+                        console.log('[PWA] Purging outdated cache:', cacheName);
                         return caches.delete(cacheName);
-                    })
+                    }
+                })
             );
+        }).then(function() {
+            return self.clients.claim();
         })
     );
-    this.clients.claim();
 });
 
-// Serve from cache, fall back to network, then offline
+// Fetch handler: NETWORK-FIRST for all HTML / dynamic requests!
 self.addEventListener('fetch', function(event) {
+    var request = event.request;
+
+    // Only handle GET requests
+    if (request.method !== 'GET') {
+        return;
+    }
+
+    var url = request.url;
+    var isHtmlOrRoute = request.mode === 'navigate' ||
+        (request.headers.get('accept') && request.headers.get('accept').includes('text/html')) ||
+        url.includes('/mobileshop/') ||
+        url.includes('/admin/') ||
+        url.includes('/portal/') ||
+        url.includes('/api/');
+
+    // 1. ALL DYNAMIC HTML ROUTES: STRICT NETWORK-FIRST
+    // Ensures latest blade views and updates appear immediately without browser caching!
+    if (isHtmlOrRoute) {
+        event.respondWith(
+            fetch(request)
+                .then(function(networkResponse) {
+                    if (networkResponse && networkResponse.status === 200) {
+                        var responseClone = networkResponse.clone();
+                        caches.open(staticCacheName).then(function(cache) {
+                            cache.put(request, responseClone);
+                        });
+                    }
+                    return networkResponse;
+                })
+                .catch(function() {
+                    // Fall back to cache ONLY if completely offline
+                    return caches.match(request);
+                })
+        );
+        return;
+    }
+
+    // 2. STATIC ASSETS (Images, Fonts, Vendor CSS/JS): Stale-While-Revalidate
     event.respondWith(
-        caches.match(event.request).then(function(response) {
-            return response || fetch(event.request).then(function(networkResponse) {
-                // Cache successful GET responses for future offline use
-                if (event.request.method === 'GET' && networkResponse && networkResponse.status === 200) {
-                    var responseToCache = networkResponse.clone();
+        caches.match(request).then(function(cachedResponse) {
+            var fetchPromise = fetch(request).then(function(networkResponse) {
+                if (networkResponse && networkResponse.status === 200) {
+                    var responseClone = networkResponse.clone();
                     caches.open(staticCacheName).then(function(cache) {
-                        cache.put(event.request, responseToCache);
+                        cache.put(request, responseClone);
                     });
                 }
                 return networkResponse;
+            }).catch(function() {
+                return cachedResponse;
             });
-        }).catch(function() {
-            return caches.match('/');
+
+            return cachedResponse || fetchPromise;
         })
     );
 });

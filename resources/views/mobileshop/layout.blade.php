@@ -744,6 +744,17 @@
             } catch (err) {}
         });
     })();
+
+    // Self-healing cache cleaner: purge stale PWA / SW caches so code updates load immediately
+    if (window.caches) {
+        window.caches.keys().then(function(names) {
+            names.forEach(function(name) {
+                if (name.startsWith('pwa-') && name !== 'pwa-v4-network-first') {
+                    window.caches.delete(name);
+                }
+            });
+        });
+    }
     </script>
     @include('mobileshop.partials.shortcut_modal')
 </body>

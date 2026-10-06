@@ -170,6 +170,12 @@
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3 shrink-0">
+                    <form action="{{ route('dev.portal.clear_cache') }}" method="POST" onsubmit="return confirm('Purge compiled views, route caches, and application framework caches?')">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-bold transition shadow-lg shadow-amber-600/30" title="Clear compiled Blade views, route cache, config, and framework caches">
+                            <i class="fa-solid fa-bolt"></i> Purge All Caches
+                        </button>
+                    </form>
                     <button type="button" onclick="openBackupModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30">
                         <i class="fa-solid fa-download"></i> Create Backup Now
                     </button>
