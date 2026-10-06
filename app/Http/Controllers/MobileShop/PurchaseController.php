@@ -7,6 +7,7 @@ use App\Services\MobileShop\Purchase\BulkPurchaseInwardService;
 use App\Services\MobileShop\Purchase\SupplierPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PurchaseController extends BaseMobileShopController
@@ -1169,19 +1170,30 @@ class PurchaseController extends BaseMobileShopController
             }
 
             // 3. Delete defective item logs linked to this PO
-            DB::table('ms_defective_items')
-                ->where('company_id', $companyId)
-                ->where('purchase_order_id', $po->id)
-                ->delete();
+            if (Schema::hasTable('ms_defective_items')) {
+                DB::table('ms_defective_items')
+                    ->where('company_id', $companyId)
+                    ->where(function($q) use ($po) {
+                        $q->where(function($sub) use ($po) {
+                            $sub->where('source_type', 'purchase_return')
+                                ->where('source_id', $po->id);
+                        })->orWhere('source_ref', $po->po_number);
+                    })
+                    ->delete();
+            }
 
             // 4. Delete goods receipts linked to this PO
-            $grnIds = DB::table('ms_goods_receipts')
-                ->where('company_id', $companyId)
-                ->where('purchase_order_id', $po->id)
-                ->pluck('id');
-            if ($grnIds->isNotEmpty()) {
-                DB::table('ms_goods_receipt_items')->whereIn('goods_receipt_id', $grnIds)->delete();
-                DB::table('ms_goods_receipts')->whereIn('id', $grnIds)->delete();
+            if (Schema::hasTable('ms_goods_receipts')) {
+                $grnIds = DB::table('ms_goods_receipts')
+                    ->where('company_id', $companyId)
+                    ->where('purchase_order_id', $po->id)
+                    ->pluck('id');
+                if ($grnIds->isNotEmpty()) {
+                    if (Schema::hasTable('ms_goods_receipt_items')) {
+                        DB::table('ms_goods_receipt_items')->whereIn('goods_receipt_id', $grnIds)->delete();
+                    }
+                    DB::table('ms_goods_receipts')->whereIn('id', $grnIds)->delete();
+                }
             }
 
             // 5. Delete supplier payments linked to this PO
