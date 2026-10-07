@@ -502,6 +502,46 @@ class SalesController extends BaseMobileShopController
     }
 
     /**
+     * Dedicated Bulk Multi-Customer Sale Page (Mirrors Bulk Purchase Architecture)
+     */
+    public function bulkSaleView(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-sale-accessories') || 
+            auth()->user()->can('create-sale-covers') || 
+            auth()->user()->can('read-mobileshop-sales') || 
+            auth()->user()->hasRole('admin') || 
+            auth()->user()->hasRole('store-admin') || 
+            auth()->user()->hasRole('accessories-staff') || 
+            auth()->user()->hasRole('accessories-manager') ||
+            auth()->user()->hasRole('owner') ||
+            $this->isOwner()
+        ), 403, 'Unauthorized access to bulk sales.');
+
+        $companyId = $this->getCompanyId();
+        $niche     = $this->getUserNiche();
+
+        $customers = DB::table('ms_customers')
+            ->where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $parts = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'selling_price', 'stock_qty', 'category', 'compatible_model']);
+
+        $categories = DB::table('ms_categories')
+            ->where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('mobileshop.bulk_sale', compact(
+            'customers', 'parts', 'categories', 'niche'
+        ));
+    }
+
+    /**
      * Store Bulk Sales (Multiple Customers & Multiple Items in One Batch)
      */
     public function storeBulkSales(Request $request)

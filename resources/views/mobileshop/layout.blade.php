@@ -478,9 +478,15 @@
 
             @canany(['read-mobileshop-sales', 'sell-mobileshop-accessories', 'create-sale-accessories', 'create-sale-covers', 'create-sale-phones', 'read-mobileshop-accessories', 'read-admin-panel'])
             <a href="{{ route('mobileshop.sales') }}"
-               class="nav-link {{ (request()->routeIs('mobileshop.sales*') || request()->routeIs('mobileshop.accessories.pos')) ? 'active' : '' }}"
+               class="nav-link {{ (request()->routeIs('mobileshop.sales') || request()->routeIs('mobileshop.accessories.pos')) ? 'active' : '' }}"
                onclick="closeMobileSidebar()">
                 <i data-lucide="shopping-cart"></i> Sales
+            </a>
+            <a href="{{ route('mobileshop.sales.bulk') }}"
+               class="nav-link {{ request()->routeIs('mobileshop.sales.bulk*') ? 'active' : '' }}"
+               onclick="closeMobileSidebar()"
+               style="padding-left:28px; font-size:12px;">
+                <i data-lucide="layers"></i> Bulk Sale
             </a>
             @endcanany
 
@@ -578,9 +584,15 @@
 
                 @canany(['read-mobileshop-sales', 'sell-mobileshop-accessories', 'create-sale-accessories', 'create-sale-covers', 'create-sale-phones', 'read-mobileshop-accessories', 'read-admin-panel'])
                 <a href="{{ route('mobileshop.sales') }}"
-                   class="nav-link {{ (request()->routeIs('mobileshop.sales*') || request()->routeIs('mobileshop.accessories.pos')) ? 'active' : '' }}">
+                   class="nav-link {{ (request()->routeIs('mobileshop.sales') || request()->routeIs('mobileshop.accessories.pos')) ? 'active' : '' }}">
                     <i data-lucide="shopping-cart"></i>
                     Sales
+                </a>
+                <a href="{{ route('mobileshop.sales.bulk') }}"
+                   class="nav-link {{ request()->routeIs('mobileshop.sales.bulk*') ? 'active' : '' }}"
+                   style="padding-left:28px; font-size:12px;">
+                    <i data-lucide="layers"></i>
+                    Bulk Sale
                 </a>
                 @endcanany
 

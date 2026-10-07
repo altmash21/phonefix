@@ -138,6 +138,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->name('defective.status');
 
     // ── SALES ACTIONS (niche-gated) ──
+    Route::get('sales/bulk', 'MobileShop\SalesController@bulkSaleView')
+        ->middleware('permission:create-sale-accessories|create-sale-covers|read-mobileshop-sales')
+        ->name('sales.bulk');
     Route::post('sales/store', 'MobileShop\SalesController@storeSale')
         ->middleware('permission:create-sale-accessories|create-sale-covers')
         ->name('sales.store');
