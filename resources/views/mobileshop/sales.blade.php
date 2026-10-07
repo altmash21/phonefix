@@ -13,10 +13,12 @@
 
 @section('page-actions')
     <div class="flex items-center gap-2 flex-wrap">
-        <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-primary btn-sm">
+        <button type="button" onclick="openBulkSaleModal()" class="btn btn-primary btn-sm" style="background:#4F46E5; border-color:#4338CA; color:#ffffff;">
+            <i data-lucide="layers" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Bulk Multi-Customer Sale</span><span class="mobile-btn-label">Bulk Sale</span>
+        </button>
+        <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-outline btn-sm">
             <i data-lucide="zap" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Accessories</span><span class="mobile-btn-label">Sell Accessories</span>
         </a>
-
     </div>
 @endsection
 
@@ -189,17 +191,83 @@
         }
     }
 
-    /* ─── QUICK SALE & SEARCH DUAL TOP PANELS (App Theme Matched) ─── */
+    /* ─── FULL-WIDTH QUICK SALE PANEL (App Theme Matched) ─── */
     .quick-sales-top-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
+        display: block;
+        width: 100%;
         margin-bottom: 20px;
     }
-    @media (max-width: 900px) {
-        .quick-sales-top-grid {
+
+    .quick-sale-cust-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    @media (max-width: 768px) {
+        .quick-sale-cust-grid {
             grid-template-columns: 1fr;
         }
+    }
+    .quick-items-header {
+        display: grid;
+        grid-template-columns: 3.2fr 100px 140px 110px 40px;
+        gap: 10px;
+        padding: 6px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #64748b;
+        letter-spacing: 0.5px;
+    }
+    .quick-item-row {
+        display: grid;
+        grid-template-columns: 3.2fr 100px 140px 110px 40px;
+        gap: 10px;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        transition: all 0.15s ease;
+    }
+    .quick-item-row:hover {
+        border-color: #cbd5e1;
+        background: #f1f5f9;
+    }
+    @media (max-width: 768px) {
+        .quick-items-header {
+            display: none !important;
+        }
+        .quick-item-row {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+            padding: 10px !important;
+        }
+        .quick-item-row .col-item-search {
+            grid-column: 1 / -1;
+        }
+        .quick-item-row .col-total-remove {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 4px;
+            border-top: 1px dashed #e2e8f0;
+        }
+    }
+    .bulk-customer-card {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        position: relative;
+    }
+    .bulk-customer-card:hover {
+        border-color: #94a3b8;
     }
 
     .light-sale-panel {
@@ -363,14 +431,28 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- QUICK SALE & SEARCH DUAL PANELS (TOP OF SALES PAGE)        -->
     <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- FULL-WIDTH QUICK SALE PANEL (MULTI-ITEM & BULK READY)      -->
+    <!-- ══════════════════════════════════════════════════════════ -->
     <div class="quick-sales-top-grid">
-        <!-- 🛒 CARD 1: QUICK ADD SALE -->
-        <div class="light-sale-panel">
-            <div class="panel-header-box">
-                <div class="panel-header-icon sale-icon">
-                    <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
+        <div class="light-sale-panel" style="width: 100%; box-sizing: border-box;">
+            <!-- Panel Header: Title + Bulk Sale Trigger Button -->
+            <div class="panel-header-box" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="panel-header-icon sale-icon">
+                        <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
+                    </div>
+                    <div>
+                        <h3 class="panel-header-title">Quick Sale</h3>
+                        <p style="margin: 0; font-size: 11px; color: #64748b;">Fast counter billing — add multiple items in a single bill</p>
+                    </div>
                 </div>
-                <h3 class="panel-header-title">Add Sale</h3>
+
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" onclick="openBulkSaleModal()" class="btn-app-primary" style="background: #4f46e5; padding: 6px 14px; font-size: 12px;">
+                        <i data-lucide="layers" style="width:13px;height:13px;"></i> Bulk Multi-Customer Sale
+                    </button>
+                </div>
             </div>
 
             <form action="{{ route('mobileshop.sales.store', ['company_id' => company_id()]) }}" method="POST" id="quickSaleForm" onsubmit="return validateQuickSaleForm(event)">
@@ -378,38 +460,14 @@
                 <input type="hidden" name="sale_type" value="accessory">
                 <input type="hidden" name="amount_paid" id="quickSaleAmountPaid" value="0">
 
-                <div class="app-form-grid">
-                    <!-- Row 1: Search Item (Type alphabets to show dropdown) & Quantity -->
-                    <div class="search-picker-wrapper" id="quickItemPickerContainer">
-                        <div style="position: relative;">
-                            <input type="text"
-                                   id="quickItemSearchInput"
-                                   name="item_name"
-                                   class="app-input-field"
-                                   style="padding-right: 34px;"
-                                   placeholder="Type item name to search..."
-                                   autocomplete="off"
-                                   required
-                                   oninput="onQuickItemSearchInput(this)">
-                            <input type="hidden" name="part_id" id="quickSalePartId">
-                            <button type="button"
-                                    id="btnQuickItemClear"
-                                    onclick="clearQuickItemSelection()"
-                                    title="Clear selected item"
-                                    style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
-                        </div>
-                        <div id="quickItemDropdownList" class="search-picker-dropdown">
-                            <!-- Items appear when user types alphabets -->
-                        </div>
-                    </div>
+                <!-- Quick Sale Inline Alert / Warning Box -->
+                <div id="quickSaleAlertBox" style="display:none; background:#fef2f2; border:1px solid #fecdd3; border-radius:8px; padding:10px 14px; margin-bottom:12px; color:#991b1b; font-size:12.5px; font-weight:600;"></div>
 
+                <!-- 1. Customer & Payment Details Bar -->
+                <div class="quick-sale-cust-grid">
                     <div>
-                        <input type="number" name="quantity" id="quickSaleQty" class="app-input-field" placeholder="Quantity" value="1" min="1" required oninput="recalcQuickSaleTotal()">
-                    </div>
-
-                    <!-- Row 2: Customer Name & Custom Price -->
-                    <div>
-                        <input type="text" name="customer_name" id="quickSaleCustName" class="app-input-field" placeholder="Customer Name" list="quickCustNames" required>
+                        <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Customer Name</label>
+                        <input type="text" name="customer_name" id="quickSaleCustName" class="app-input-field" placeholder="Customer Name (Walk-in Customer)" list="quickCustNames">
                         <datalist id="quickCustNames">
                             @foreach($customers as $c)
                                 <option value="{{ $c->name }}">{{ $c->phone }}</option>
@@ -418,12 +476,8 @@
                     </div>
 
                     <div>
-                        <input type="number" step="0.01" name="custom_price" id="quickSaleCustomPrice" class="app-input-field" placeholder="Custom Price (Optional)" oninput="recalcQuickSaleTotal()">
-                    </div>
-
-                    <!-- Row 3: Mobile Number & Mode of Payment -->
-                    <div>
-                        <input type="tel" name="customer_phone" id="quickSaleCustPhone" class="app-input-field" placeholder="Mobile Number" list="quickCustPhones" required onchange="onQuickPhoneChange(this)">
+                        <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Mobile Number</label>
+                        <input type="tel" name="customer_phone" id="quickSaleCustPhone" class="app-input-field" placeholder="Mobile Number (Optional)" list="quickCustPhones" onchange="onQuickPhoneChange(this)">
                         <datalist id="quickCustPhones">
                             @foreach($customers as $c)
                                 <option value="{{ $c->phone }}">{{ $c->name }}</option>
@@ -432,88 +486,125 @@
                     </div>
 
                     <div>
+                        <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Payment Mode</label>
                         <select name="payment_mode" id="quickSalePaymentMode" class="app-input-field" required onchange="onQuickPaymentModeChange(this)">
                             <option value="cash" selected>Cash</option>
                             <option value="upi">UPI</option>
                             <option value="udhari">Udhari</option>
                             <option value="cash+upi">Cash + UPI</option>
+                            <option value="upi+cash">UPI + Cash</option>
                             <option value="cash+udhari">Cash + Udhari</option>
                             <option value="upi+udhari">UPI + Udhari</option>
                         </select>
                     </div>
+                </div>
 
-                    <!-- Dynamic Split Payment Fields (when cash+upi, cash+udhari, upi+udhari) -->
-                    <div id="quickSplitRow" class="split-row-light" style="display: none;">
-                        <!-- Configured dynamically by onQuickPaymentModeChange() -->
+                <!-- Dynamic Split Payment Fields (Cash+UPI, Cash+Udhari, UPI+Udhari, Udhari) -->
+                <div id="quickSplitRow" class="split-row-light" style="display: none; margin-bottom: 14px;">
+                    <!-- Configured dynamically by onQuickPaymentModeChange() -->
+                </div>
+
+                <!-- 2. Multi-Item Cart Repeater Section -->
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="package" style="width:14px;height:14px; color: #4f46e5;"></i>
+                            Sale Items (<span id="quickItemCountText">1</span>)
+                        </span>
+                        <button type="button" onclick="addQuickSaleItemRow()" style="background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                            <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Another Item
+                        </button>
                     </div>
 
-                    <!-- Submit Button Row -->
-                    <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; margin-top: 4px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
-                        <button type="submit" class="btn-app-primary" id="quickSaleSubmitBtn">
-                            <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Sale
+                    <!-- Column Headers (Desktop) -->
+                    <div class="quick-items-header">
+                        <div>Item Name / Search (Type letters)</div>
+                        <div style="text-align:center;">Qty</div>
+                        <div style="text-align:right;">Price (₹)</div>
+                        <div style="text-align:right;">Total (₹)</div>
+                        <div style="text-align:center;"></div>
+                    </div>
+
+                    <!-- Item Rows Container -->
+                    <div id="quickSaleItemsContainer">
+                        <!-- Initial Row 0 -->
+                        <div class="quick-item-row item-search-row" data-index="0" id="quickItemRow_0">
+                            <div class="search-picker-wrapper col-item-search" style="position: relative;">
+                                <input type="text"
+                                       name="items[0][part_name]"
+                                       class="app-input-field input-item-name"
+                                       style="padding-right: 30px;"
+                                       placeholder="Type item name to search or enter custom item..."
+                                       autocomplete="off"
+                                       required
+                                       oninput="onRowItemSearchInput(this)">
+                                <input type="hidden" name="items[0][part_id]" class="input-part-id">
+                                <button type="button"
+                                        class="btn-item-clear"
+                                        onclick="clearRowItemSelection(this)"
+                                        title="Clear item"
+                                        style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                                <div class="search-picker-dropdown"></div>
+                            </div>
+
+                            <div>
+                                <input type="number"
+                                       name="items[0][quantity]"
+                                       class="app-input-field input-quantity"
+                                       placeholder="Qty"
+                                       value="1"
+                                       min="1"
+                                       required
+                                       oninput="recalcQuickSaleRow(this)">
+                            </div>
+
+                            <div>
+                                <input type="number"
+                                       step="0.01"
+                                       name="items[0][unit_price]"
+                                       class="app-input-field input-unit-price"
+                                       placeholder="Price (₹)"
+                                       required
+                                       oninput="recalcQuickSaleRow(this)">
+                            </div>
+
+                            <div class="line-total-cell" style="text-align: right; font-weight: 700; font-size: 13px; color: #0f172a; white-space: nowrap;">
+                                ₹0.00
+                            </div>
+
+                            <div class="col-total-remove" style="text-align: center;">
+                                <button type="button"
+                                        class="btn-remove-row"
+                                        onclick="removeQuickSaleItemRow(this)"
+                                        title="Remove item"
+                                        disabled
+                                        style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; color: #94a3b8; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: not-allowed; font-size: 12px;">✕</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Add Item Button Strip -->
+                    <div style="margin-top: 8px; text-align: left;">
+                        <button type="button" onclick="addQuickSaleItemRow()" style="background: transparent; color: #4f46e5; border: 1px dashed #c7d2fe; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; width: 100%; justify-content: center;">
+                            <i data-lucide="plus-circle" style="width:14px;height:14px;"></i> + Click to Add Another Item
                         </button>
-                        <div id="quickSaleTotalBadge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; border-radius:6px; padding:4px 12px; font-size: 13px; font-weight: 700;">
+                    </div>
+                </div>
+
+                <!-- 3. Submit Button Row & Total Badges -->
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                    <button type="submit" class="btn-app-primary" id="quickSaleSubmitBtn">
+                        <i data-lucide="check-circle" style="width:15px;height:15px;"></i> Complete Sale
+                    </button>
+
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="quickItemCountBadge" style="font-size: 12px; color: #64748b; font-weight: 600;">1 Item</span>
+                        <div id="quickSaleTotalBadge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; border-radius:6px; padding:6px 16px; font-size: 15px; font-weight: 800;">
                             Total: ₹0.00
                         </div>
                     </div>
                 </div>
             </form>
-        </div>
-
-        <!-- 🔍 CARD 2: SEARCH SALES (FILTER OPTIONS) -->
-        <div class="light-sale-panel">
-            <div class="panel-header-box">
-                <div class="panel-header-icon search-icon">
-                    <i data-lucide="search" style="width:16px;height:16px;"></i>
-                </div>
-                <h3 class="panel-header-title">Search Sales</h3>
-            </div>
-
-            <div class="app-form-grid">
-                <!-- Row 1: Search by customer name & Select Item (Search first) -->
-                <div>
-                    <input type="text" id="filterCustName" class="app-input-field" placeholder="Search by customer name" oninput="applyCombinedSalesFilter()">
-                </div>
-
-                <div class="search-picker-wrapper" id="filterItemPickerContainer">
-                    <div style="position: relative;">
-                        <input type="text"
-                               id="filterItemSearchInput"
-                               class="app-input-field"
-                               style="padding-right: 34px;"
-                               placeholder="Type item to filter (Optional)..."
-                               autocomplete="off"
-                               oninput="onFilterItemSearchInput(this)">
-                        <input type="hidden" id="filterItemName">
-                        <button type="button"
-                                id="btnFilterItemClear"
-                                onclick="clearFilterItemSelection()"
-                                title="Clear item filter"
-                                style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
-                    </div>
-                    <div id="filterItemDropdownList" class="search-picker-dropdown">
-                    </div>
-                </div>
-
-                <!-- Row 2: Date From & Date To -->
-                <div>
-                    <input type="date" id="filterFromDate" class="app-input-field" placeholder="dd-mm-yyyy" onchange="applyCombinedSalesFilter()">
-                </div>
-
-                <div>
-                    <input type="date" id="filterToDate" class="app-input-field" placeholder="dd-mm-yyyy" onchange="applyCombinedSalesFilter()">
-                </div>
-
-                <!-- Action Buttons: Search & Reset -->
-                <div style="grid-column: 1 / -1; display:flex; gap: 10px; align-items:center; margin-top: 4px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
-                    <button type="button" class="btn-app-primary" onclick="applyCombinedSalesFilter()">
-                        <i data-lucide="search" style="width:14px;height:14px;"></i> Search
-                    </button>
-                    <button type="button" class="btn-app-success" onclick="resetCombinedSalesFilter()">
-                        <i data-lucide="rotate-cw" style="width:14px;height:14px;"></i> Reset
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -881,6 +972,66 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MODAL: BULK MULTI-CUSTOMER SALE (BATCH PROCESSING)        -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div id="bulkSaleModal" style="display:none; position: fixed; inset: 0; z-index: 1250; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+        <div class="card" style="max-width: 960px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); border-radius:14px; border:none; background:#fff; overflow:hidden;">
+            <!-- Modal Header -->
+            <div style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color:#fff; padding:16px 22px; display:flex; justify-content:space-between; align-items:center; flex-shrink: 0;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="background:rgba(255,255,255,0.18); width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                        <i data-lucide="layers" style="width:20px;height:20px; color:#fff;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:16px; font-weight:800; color:#fff; margin:0;">Bulk Multi-Customer Sale</div>
+                        <div style="font-size:11.5px; color:#e0e7ff; margin:0;">Record sales for multiple customers with custom items & payment modes in a single click</div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeBulkSaleModal()" style="background:rgba(255,255,255,0.15); border:none; color:#FFFFFF; font-size:16px; width:30px; height:30px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div style="padding: 18px 22px; overflow-y: auto; flex: 1; background: #f8fafc;">
+                <!-- Bulk Sale Error / Warning Alert Box -->
+                <div id="bulkSaleAlertBox" style="display:none; background:#fef2f2; border:1px solid #fecdd3; border-radius:8px; padding:12px 16px; margin-bottom:14px; color:#991b1b; font-size:13px; font-weight:600;"></div>
+
+                <!-- Bulk Customers Container -->
+                <div id="bulkCustomersContainer">
+                    <!-- Cards injected dynamically / starts with Customer 1 -->
+                </div>
+
+                <!-- Add Another Customer Button -->
+                <div style="margin-top: 10px; margin-bottom: 6px;">
+                    <button type="button" onclick="addBulkCustomerCard()" style="background:#ffffff; color:#4f46e5; border:1px dashed #818cf8; border-radius:8px; padding:10px 18px; font-size:13px; font-weight:700; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                        <i data-lucide="user-plus" style="width:16px;height:16px;"></i> + Add Another Customer Sale
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 14px 22px; display:flex; justify-content:space-between; align-items:center; flex-shrink: 0; flex-wrap: wrap; gap: 10px;">
+                <div style="display:flex; align-items:center; gap: 14px;">
+                    <div style="font-size: 13px; font-weight: 700; color: #475569;">
+                        Total Customers: <span id="bulkTotalCustomersCount" style="color: #0f172a; font-weight: 800;">1</span>
+                    </div>
+                    <div style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 6px; padding: 4px 12px; font-size: 14px; font-weight: 800;">
+                        Grand Total: <span id="bulkGrandTotalBadge">₹0.00</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button type="button" onclick="closeBulkSaleModal()" class="btn btn-outline" style="border:1px solid #cbd5e1; color:#475569; font-weight:700; padding:8px 18px; border-radius:7px; cursor:pointer;">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="submitBulkSales(event)" id="btnSubmitBulkSales" class="btn-app-primary" style="background: #4f46e5; padding: 8px 22px; font-weight: 700; border-radius: 7px; font-size: 13px;">
+                        <i data-lucide="check-check" style="width:16px;height:16px;"></i> Process All Sales
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1925,8 +2076,9 @@
         initSalesPage();
     });
 
-    /* ─── Quick Add Sale & Search Item Dropdown Handlers ─── */
+    /* ─── Global Inventory & Customer Data ─── */
     window.allPartsData = @json($parts ?? []);
+    window.customersList = @json($customers ?? []);
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -1938,29 +2090,33 @@
             .replace(/'/g, '&#039;');
     }
 
-    // Quick Sale: Search first - dropdown only appears when typing alphabets
-    function onQuickItemSearchInput(inputEl) {
+    /* ─── Generic Row Item Autocomplete (Quick Sale & Bulk Sale) ─── */
+    function onRowItemSearchInput(inputEl) {
+        const wrapper = inputEl.closest('.search-picker-wrapper');
+        const dropdown = wrapper?.querySelector('.search-picker-dropdown');
+        const clearBtn = wrapper?.querySelector('.btn-item-clear');
+        const row = inputEl.closest('.item-search-row');
+        const partIdInput = row?.querySelector('.input-part-id');
         const rawVal = inputEl.value || '';
         const query = rawVal.trim().toLowerCase();
-        const dropdown = document.getElementById('quickItemDropdownList');
-        const clearBtn = document.getElementById('btnQuickItemClear');
-        const partIdInput = document.getElementById('quickSalePartId');
 
         if (!dropdown) return;
 
-        // If empty or user cleared text, hide dropdown and reset
         if (query.length === 0) {
             dropdown.style.display = 'none';
             dropdown.innerHTML = '';
             if (clearBtn) clearBtn.style.display = 'none';
             if (partIdInput) partIdInput.value = '';
-            recalcQuickSaleTotal();
+            if (row.closest('#bulkSaleModal')) {
+                recalcBulkCustomerTotals(row.closest('.bulk-customer-card'));
+            } else {
+                recalcQuickSaleRow(row);
+            }
             return;
         }
 
         if (clearBtn) clearBtn.style.display = 'block';
 
-        // Filter items
         const matches = (window.allPartsData || []).filter(item => {
             const name = (item.name || '').toLowerCase();
             const cat = (item.category || '').toLowerCase();
@@ -1969,8 +2125,9 @@
 
         if (matches.length === 0) {
             dropdown.innerHTML = `
-                <div style="padding: 12px 14px; text-align: center; color: #64748b; font-size: 12px;">
-                    No items found matching "<strong>${escapeHtml(rawVal.trim())}</strong>"
+                <div style="padding: 10px 12px; text-align: center; color: #64748b; font-size: 12px;">
+                    No inventory match for "<strong>${escapeHtml(rawVal.trim())}</strong>"
+                    <div style="font-size: 11px; color:#4338ca; margin-top: 4px; font-weight: 600;">Custom item will be created with custom price</div>
                 </div>
             `;
         } else {
@@ -1982,7 +2139,7 @@
                 const categoryText = item.category ? escapeHtml(item.category) : 'General';
                 const safeName = escapeHtml(item.name);
                 return `
-                    <div class="search-picker-item" onclick="selectQuickItem(${item.id})">
+                    <div class="search-picker-item" onclick="selectRowItem(this, ${item.id})">
                         <div style="display:flex; flex-direction:column; gap:2px; text-align:left; overflow:hidden;">
                             <span style="font-weight:600; font-size:13px; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${safeName}</span>
                             <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:#64748b;">
@@ -2001,15 +2158,16 @@
         dropdown.style.display = 'block';
     }
 
-    function selectQuickItem(id) {
-        const item = (window.allPartsData || []).find(p => String(p.id) === String(id));
-        if (!item) return;
+    function selectRowItem(dropdownItemEl, partId) {
+        const row = dropdownItemEl.closest('.item-search-row');
+        const item = (window.allPartsData || []).find(p => String(p.id) === String(partId));
+        if (!row || !item) return;
 
-        const input = document.getElementById('quickItemSearchInput');
-        const partIdInput = document.getElementById('quickSalePartId');
-        const priceInput = document.getElementById('quickSaleCustomPrice');
-        const dropdown = document.getElementById('quickItemDropdownList');
-        const clearBtn = document.getElementById('btnQuickItemClear');
+        const input = row.querySelector('.input-item-name');
+        const partIdInput = row.querySelector('.input-part-id');
+        const priceInput = row.querySelector('.input-unit-price');
+        const dropdown = row.querySelector('.search-picker-dropdown');
+        const clearBtn = row.querySelector('.btn-item-clear');
 
         if (input) input.value = item.name;
         if (partIdInput) partIdInput.value = item.id;
@@ -2021,19 +2179,25 @@
 
         const price = parseFloat(item.selling_price || 0);
         if (priceInput) {
-            priceInput.placeholder = 'Custom Price (Default: ₹' + price.toFixed(2) + ')';
             priceInput.value = price > 0 ? price : '';
+            priceInput.placeholder = '₹' + price.toFixed(2);
         }
 
-        recalcQuickSaleTotal();
+        if (row.closest('#bulkSaleModal')) {
+            recalcBulkCustomerTotals(row.closest('.bulk-customer-card'));
+        } else {
+            recalcQuickSaleRow(row);
+        }
     }
 
-    function clearQuickItemSelection() {
-        const input = document.getElementById('quickItemSearchInput');
-        const partIdInput = document.getElementById('quickSalePartId');
-        const priceInput = document.getElementById('quickSaleCustomPrice');
-        const dropdown = document.getElementById('quickItemDropdownList');
-        const clearBtn = document.getElementById('btnQuickItemClear');
+    function clearRowItemSelection(btnEl) {
+        const row = btnEl.closest('.item-search-row');
+        if (!row) return;
+
+        const input = row.querySelector('.input-item-name');
+        const partIdInput = row.querySelector('.input-part-id');
+        const priceInput = row.querySelector('.input-unit-price');
+        const dropdown = row.querySelector('.search-picker-dropdown');
 
         if (input) {
             input.value = '';
@@ -2042,147 +2206,201 @@
         if (partIdInput) partIdInput.value = '';
         if (priceInput) {
             priceInput.value = '';
-            priceInput.placeholder = 'Custom Price (Optional)';
+            priceInput.placeholder = 'Price (₹)';
         }
         if (dropdown) {
             dropdown.style.display = 'none';
             dropdown.innerHTML = '';
         }
-        if (clearBtn) clearBtn.style.display = 'none';
+        btnEl.style.display = 'none';
 
-        recalcQuickSaleTotal();
-    }
-
-    // Filter Panel: Item search-first dropdown
-    function onFilterItemSearchInput(inputEl) {
-        const rawVal = inputEl.value || '';
-        const query = rawVal.trim().toLowerCase();
-        const dropdown = document.getElementById('filterItemDropdownList');
-        const clearBtn = document.getElementById('btnFilterItemClear');
-        const filterItemHidden = document.getElementById('filterItemName');
-
-        if (!dropdown) return;
-
-        if (query.length === 0) {
-            dropdown.style.display = 'none';
-            dropdown.innerHTML = '';
-            if (clearBtn) clearBtn.style.display = 'none';
-            if (filterItemHidden) filterItemHidden.value = '';
-            applyCombinedSalesFilter();
-            return;
-        }
-
-        if (clearBtn) clearBtn.style.display = 'block';
-        if (filterItemHidden) filterItemHidden.value = rawVal.trim();
-
-        const matches = (window.allPartsData || []).filter(item => {
-            const name = (item.name || '').toLowerCase();
-            const cat = (item.category || '').toLowerCase();
-            return name.includes(query) || cat.includes(query);
-        }).slice(0, 20);
-
-        if (matches.length === 0) {
-            dropdown.innerHTML = `
-                <div style="padding: 10px 12px; text-align: center; color: #64748b; font-size: 12px;">
-                    No items matching "<strong>${escapeHtml(rawVal.trim())}</strong>"
-                </div>
-            `;
+        if (row.closest('#bulkSaleModal')) {
+            recalcBulkCustomerTotals(row.closest('.bulk-customer-card'));
         } else {
-            dropdown.innerHTML = matches.map(item => {
-                const safeName = escapeHtml(item.name);
-                const safeCategory = escapeHtml(item.category || 'General');
-                const escapedForJs = safeName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                return `
-                    <div class="search-picker-item" onclick="selectFilterItem('${escapedForJs}')">
-                        <span style="font-weight:500; font-size:13px; color:#0f172a;">${safeName}</span>
-                        <span style="font-size:11px; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${safeCategory}</span>
-                    </div>
-                `;
-            }).join('');
+            recalcQuickSaleRow(row);
         }
-        dropdown.style.display = 'block';
-        applyCombinedSalesFilter();
     }
 
-    function selectFilterItem(itemName) {
-        const input = document.getElementById('filterItemSearchInput');
-        const filterItemHidden = document.getElementById('filterItemName');
-        const dropdown = document.getElementById('filterItemDropdownList');
-        const clearBtn = document.getElementById('btnFilterItemClear');
-
-        if (input) input.value = itemName;
-        if (filterItemHidden) filterItemHidden.value = itemName;
-        if (dropdown) {
-            dropdown.style.display = 'none';
-            dropdown.innerHTML = '';
-        }
-        if (clearBtn) clearBtn.style.display = 'block';
-
-        applyCombinedSalesFilter();
-    }
-
-    function clearFilterItemSelection() {
-        const input = document.getElementById('filterItemSearchInput');
-        const filterItemHidden = document.getElementById('filterItemName');
-        const dropdown = document.getElementById('filterItemDropdownList');
-        const clearBtn = document.getElementById('btnFilterItemClear');
-
-        if (input) {
-            input.value = '';
-            input.focus();
-        }
-        if (filterItemHidden) filterItemHidden.value = '';
-        if (dropdown) {
-            dropdown.style.display = 'none';
-            dropdown.innerHTML = '';
-        }
-        if (clearBtn) clearBtn.style.display = 'none';
-
-        applyCombinedSalesFilter();
-    }
-
-    // Close item dropdowns when clicking outside
+    // Dismiss open search dropdowns on document click
     document.addEventListener('click', function(e) {
-        const quickPicker = document.getElementById('quickItemPickerContainer');
-        if (quickPicker && !quickPicker.contains(e.target)) {
-            const dd = document.getElementById('quickItemDropdownList');
-            if (dd) dd.style.display = 'none';
-        }
-
-        const filterPicker = document.getElementById('filterItemPickerContainer');
-        if (filterPicker && !filterPicker.contains(e.target)) {
-            const dd = document.getElementById('filterItemDropdownList');
-            if (dd) dd.style.display = 'none';
+        if (!e.target.closest('.search-picker-wrapper')) {
+            document.querySelectorAll('.search-picker-dropdown').forEach(d => {
+                d.style.display = 'none';
+            });
         }
     });
 
-    function recalcQuickSaleTotal() {
-        const qtyInput = document.getElementById('quickSaleQty');
-        const customPriceInput = document.getElementById('quickSaleCustomPrice');
-        const badge = document.getElementById('quickSaleTotalBadge');
+    /* ─── Multi-Item Quick Sale Handlers ─── */
+    let quickItemRowCounter = 1;
 
-        const qty = Math.max(1, parseInt(qtyInput?.value || 1));
-        let unitPrice = 0;
-        if (customPriceInput && customPriceInput.value !== '') {
-            unitPrice = parseFloat(customPriceInput.value) || 0;
-        } else {
-            const partId = document.getElementById('quickSalePartId')?.value;
-            if (partId && window.allPartsData) {
-                const found = window.allPartsData.find(p => String(p.id) === String(partId));
-                if (found) {
-                    unitPrice = parseFloat(found.selling_price || 0);
+    function addQuickSaleItemRow() {
+        const container = document.getElementById('quickSaleItemsContainer');
+        if (!container) return;
+
+        const idx = quickItemRowCounter++;
+        const row = document.createElement('div');
+        row.className = 'quick-item-row item-search-row';
+        row.dataset.index = idx;
+        row.id = `quickItemRow_${idx}`;
+        row.innerHTML = `
+            <div class="search-picker-wrapper col-item-search" style="position: relative;">
+                <input type="text"
+                       name="items[${idx}][part_name]"
+                       class="app-input-field input-item-name"
+                       style="padding-right: 30px;"
+                       placeholder="Type item name to search or enter custom item..."
+                       autocomplete="off"
+                       required
+                       oninput="onRowItemSearchInput(this)">
+                <input type="hidden" name="items[${idx}][part_id]" class="input-part-id">
+                <button type="button"
+                        class="btn-item-clear"
+                        onclick="clearRowItemSelection(this)"
+                        title="Clear item"
+                        style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                <div class="search-picker-dropdown"></div>
+            </div>
+
+            <div>
+                <input type="number"
+                       name="items[${idx}][quantity]"
+                       class="app-input-field input-quantity"
+                       placeholder="Qty"
+                       value="1"
+                       min="1"
+                       required
+                       oninput="recalcQuickSaleRow(this)">
+            </div>
+
+            <div>
+                <input type="number"
+                       step="0.01"
+                       name="items[${idx}][unit_price]"
+                       class="app-input-field input-unit-price"
+                       placeholder="Price (₹)"
+                       required
+                       oninput="recalcQuickSaleRow(this)">
+            </div>
+
+            <div class="line-total-cell" style="text-align: right; font-weight: 700; font-size: 13px; color: #0f172a; white-space: nowrap;">
+                ₹0.00
+            </div>
+
+            <div class="col-total-remove" style="text-align: center;">
+                <button type="button"
+                        class="btn-remove-row"
+                        onclick="removeQuickSaleItemRow(this)"
+                        title="Remove item"
+                        style="background: #fee2e2; border: 1px solid #fecdd3; border-radius: 6px; color: #dc2626; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px;">✕</button>
+            </div>
+        `;
+
+        container.appendChild(row);
+        updateQuickSaleRemoveButtons();
+        recalcAllQuickSale();
+        row.querySelector('.input-item-name')?.focus();
+        if (window.refreshIcons) window.refreshIcons();
+    }
+
+    function removeQuickSaleItemRow(btnEl) {
+        const row = btnEl.closest('.quick-item-row');
+        if (!row) return;
+        const container = document.getElementById('quickSaleItemsContainer');
+        const allRows = container ? container.querySelectorAll('.quick-item-row') : [];
+        if (allRows.length <= 1) return; // Keep at least one row
+
+        row.remove();
+        updateQuickSaleRemoveButtons();
+        recalcAllQuickSale();
+    }
+
+    function updateQuickSaleRemoveButtons() {
+        const container = document.getElementById('quickSaleItemsContainer');
+        if (!container) return;
+        const allRows = container.querySelectorAll('.quick-item-row');
+        allRows.forEach(r => {
+            const btn = r.querySelector('.btn-remove-row');
+            if (btn) {
+                if (allRows.length <= 1) {
+                    btn.disabled = true;
+                    btn.style.background = '#f1f5f9';
+                    btn.style.color = '#94a3b8';
+                    btn.style.borderColor = '#e2e8f0';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.disabled = false;
+                    btn.style.background = '#fee2e2';
+                    btn.style.color = '#dc2626';
+                    btn.style.borderColor = '#fecdd3';
+                    btn.style.cursor = 'pointer';
                 }
             }
-        }
+        });
 
-        const total = (unitPrice * qty).toFixed(2);
-        if (badge) {
-            badge.textContent = 'Total: ₹' + total;
-        }
+        const countText = document.getElementById('quickItemCountText');
+        const countBadge = document.getElementById('quickItemCountBadge');
+        if (countText) countText.textContent = allRows.length;
+        if (countBadge) countBadge.textContent = `${allRows.length} ${allRows.length === 1 ? 'Item' : 'Items'}`;
+    }
 
-        const modeSelect = document.getElementById('quickSalePaymentMode');
-        if (modeSelect) {
-            syncQuickSplitAmounts(modeSelect.value, parseFloat(total));
+    function recalcQuickSaleRow(el) {
+        const row = el.closest('.quick-item-row');
+        if (!row) return;
+
+        const qty = Math.max(1, parseInt(row.querySelector('.input-quantity')?.value || 1));
+        const price = parseFloat(row.querySelector('.input-unit-price')?.value) || 0;
+        const lineTotal = qty * price;
+
+        const cell = row.querySelector('.line-total-cell');
+        if (cell) cell.textContent = '₹' + lineTotal.toFixed(2);
+
+        recalcAllQuickSale();
+    }
+
+    function recalcAllQuickSale() {
+        const container = document.getElementById('quickSaleItemsContainer');
+        if (!container) return;
+
+        let grandTotal = 0;
+        container.querySelectorAll('.quick-item-row').forEach(row => {
+            const qty = Math.max(1, parseInt(row.querySelector('.input-quantity')?.value || 1));
+            const price = parseFloat(row.querySelector('.input-unit-price')?.value) || 0;
+            grandTotal += qty * price;
+        });
+
+        const badge = document.getElementById('quickSaleTotalBadge');
+        if (badge) badge.textContent = 'Total: ₹' + grandTotal.toFixed(2);
+
+        const mode = document.getElementById('quickSalePaymentMode')?.value || 'cash';
+        syncQuickSplitAmounts(mode, grandTotal);
+    }
+
+    function getQuickSaleCurrentTotal() {
+        const container = document.getElementById('quickSaleItemsContainer');
+        if (!container) return 0;
+        let grandTotal = 0;
+        container.querySelectorAll('.quick-item-row').forEach(row => {
+            const qty = Math.max(1, parseInt(row.querySelector('.input-quantity')?.value || 1));
+            const price = parseFloat(row.querySelector('.input-unit-price')?.value) || 0;
+            grandTotal += qty * price;
+        });
+        return grandTotal;
+    }
+
+    function onQuickPhoneChange(inputEl) {
+        const phone = (inputEl.value || '').trim();
+        if (!phone) return;
+        const datalist = document.getElementById('quickCustPhones');
+        if (datalist) {
+            for (let opt of datalist.options) {
+                if (opt.value === phone && opt.textContent) {
+                    const nameInput = document.getElementById('quickSaleCustName');
+                    if (nameInput && (!nameInput.value || nameInput.value === 'Walk-in Customer')) {
+                        nameInput.value = opt.textContent;
+                    }
+                    break;
+                }
+            }
         }
     }
 
@@ -2192,16 +2410,18 @@
         const splitRow = document.getElementById('quickSplitRow');
         if (!splitRow) return;
 
-        if (mode === 'cash+upi') {
+        if (mode === 'cash+upi' || mode === 'upi+cash') {
             splitRow.style.display = 'grid';
+            const half = (total / 2).toFixed(2);
+            const rem = (total - parseFloat(half)).toFixed(2);
             splitRow.innerHTML = `
                 <div>
-                    <label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:4px;">Cash Amount (₹)</label>
-                    <input type="number" step="0.01" name="cash_amount" id="quickSplitCash" class="app-input-field" placeholder="Cash Amount" value="${(total/2).toFixed(2)}" oninput="onQuickCashSplitChange(this, ${total})">
+                    <label style="font-size:11px;color:#475569;font-weight:700;display:block;margin-bottom:4px;">Cash Amount (₹)</label>
+                    <input type="number" step="0.01" name="cash_amount" id="quickSplitCash" class="app-input-field" placeholder="Cash Amount" value="${half}" oninput="onQuickCashSplitChange(this, ${total})">
                 </div>
                 <div>
-                    <label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:4px;">UPI Amount (₹)</label>
-                    <input type="number" step="0.01" name="upi_amount" id="quickSplitUpi" class="app-input-field" placeholder="UPI Amount" value="${(total - (total/2)).toFixed(2)}" oninput="onQuickUpiSplitChange(this, ${total})">
+                    <label style="font-size:11px;color:#475569;font-weight:700;display:block;margin-bottom:4px;">UPI Amount (₹)</label>
+                    <input type="number" step="0.01" name="upi_amount" id="quickSplitUpi" class="app-input-field" placeholder="UPI Amount" value="${rem}" oninput="onQuickUpiSplitChange(this, ${total})">
                 </div>
             `;
         } else if (mode === 'cash+udhari') {
@@ -2210,12 +2430,12 @@
             const udhari = (total - paid).toFixed(2);
             splitRow.innerHTML = `
                 <div>
-                    <label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:4px;">Cash Paid (₹)</label>
+                    <label style="font-size:11px;color:#475569;font-weight:700;display:block;margin-bottom:4px;">Cash Paid (₹)</label>
                     <input type="number" step="0.01" name="cash_amount" id="quickSplitCashPaid" class="app-input-field" placeholder="Cash Paid" value="${paid}" oninput="onQuickCashUdhariChange(this, ${total})">
                 </div>
                 <div style="display:flex;flex-direction:column;justify-content:center;">
-                    <span style="font-size:11px;color:#475569;font-weight:600;margin-bottom:4px;">Remaining to Khata</span>
-                    <span id="quickUdhariBadge" style="font-size:13px;font-weight:700;color:#dc2626;">Udhari: ₹${udhari}</span>
+                    <span style="font-size:11px;color:#475569;font-weight:700;margin-bottom:4px;">Remaining to Khata</span>
+                    <span id="quickUdhariBadge" style="font-size:14px;font-weight:800;color:#dc2626;">Udhari: ₹${udhari}</span>
                 </div>
             `;
         } else if (mode === 'upi+udhari') {
@@ -2224,24 +2444,23 @@
             const udhari = (total - paid).toFixed(2);
             splitRow.innerHTML = `
                 <div>
-                    <label style="font-size:11px;color:#475569;font-weight:600;display:block;margin-bottom:4px;">UPI Paid (₹)</label>
+                    <label style="font-size:11px;color:#475569;font-weight:700;display:block;margin-bottom:4px;">UPI Paid (₹)</label>
                     <input type="number" step="0.01" name="upi_amount" id="quickSplitUpiPaid" class="app-input-field" placeholder="UPI Paid" value="${paid}" oninput="onQuickUpiUdhariChange(this, ${total})">
                 </div>
                 <div style="display:flex;flex-direction:column;justify-content:center;">
-                    <span style="font-size:11px;color:#475569;font-weight:600;margin-bottom:4px;">Remaining to Khata</span>
-                    <span id="quickUdhariBadge" style="font-size:13px;font-weight:700;color:#dc2626;">Udhari: ₹${udhari}</span>
+                    <span style="font-size:11px;color:#475569;font-weight:700;margin-bottom:4px;">Remaining to Khata</span>
+                    <span id="quickUdhariBadge" style="font-size:14px;font-weight:800;color:#dc2626;">Udhari: ₹${udhari}</span>
                 </div>
             `;
         } else if (mode === 'udhari') {
             splitRow.style.display = 'grid';
             splitRow.innerHTML = `
-                <div style="grid-column: 1 / -1; font-size:12px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding: 8px 12px;">
-                    <i data-lucide="info" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>
-                    Full invoice amount (₹${total.toFixed(2)}) will be recorded as <strong>Udhari</strong> in Customer Khata ledger.
+                <div style="grid-column: 1 / -1; font-size:12px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding: 10px 14px; display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="info" style="width:16px;height:16px;color:#d97706;flex-shrink:0;"></i>
+                    <span>Full invoice amount (<strong>₹${total.toFixed(2)}</strong>) will be recorded as <strong>Udhari</strong> in Customer Khata ledger.</span>
                 </div>
             `;
             if (window.refreshIcons) window.refreshIcons();
-            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
         } else {
             splitRow.style.display = 'none';
             splitRow.innerHTML = '';
@@ -2249,7 +2468,7 @@
     }
 
     function syncQuickSplitAmounts(mode, total) {
-        if (mode === 'cash+upi') {
+        if (mode === 'cash+upi' || mode === 'upi+cash') {
             const cashEl = document.getElementById('quickSplitCash');
             const upiEl = document.getElementById('quickSplitUpi');
             if (cashEl && upiEl) {
@@ -2301,52 +2520,132 @@
         }
     }
 
-    function getQuickSaleCurrentTotal() {
-        const qtyInput = document.getElementById('quickSaleQty');
-        const customPriceInput = document.getElementById('quickSaleCustomPrice');
-
-        const qty = Math.max(1, parseInt(qtyInput?.value || 1));
-        let unitPrice = 0;
-        if (customPriceInput && customPriceInput.value !== '') {
-            unitPrice = parseFloat(customPriceInput.value) || 0;
+    function showQuickSaleWarning(msg, targetInput = null) {
+        const alertBox = document.getElementById('quickSaleAlertBox');
+        if (alertBox) {
+            alertBox.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px; justify-content:space-between; width:100%;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:16px;">⚠️</span>
+                        <span>${escapeHtml(msg)}</span>
+                    </div>
+                    <button type="button" onclick="this.closest('#quickSaleAlertBox').style.display='none'" style="background:none;border:none;color:#991b1b;font-weight:800;font-size:14px;cursor:pointer;">✕</button>
+                </div>
+            `;
+            alertBox.style.display = 'block';
+            alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
-            const partId = document.getElementById('quickSalePartId')?.value;
-            if (partId && window.allPartsData) {
-                const found = window.allPartsData.find(p => String(p.id) === String(partId));
-                if (found) {
-                    unitPrice = parseFloat(found.selling_price || 0);
-                }
-            }
+            alert(msg);
         }
-        return unitPrice * qty;
-    }
-
-    function onQuickPhoneChange(inputEl) {
-        const phone = (inputEl.value || '').trim();
-        if (!phone) return;
-        const datalist = document.getElementById('quickCustPhones');
-        if (datalist) {
-            for (let opt of datalist.options) {
-                if (opt.value === phone && opt.textContent) {
-                    const nameInput = document.getElementById('quickSaleCustName');
-                    if (nameInput && (!nameInput.value || nameInput.value === 'Walk-in Customer')) {
-                        nameInput.value = opt.textContent;
-                    }
-                    break;
-                }
-            }
+        if (targetInput) {
+            targetInput.focus();
+            targetInput.style.borderColor = '#ef4444';
+            targetInput.style.backgroundColor = '#fff5f5';
+            setTimeout(() => {
+                targetInput.style.borderColor = '';
+                targetInput.style.backgroundColor = '';
+            }, 4500);
         }
     }
 
     function validateQuickSaleForm(e) {
-        const partId = document.getElementById('quickSalePartId')?.value;
-        const itemName = (document.getElementById('quickItemSearchInput')?.value || '').trim();
-        if (!partId && !itemName) {
-            alert('Please search or enter an item name to sell.');
-            const searchInput = document.getElementById('quickItemSearchInput');
-            if (searchInput) searchInput.focus();
+        const alertBox = document.getElementById('quickSaleAlertBox');
+        if (alertBox) alertBox.style.display = 'none';
+
+        const container = document.getElementById('quickSaleItemsContainer');
+        const rows = container ? container.querySelectorAll('.quick-item-row') : [];
+        if (rows.length === 0) {
+            showQuickSaleWarning('Please add at least one item to sell.');
             if (e) e.preventDefault();
             return false;
+        }
+
+        for (let i = 0; i < rows.length; i++) {
+            const r = rows[i];
+            const nameInput = r.querySelector('.input-item-name');
+            const name = (nameInput?.value || '').trim();
+            if (!name) {
+                showQuickSaleWarning(`Item #${i + 1}: Please select or enter an item name.`, nameInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+
+            const qtyInput = r.querySelector('.input-quantity');
+            const qty = parseInt(qtyInput?.value || 0);
+            if (isNaN(qty) || qty < 1) {
+                showQuickSaleWarning(`Item #${i + 1} (${name}): Quantity must be at least 1.`, qtyInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+
+            const priceInput = r.querySelector('.input-unit-price');
+            const price = parseFloat(priceInput?.value);
+            if (isNaN(price) || price < 0) {
+                showQuickSaleWarning(`Item #${i + 1} (${name}): Unit price cannot be empty or negative.`, priceInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+        }
+
+        const total = getQuickSaleCurrentTotal();
+        if (total <= 0) {
+            showQuickSaleWarning('Total bill amount must be greater than zero.');
+            if (e) e.preventDefault();
+            return false;
+        }
+
+        const mode = document.getElementById('quickSalePaymentMode')?.value || 'cash';
+        const amountPaidInput = document.getElementById('quickSaleAmountPaid');
+
+        if (mode === 'cash+upi' || mode === 'upi+cash') {
+            const cashInput = document.getElementById('quickSplitCash');
+            const upiInput = document.getElementById('quickSplitUpi');
+            const cashVal = parseFloat(cashInput?.value) || 0;
+            const upiVal = parseFloat(upiInput?.value) || 0;
+
+            if (cashVal < 0 || upiVal < 0) {
+                showQuickSaleWarning('Split cash and UPI amounts cannot be negative.', cashVal < 0 ? cashInput : upiInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+            if (Math.abs((cashVal + upiVal) - total) > 0.05) {
+                showQuickSaleWarning(`Split Cash (₹${cashVal.toFixed(2)}) + UPI (₹${upiVal.toFixed(2)}) total ₹${(cashVal + upiVal).toFixed(2)}, which does not match total amount ₹${total.toFixed(2)}. Please balance the split.`, cashInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+            if (amountPaidInput) amountPaidInput.value = total.toFixed(2);
+        } else if (mode === 'cash+udhari') {
+            const cashInput = document.getElementById('quickSplitCashPaid');
+            const cashPaid = parseFloat(cashInput?.value) || 0;
+            if (cashPaid < 0) {
+                showQuickSaleWarning('Cash paid cannot be negative.', cashInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+            if (cashPaid > total) {
+                showQuickSaleWarning(`Cash paid (₹${cashPaid.toFixed(2)}) cannot exceed total sale amount (₹${total.toFixed(2)}).`, cashInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+            if (amountPaidInput) amountPaidInput.value = cashPaid.toFixed(2);
+        } else if (mode === 'upi+udhari') {
+            const upiInput = document.getElementById('quickSplitUpiPaid');
+            const upiPaid = parseFloat(upiInput?.value) || 0;
+            if (upiPaid < 0) {
+                showQuickSaleWarning('UPI paid cannot be negative.', upiInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+            if (upiPaid > total) {
+                showQuickSaleWarning(`UPI paid (₹${upiPaid.toFixed(2)}) cannot exceed total sale amount (₹${total.toFixed(2)}).`, upiInput);
+                if (e) e.preventDefault();
+                return false;
+            }
+            if (amountPaidInput) amountPaidInput.value = upiPaid.toFixed(2);
+        } else if (mode === 'udhari') {
+            if (amountPaidInput) amountPaidInput.value = '0';
+        } else {
+            if (amountPaidInput) amountPaidInput.value = total.toFixed(2);
         }
 
         const custNameInput = document.getElementById('quickSaleCustName');
@@ -2359,99 +2658,661 @@
             custPhoneInput.value = '9999999999';
         }
 
-        const total = getQuickSaleCurrentTotal();
-        const mode = document.getElementById('quickSalePaymentMode')?.value || 'cash';
-        const amountPaidInput = document.getElementById('quickSaleAmountPaid');
-
-        if (mode === 'cash' || mode === 'upi' || mode === 'cash+upi') {
-            if (amountPaidInput) amountPaidInput.value = (total > 0 ? total : 0).toFixed(2);
-        } else if (mode === 'udhari') {
-            if (amountPaidInput) amountPaidInput.value = '0';
-        } else if (mode === 'cash+udhari') {
-            const cash = parseFloat(document.getElementById('quickSplitCashPaid')?.value) || 0;
-            if (amountPaidInput) amountPaidInput.value = cash.toFixed(2);
-        } else if (mode === 'upi+udhari') {
-            const upi = parseFloat(document.getElementById('quickSplitUpiPaid')?.value) || 0;
-            if (amountPaidInput) amountPaidInput.value = upi.toFixed(2);
-        }
-
         const submitBtn = document.getElementById('quickSaleSubmitBtn');
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing Sale...';
         }
 
         return true;
     }
 
-    /* ─── Search Sales Combined Filter JS Handlers ─── */
-    function applyCombinedSalesFilter() {
-        const custTerm = (document.getElementById('filterCustName')?.value || '').toLowerCase().trim();
-        const itemTerm = (document.getElementById('filterItemName')?.value || '').toLowerCase().trim();
-        const fromDate = document.getElementById('filterFromDate')?.value || '';
-        const toDate = document.getElementById('filterToDate')?.value || '';
-        const globalSearch = (document.getElementById('salesSearchInput')?.value || '').toLowerCase().trim();
+    /* ─── Bulk Multi-Customer Sale Handlers ─── */
+    let bulkCustomerCounter = 0;
 
-        let visibleCount = 0;
-        document.querySelectorAll('#salesTable tbody tr.sales-row').forEach(row => {
-            const rowText = row.textContent.toLowerCase();
-            const rawDate = (row.dataset.date || '').trim();
-            const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
+    function openBulkSaleModal() {
+        const modal = document.getElementById('bulkSaleModal');
+        if (!modal) return;
+        const alertBox = document.getElementById('bulkSaleAlertBox');
+        if (alertBox) alertBox.style.display = 'none';
+        const container = document.getElementById('bulkCustomersContainer');
+        if (container && container.children.length === 0) {
+            addBulkCustomerCard();
+        }
+        modal.style.display = 'flex';
+        if (window.refreshIcons) window.refreshIcons();
+    }
 
-            const matchesCust = !custTerm || rowText.includes(custTerm);
-            const matchesItem = !itemTerm || rowText.includes(itemTerm);
-            const matchesGlobal = !globalSearch || rowText.includes(globalSearch);
+    function closeBulkSaleModal() {
+        const modal = document.getElementById('bulkSaleModal');
+        if (modal) modal.style.display = 'none';
+    }
 
-            let matchesDate = true;
-            if (fromDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
-            if (toDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
+    function addBulkCustomerCard() {
+        const container = document.getElementById('bulkCustomersContainer');
+        if (!container) return;
 
-            const isVisible = matchesCust && matchesItem && matchesGlobal && matchesDate;
-            row.dataset.mobiHidden = isVisible ? '0' : '1';
-            row.style.display = isVisible ? '' : 'none';
-            if (isVisible) visibleCount++;
-        });
+        bulkCustomerCounter++;
+        const cIdx = bulkCustomerCounter;
+        const card = document.createElement('div');
+        card.className = 'bulk-customer-card';
+        card.dataset.customerIndex = cIdx;
+        card.id = `bulkCustomerCard_${cIdx}`;
 
-        let visibleMobileCount = 0;
-        document.querySelectorAll('#salesMobileCards .sales-flat-row').forEach(card => {
-            const cardText = card.textContent.toLowerCase();
-            const rawDate = (card.dataset.date || '').trim();
-            const cleanCardDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
+        card.innerHTML = `
+            <!-- Customer Card Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="badge" style="background:#4f46e5; color:#fff; font-size:12px; font-weight:800; padding:4px 10px; border-radius:6px;">
+                        Customer #${container.children.length + 1}
+                    </span>
+                    <span style="font-size:13px; font-weight:700; color:#1e293b;" class="bulk-customer-label">Sale Entry</span>
+                </div>
+                <button type="button" onclick="removeBulkCustomerCard(this)" class="btn-remove-customer" title="Remove customer sale" style="background:#fee2e2; border:1px solid #fecdd3; border-radius:6px; color:#dc2626; padding:3px 8px; font-size:11px; font-weight:700; cursor:pointer;">
+                    ✕ Remove Customer
+                </button>
+            </div>
 
-            const matchesCust = !custTerm || cardText.includes(custTerm);
-            const matchesItem = !itemTerm || cardText.includes(itemTerm);
-            const matchesGlobal = !globalSearch || cardText.includes(globalSearch);
+            <!-- Customer Info Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 10px; margin-bottom: 12px;">
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Customer Name</label>
+                    <input type="text" class="app-input-field bulk-cust-name" placeholder="Name (Walk-in Customer)" list="quickCustNames" oninput="onBulkCustomerNameInput(this)">
+                </div>
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Mobile Number</label>
+                    <input type="tel" class="app-input-field bulk-cust-phone" placeholder="Mobile (Optional)" list="quickCustPhones">
+                </div>
+                <div>
+                    <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Payment Mode</label>
+                    <select class="app-input-field bulk-payment-mode" onchange="onBulkPaymentModeChange(this)">
+                        <option value="cash" selected>Cash</option>
+                        <option value="upi">UPI</option>
+                        <option value="udhari">Udhari</option>
+                        <option value="cash+upi">Cash + UPI</option>
+                        <option value="upi+cash">UPI + Cash</option>
+                        <option value="cash+udhari">Cash + Udhari</option>
+                        <option value="upi+udhari">UPI + Udhari</option>
+                    </select>
+                </div>
+            </div>
 
-            let matchesDate = true;
-            if (fromDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate >= fromDate);
-            if (toDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate <= toDate);
+            <!-- Dynamic Split Row for this Customer -->
+            <div class="bulk-split-row split-row-light" style="display: none; margin-bottom: 12px;"></div>
 
-            const isVisible = matchesCust && matchesItem && matchesGlobal && matchesDate;
-            card.dataset.mobiHidden = isVisible ? '0' : '1';
-            card.style.display = isVisible ? '' : 'none';
-            if (isVisible) visibleMobileCount++;
-        });
+            <!-- Items Table for this Customer -->
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:11.5px; font-weight:700; color:#334155;">Customer Items:</span>
+                    <button type="button" onclick="addBulkItemRow(this)" style="background:#eef2ff; color:#4f46e5; border:1px solid #c7d2fe; border-radius:5px; padding:2px 8px; font-size:11px; font-weight:700; cursor:pointer;">
+                        + Add Item
+                    </button>
+                </div>
 
-        const emptyRow = document.getElementById('salesEmptyFilterRow');
-        if (emptyRow) emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
-        const mobEmptyRow = document.getElementById('salesMobileEmptyFilterRow');
-        if (mobEmptyRow) mobEmptyRow.style.display = (visibleMobileCount === 0) ? 'block' : 'none';
+                <div class="bulk-items-container">
+                    <!-- Initial Item Row for Customer -->
+                    <div class="quick-item-row item-search-row" style="background:#fff; margin-bottom:6px;">
+                        <div class="search-picker-wrapper col-item-search" style="position: relative;">
+                            <input type="text"
+                                   class="app-input-field input-item-name"
+                                   style="padding-right: 30px; height: 34px; font-size: 12px;"
+                                   placeholder="Search item or enter custom name..."
+                                   autocomplete="off"
+                                   oninput="onRowItemSearchInput(this)">
+                            <input type="hidden" class="input-part-id">
+                            <button type="button"
+                                    class="btn-item-clear"
+                                    onclick="clearRowItemSelection(this)"
+                                    title="Clear item"
+                                    style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; line-height: 18px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                            <div class="search-picker-dropdown"></div>
+                        </div>
 
-        if (window.salesPager && typeof window.salesPager.refresh === 'function') {
-            window.salesPager.refresh(true);
+                        <div>
+                            <input type="number"
+                                   class="app-input-field input-quantity"
+                                   placeholder="Qty"
+                                   value="1"
+                                   min="1"
+                                   style="height: 34px; font-size: 12px;"
+                                   oninput="recalcBulkItemRow(this)">
+                        </div>
+
+                        <div>
+                            <input type="number"
+                                   step="0.01"
+                                   class="app-input-field input-unit-price"
+                                   placeholder="Price (₹)"
+                                   style="height: 34px; font-size: 12px;"
+                                   oninput="recalcBulkItemRow(this)">
+                        </div>
+
+                        <div class="line-total-cell" style="text-align: right; font-weight: 700; font-size: 12px; color: #0f172a; white-space: nowrap;">
+                            ₹0.00
+                        </div>
+
+                        <div class="col-total-remove" style="text-align: center;">
+                            <button type="button"
+                                    class="btn-remove-item"
+                                    onclick="removeBulkItemRow(this)"
+                                    title="Remove item"
+                                    disabled
+                                    style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 5px; color: #94a3b8; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: not-allowed; font-size: 11px;">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Total Bar -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:6px 12px; border-radius:6px;">
+                <span style="font-size:11.5px; color:#64748b; font-weight:600;">Customer Total:</span>
+                <strong class="bulk-customer-total-badge" style="font-size:13.5px; color:#1e293b;">₹0.00</strong>
+            </div>
+        `;
+
+        container.appendChild(card);
+        updateBulkCustomersUI();
+        recalcBulkGrandTotal();
+        if (window.refreshIcons) window.refreshIcons();
+    }
+
+    function onBulkCustomerNameInput(inputEl) {
+        const card = inputEl.closest('.bulk-customer-card');
+        const label = card?.querySelector('.bulk-customer-label');
+        const val = (inputEl.value || '').trim();
+        if (label) {
+            label.textContent = val ? `— ${val}` : 'Sale Entry';
         }
     }
 
-    function resetCombinedSalesFilter() {
-        const cust = document.getElementById('filterCustName');
-        const fromD = document.getElementById('filterFromDate');
-        const toD = document.getElementById('filterToDate');
+    function removeBulkCustomerCard(btnEl) {
+        const card = btnEl.closest('.bulk-customer-card');
+        if (!card) return;
+        const container = document.getElementById('bulkCustomersContainer');
+        if (container.children.length <= 1) return; // Keep at least one
 
-        if (cust) cust.value = '';
-        if (fromD) fromD.value = '';
-        if (toD) toD.value = '';
+        card.remove();
+        updateBulkCustomersUI();
+        recalcBulkGrandTotal();
+    }
 
-        clearFilterItemSelection();
+    function updateBulkCustomersUI() {
+        const container = document.getElementById('bulkCustomersContainer');
+        if (!container) return;
+        const cards = container.querySelectorAll('.bulk-customer-card');
+        cards.forEach((c, idx) => {
+            const badge = c.querySelector('.badge');
+            if (badge) badge.textContent = `Customer #${idx + 1}`;
+            const removeBtn = c.querySelector('.btn-remove-customer');
+            if (removeBtn) {
+                removeBtn.style.display = cards.length > 1 ? 'inline-block' : 'none';
+            }
+        });
+
+        const totalCount = document.getElementById('bulkTotalCustomersCount');
+        if (totalCount) totalCount.textContent = cards.length;
+    }
+
+    function addBulkItemRow(btnEl) {
+        const card = btnEl.closest('.bulk-customer-card');
+        const container = card?.querySelector('.bulk-items-container');
+        if (!container) return;
+
+        const row = document.createElement('div');
+        row.className = 'quick-item-row item-search-row';
+        row.style.cssText = 'background:#fff; margin-bottom:6px;';
+        row.innerHTML = `
+            <div class="search-picker-wrapper col-item-search" style="position: relative;">
+                <input type="text"
+                       class="app-input-field input-item-name"
+                       style="padding-right: 30px; height: 34px; font-size: 12px;"
+                       placeholder="Search item or enter custom name..."
+                       autocomplete="off"
+                       oninput="onRowItemSearchInput(this)">
+                <input type="hidden" class="input-part-id">
+                <button type="button"
+                        class="btn-item-clear"
+                        onclick="clearRowItemSelection(this)"
+                        title="Clear item"
+                        style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; line-height: 18px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                <div class="search-picker-dropdown"></div>
+            </div>
+
+            <div>
+                <input type="number"
+                       class="app-input-field input-quantity"
+                       placeholder="Qty"
+                       value="1"
+                       min="1"
+                       style="height: 34px; font-size: 12px;"
+                       oninput="recalcBulkItemRow(this)">
+            </div>
+
+            <div>
+                <input type="number"
+                       step="0.01"
+                       class="app-input-field input-unit-price"
+                       placeholder="Price (₹)"
+                       style="height: 34px; font-size: 12px;"
+                       oninput="recalcBulkItemRow(this)">
+            </div>
+
+            <div class="line-total-cell" style="text-align: right; font-weight: 700; font-size: 12px; color: #0f172a; white-space: nowrap;">
+                ₹0.00
+            </div>
+
+            <div class="col-total-remove" style="text-align: center;">
+                <button type="button"
+                        class="btn-remove-item"
+                        onclick="removeBulkItemRow(this)"
+                        title="Remove item"
+                        style="background: #fee2e2; border: 1px solid #fecdd3; border-radius: 5px; color: #dc2626; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px;">✕</button>
+            </div>
+        `;
+
+        container.appendChild(row);
+        updateBulkItemRowRemoveButtons(container);
+        recalcBulkCustomerTotals(card);
+        row.querySelector('.input-item-name')?.focus();
+    }
+
+    function removeBulkItemRow(btnEl) {
+        const card = btnEl.closest('.bulk-customer-card');
+        const row = btnEl.closest('.quick-item-row');
+        const container = card?.querySelector('.bulk-items-container');
+        if (!row || !container) return;
+
+        if (container.children.length <= 1) return;
+        row.remove();
+        updateBulkItemRowRemoveButtons(container);
+        recalcBulkCustomerTotals(card);
+    }
+
+    function updateBulkItemRowRemoveButtons(container) {
+        const rows = container.querySelectorAll('.quick-item-row');
+        rows.forEach(r => {
+            const btn = r.querySelector('.btn-remove-item');
+            if (btn) {
+                if (rows.length <= 1) {
+                    btn.disabled = true;
+                    btn.style.background = '#f1f5f9';
+                    btn.style.color = '#94a3b8';
+                    btn.style.borderColor = '#e2e8f0';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.disabled = false;
+                    btn.style.background = '#fee2e2';
+                    btn.style.color = '#dc2626';
+                    btn.style.borderColor = '#fecdd3';
+                    btn.style.cursor = 'pointer';
+                }
+            }
+        });
+    }
+
+    function recalcBulkItemRow(el) {
+        const card = el.closest('.bulk-customer-card');
+        const row = el.closest('.quick-item-row');
+        if (!row || !card) return;
+
+        const qty = Math.max(1, parseInt(row.querySelector('.input-quantity')?.value || 1));
+        const price = parseFloat(row.querySelector('.input-unit-price')?.value) || 0;
+        const lTot = qty * price;
+
+        const cell = row.querySelector('.line-total-cell');
+        if (cell) cell.textContent = '₹' + lTot.toFixed(2);
+
+        recalcBulkCustomerTotals(card);
+    }
+
+    function recalcBulkCustomerTotals(card) {
+        if (!card) return;
+        let custTotal = 0;
+        card.querySelectorAll('.bulk-items-container .quick-item-row').forEach(row => {
+            const qty = Math.max(1, parseInt(row.querySelector('.input-quantity')?.value || 1));
+            const price = parseFloat(row.querySelector('.input-unit-price')?.value) || 0;
+            custTotal += qty * price;
+        });
+
+        const badge = card.querySelector('.bulk-customer-total-badge');
+        if (badge) badge.textContent = '₹' + custTotal.toFixed(2);
+
+        const modeSelect = card.querySelector('.bulk-payment-mode');
+        if (modeSelect) syncBulkCustomerSplit(card, modeSelect.value, custTotal);
+
+        recalcBulkGrandTotal();
+    }
+
+    function onBulkPaymentModeChange(selectEl) {
+        const card = selectEl.closest('.bulk-customer-card');
+        if (!card) return;
+        const mode = selectEl.value;
+        const splitRow = card.querySelector('.bulk-split-row');
+        if (!splitRow) return;
+
+        let custTotal = 0;
+        card.querySelectorAll('.bulk-items-container .quick-item-row').forEach(row => {
+            const qty = Math.max(1, parseInt(row.querySelector('.input-quantity')?.value || 1));
+            const price = parseFloat(row.querySelector('.input-unit-price')?.value) || 0;
+            custTotal += qty * price;
+        });
+
+        if (mode === 'cash+upi' || mode === 'upi+cash') {
+            splitRow.style.display = 'grid';
+            const half = (custTotal / 2).toFixed(2);
+            const rem = (custTotal - parseFloat(half)).toFixed(2);
+            splitRow.innerHTML = `
+                <div>
+                    <label style="font-size:11px;color:#475569;font-weight:700;display:block;margin-bottom:3px;">Cash Amount (₹)</label>
+                    <input type="number" step="0.01" class="app-input-field input-split-cash" placeholder="Cash" value="${half}" oninput="onBulkCashSplitChange(this, ${custTotal})">
+                </div>
+                <div>
+                    <label style="font-size:11px;color:#475569;font-weight:700;display:block;margin-bottom:3px;">UPI Amount (₹)</label>
+                    <input type="number" step="0.01" class="app-input-field input-split-upi" placeholder="UPI" value="${rem}" oninput="onBulkUpiSplitChange(this, ${custTotal})">
+                </div>
+            `;
+        } else if (mode === 'cash+udhari') {
+            splitRow.style.display = 'grid';
+            const paid = (custTotal > 0 ? (custTotal * 0.5) : 0).toFixed(2);
+            const rem = (custTotal - paid).toFixed(2);
+            splitRow.innerHTML = `
+                <div>
+                    <label style="font-size:11px;color:#475569;font-weight:700;display:block;margin-bottom:3px;">Cash Paid (₹)</label>
+                    <input type="number" step="0.01" class="app-input-field input-split-cash" placeholder="Cash Paid" value="${paid}" oninput="onBulkCashUdhariChange(this, ${custTotal})">
+                </div>
+                <div style="display:flex;flex-direction:column;justify-content:center;">
+                    <span style="font-size:11px;color:#475569;font-weight:700;margin-bottom:3px;">Remaining to Khata</span>
+                    <span class="bulk-udhari-badge" style="font-size:13px;font-weight:800;color:#dc2626;">Udhari: ₹${rem}</span>
+                </div>
+            `;
+        } else if (mode === 'upi+udhari') {
+            splitRow.style.display = 'grid';
+            const paid = (custTotal > 0 ? (custTotal * 0.5) : 0).toFixed(2);
+            const rem = (custTotal - paid).toFixed(2);
+            splitRow.innerHTML = `
+                <div>
+                    <label style="font-size:11px;color:#475569;font-weight:700;display:block;margin-bottom:3px;">UPI Paid (₹)</label>
+                    <input type="number" step="0.01" class="app-input-field input-split-upi" placeholder="UPI Paid" value="${paid}" oninput="onBulkUpiUdhariChange(this, ${custTotal})">
+                </div>
+                <div style="display:flex;flex-direction:column;justify-content:center;">
+                    <span style="font-size:11px;color:#475569;font-weight:700;margin-bottom:3px;">Remaining to Khata</span>
+                    <span class="bulk-udhari-badge" style="font-size:13px;font-weight:800;color:#dc2626;">Udhari: ₹${rem}</span>
+                </div>
+            `;
+        } else if (mode === 'udhari') {
+            splitRow.style.display = 'grid';
+            splitRow.innerHTML = `
+                <div style="grid-column: 1 / -1; font-size:11.5px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding: 6px 10px;">
+                    Full amount (<strong>₹${custTotal.toFixed(2)}</strong>) will be recorded as <strong>Udhari</strong> in Customer Khata ledger.
+                </div>
+            `;
+        } else {
+            splitRow.style.display = 'none';
+            splitRow.innerHTML = '';
+        }
+    }
+
+    function syncBulkCustomerSplit(card, mode, total) {
+        if (mode === 'cash+upi' || mode === 'upi+cash') {
+            const cashEl = card.querySelector('.input-split-cash');
+            const upiEl = card.querySelector('.input-split-upi');
+            if (cashEl && upiEl) {
+                const cash = Math.min(total, parseFloat(cashEl.value) || 0);
+                upiEl.value = Math.max(0, total - cash).toFixed(2);
+            }
+        } else if (mode === 'cash+udhari') {
+            const cashEl = card.querySelector('.input-split-cash');
+            const badge = card.querySelector('.bulk-udhari-badge');
+            if (cashEl && badge) {
+                const cash = Math.min(total, parseFloat(cashEl.value) || 0);
+                badge.textContent = 'Udhari: ₹' + Math.max(0, total - cash).toFixed(2);
+            }
+        } else if (mode === 'upi+udhari') {
+            const upiEl = card.querySelector('.input-split-upi');
+            const badge = card.querySelector('.bulk-udhari-badge');
+            if (upiEl && badge) {
+                const upi = Math.min(total, parseFloat(upiEl.value) || 0);
+                badge.textContent = 'Udhari: ₹' + Math.max(0, total - upi).toFixed(2);
+            }
+        }
+    }
+
+    function onBulkCashSplitChange(el, total) {
+        const card = el.closest('.bulk-customer-card');
+        const cash = Math.max(0, Math.min(total, parseFloat(el.value) || 0));
+        const upiEl = card?.querySelector('.input-split-upi');
+        if (upiEl) upiEl.value = Math.max(0, total - cash).toFixed(2);
+    }
+
+    function onBulkUpiSplitChange(el, total) {
+        const card = el.closest('.bulk-customer-card');
+        const upi = Math.max(0, Math.min(total, parseFloat(el.value) || 0));
+        const cashEl = card?.querySelector('.input-split-cash');
+        if (cashEl) cashEl.value = Math.max(0, total - upi).toFixed(2);
+    }
+
+    function onBulkCashUdhariChange(el, total) {
+        const card = el.closest('.bulk-customer-card');
+        const cash = Math.max(0, parseFloat(el.value) || 0);
+        const badge = card?.querySelector('.bulk-udhari-badge');
+        if (badge) badge.textContent = 'Udhari: ₹' + Math.max(0, total - cash).toFixed(2);
+    }
+
+    function onBulkUpiUdhariChange(el, total) {
+        const card = el.closest('.bulk-customer-card');
+        const upi = Math.max(0, parseFloat(el.value) || 0);
+        const badge = card?.querySelector('.bulk-udhari-badge');
+        if (badge) badge.textContent = 'Udhari: ₹' + Math.max(0, total - upi).toFixed(2);
+    }
+
+    function recalcBulkGrandTotal() {
+        const container = document.getElementById('bulkCustomersContainer');
+        if (!container) return;
+
+        let grand = 0;
+        container.querySelectorAll('.bulk-items-container .quick-item-row').forEach(row => {
+            const qty = Math.max(1, parseInt(row.querySelector('.input-quantity')?.value || 1));
+            const price = parseFloat(row.querySelector('.input-unit-price')?.value) || 0;
+            grand += qty * price;
+        });
+
+        const badge = document.getElementById('bulkGrandTotalBadge');
+        if (badge) badge.textContent = '₹' + grand.toFixed(2);
+    }
+
+    function showBulkSaleWarning(msg, targetCard = null, targetInput = null) {
+        const alertBox = document.getElementById('bulkSaleAlertBox');
+        if (alertBox) {
+            alertBox.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px; justify-content:space-between; width:100%;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:16px;">⚠️</span>
+                        <span>${escapeHtml(msg)}</span>
+                    </div>
+                    <button type="button" onclick="this.closest('#bulkSaleAlertBox').style.display='none'" style="background:none;border:none;color:#991b1b;font-weight:800;font-size:14px;cursor:pointer;">✕</button>
+                </div>
+            `;
+            alertBox.style.display = 'block';
+            alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            alert(msg);
+        }
+        if (targetCard) {
+            targetCard.style.outline = '2px solid #ef4444';
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => { targetCard.style.outline = ''; }, 4500);
+        }
+        if (targetInput) {
+            targetInput.focus();
+            targetInput.style.borderColor = '#ef4444';
+            targetInput.style.backgroundColor = '#fff5f5';
+            setTimeout(() => {
+                targetInput.style.borderColor = '';
+                targetInput.style.backgroundColor = '';
+            }, 4500);
+        }
+    }
+
+    async function submitBulkSales(e) {
+        if (e) e.preventDefault();
+        const alertBox = document.getElementById('bulkSaleAlertBox');
+        if (alertBox) alertBox.style.display = 'none';
+
+        const btn = document.getElementById('btnSubmitBulkSales');
+        const container = document.getElementById('bulkCustomersContainer');
+        const cards = container ? container.querySelectorAll('.bulk-customer-card') : [];
+
+        if (cards.length === 0) {
+            showBulkSaleWarning('Please add at least one customer sale.');
+            return;
+        }
+
+        const salesPayload = [];
+
+        for (let cIdx = 0; cIdx < cards.length; cIdx++) {
+            const c = cards[cIdx];
+            const nameInput = c.querySelector('.bulk-cust-name');
+            const phoneInput = c.querySelector('.bulk-cust-phone');
+            const name = (nameInput?.value || '').trim() || 'Walk-in Customer';
+            const phone = (phoneInput?.value || '').trim() || '9999999999';
+            const mode = c.querySelector('.bulk-payment-mode')?.value || 'cash';
+            const cashAmount = parseFloat(c.querySelector('.input-split-cash')?.value) || 0;
+            const upiAmount = parseFloat(c.querySelector('.input-split-upi')?.value) || 0;
+
+            const itemRows = c.querySelectorAll('.bulk-items-container .quick-item-row');
+            if (itemRows.length === 0) {
+                showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): Please add at least one item.`, c);
+                return;
+            }
+
+            const items = [];
+            let custTotal = 0;
+
+            for (let rIdx = 0; rIdx < itemRows.length; rIdx++) {
+                const r = itemRows[rIdx];
+                const pId = parseInt(r.querySelector('.input-part-id')?.value || 0);
+                const pNameInput = r.querySelector('.input-item-name');
+                const pName = (pNameInput?.value || '').trim();
+                const qtyInput = r.querySelector('.input-quantity');
+                const qty = parseInt(qtyInput?.value || 0);
+                const priceInput = r.querySelector('.input-unit-price');
+                const price = parseFloat(priceInput?.value);
+
+                if (!pName) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}), Item #${rIdx + 1}: Please select or enter an item name.`, c, pNameInput);
+                    return;
+                }
+                if (isNaN(qty) || qty < 1) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}), Item #${rIdx + 1} (${pName}): Quantity must be at least 1.`, c, qtyInput);
+                    return;
+                }
+                if (isNaN(price) || price < 0) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}), Item #${rIdx + 1} (${pName}): Price must be a valid non-negative number.`, c, priceInput);
+                    return;
+                }
+
+                items.push({
+                    part_id: pId,
+                    part_name: pName,
+                    quantity: qty,
+                    unit_price: price,
+                });
+                custTotal += (qty * price);
+            }
+
+            if (items.length === 0) {
+                showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): Please add at least one valid item.`, c);
+                return;
+            }
+            if (custTotal <= 0) {
+                showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): Total bill amount must be greater than zero.`, c);
+                return;
+            }
+
+            // Split validation per customer
+            if (mode === 'cash+upi' || mode === 'upi+cash') {
+                const cashInput = c.querySelector('.input-split-cash');
+                const upiInput = c.querySelector('.input-split-upi');
+                if (cashAmount < 0 || upiAmount < 0) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): Split amounts cannot be negative.`, c, cashAmount < 0 ? cashInput : upiInput);
+                    return;
+                }
+                if (Math.abs((cashAmount + upiAmount) - custTotal) > 0.05) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): Split Cash (₹${cashAmount.toFixed(2)}) + UPI (₹${upiAmount.toFixed(2)}) total ₹${(cashAmount + upiAmount).toFixed(2)}, which does not match customer total ₹${custTotal.toFixed(2)}. Please balance the split.`, c, cashInput);
+                    return;
+                }
+            } else if (mode === 'cash+udhari') {
+                const cashInput = c.querySelector('.input-split-cash');
+                if (cashAmount < 0) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): Cash paid cannot be negative.`, c, cashInput);
+                    return;
+                }
+                if (cashAmount > custTotal) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): Cash paid (₹${cashAmount.toFixed(2)}) cannot exceed customer total (₹${custTotal.toFixed(2)}).`, c, cashInput);
+                    return;
+                }
+            } else if (mode === 'upi+udhari') {
+                const upiInput = c.querySelector('.input-split-upi');
+                if (upiAmount < 0) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): UPI paid cannot be negative.`, c, upiInput);
+                    return;
+                }
+                if (upiAmount > custTotal) {
+                    showBulkSaleWarning(`Customer #${cIdx + 1} (${name}): UPI paid (₹${upiAmount.toFixed(2)}) cannot exceed customer total (₹${custTotal.toFixed(2)}).`, c, upiInput);
+                    return;
+                }
+            }
+
+            salesPayload.push({
+                customer_name: name,
+                customer_phone: phone,
+                payment_mode: mode,
+                cash_amount: cashAmount,
+                upi_amount: upiAmount,
+                items: items,
+            });
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing Sales...';
+        }
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                              document.querySelector('input[name="_token"]')?.value;
+
+            const response = await fetch("{{ route('mobileshop.sales.bulk_store', ['company_id' => company_id()]) }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ sales: salesPayload })
+            });
+
+            const res = await response.json();
+
+            if (res.success) {
+                alert(res.message || 'Bulk sales recorded successfully!');
+                window.location.reload();
+            } else {
+                showBulkSaleWarning(res.message || 'Error occurred while processing bulk sales.');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="check-check" style="width:16px;height:16px;"></i> Process All Sales';
+                    if (window.refreshIcons) window.refreshIcons();
+                }
+            }
+        } catch (err) {
+            showBulkSaleWarning('Request failed or server connection issue: ' + (err.message || 'Unknown error'));
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="check-check" style="width:16px;height:16px;"></i> Process All Sales';
+                if (window.refreshIcons) window.refreshIcons();
+            }
+        }
     }
 </script>
 @endpush

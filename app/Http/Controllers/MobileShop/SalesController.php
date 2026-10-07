@@ -7,6 +7,7 @@ use App\Services\MobileShop\Sales\PosSaleService;
 use App\Services\MobileShop\Sales\MultiSaleService;
 use App\Services\MobileShop\Sales\SaleVoidService;
 use App\Services\MobileShop\Sales\WhatsAppReceiptService;
+use App\Services\MobileShop\Accessories\AccessorySaleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -262,17 +263,151 @@ class SalesController extends BaseMobileShopController
     }
 
     /**
-     * Dispatcher: Unified Sale Store
+     * Dispatcher: Unified Sale Store (Supports Single Item and Multi-Item Quick Sales)
      */
     public function storeSale(Request $request)
     {
-        // Support Quick Sale single-item direct submission from sales page
+        $companyId = $this->getCompanyId();
+
+        // Check if multi-item submission is provided
+        if ($request->has('items') && is_array($request->input('items'))) {
+            $rawItems = $request->input('items');
+            $cleanedItems = [];
+            $computedTotal = 0.0;
+
+            foreach ($rawItems as $idx => $item) {
+                $pId = (int) ($item['part_id'] ?? 0);
+                $pName = trim((string) ($item['part_name'] ?? $item['item_name'] ?? $item['name'] ?? ''));
+                $qty = (int) ($item['quantity'] ?? 1);
+                if ($qty < 1) {
+                    return redirect()->back()->withInput()->with('error', "Quantity must be at least 1 for item row #" . ($idx + 1) . ".");
+                }
+
+                $uPrice = isset($item['unit_price']) && $item['unit_price'] !== '' ? (float) $item['unit_price'] : (isset($item['custom_price']) && $item['custom_price'] !== '' ? (float) $item['custom_price'] : null);
+                if ($uPrice !== null && $uPrice < 0) {
+                    return redirect()->back()->withInput()->with('error', "Price cannot be negative for item '{$pName}'.");
+                }
+
+                // Auto-resolve or register inventory item if part_id missing
+                if (!$pId && !empty($pName)) {
+                    $existing = DB::table('ms_parts_inventory')
+                        ->where('company_id', $companyId)
+                        ->where('name', $pName)
+                        ->first();
+                    if ($existing) {
+                        $pId = (int) $existing->id;
+                        if ($uPrice === null) {
+                            $uPrice = (float) ($existing->selling_price ?? 0);
+                        }
+                    } else {
+                        $pPrice = $uPrice !== null ? max(0, $uPrice) : 0.0;
+                        $pId = DB::table('ms_parts_inventory')->insertGetId([
+                            'company_id'       => $companyId,
+                            'name'             => $pName,
+                            'category'         => 'general_accessory',
+                            'brand'            => 'Universal',
+                            'compatible_model' => 'Universal',
+                            'display_type'     => 'na',
+                            'hsn_code'         => '85177090',
+                            'unit_cost'        => 0.00,
+                            'selling_price'    => $pPrice,
+                            'stock_qty'        => max(10, $qty),
+                            'min_stock_alert'  => 3,
+                            'created_at'       => now(),
+                            'updated_at'       => now(),
+                        ]);
+                    }
+                }
+
+                if ($pId > 0) {
+                    if ($uPrice === null) {
+                        $part = DB::table('ms_parts_inventory')
+                            ->where('company_id', $companyId)
+                            ->where('id', $pId)
+                            ->first();
+                        $uPrice = (float) ($part->selling_price ?? 0);
+                    }
+                    $uPrice = max(0, (float) $uPrice);
+                    $lineTotal = round($uPrice * $qty, 2);
+                    $computedTotal += $lineTotal;
+
+                    $cleanedItems[] = [
+                        'part_id'    => $pId,
+                        'part_name'  => $pName,
+                        'quantity'   => $qty,
+                        'unit_price' => $uPrice,
+                    ];
+                }
+            }
+
+            if (empty($cleanedItems)) {
+                return redirect()->back()->withInput()->with('error', 'Please enter at least one valid item to sell.');
+            }
+            if ($computedTotal <= 0) {
+                return redirect()->back()->withInput()->with('error', 'Total sale amount must be greater than zero.');
+            }
+
+            $mode = strtolower(trim((string) $request->input('payment_mode', 'cash')));
+            if ($mode === 'upi+cash') $mode = 'cash+upi';
+
+            $phone = trim((string) $request->input('customer_phone', ''));
+            if (empty($phone)) $phone = '9999999999';
+            $name = trim((string) $request->input('customer_name', ''));
+            if (empty($name)) $name = 'Walk-in Customer';
+
+            if ($mode === 'udhari') {
+                $amountPaid = 0.00;
+            } elseif ($mode === 'cash+udhari') {
+                $amountPaid = (float) ($request->input('cash_amount') ?? $request->input('amount_paid') ?? 0);
+                if ($amountPaid < 0) {
+                    return redirect()->back()->withInput()->with('error', 'Cash paid cannot be negative.');
+                }
+                if ($amountPaid > $computedTotal) {
+                    return redirect()->back()->withInput()->with('error', "Cash paid (₹{$amountPaid}) cannot exceed total sale amount (₹{$computedTotal}).");
+                }
+            } elseif ($mode === 'upi+udhari') {
+                $amountPaid = (float) ($request->input('upi_amount') ?? $request->input('amount_paid') ?? 0);
+                if ($amountPaid < 0) {
+                    return redirect()->back()->withInput()->with('error', 'UPI paid cannot be negative.');
+                }
+                if ($amountPaid > $computedTotal) {
+                    return redirect()->back()->withInput()->with('error', "UPI paid (₹{$amountPaid}) cannot exceed total sale amount (₹{$computedTotal}).");
+                }
+            } elseif (in_array($mode, ['cash+upi', 'upi+cash'])) {
+                $cashAmt = (float) ($request->input('cash_amount') ?? 0);
+                $upiAmt = (float) ($request->input('upi_amount') ?? 0);
+                if ($cashAmt > 0 || $upiAmt > 0) {
+                    if (abs(($cashAmt + $upiAmt) - $computedTotal) > 0.05) {
+                        return redirect()->back()->withInput()->with('error', "Split Cash (₹{$cashAmt}) + UPI (₹{$upiAmt}) does not match total amount (₹{$computedTotal}). Please adjust split.");
+                    }
+                }
+                $amountPaid = $computedTotal;
+            } else {
+                $amountPaid = $computedTotal;
+            }
+
+            $request->merge([
+                'items'          => $cleanedItems,
+                'sale_type'      => 'accessory',
+                'customer_phone' => $phone,
+                'customer_name'  => $name,
+                'amount_paid'    => $amountPaid,
+                'payment_mode'   => $mode,
+            ]);
+
+            try {
+                return app(AccessoriesController::class)->sellAccessory($request);
+            } catch (\Throwable $e) {
+                return redirect()->back()->withInput()->with('error', 'Sale failed: ' . $e->getMessage());
+            }
+        }
+
+        // Support Quick Sale single-item direct submission fallback
         $partId = (int) $request->input('part_id');
         $itemName = trim((string) ($request->input('item_name') ?? $request->input('name') ?? ''));
 
         // If part_id is empty, resolve by item name or auto-register in inventory
         if (!$partId && !empty($itemName)) {
-            $companyId = $this->getCompanyId();
             $existing = DB::table('ms_parts_inventory')
                 ->where('company_id', $companyId)
                 ->where('name', $itemName)
@@ -290,7 +425,7 @@ class SalesController extends BaseMobileShopController
                     'display_type'     => 'na',
                     'hsn_code'         => '85177090',
                     'unit_cost'        => 0.00,
-                    'selling_price'    => $customPrice,
+                    'selling_price'    => max(0, $customPrice),
                     'stock_qty'        => max(10, (int) $request->input('quantity', 1)),
                     'min_stock_alert'  => 3,
                     'created_at'       => now(),
@@ -306,17 +441,18 @@ class SalesController extends BaseMobileShopController
             // Get item price if custom_price not provided
             $customPrice = $request->input('custom_price');
             if ($customPrice !== null && $customPrice !== '') {
-                $unitPrice = (float) $customPrice;
+                $unitPrice = max(0, (float) $customPrice);
             } else {
                 $part = DB::table('ms_parts_inventory')
-                    ->where('company_id', $this->getCompanyId())
+                    ->where('company_id', $companyId)
                     ->where('id', $partId)
                     ->first();
-                $unitPrice = (float) ($part->selling_price ?? 0);
+                $unitPrice = max(0, (float) ($part->selling_price ?? 0));
             }
 
             $total = round($unitPrice * $qty, 2);
-            $mode = $request->input('payment_mode', 'cash');
+            $mode = strtolower(trim((string) $request->input('payment_mode', 'cash')));
+            if ($mode === 'upi+cash') $mode = 'cash+upi';
 
             // Determine amount_paid
             if ($request->filled('amount_paid') && (float)$request->input('amount_paid') > 0) {
@@ -363,6 +499,212 @@ class SalesController extends BaseMobileShopController
             return app(StockController::class)->sellSecondHand($request);
         }
         return $this->processSale($request);
+    }
+
+    /**
+     * Store Bulk Sales (Multiple Customers & Multiple Items in One Batch)
+     */
+    public function storeBulkSales(Request $request)
+    {
+        $companyId = $this->getCompanyId();
+        $storeState = $this->getStoreStateCode();
+        $rawSales = $request->input('sales', []);
+
+        // Also accept JSON string if sent as payload
+        if (is_string($rawSales)) {
+            $rawSales = json_decode($rawSales, true) ?: [];
+        }
+
+        if (!is_array($rawSales) || count($rawSales) === 0) {
+            $emptyMsg = 'No customer sales provided. Please enter at least one customer sale entry.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $emptyMsg], 422);
+            }
+            return redirect()->back()->with('error', $emptyMsg);
+        }
+
+        $createdSales = [];
+        $totalAmountAll = 0.0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($rawSales as $index => $saleData) {
+                $custNum = $index + 1;
+                $custName = trim((string) ($saleData['customer_name'] ?? 'Walk-in Customer'));
+                if (empty($custName)) $custName = 'Walk-in Customer';
+                $custPhone = trim((string) ($saleData['customer_phone'] ?? '9999999999'));
+                if (empty($custPhone)) $custPhone = '9999999999';
+
+                $mode = strtolower(trim((string) ($saleData['payment_mode'] ?? 'cash')));
+                if ($mode === 'upi+cash') $mode = 'cash+upi';
+
+                $saleItems = $saleData['items'] ?? [];
+                if (!is_array($saleItems) || count($saleItems) === 0) {
+                    throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}) has no items. Please add at least one item or remove this customer.");
+                }
+
+                $cleanedItems = [];
+                $saleTotal = 0.0;
+
+                foreach ($saleItems as $rIdx => $it) {
+                    $itemNum = $rIdx + 1;
+                    $pId = (int) ($it['part_id'] ?? 0);
+                    $pName = trim((string) ($it['part_name'] ?? $it['item_name'] ?? $it['name'] ?? ''));
+                    if (empty($pName) && !$pId) {
+                        throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}), Item #{$itemNum}: Item name is required.");
+                    }
+
+                    $qty = (int) ($it['quantity'] ?? 1);
+                    if ($qty < 1) {
+                        throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}), Item #{$itemNum}: Quantity must be at least 1.");
+                    }
+
+                    $uPrice = isset($it['unit_price']) && $it['unit_price'] !== '' ? (float) $it['unit_price'] : (isset($it['custom_price']) && $it['custom_price'] !== '' ? (float) $it['custom_price'] : null);
+                    if ($uPrice !== null && $uPrice < 0) {
+                        throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}), Item '{$pName}': Price cannot be negative.");
+                    }
+
+                    if (!$pId && !empty($pName)) {
+                        $existing = DB::table('ms_parts_inventory')
+                            ->where('company_id', $companyId)
+                            ->where('name', $pName)
+                            ->first();
+                        if ($existing) {
+                            $pId = (int) $existing->id;
+                            if ($uPrice === null) $uPrice = (float) ($existing->selling_price ?? 0);
+                        } else {
+                            $pPrice = $uPrice !== null ? max(0, $uPrice) : 0.0;
+                            $pId = DB::table('ms_parts_inventory')->insertGetId([
+                                'company_id'       => $companyId,
+                                'name'             => $pName,
+                                'category'         => 'general_accessory',
+                                'brand'            => 'Universal',
+                                'compatible_model' => 'Universal',
+                                'display_type'     => 'na',
+                                'hsn_code'         => '85177090',
+                                'unit_cost'        => 0.00,
+                                'selling_price'    => $pPrice,
+                                'stock_qty'        => max(10, $qty),
+                                'min_stock_alert'  => 3,
+                                'created_at'       => now(),
+                                'updated_at'       => now(),
+                            ]);
+                        }
+                    }
+
+                    if ($pId > 0) {
+                        if ($uPrice === null) {
+                            $part = DB::table('ms_parts_inventory')->where('company_id', $companyId)->where('id', $pId)->first();
+                            $uPrice = (float) ($part->selling_price ?? 0);
+                        }
+                        $uPrice = max(0, (float) $uPrice);
+                        $lTot = round($uPrice * $qty, 2);
+                        $saleTotal += $lTot;
+                        $cleanedItems[] = [
+                            'part_id'    => $pId,
+                            'part_name'  => $pName,
+                            'quantity'   => $qty,
+                            'unit_price' => $uPrice,
+                        ];
+                    }
+                }
+
+                if (empty($cleanedItems)) {
+                    throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}): Please provide valid item details.");
+                }
+                if ($saleTotal <= 0) {
+                    throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}): Total bill must be greater than zero.");
+                }
+
+                // Compute and validate amount_paid
+                if ($mode === 'udhari') {
+                    $amountPaid = 0.00;
+                } elseif ($mode === 'cash+udhari') {
+                    $amountPaid = (float) ($saleData['cash_amount'] ?? $saleData['amount_paid'] ?? 0);
+                    if ($amountPaid < 0) {
+                        throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}): Cash paid cannot be negative.");
+                    }
+                    if ($amountPaid > $saleTotal) {
+                        throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}): Cash paid (₹" . number_format($amountPaid, 2) . ") cannot exceed the total bill (₹" . number_format($saleTotal, 2) . ").");
+                    }
+                } elseif ($mode === 'upi+udhari') {
+                    $amountPaid = (float) ($saleData['upi_amount'] ?? $saleData['amount_paid'] ?? 0);
+                    if ($amountPaid < 0) {
+                        throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}): UPI paid cannot be negative.");
+                    }
+                    if ($amountPaid > $saleTotal) {
+                        throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}): UPI paid (₹" . number_format($amountPaid, 2) . ") cannot exceed the total bill (₹" . number_format($saleTotal, 2) . ").");
+                    }
+                } elseif (in_array($mode, ['cash+upi', 'upi+cash'])) {
+                    $cPaid = (float) ($saleData['cash_amount'] ?? 0);
+                    $uPaid = (float) ($saleData['upi_amount'] ?? 0);
+                    if ($cPaid <= 0 && $uPaid <= 0) {
+                        $cPaid = round($saleTotal / 2, 2);
+                        $uPaid = round($saleTotal - $cPaid, 2);
+                    }
+                    if (abs(($cPaid + $uPaid) - $saleTotal) > 0.05) {
+                        throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}): Split Cash (₹{$cPaid}) + UPI (₹{$uPaid}) must equal total bill (₹{$saleTotal}).");
+                    }
+                    $amountPaid = $saleTotal;
+                } else {
+                    $amountPaid = $saleTotal;
+                }
+
+                $subReq = new Request([
+                    'company_id'     => $companyId,
+                    'customer_phone' => $custPhone,
+                    'customer_name'  => $custName,
+                    'items'          => $cleanedItems,
+                    'amount_paid'    => $amountPaid,
+                    'payment_mode'   => $mode,
+                    'sale_type'      => 'accessory',
+                ]);
+
+                $res = app(AccessorySaleService::class)->sellAccessory($companyId, $subReq, $storeState);
+                $createdSales[] = [
+                    'sale_id'        => $res['sale_id'],
+                    'invoice_number' => $res['invoice_number'],
+                    'customer_name'  => $custName,
+                    'amount'         => $saleTotal,
+                    'mode'           => $mode,
+                ];
+                $totalAmountAll += $saleTotal;
+            }
+
+            if (empty($createdSales)) {
+                DB::rollBack();
+                $msg = 'No valid sales were processed. Please check items and quantities.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+                return redirect()->back()->with('error', $msg);
+            }
+
+            DB::commit();
+
+            $count = count($createdSales);
+            $invoices = collect($createdSales)->pluck('invoice_number')->implode(', ');
+            $successMsg = "{$count} bulk sales recorded successfully! (Invoices: {$invoices}) Total: ₹" . number_format($totalAmountAll, 2);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMsg,
+                    'count'   => $count,
+                    'total'   => $totalAmountAll,
+                    'sales'   => $createdSales,
+                ]);
+            }
+
+            return redirect()->route('mobileshop.sales')->with('success', $successMsg);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            $errorMsg = $e->getMessage();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $errorMsg], 422);
+            }
+            return redirect()->back()->with('error', $errorMsg);
+        }
     }
 
     /**

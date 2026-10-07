@@ -141,6 +141,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('sales/store', 'MobileShop\SalesController@storeSale')
         ->middleware('permission:create-sale-accessories|create-sale-covers')
         ->name('sales.store');
+    Route::post('sales/bulk-store', 'MobileShop\SalesController@storeBulkSales')
+        ->middleware('permission:create-sale-accessories|create-sale-covers')
+        ->name('sales.bulk_store');
 
     // ── STOCK ACTIONS (niche-gated) ──
     Route::post('stock/store', 'MobileShop\StockController@storeStock')

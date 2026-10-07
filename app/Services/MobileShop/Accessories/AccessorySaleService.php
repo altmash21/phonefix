@@ -22,7 +22,7 @@ class AccessorySaleService
             'items.*.quantity'   => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'amount_paid'        => 'required|numeric|min:0',
-            'payment_mode'       => 'required|in:cash,upi,card,credit_udhari,split,udhari,cash+upi,cash+udhari,upi+udhari,cash_udhari,upi_udhari,full_khata',
+            'payment_mode'       => 'required|in:cash,upi,card,credit_udhari,split,udhari,cash+upi,upi+cash,cash+udhari,upi+udhari,cash_udhari,upi_udhari,full_khata',
         ]);
 
         // Idempotency check
@@ -173,6 +173,7 @@ class AccessorySaleService
             // Update Customer Khata if Udhari
             if ($udhariAmount > 0) {
                 DB::table('ms_customers')->where('id', $customer->id)->increment('udhari_balance', $udhariAmount);
+                $newBal = (float) (DB::table('ms_customers')->where('id', $customer->id)->value('udhari_balance') ?? 0);
                 $itemSummary = collect($lineItemsData)->map(fn($l) => $l['part_name'] . ($l['quantity'] > 1 ? " (x{$l['quantity']})" : ""))->implode(', ');
                 DB::table('ms_customer_khata_transactions')->insert([
                     'company_id'    => $companyId,
