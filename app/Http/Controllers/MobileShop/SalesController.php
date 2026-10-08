@@ -521,20 +521,43 @@ class SalesController extends BaseMobileShopController
         $companyId = $this->getCompanyId();
         $niche     = $this->getUserNiche();
 
-        $customers = DB::table('ms_customers')
-            ->where('company_id', $companyId)
-            ->orderBy('name', 'asc')
-            ->get();
+        $customers = collect([]);
+        $parts = collect([]);
+        $categories = collect([]);
 
-        $parts = DB::table('ms_parts_inventory')
-            ->where('company_id', $companyId)
-            ->orderBy('name', 'asc')
-            ->get(['id', 'name', 'selling_price', 'stock_qty', 'category', 'compatible_model']);
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('ms_customers')) {
+                $customers = DB::table('ms_customers')
+                    ->where('company_id', $companyId)
+                    ->orderBy('name', 'asc')
+                    ->get();
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('bulkSaleView: ms_customers query warning: ' . $e->getMessage());
+        }
 
-        $categories = DB::table('ms_categories')
-            ->where('company_id', $companyId)
-            ->orderBy('name', 'asc')
-            ->get();
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('ms_parts_inventory')) {
+                $parts = DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->orderBy('name', 'asc')
+                    ->get(['id', 'name', 'selling_price', 'stock_qty', 'category']);
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('bulkSaleView: ms_parts_inventory query warning: ' . $e->getMessage());
+        }
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('ms_part_categories')) {
+                $categories = DB::table('ms_part_categories')
+                    ->where('company_id', $companyId)
+                    ->select('id', 'name', 'slug')
+                    ->orderBy('name', 'asc')
+                    ->get();
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('bulkSaleView: ms_part_categories query warning: ' . $e->getMessage());
+        }
 
         return view('mobileshop.bulk_sale', compact(
             'customers', 'parts', 'categories', 'niche'
