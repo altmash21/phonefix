@@ -521,9 +521,11 @@ class SalesController extends BaseMobileShopController
         $companyId = $this->getCompanyId();
         $niche     = $this->getUserNiche();
 
-        $customers = collect([]);
-        $parts = collect([]);
+        $customers  = collect([]);
+        $parts      = collect([]);
+        $phones     = collect([]);
         $categories = collect([]);
+        $staffUsers = collect([]);
 
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('ms_customers')) {
@@ -548,6 +550,19 @@ class SalesController extends BaseMobileShopController
         }
 
         try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('ms_mobile_devices')) {
+                $phones = DB::table('ms_mobile_devices')
+                    ->where('company_id', $companyId)
+                    ->where('status', 'in_stock')
+                    ->orderBy('brand', 'asc')
+                    ->orderBy('model', 'asc')
+                    ->get(['id', 'brand', 'model', 'imei_1', 'selling_price', 'type']);
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('bulkSaleView: ms_mobile_devices query warning: ' . $e->getMessage());
+        }
+
+        try {
             if (\Illuminate\Support\Facades\Schema::hasTable('ms_part_categories')) {
                 $categories = DB::table('ms_part_categories')
                     ->where('company_id', $companyId)
@@ -559,8 +574,20 @@ class SalesController extends BaseMobileShopController
             \Log::warning('bulkSaleView: ms_part_categories query warning: ' . $e->getMessage());
         }
 
+        try {
+            $staffUsers = \App\Models\Auth\User::whereHas('companies', function($q) use ($companyId) {
+                $q->where('companies.id', $companyId);
+            })->where('enabled', 1)->orderBy('name', 'asc')->get(['id', 'name', 'email']);
+
+            if ($staffUsers->isEmpty()) {
+                $staffUsers = \App\Models\Auth\User::where('enabled', 1)->orderBy('name', 'asc')->get(['id', 'name', 'email']);
+            }
+        } catch (\Throwable $e) {
+            $staffUsers = collect(auth()->check() ? [auth()->user()] : []);
+        }
+
         return view('mobileshop.bulk_sale', compact(
-            'customers', 'parts', 'categories', 'niche'
+            'customers', 'parts', 'phones', 'categories', 'staffUsers', 'niche'
         ));
     }
 
@@ -572,6 +599,9 @@ class SalesController extends BaseMobileShopController
         $companyId = $this->getCompanyId();
         $storeState = $this->getStoreStateCode();
         $rawSales = $request->input('sales', []);
+        $saleDate = $request->input('sale_date');
+        $saleTimestamp = $saleDate ? date('Y-m-d H:i:s', strtotime($saleDate . ' ' . date('H:i:s'))) : now();
+        $staffId = (int) ($request->input('staff_id') ?: auth()->id());
 
         // Also accept JSON string if sent as payload
         if (is_string($rawSales)) {
@@ -602,6 +632,18 @@ class SalesController extends BaseMobileShopController
                 if ($mode === 'upi+cash') $mode = 'cash+upi';
 
                 $saleItems = $saleData['items'] ?? [];
+                // Support flat row format from Day-End table
+                if (empty($saleItems) && (!empty($saleData['item_name']) || !empty($saleData['part_name']) || !empty($saleData['name']) || !empty($saleData['part_id']) || !empty($saleData['device_id']))) {
+                    $saleItems = [[
+                        'item_type'  => $saleData['item_type'] ?? 'accessory',
+                        'part_id'    => $saleData['part_id'] ?? 0,
+                        'device_id'  => $saleData['device_id'] ?? 0,
+                        'part_name'  => $saleData['item_name'] ?? $saleData['part_name'] ?? $saleData['name'] ?? '',
+                        'quantity'   => $saleData['quantity'] ?? 1,
+                        'unit_price' => $saleData['unit_price'] ?? 0,
+                    ]];
+                }
+
                 if (!is_array($saleItems) || count($saleItems) === 0) {
                     throw new \InvalidArgumentException("Customer #{$custNum} ({$custName}) has no items. Please add at least one item or remove this customer.");
                 }
@@ -713,6 +755,77 @@ class SalesController extends BaseMobileShopController
                     $amountPaid = $saleTotal;
                 }
 
+                // If item is a mobile phone device from inventory
+                $dId = (int) ($saleItems[0]['device_id'] ?? 0);
+                $itType = $saleItems[0]['item_type'] ?? 'accessory';
+                if ($dId > 0 || $itType === 'phone') {
+                    $device = DB::table('ms_mobile_devices')
+                        ->where('company_id', $companyId)
+                        ->where('id', $dId)
+                        ->first();
+
+                    if ($device) {
+                        $custModel = MobileShopInvoiceHelper::findOrCreateCustomer($companyId, new Request([
+                            'customer_phone' => $custPhone,
+                            'customer_name'  => $custName,
+                        ]));
+
+                        $invNum = MobileShopInvoiceHelper::getNextInvoiceNumber($companyId, 'MOB');
+                        $devPrice = (float) ($saleItems[0]['unit_price'] ?? $device->selling_price);
+                        $amtPaid = in_array($mode, ['udhari', 'credit_udhari']) ? 0.00 : $devPrice;
+                        $udhariDue = max(0.00, $devPrice - $amtPaid);
+
+                        $mSaleId = DB::table('ms_mobile_sales')->insertGetId([
+                            'company_id'      => $companyId,
+                            'customer_id'     => $custModel->id,
+                            'invoice_number'  => $invNum,
+                            'device_id'       => $dId,
+                            'sale_price'      => $devPrice,
+                            'tax_rate'        => 18.00,
+                            'tax_type'        => 'intra_state',
+                            'cgst_amount'     => round(($devPrice * 0.18) / 2, 2),
+                            'sgst_amount'     => round(($devPrice * 0.18) / 2, 2),
+                            'igst_amount'     => 0.00,
+                            'total_amount'    => $devPrice,
+                            'amount_paid'     => $amtPaid,
+                            'udhari_amount'   => $udhariDue,
+                            'payment_mode'    => in_array($mode, ['cash', 'upi', 'card', 'emi', 'split']) ? $mode : ($mode === 'udhari' ? 'credit_udhari' : 'cash'),
+                            'sold_by'         => $staffId,
+                            'status'          => 'completed',
+                            'created_at'      => $saleTimestamp,
+                            'updated_at'      => $saleTimestamp,
+                        ]);
+
+                        DB::table('ms_mobile_devices')->where('id', $dId)->update([
+                            'status'     => 'sold',
+                            'updated_at' => now(),
+                        ]);
+
+                        if ($udhariDue > 0) {
+                            DB::table('ms_customers')->where('id', $custModel->id)->increment('udhari_balance', $udhariDue);
+                            DB::table('ms_customer_khata_transactions')->insert([
+                                'company_id'  => $companyId,
+                                'customer_id' => $custModel->id,
+                                'type'        => 'udhari_sale',
+                                'sale_id'     => $mSaleId,
+                                'amount'      => $udhariDue,
+                                'created_at'  => $saleTimestamp,
+                                'updated_at'  => $saleTimestamp,
+                            ]);
+                        }
+
+                        $createdSales[] = [
+                            'sale_id'        => $mSaleId,
+                            'invoice_number' => $invNum,
+                            'customer_name'  => $custName,
+                            'amount'         => $devPrice,
+                            'mode'           => $mode,
+                        ];
+                        $totalAmountAll += $devPrice;
+                        continue;
+                    }
+                }
+
                 $subReq = new Request([
                     'company_id'     => $companyId,
                     'customer_phone' => $custPhone,
@@ -724,6 +837,13 @@ class SalesController extends BaseMobileShopController
                 ]);
 
                 $res = app(AccessorySaleService::class)->sellAccessory($companyId, $subReq, $storeState);
+                if (!empty($res['sale_id'])) {
+                    DB::table('ms_accessory_sales')->where('id', $res['sale_id'])->update([
+                        'sold_by'    => $staffId,
+                        'created_at' => $saleTimestamp,
+                    ]);
+                }
+
                 $createdSales[] = [
                     'sale_id'        => $res['sale_id'],
                     'invoice_number' => $res['invoice_number'],
