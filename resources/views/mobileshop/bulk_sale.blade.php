@@ -282,7 +282,6 @@
                         <th style="width:115px;">UNIT PRICE (₹)</th>
                         <th style="width:110px; text-align:right;">TOTAL (₹)</th>
                         <th style="width:200px;">PAYMENT METHOD</th>
-                        <th style="width:140px;">REF / NOTE</th>
                         <th style="width:48px; text-align:center;">ACTION</th>
                     </tr>
                 </thead>
@@ -489,13 +488,6 @@
 
                 <!-- Interactive Split Box (Opens automatically for split payments) -->
                 <div class="split-payment-box" id="splitBox_${cIdx}" style="display:none;"></div>
-            </td>
-
-            <!-- REF / NOTE -->
-            <td>
-                <input type="text" class="day-input cust-note-input"
-                       placeholder="UTR / Note"
-                       style="height:34px; font-size:12px;">
             </td>
 
             <!-- ACTION -->
@@ -1168,7 +1160,6 @@
             const custName = (r.querySelector('.cust-name-input')?.value || '').trim() || 'Walk-in Customer';
             const custPhone = (r.querySelector('.cust-phone-input')?.value || '').trim() || '9999999999';
             const paymentMode = r.querySelector('.cust-payment-select')?.value || 'cash';
-            const refNote = (r.querySelector('.cust-note-input')?.value || '').trim();
             const splitBox = document.getElementById(`splitBox_${cIdx}`);
 
             const itemLines = r.querySelectorAll('.cust-item-line');
@@ -1256,7 +1247,7 @@
                 payment_mode: paymentMode,
                 cash_amount: cashAmount,
                 upi_amount: upiAmount,
-                ref_note: refNote,
+                ref_note: '',
                 items: items,
             });
         }
