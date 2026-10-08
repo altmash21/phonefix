@@ -19,12 +19,15 @@
 
 @section('content')
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
     .day-end-container {
         max-width: 1480px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
         gap: 14px;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
 
     /* ── Hide browser number spinners ── */
@@ -42,6 +45,7 @@
         border-radius: 6px !important;
         padding: 6px 10px !important;
         font-size: 13px !important;
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
         box-sizing: border-box;
     }
@@ -52,8 +56,9 @@
         background: #FFFFFF !important;
     }
     .day-input.num-field {
-        font-family: 'JetBrains Mono', monospace !important;
+        font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace !important;
         font-weight: 700 !important;
+        font-variant-numeric: tabular-nums;
     }
 
     /* ── Table Grid Layout ── */
@@ -66,27 +71,36 @@
         border-collapse: separate;
         border-spacing: 0;
         min-width: 1100px;
+        table-layout: fixed;
     }
     .day-sales-table th {
         background: #F8FAFC;
         border-top: 1px solid #E2E8F0;
-        border-bottom: 1px solid #E2E8F0;
+        border-bottom: 2px solid #E2E8F0;
         color: #475569;
         font-size: 11px;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        padding: 9px 10px;
-        text-align: left;
+        padding: 10px 10px;
+        box-sizing: border-box;
     }
     .day-sales-table td {
-        padding: 10px 10px;
+        padding: 8px 8px;
         border-bottom: 1px solid #E2E8F0;
-        vertical-align: top;
+        vertical-align: middle;
         background: #FFFFFF;
+        box-sizing: border-box;
     }
-    .day-sales-table tr:hover td {
-        background: #FCFCFD;
+    .day-sales-table tr.day-customer-row:hover td {
+        background: #F8FAFC;
+    }
+    .day-sales-table tr.day-customer-subitem-row td {
+        background: #FBFBFE;
+        border-bottom: 1px dashed #E2E8F0;
+    }
+    .day-sales-table tr.day-customer-subitem-row:hover td {
+        background: #F5F5FD !important;
     }
 
     /* ── Autocomplete Search Dropdown ── */
@@ -136,8 +150,14 @@
         border: 1px solid #FECDD3;
     }
 
-    /* ── Buttons ── */
-    .btn-add-row-action {
+    /* ── Action Buttons ── */
+    .action-btn-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        justify-content: center;
+    }
+    .btn-action-add {
         width: 32px;
         height: 32px;
         display: inline-flex;
@@ -151,46 +171,79 @@
         transition: all 0.15s ease;
         padding: 0;
     }
-    .btn-add-row-action:hover {
+    .btn-action-add:hover {
         background: #4F46E5 !important;
         border-color: #4338CA !important;
         color: #FFFFFF !important;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
     }
-    .btn-trash-row {
+    .btn-action-del {
         width: 32px;
         height: 32px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         border-radius: 6px;
-        background: #FFFFFF;
-        border: 1px solid #FECACA;
-        color: #DC2626;
+        background: #FFF1F2;
+        border: 1px solid #FECDD3;
+        color: #E11D48;
         cursor: pointer;
         transition: all 0.15s ease;
         padding: 0;
     }
-    .btn-trash-row:hover {
-        background: #FEF2F2 !important;
-        border-color: #F87171 !important;
+    .btn-action-del:hover {
+        background: #E11D48 !important;
+        border-color: #BE123C !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 2px 6px rgba(225, 29, 72, 0.35);
     }
-
-    .btn-add-item-link {
-        background: transparent;
-        border: none;
-        color: #4F46E5;
-        font-size: 11.5px;
-        font-weight: 700;
+    .btn-remove-subitem {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        background: #FFFFFF;
+        border: 1px solid #FECACA;
+        color: #EF4444;
         cursor: pointer;
+        transition: all 0.15s ease;
+        padding: 0;
+    }
+    .btn-remove-subitem:hover {
+        background: #EF4444 !important;
+        color: #FFFFFF !important;
+    }
+    .btn-add-item-chip {
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        padding: 4px 0 0 0;
-        transition: color 0.15s ease;
+        font-size: 11px;
+        font-weight: 700;
+        color: #4F46E5;
+        background: #EEF2FF;
+        border: 1px dashed #A5B4FC;
+        border-radius: 4px;
+        padding: 2px 7px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        line-height: 1.2;
     }
-    .btn-add-item-link:hover {
-        color: #3730A3;
-        text-decoration: underline;
+    .btn-add-item-chip:hover {
+        background: #4F46E5;
+        color: #FFFFFF;
+        border-style: solid;
+    }
+    .badge-subitem {
+        font-size: 11px;
+        font-weight: 700;
+        color: #4F46E5;
+        background: #EEF2FF;
+        border: 1px solid #E0E7FF;
+        padding: 2px 7px;
+        border-radius: 4px;
+        display: inline-block;
     }
 </style>
 
@@ -291,17 +344,27 @@
 
         <!-- Table Container -->
         <div class="day-sales-table-wrap">
-            <table class="day-sales-table">
+            <table class="day-sales-table" id="daySalesTable">
+                <colgroup>
+                    <col style="width:42px;">
+                    <col style="width:220px;">
+                    <col style="width:auto;">
+                    <col style="width:75px;">
+                    <col style="width:115px;">
+                    <col style="width:105px;">
+                    <col style="width:190px;">
+                    <col style="width:85px;">
+                </colgroup>
                 <thead>
                     <tr>
-                        <th style="width:36px; text-align:center;">#</th>
-                        <th style="width:230px;">CUSTOMER (OPTIONAL FOR PAID)</th>
-                        <th style="min-width:320px;">ITEM / PRODUCT (SEARCH DROPDOWN)</th>
-                        <th style="width:75px; text-align:center;">QTY</th>
-                        <th style="width:115px;">UNIT PRICE (₹)</th>
-                        <th style="width:110px; text-align:right;">TOTAL (₹)</th>
-                        <th style="width:200px;">PAYMENT METHOD</th>
-                        <th style="width:76px; text-align:center;">ACTION</th>
+                        <th style="text-align:center;">#</th>
+                        <th>CUSTOMER (OPTIONAL FOR PAID)</th>
+                        <th>ITEM / PRODUCT (SEARCH DROPDOWN)</th>
+                        <th style="text-align:center;">QTY</th>
+                        <th style="text-align:right;">UNIT PRICE (₹)</th>
+                        <th style="text-align:right;">TOTAL (₹)</th>
+                        <th>PAYMENT METHOD</th>
+                        <th style="text-align:center;">ACTION</th>
                     </tr>
                 </thead>
                 <tbody id="daySalesRowsTbody">
@@ -437,6 +500,9 @@
 
         customerCardCounter++;
         const cIdx = customerCardCounter;
+        globalItemCounter++;
+        const itIdx = globalItemCounter;
+
         const tr = document.createElement('tr');
         tr.className = 'day-customer-row';
         tr.dataset.customerIndex = cIdx;
@@ -445,47 +511,65 @@
         const defaultPayment = document.getElementById('masterDefaultPayment')?.value || 'cash';
 
         tr.innerHTML = `
-            <!-- # -->
+            <!-- 1: # -->
             <td style="text-align:center; font-weight:700; color:#64748B; font-size:13px;" class="row-num-cell">
-                ${tbody.children.length + 1}
+                ${document.querySelectorAll('#daySalesRowsTbody .day-customer-row').length + 1}
             </td>
 
-            <!-- CUSTOMER (OPTIONAL) -->
+            <!-- 2: CUSTOMER -->
             <td>
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                    <div style="position:relative;">
-                        <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:11px; color:#94A3B8;">👤</span>
-                        <input type="text" class="day-input cust-name-input" list="registeredCustomersDatalist"
-                               placeholder="Customer Name (Optional)"
-                               style="padding-left:24px !important; font-size:12px !important; height:30px;"
-                               oninput="onCustNameInput(${cIdx}, this)">
-                    </div>
-                    <div style="position:relative;">
-                        <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:11px; color:#94A3B8;">📞</span>
-                        <input type="tel" class="day-input cust-phone-input" list="registeredPhonesDatalist"
-                               placeholder="Mobile (Optional)"
-                               style="padding-left:24px !important; font-size:12px !important; height:30px; font-family:'JetBrains Mono',monospace;"
-                               oninput="onCustPhoneInput(${cIdx}, this)">
-                    </div>
+                    <input type="text" class="day-input cust-name-input" list="registeredCustomersDatalist"
+                           placeholder="Customer Name (Optional)"
+                           style="font-size:12px !important; height:30px;"
+                           oninput="onCustNameInput(${cIdx}, this)">
+                    <input type="tel" class="day-input cust-phone-input num-field" list="registeredPhonesDatalist"
+                           placeholder="Mobile (Optional)"
+                           style="font-size:12px !important; height:30px;"
+                           oninput="onCustPhoneInput(${cIdx}, this)">
                     <div class="cust-khata-badge" style="display:none; font-size:10.5px; font-weight:700; color:#DC2626; background:#FEF2F2; padding:2px 6px; border-radius:4px;"></div>
                 </div>
             </td>
 
-            <!-- ITEMS CONTAINER (Can have multiple items per customer) -->
-            <td colspan="3" style="padding:4px 6px !important;">
-                <div class="customer-items-container" id="custItemsContainer_${cIdx}" style="display:flex; flex-direction:column; gap:6px;">
-                    <!-- Items injected dynamically -->
+            <!-- 3: ITEM / PRODUCT -->
+            <td>
+                <div style="position:relative;">
+                    <input type="text" class="day-input item-search-input"
+                           placeholder="Search Phone or Accessory..."
+                           style="height:34px; font-weight:600; font-size:13px;"
+                           autocomplete="off"
+                           onfocus="onItemInputFocus(${itIdx}, this)"
+                           oninput="onItemInputSearch(${itIdx}, this)">
+                    <input type="hidden" class="item-part-id" value="0">
+                    <input type="hidden" class="item-device-id" value="0">
+                    <input type="hidden" class="item-type" value="accessory">
+                    <div class="item-search-dropdown" id="itemSearchDropdown_${itIdx}"></div>
                 </div>
-                <div style="margin-top:5px; padding-left:4px;">
-                    <button type="button" onclick="addItemToCustomer(${cIdx})" class="btn-add-item-link">
-                        <i data-lucide="plus-circle" style="width:12px;height:12px;"></i> + Add another item for this customer
+                <div style="margin-top:4px;">
+                    <button type="button" onclick="addItemToCustomer(${cIdx})" class="btn-add-item-chip" title="Add another item for this customer">
+                        <i data-lucide="plus" style="width:11px;height:11px;"></i> Add item
                     </button>
                 </div>
             </td>
 
-            <!-- TOTAL (₹) -->
+            <!-- 4: QTY -->
+            <td style="text-align:center;">
+                <input type="number" min="1" value="1" class="day-input num-field num-no-spin item-qty-input"
+                       style="text-align:center; height:34px; font-size:13px;"
+                       oninput="recalcCustomerTotal(${cIdx})">
+            </td>
+
+            <!-- 5: UNIT PRICE -->
             <td style="text-align:right;">
-                <div class="cust-bill-total" style="font-size:15px; font-weight:900; color:#0F172A; font-family:'JetBrains Mono',monospace;">
+                <input type="number" min="0" step="0.01" value="0.00" class="day-input num-field item-price-input"
+                       style="text-align:right; height:34px; font-size:13px;"
+                       placeholder="0.00"
+                       oninput="recalcCustomerTotal(${cIdx})">
+            </td>
+
+            <!-- 6: TOTAL -->
+            <td style="text-align:right;">
+                <div class="cust-bill-total" style="font-size:15px; font-weight:800; color:#0F172A;">
                     ₹0.00
                 </div>
                 <div class="cust-items-count-label" style="font-size:11px; color:#64748B; margin-top:2px;">
@@ -493,7 +577,7 @@
                 </div>
             </td>
 
-            <!-- PAYMENT METHOD (With Interactive Split Box) -->
+            <!-- 7: PAYMENT METHOD -->
             <td>
                 <select class="day-input cust-payment-select" style="height:34px; font-weight:700; cursor:pointer;" onchange="onPaymentModeChange(${cIdx}, this)">
                     <option value="cash" ${defaultPayment === 'cash' ? 'selected' : ''}>💵 Cash</option>
@@ -504,18 +588,16 @@
                     <option value="emi" ${defaultPayment === 'emi' ? 'selected' : ''}>⚡ EMI Financed</option>
                     <option value="udhari" ${defaultPayment === 'udhari' ? 'selected' : ''}>📝 Customer Khata</option>
                 </select>
-
-                <!-- Interactive Split Box (Opens automatically for split payments) -->
                 <div class="split-payment-box" id="splitBox_${cIdx}" style="display:none;"></div>
             </td>
 
-            <!-- ACTION -->
+            <!-- 8: ACTION -->
             <td style="text-align:center; vertical-align:middle;">
-                <div style="display:inline-flex; align-items:center; gap:5px; justify-content:center;">
-                    <button type="button" class="btn-add-row-action" onclick="addCustomerSaleRow()" title="Add Sale Row">
+                <div class="action-btn-group">
+                    <button type="button" class="btn-action-add" onclick="addCustomerSaleRow()" title="Add New Sale Row (+)">
                         <i data-lucide="plus" style="width:14px;height:14px;"></i>
                     </button>
-                    <button type="button" class="btn-trash-row" onclick="removeCustomerRow(${cIdx})" title="Delete Customer Bill">
+                    <button type="button" class="btn-action-del" onclick="removeCustomerRow(${cIdx})" title="Delete This Sale">
                         <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
                     </button>
                 </div>
@@ -523,9 +605,6 @@
         `;
 
         tbody.appendChild(tr);
-
-        // Add 1st item row to this customer
-        addItemToCustomer(cIdx);
 
         // Render split box if default was split
         onPaymentModeChange(cIdx, tr.querySelector('.cust-payment-select'));
@@ -538,97 +617,83 @@
         }
     }
 
-    /* ── Add Item Line to a Customer ── */
+    /* ── Add Extra Item Line to a Customer ── */
     function addItemToCustomer(cIdx) {
-        const container = document.getElementById(`custItemsContainer_${cIdx}`);
-        if (!container) return;
+        const parentRow = document.getElementById(`dayCustRow_${cIdx}`);
+        if (!parentRow) return;
 
         globalItemCounter++;
         const itIdx = globalItemCounter;
 
-        const itemRow = document.createElement('div');
-        itemRow.className = 'cust-item-line';
-        itemRow.id = `itemLine_${itIdx}`;
-        itemRow.style.cssText = 'display:grid; grid-template-columns: minmax(240px, 1fr) 75px 115px 24px; gap:8px; align-items:center;';
+        // Find insertion point: after the last existing subitem row for this customer, or after parentRow
+        const existingSubitems = document.querySelectorAll(`.day-customer-subitem-row[data-parent-customer="${cIdx}"]`);
+        const insertAfterEl = existingSubitems.length > 0 ? existingSubitems[existingSubitems.length - 1] : parentRow;
+        const itemNumber = existingSubitems.length + 2;
 
-        itemRow.innerHTML = `
-            <!-- Product Search -->
-            <div style="position:relative;">
-                <input type="text" class="day-input item-search-input"
-                       placeholder="Search Phone or Accessory..."
-                       style="height:32px; font-weight:700; font-size:12.5px;"
-                       autocomplete="off"
-                       onfocus="onItemInputFocus(${itIdx}, this)"
-                       oninput="onItemInputSearch(${itIdx}, this)">
-                <input type="hidden" class="item-part-id" value="0">
-                <input type="hidden" class="item-device-id" value="0">
-                <input type="hidden" class="item-type" value="accessory">
+        const subTr = document.createElement('tr');
+        subTr.className = 'day-customer-subitem-row';
+        subTr.dataset.parentCustomer = cIdx;
+        subTr.id = `subItemRow_${itIdx}`;
 
-                <!-- Floating Dropdown -->
-                <div class="item-search-dropdown" id="itemSearchDropdown_${itIdx}"></div>
-            </div>
-
-            <!-- Qty -->
-            <div>
+        subTr.innerHTML = `
+            <td></td>
+            <td style="text-align:right; vertical-align:middle; padding-right:10px;">
+                <span class="badge-subitem">↳ Item #${itemNumber}</span>
+            </td>
+            <td>
+                <div style="position:relative;">
+                    <input type="text" class="day-input item-search-input"
+                           placeholder="Search another item..."
+                           style="height:34px; font-weight:600; font-size:13px;"
+                           autocomplete="off"
+                           onfocus="onItemInputFocus(${itIdx}, this)"
+                           oninput="onItemInputSearch(${itIdx}, this)">
+                    <input type="hidden" class="item-part-id" value="0">
+                    <input type="hidden" class="item-device-id" value="0">
+                    <input type="hidden" class="item-type" value="accessory">
+                    <div class="item-search-dropdown" id="itemSearchDropdown_${itIdx}"></div>
+                </div>
+            </td>
+            <td style="text-align:center;">
                 <input type="number" min="1" value="1" class="day-input num-field num-no-spin item-qty-input"
-                       style="text-align:center; height:32px; font-size:12.5px;"
+                       style="text-align:center; height:34px; font-size:13px;"
                        oninput="recalcCustomerTotal(${cIdx})">
-            </div>
-
-            <!-- Unit Price -->
-            <div>
+            </td>
+            <td style="text-align:right;">
                 <input type="number" min="0" step="0.01" value="0.00" class="day-input num-field item-price-input"
-                       style="height:32px; font-size:12.5px;"
+                       style="text-align:right; height:34px; font-size:13px;"
                        placeholder="0.00"
                        oninput="recalcCustomerTotal(${cIdx})">
-            </div>
-
-            <!-- Delete Item Button (Only shown if customer has >1 item) -->
-            <div>
-                <button type="button" onclick="removeItemLine(${cIdx}, ${itIdx})" class="btn-remove-item"
-                        style="background:none; border:none; color:#94A3B8; font-size:14px; font-weight:800; cursor:pointer; padding:0; display:none; line-height:1;"
-                        title="Remove this item">✕</button>
-            </div>
+            </td>
+            <td style="text-align:right; vertical-align:middle;">
+                <div class="subitem-line-total" style="font-size:13px; font-weight:700; color:#475569;">₹0.00</div>
+            </td>
+            <td style="text-align:center; vertical-align:middle; color:#94A3B8; font-size:12px;">
+                —
+            </td>
+            <td style="text-align:center; vertical-align:middle;">
+                <button type="button" class="btn-remove-subitem" onclick="removeSubitem(${cIdx}, ${itIdx})" title="Remove this item">
+                    <i data-lucide="x" style="width:13px;height:13px;"></i>
+                </button>
+            </td>
         `;
 
-        container.appendChild(itemRow);
-        updateItemRemoveButtons(cIdx);
+        insertAfterEl.after(subTr);
         recalcCustomerTotal(cIdx);
-
-        if (window.lucide) {
-            window.lucide.createIcons();
-        }
+        if (window.lucide) window.lucide.createIcons();
     }
 
-    /* ── Remove Item Line ── */
-    function removeItemLine(cIdx, itIdx) {
-        const itemLine = document.getElementById(`itemLine_${itIdx}`);
-        if (!itemLine) return;
-
-        const container = document.getElementById(`custItemsContainer_${cIdx}`);
-        if (container && container.children.length > 1) {
-            itemLine.remove();
-            updateItemRemoveButtons(cIdx);
+    /* ── Remove Extra Item Line ── */
+    function removeSubitem(cIdx, itIdx) {
+        const subRow = document.getElementById(`subItemRow_${itIdx}`);
+        if (subRow) {
+            subRow.remove();
+            const subitems = document.querySelectorAll(`.day-customer-subitem-row[data-parent-customer="${cIdx}"]`);
+            subitems.forEach((sr, idx) => {
+                const badge = sr.querySelector('.badge-subitem');
+                if (badge) badge.innerText = `↳ Item #${idx + 2}`;
+            });
             recalcCustomerTotal(cIdx);
-        }
-    }
-
-    function updateItemRemoveButtons(cIdx) {
-        const container = document.getElementById(`custItemsContainer_${cIdx}`);
-        if (!container) return;
-
-        const lines = container.querySelectorAll('.cust-item-line');
-        lines.forEach(l => {
-            const btn = l.querySelector('.btn-remove-item');
-            if (btn) {
-                btn.style.display = lines.length > 1 ? 'block' : 'none';
-            }
-        });
-
-        const custRow = document.getElementById(`dayCustRow_${cIdx}`);
-        const countLabel = custRow?.querySelector('.cust-items-count-label');
-        if (countLabel) {
-            countLabel.innerText = `${lines.length} ${lines.length === 1 ? 'item' : 'items'}`;
         }
     }
 
@@ -640,7 +705,9 @@
             if (numCell) numCell.innerText = idx + 1;
         });
         const badge = document.getElementById('lblRowsCountBadge');
-        if (badge) badge.innerText = `${rows.length} Sales`;
+        if (badge) {
+            badge.innerText = `${rows.length} ${rows.length === 1 ? 'Sale' : 'Sales'}`;
+        }
     }
 
     /* ── Remove Customer Row ── */
@@ -649,17 +716,23 @@
         if (!row) return;
 
         const tbody = document.getElementById('daySalesRowsTbody');
-        if (tbody.children.length <= 1) {
+        const allCustRows = tbody.querySelectorAll('.day-customer-row');
+        if (allCustRows.length <= 1) {
             // Keep at least 1 clean customer row
             row.querySelector('.cust-name-input').value = '';
             row.querySelector('.cust-phone-input').value = '';
-            const itemsContainer = document.getElementById(`custItemsContainer_${cIdx}`);
-            if (itemsContainer) itemsContainer.innerHTML = '';
-            addItemToCustomer(cIdx);
+            row.querySelector('.item-search-input').value = '';
+            row.querySelector('.item-part-id').value = 0;
+            row.querySelector('.item-device-id').value = 0;
+            row.querySelector('.item-type').value = 'accessory';
+            row.querySelector('.item-qty-input').value = 1;
+            row.querySelector('.item-price-input').value = '0.00';
+            document.querySelectorAll(`.day-customer-subitem-row[data-parent-customer="${cIdx}"]`).forEach(sr => sr.remove());
             recalcCustomerTotal(cIdx);
             return;
         }
 
+        document.querySelectorAll(`.day-customer-subitem-row[data-parent-customer="${cIdx}"]`).forEach(sr => sr.remove());
         row.remove();
         renumberCustomerRows();
         recalcAllSummaryMetrics();
@@ -670,20 +743,36 @@
         const row = document.getElementById(`dayCustRow_${cIdx}`);
         if (!row) return;
 
-        const itemLines = row.querySelectorAll('.cust-item-line');
         let custTotal = 0;
+        let count = 0;
 
-        itemLines.forEach(l => {
-            const qty = parseInt(l.querySelector('.item-qty-input')?.value || 1);
-            const price = parseFloat(l.querySelector('.item-price-input')?.value || 0);
-            if (qty > 0 && price >= 0) {
-                custTotal += (qty * price);
-            }
+        // Primary row item
+        const pQty = parseInt(row.querySelector('.item-qty-input')?.value || 0);
+        const pPrice = parseFloat(row.querySelector('.item-price-input')?.value || 0);
+        const pLineTotal = (pQty > 0 && pPrice >= 0) ? (pQty * pPrice) : 0;
+        custTotal += pLineTotal;
+        count++;
+
+        // Child subitem rows
+        const subRows = document.querySelectorAll(`.day-customer-subitem-row[data-parent-customer="${cIdx}"]`);
+        subRows.forEach(sr => {
+            const sQty = parseInt(sr.querySelector('.item-qty-input')?.value || 0);
+            const sPrice = parseFloat(sr.querySelector('.item-price-input')?.value || 0);
+            const sLineTotal = (sQty > 0 && sPrice >= 0) ? (sQty * sPrice) : 0;
+            const subtotalLbl = sr.querySelector('.subitem-line-total');
+            if (subtotalLbl) subtotalLbl.innerText = `₹${sLineTotal.toFixed(2)}`;
+            custTotal += sLineTotal;
+            count++;
         });
 
         const totalDisplay = row.querySelector('.cust-bill-total');
         if (totalDisplay) {
             totalDisplay.innerText = `₹${custTotal.toFixed(2)}`;
+        }
+
+        const countDisplay = row.querySelector('.cust-items-count-label');
+        if (countDisplay) {
+            countDisplay.innerText = `${count} ${count === 1 ? 'item' : 'items'}`;
         }
 
         // Auto-update split box inputs if split mode is active
@@ -790,9 +879,13 @@
         const row = document.getElementById(`dayCustRow_${cIdx}`);
         if (!row) return 0;
         let tot = 0;
-        row.querySelectorAll('.cust-item-line').forEach(l => {
-            const q = parseInt(l.querySelector('.item-qty-input')?.value || 1);
-            const p = parseFloat(l.querySelector('.item-price-input')?.value || 0);
+        const q1 = parseInt(row.querySelector('.item-qty-input')?.value || 0);
+        const p1 = parseFloat(row.querySelector('.item-price-input')?.value || 0);
+        if (q1 > 0 && p1 >= 0) tot += (q1 * p1);
+
+        document.querySelectorAll(`.day-customer-subitem-row[data-parent-customer="${cIdx}"]`).forEach(sr => {
+            const q = parseInt(sr.querySelector('.item-qty-input')?.value || 0);
+            const p = parseFloat(sr.querySelector('.item-price-input')?.value || 0);
             if (q > 0 && p >= 0) tot += (q * p);
         });
         return tot;
@@ -893,7 +986,7 @@
 
         rows.forEach(r => {
             const cIdx = r.dataset.customerIndex;
-            const itemLines = r.querySelectorAll('.cust-item-line');
+            const itemLines = [r, ...document.querySelectorAll(`.day-customer-subitem-row[data-parent-customer="${cIdx}"]`)];
             const payMode = r.querySelector('.cust-payment-select')?.value || 'cash';
             const splitBox = document.getElementById(`splitBox_${cIdx}`);
 
@@ -1109,38 +1202,40 @@
     }
 
     function onPickPartItem(itIdx, partId, partName, price) {
-        const itemLine = document.getElementById(`itemLine_${itIdx}`);
-        if (!itemLine) return;
+        const dropdown = document.getElementById(`itemSearchDropdown_${itIdx}`);
+        const itemRow = dropdown?.closest('tr');
+        if (!itemRow) return;
 
-        itemLine.querySelector('.item-search-input').value = partName;
-        itemLine.querySelector('.item-part-id').value = partId;
-        itemLine.querySelector('.item-device-id').value = 0;
-        itemLine.querySelector('.item-type').value = 'accessory';
-        itemLine.querySelector('.item-price-input').value = price.toFixed(2);
+        itemRow.querySelector('.item-search-input').value = partName;
+        itemRow.querySelector('.item-part-id').value = partId;
+        itemRow.querySelector('.item-device-id').value = 0;
+        itemRow.querySelector('.item-type').value = 'accessory';
+        itemRow.querySelector('.item-price-input').value = price.toFixed(2);
 
-        document.getElementById(`itemSearchDropdown_${itIdx}`).style.display = 'none';
+        dropdown.style.display = 'none';
 
-        const custRow = itemLine.closest('.day-customer-row');
-        if (custRow) {
-            recalcCustomerTotal(custRow.dataset.customerIndex);
+        const cIdx = itemRow.dataset.customerIndex || itemRow.dataset.parentCustomer;
+        if (cIdx) {
+            recalcCustomerTotal(cIdx);
         }
     }
 
     function onPickPhoneItem(itIdx, deviceId, phoneTitle, price) {
-        const itemLine = document.getElementById(`itemLine_${itIdx}`);
-        if (!itemLine) return;
+        const dropdown = document.getElementById(`itemSearchDropdown_${itIdx}`);
+        const itemRow = dropdown?.closest('tr');
+        if (!itemRow) return;
 
-        itemLine.querySelector('.item-search-input').value = phoneTitle;
-        itemLine.querySelector('.item-part-id').value = 0;
-        itemLine.querySelector('.item-device-id').value = deviceId;
-        itemLine.querySelector('.item-type').value = 'phone';
-        itemLine.querySelector('.item-price-input').value = price.toFixed(2);
+        itemRow.querySelector('.item-search-input').value = phoneTitle;
+        itemRow.querySelector('.item-part-id').value = 0;
+        itemRow.querySelector('.item-device-id').value = deviceId;
+        itemRow.querySelector('.item-type').value = 'phone';
+        itemRow.querySelector('.item-price-input').value = price.toFixed(2);
 
-        document.getElementById(`itemSearchDropdown_${itIdx}`).style.display = 'none';
+        dropdown.style.display = 'none';
 
-        const custRow = itemLine.closest('.day-customer-row');
-        if (custRow) {
-            recalcCustomerTotal(custRow.dataset.customerIndex);
+        const cIdx = itemRow.dataset.customerIndex || itemRow.dataset.parentCustomer;
+        if (cIdx) {
+            recalcCustomerTotal(cIdx);
         }
     }
 
@@ -1185,7 +1280,7 @@
             const paymentMode = r.querySelector('.cust-payment-select')?.value || 'cash';
             const splitBox = document.getElementById(`splitBox_${cIdx}`);
 
-            const itemLines = r.querySelectorAll('.cust-item-line');
+            const itemLines = [r, ...document.querySelectorAll(`.day-customer-subitem-row[data-parent-customer="${cIdx}"]`)];
             const items = [];
             let custTotal = 0;
 
