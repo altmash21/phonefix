@@ -137,6 +137,25 @@
     }
 
     /* ── Buttons ── */
+    .btn-add-row-action {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        background: #EEF2FF;
+        border: 1px solid #C7D2FE;
+        color: #4F46E5;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        padding: 0;
+    }
+    .btn-add-row-action:hover {
+        background: #4F46E5 !important;
+        border-color: #4338CA !important;
+        color: #FFFFFF !important;
+    }
     .btn-trash-row {
         width: 32px;
         height: 32px;
@@ -262,7 +281,7 @@
                 <i data-lucide="layers" style="width:18px;height:18px;color:#4F46E5;"></i>
                 <h3 style="font-size:16px; font-weight:800; color:#0F172A; margin:0;">Day Sales Rows</h3>
                 <span id="lblRowsCountBadge" style="background:#E0E7FF; color:#3730A3; font-size:11px; font-weight:800; padding:2px 10px; border-radius:9999px;">
-                    3 Sales
+                    1 Sale
                 </span>
             </div>
             <button type="button" onclick="addCustomerSaleRow()" class="btn btn-primary btn-sm" style="background:#4F46E5; border-color:#4338CA; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
@@ -282,7 +301,7 @@
                         <th style="width:115px;">UNIT PRICE (₹)</th>
                         <th style="width:110px; text-align:right;">TOTAL (₹)</th>
                         <th style="width:200px;">PAYMENT METHOD</th>
-                        <th style="width:48px; text-align:center;">ACTION</th>
+                        <th style="width:76px; text-align:center;">ACTION</th>
                     </tr>
                 </thead>
                 <tbody id="daySalesRowsTbody">
@@ -491,10 +510,15 @@
             </td>
 
             <!-- ACTION -->
-            <td style="text-align:center;">
-                <button type="button" class="btn-trash-row" onclick="removeCustomerRow(${cIdx})" title="Delete Customer Bill">
-                    <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
-                </button>
+            <td style="text-align:center; vertical-align:middle;">
+                <div style="display:inline-flex; align-items:center; gap:5px; justify-content:center;">
+                    <button type="button" class="btn-add-row-action" onclick="addCustomerSaleRow()" title="Add Sale Row">
+                        <i data-lucide="plus" style="width:14px;height:14px;"></i>
+                    </button>
+                    <button type="button" class="btn-trash-row" onclick="removeCustomerRow(${cIdx})" title="Delete Customer Bill">
+                        <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                    </button>
+                </div>
             </td>
         `;
 
@@ -629,7 +653,6 @@
             // Keep at least 1 clean customer row
             row.querySelector('.cust-name-input').value = '';
             row.querySelector('.cust-phone-input').value = '';
-            row.querySelector('.cust-note-input').value = '';
             const itemsContainer = document.getElementById(`custItemsContainer_${cIdx}`);
             if (itemsContainer) itemsContainer.innerHTML = '';
             addItemToCustomer(cIdx);
@@ -1308,10 +1331,8 @@
         }
     }
 
-    // Initialize with 3 rows on start (matching user screenshot)
+    // Initialize with default 1 row on start (user can add as many as they want)
     document.addEventListener('DOMContentLoaded', () => {
-        addCustomerSaleRow();
-        addCustomerSaleRow();
         addCustomerSaleRow();
     });
 </script>
