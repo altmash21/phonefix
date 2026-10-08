@@ -5,7 +5,7 @@
 
 @section('page-actions')
     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <button type="button" onclick="addSaleRow()" class="btn btn-outline btn-sm" style="font-weight:700; border:1px solid #CBD5E1; color:#334155; padding:6px 14px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
+        <button type="button" onclick="addCustomerSaleRow()" class="btn btn-outline btn-sm" style="font-weight:700; border:1px solid #CBD5E1; color:#334155; padding:6px 14px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
             <i data-lucide="plus" style="width:13px;height:13px;"></i> + Add Sale Row
         </button>
         <button type="button" onclick="submitDaySales()" class="btn btn-primary btn-sm" style="background:#4F46E5; border-color:#4338CA; color:#ffffff; font-weight:700; padding:6px 16px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 1px 3px rgba(79,70,229,0.3);">
@@ -20,7 +20,7 @@
 @section('content')
 <style>
     .day-end-container {
-        max-width: 1460px;
+        max-width: 1480px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
@@ -65,7 +65,7 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        min-width: 1060px;
+        min-width: 1100px;
     }
     .day-sales-table th {
         background: #F8FAFC;
@@ -80,13 +80,13 @@
         text-align: left;
     }
     .day-sales-table td {
-        padding: 8px 10px;
-        border-bottom: 1px solid #F1F5F9;
-        vertical-align: middle;
+        padding: 10px 10px;
+        border-bottom: 1px solid #E2E8F0;
+        vertical-align: top;
         background: #FFFFFF;
     }
     .day-sales-table tr:hover td {
-        background: #FAFAFC;
+        background: #FCFCFD;
     }
 
     /* ── Autocomplete Search Dropdown ── */
@@ -117,7 +117,26 @@
         background: #EEF2FF;
     }
 
-    /* ── Delete Button ── */
+    /* ── Split Payment Box ── */
+    .split-payment-box {
+        margin-top: 6px;
+        border-radius: 6px;
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .split-payment-box.theme-cash-upi {
+        background: #F8FAFC;
+        border: 1px solid #CBD5E1;
+    }
+    .split-payment-box.theme-udhari {
+        background: #FFF1F2;
+        border: 1px solid #FECDD3;
+    }
+
+    /* ── Buttons ── */
     .btn-trash-row {
         width: 32px;
         height: 32px;
@@ -135,6 +154,24 @@
     .btn-trash-row:hover {
         background: #FEF2F2 !important;
         border-color: #F87171 !important;
+    }
+
+    .btn-add-item-link {
+        background: transparent;
+        border: none;
+        color: #4F46E5;
+        font-size: 11.5px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 0 0 0;
+        transition: color 0.15s ease;
+    }
+    .btn-add-item-link:hover {
+        color: #3730A3;
+        text-decoration: underline;
     }
 </style>
 
@@ -155,7 +192,7 @@
             <kbd style="background:#E2E8F0; border:1px solid #CBD5E1; border-radius:4px; padding:1px 6px; font-family:monospace; font-size:11px; font-weight:800; color:#334155;">Ctrl</kbd>
             <span>+</span>
             <kbd style="background:#E2E8F0; border:1px solid #CBD5E1; border-radius:4px; padding:1px 6px; font-family:monospace; font-size:11px; font-weight:800; color:#334155;">Enter</kbd>
-            <span>to add new row</span>
+            <span>to add new customer sale row</span>
         </div>
     </div>
 
@@ -207,6 +244,9 @@
                 <select id="masterDefaultPayment" onchange="applyDefaultPaymentToAllRows()" class="day-input" style="font-weight:700; cursor:pointer;">
                     <option value="cash" selected>💵 Cash (Default for new rows)</option>
                     <option value="upi">📱 UPI / QR</option>
+                    <option value="cash+upi">💵+📱 Cash + UPI</option>
+                    <option value="cash+udhari">💵+📝 Cash + Udhari</option>
+                    <option value="upi+udhari">📱+📝 UPI + Udhari</option>
                     <option value="emi">⚡ EMI Financed</option>
                     <option value="udhari">📝 Customer Khata (Udhari)</option>
                 </select>
@@ -225,7 +265,7 @@
                     3 Sales
                 </span>
             </div>
-            <button type="button" onclick="addSaleRow()" class="btn btn-primary btn-sm" style="background:#4F46E5; border-color:#4338CA; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
+            <button type="button" onclick="addCustomerSaleRow()" class="btn btn-primary btn-sm" style="background:#4F46E5; border-color:#4338CA; color:#ffffff; font-weight:700; padding:6px 14px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
                 <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Sale Row
             </button>
         </div>
@@ -235,15 +275,15 @@
             <table class="day-sales-table">
                 <thead>
                     <tr>
-                        <th style="width:40px; text-align:center;">#</th>
+                        <th style="width:36px; text-align:center;">#</th>
                         <th style="width:230px;">CUSTOMER (OPTIONAL FOR PAID)</th>
-                        <th style="min-width:260px;">ITEM / PRODUCT (SEARCH DROPDOWN)</th>
+                        <th style="min-width:320px;">ITEM / PRODUCT (SEARCH DROPDOWN)</th>
                         <th style="width:75px; text-align:center;">QTY</th>
                         <th style="width:115px;">UNIT PRICE (₹)</th>
-                        <th style="width:105px; text-align:right;">TOTAL (₹)</th>
-                        <th style="width:170px;">PAYMENT METHOD</th>
-                        <th style="width:150px;">REF / NOTE</th>
-                        <th style="width:50px; text-align:center;">ACTION</th>
+                        <th style="width:110px; text-align:right;">TOTAL (₹)</th>
+                        <th style="width:200px;">PAYMENT METHOD</th>
+                        <th style="width:140px;">REF / NOTE</th>
+                        <th style="width:48px; text-align:center;">ACTION</th>
                     </tr>
                 </thead>
                 <tbody id="daySalesRowsTbody">
@@ -297,7 +337,7 @@
 
             <!-- Action Buttons -->
             <div style="display:flex; align-items:center; gap:10px;">
-                <button type="button" onclick="addSaleRow()" class="btn btn-outline" style="font-weight:700; padding:8px 16px; border-radius:6px; font-size:13px; border-color:#CBD5E1; color:#334155; display:inline-flex; align-items:center; gap:6px;">
+                <button type="button" onclick="addCustomerSaleRow()" class="btn btn-outline" style="font-weight:700; padding:8px 16px; border-radius:6px; font-size:13px; border-color:#CBD5E1; color:#334155; display:inline-flex; align-items:center; gap:6px;">
                     <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Row
                 </button>
                 <button type="button" onclick="submitDaySales()" id="btnSaveAllDaySales" class="btn btn-primary" style="background:#4F46E5; border-color:#4338CA; color:#ffffff; font-weight:800; padding:8px 24px; font-size:13px; border-radius:6px; box-shadow:0 3px 8px rgba(79, 70, 229, 0.3); display:inline-flex; align-items:center; gap:8px;">
@@ -330,7 +370,8 @@
     const allPartsData = @json($parts ?? []);
     const allPhonesData = @json($phones ?? []);
     const customersData = @json($customers ?? []);
-    let dayRowCounter = 0;
+    let customerCardCounter = 0;
+    let globalItemCounter = 0;
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -371,17 +412,17 @@
         }
     }
 
-    /* ── Add Sale Row ── */
-    function addSaleRow(initialData = null) {
+    /* ── Add Customer Sale Row ── */
+    function addCustomerSaleRow() {
         const tbody = document.getElementById('daySalesRowsTbody');
         if (!tbody) return;
 
-        dayRowCounter++;
-        const rIdx = dayRowCounter;
+        customerCardCounter++;
+        const cIdx = customerCardCounter;
         const tr = document.createElement('tr');
-        tr.className = 'day-sale-row';
-        tr.dataset.rowIndex = rIdx;
-        tr.id = `daySaleRow_${rIdx}`;
+        tr.className = 'day-customer-row';
+        tr.dataset.customerIndex = cIdx;
+        tr.id = `dayCustRow_${cIdx}`;
 
         const defaultPayment = document.getElementById('masterDefaultPayment')?.value || 'cash';
 
@@ -399,99 +440,185 @@
                         <input type="text" class="day-input cust-name-input" list="registeredCustomersDatalist"
                                placeholder="Customer Name (Optional)"
                                style="padding-left:24px !important; font-size:12px !important; height:30px;"
-                               oninput="onCustNameInput(${rIdx}, this)">
+                               oninput="onCustNameInput(${cIdx}, this)">
                     </div>
                     <div style="position:relative;">
                         <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:11px; color:#94A3B8;">📞</span>
                         <input type="tel" class="day-input cust-phone-input" list="registeredPhonesDatalist"
                                placeholder="Mobile (Optional)"
                                style="padding-left:24px !important; font-size:12px !important; height:30px; font-family:'JetBrains Mono',monospace;"
-                               oninput="onCustPhoneInput(${rIdx}, this)">
+                               oninput="onCustPhoneInput(${cIdx}, this)">
                     </div>
+                    <div class="cust-khata-badge" style="display:none; font-size:10.5px; font-weight:700; color:#DC2626; background:#FEF2F2; padding:2px 6px; border-radius:4px;"></div>
                 </div>
             </td>
 
-            <!-- ITEM / PRODUCT (SEARCH DROPDOWN) -->
-            <td>
-                <div style="position:relative;">
-                    <input type="text" class="day-input item-search-input"
-                           placeholder="Search Phone or Accessory..."
-                           style="height:34px; font-weight:700;"
-                           autocomplete="off"
-                           onfocus="onItemInputFocus(${rIdx}, this)"
-                           oninput="onItemInputSearch(${rIdx}, this)">
-                    <input type="hidden" class="item-part-id" value="0">
-                    <input type="hidden" class="item-device-id" value="0">
-                    <input type="hidden" class="item-type" value="accessory">
-
-                    <!-- Floating Search Dropdown -->
-                    <div class="item-search-dropdown" id="itemSearchDropdown_${rIdx}"></div>
+            <!-- ITEMS CONTAINER (Can have multiple items per customer) -->
+            <td colspan="3" style="padding:4px 6px !important;">
+                <div class="customer-items-container" id="custItemsContainer_${cIdx}" style="display:flex; flex-direction:column; gap:6px;">
+                    <!-- Items injected dynamically -->
                 </div>
-            </td>
-
-            <!-- QTY -->
-            <td style="text-align:center;">
-                <input type="number" min="1" value="1" class="day-input num-field num-no-spin item-qty-input"
-                       style="text-align:center; width:65px; height:34px;"
-                       oninput="recalcRowTotal(${rIdx})">
-            </td>
-
-            <!-- UNIT PRICE (₹) -->
-            <td>
-                <input type="number" min="0" step="0.01" value="0.00" class="day-input num-field item-price-input"
-                       style="height:34px;"
-                       placeholder="0.00"
-                       oninput="recalcRowTotal(${rIdx})">
+                <div style="margin-top:5px; padding-left:4px;">
+                    <button type="button" onclick="addItemToCustomer(${cIdx})" class="btn-add-item-link">
+                        <i data-lucide="plus-circle" style="width:12px;height:12px;"></i> + Add another item for this customer
+                    </button>
+                </div>
             </td>
 
             <!-- TOTAL (₹) -->
             <td style="text-align:right;">
-                <div class="item-total-display" style="font-size:14px; font-weight:800; color:#0F172A; font-family:'JetBrains Mono',monospace;">
+                <div class="cust-bill-total" style="font-size:15px; font-weight:900; color:#0F172A; font-family:'JetBrains Mono',monospace;">
                     ₹0.00
+                </div>
+                <div class="cust-items-count-label" style="font-size:11px; color:#64748B; margin-top:2px;">
+                    1 item
                 </div>
             </td>
 
-            <!-- PAYMENT METHOD -->
+            <!-- PAYMENT METHOD (With Interactive Split Box) -->
             <td>
-                <select class="day-input item-payment-select" style="height:34px; font-weight:700; cursor:pointer;" onchange="recalcAllSummaryMetrics()">
+                <select class="day-input cust-payment-select" style="height:34px; font-weight:700; cursor:pointer;" onchange="onPaymentModeChange(${cIdx}, this)">
                     <option value="cash" ${defaultPayment === 'cash' ? 'selected' : ''}>💵 Cash</option>
                     <option value="upi" ${defaultPayment === 'upi' ? 'selected' : ''}>📱 UPI</option>
+                    <option value="cash+upi" ${defaultPayment === 'cash+upi' ? 'selected' : ''}>💵+📱 Cash + UPI</option>
+                    <option value="cash+udhari" ${defaultPayment === 'cash+udhari' ? 'selected' : ''}>💵+📝 Cash + Udhari</option>
+                    <option value="upi+udhari" ${defaultPayment === 'upi+udhari' ? 'selected' : ''}>📱+📝 UPI + Udhari</option>
                     <option value="emi" ${defaultPayment === 'emi' ? 'selected' : ''}>⚡ EMI Financed</option>
                     <option value="udhari" ${defaultPayment === 'udhari' ? 'selected' : ''}>📝 Customer Khata</option>
                 </select>
+
+                <!-- Interactive Split Box (Opens automatically for split payments) -->
+                <div class="split-payment-box" id="splitBox_${cIdx}" style="display:none;"></div>
             </td>
 
             <!-- REF / NOTE -->
             <td>
-                <input type="text" class="day-input item-note-input"
+                <input type="text" class="day-input cust-note-input"
                        placeholder="UTR / Note"
                        style="height:34px; font-size:12px;">
             </td>
 
             <!-- ACTION -->
             <td style="text-align:center;">
-                <button type="button" class="btn-trash-row" onclick="removeSaleRow(${rIdx})" title="Delete Row">
+                <button type="button" class="btn-trash-row" onclick="removeCustomerRow(${cIdx})" title="Delete Customer Bill">
                     <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
                 </button>
             </td>
         `;
 
         tbody.appendChild(tr);
-        renumberTableRows();
+
+        // Add 1st item row to this customer
+        addItemToCustomer(cIdx);
+
+        // Render split box if default was split
+        onPaymentModeChange(cIdx, tr.querySelector('.cust-payment-select'));
+
+        renumberCustomerRows();
         recalcAllSummaryMetrics();
 
         if (window.lucide) {
             window.lucide.createIcons();
         }
+    }
 
-        if (initialData) {
-            populateRowData(rIdx, initialData);
+    /* ── Add Item Line to a Customer ── */
+    function addItemToCustomer(cIdx) {
+        const container = document.getElementById(`custItemsContainer_${cIdx}`);
+        if (!container) return;
+
+        globalItemCounter++;
+        const itIdx = globalItemCounter;
+
+        const itemRow = document.createElement('div');
+        itemRow.className = 'cust-item-line';
+        itemRow.id = `itemLine_${itIdx}`;
+        itemRow.style.cssText = 'display:grid; grid-template-columns: minmax(240px, 1fr) 75px 115px 24px; gap:8px; align-items:center;';
+
+        itemRow.innerHTML = `
+            <!-- Product Search -->
+            <div style="position:relative;">
+                <input type="text" class="day-input item-search-input"
+                       placeholder="Search Phone or Accessory..."
+                       style="height:32px; font-weight:700; font-size:12.5px;"
+                       autocomplete="off"
+                       onfocus="onItemInputFocus(${itIdx}, this)"
+                       oninput="onItemInputSearch(${itIdx}, this)">
+                <input type="hidden" class="item-part-id" value="0">
+                <input type="hidden" class="item-device-id" value="0">
+                <input type="hidden" class="item-type" value="accessory">
+
+                <!-- Floating Dropdown -->
+                <div class="item-search-dropdown" id="itemSearchDropdown_${itIdx}"></div>
+            </div>
+
+            <!-- Qty -->
+            <div>
+                <input type="number" min="1" value="1" class="day-input num-field num-no-spin item-qty-input"
+                       style="text-align:center; height:32px; font-size:12.5px;"
+                       oninput="recalcCustomerTotal(${cIdx})">
+            </div>
+
+            <!-- Unit Price -->
+            <div>
+                <input type="number" min="0" step="0.01" value="0.00" class="day-input num-field item-price-input"
+                       style="height:32px; font-size:12.5px;"
+                       placeholder="0.00"
+                       oninput="recalcCustomerTotal(${cIdx})">
+            </div>
+
+            <!-- Delete Item Button (Only shown if customer has >1 item) -->
+            <div>
+                <button type="button" onclick="removeItemLine(${cIdx}, ${itIdx})" class="btn-remove-item"
+                        style="background:none; border:none; color:#94A3B8; font-size:14px; font-weight:800; cursor:pointer; padding:0; display:none; line-height:1;"
+                        title="Remove this item">✕</button>
+            </div>
+        `;
+
+        container.appendChild(itemRow);
+        updateItemRemoveButtons(cIdx);
+        recalcCustomerTotal(cIdx);
+
+        if (window.lucide) {
+            window.lucide.createIcons();
         }
     }
 
-    /* ── Renumber Rows ── */
-    function renumberTableRows() {
-        const rows = document.querySelectorAll('#daySalesRowsTbody .day-sale-row');
+    /* ── Remove Item Line ── */
+    function removeItemLine(cIdx, itIdx) {
+        const itemLine = document.getElementById(`itemLine_${itIdx}`);
+        if (!itemLine) return;
+
+        const container = document.getElementById(`custItemsContainer_${cIdx}`);
+        if (container && container.children.length > 1) {
+            itemLine.remove();
+            updateItemRemoveButtons(cIdx);
+            recalcCustomerTotal(cIdx);
+        }
+    }
+
+    function updateItemRemoveButtons(cIdx) {
+        const container = document.getElementById(`custItemsContainer_${cIdx}`);
+        if (!container) return;
+
+        const lines = container.querySelectorAll('.cust-item-line');
+        lines.forEach(l => {
+            const btn = l.querySelector('.btn-remove-item');
+            if (btn) {
+                btn.style.display = lines.length > 1 ? 'block' : 'none';
+            }
+        });
+
+        const custRow = document.getElementById(`dayCustRow_${cIdx}`);
+        const countLabel = custRow?.querySelector('.cust-items-count-label');
+        if (countLabel) {
+            countLabel.innerText = `${lines.length} ${lines.length === 1 ? 'item' : 'items'}`;
+        }
+    }
+
+    /* ── Renumber Customer Rows ── */
+    function renumberCustomerRows() {
+        const rows = document.querySelectorAll('#daySalesRowsTbody .day-customer-row');
         rows.forEach((r, idx) => {
             const numCell = r.querySelector('.row-num-cell');
             if (numCell) numCell.innerText = idx + 1;
@@ -500,52 +627,246 @@
         if (badge) badge.innerText = `${rows.length} Sales`;
     }
 
-    /* ── Remove Row ── */
-    function removeSaleRow(rIdx) {
-        const row = document.getElementById(`daySaleRow_${rIdx}`);
+    /* ── Remove Customer Row ── */
+    function removeCustomerRow(cIdx) {
+        const row = document.getElementById(`dayCustRow_${cIdx}`);
         if (!row) return;
 
         const tbody = document.getElementById('daySalesRowsTbody');
         if (tbody.children.length <= 1) {
-            // Keep at least 1 row clear
+            // Keep at least 1 clean customer row
             row.querySelector('.cust-name-input').value = '';
             row.querySelector('.cust-phone-input').value = '';
-            row.querySelector('.item-search-input').value = '';
-            row.querySelector('.item-part-id').value = '0';
-            row.querySelector('.item-device-id').value = '0';
-            row.querySelector('.item-type').value = 'accessory';
-            row.querySelector('.item-qty-input').value = '1';
-            row.querySelector('.item-price-input').value = '0.00';
-            row.querySelector('.item-note-input').value = '';
-            recalcRowTotal(rIdx);
+            row.querySelector('.cust-note-input').value = '';
+            const itemsContainer = document.getElementById(`custItemsContainer_${cIdx}`);
+            if (itemsContainer) itemsContainer.innerHTML = '';
+            addItemToCustomer(cIdx);
+            recalcCustomerTotal(cIdx);
             return;
         }
 
         row.remove();
-        renumberTableRows();
+        renumberCustomerRows();
         recalcAllSummaryMetrics();
     }
 
-    /* ── Recalculate Row Total ── */
-    function recalcRowTotal(rIdx) {
-        const row = document.getElementById(`daySaleRow_${rIdx}`);
+    /* ── Recalculate Customer Total ── */
+    function recalcCustomerTotal(cIdx) {
+        const row = document.getElementById(`dayCustRow_${cIdx}`);
         if (!row) return;
 
-        const qty = parseInt(row.querySelector('.item-qty-input')?.value || 1);
-        const price = parseFloat(row.querySelector('.item-price-input')?.value || 0);
-        const total = (qty > 0 && price >= 0) ? (qty * price) : 0;
+        const itemLines = row.querySelectorAll('.cust-item-line');
+        let custTotal = 0;
 
-        const totalDisplay = row.querySelector('.item-total-display');
+        itemLines.forEach(l => {
+            const qty = parseInt(l.querySelector('.item-qty-input')?.value || 1);
+            const price = parseFloat(l.querySelector('.item-price-input')?.value || 0);
+            if (qty > 0 && price >= 0) {
+                custTotal += (qty * price);
+            }
+        });
+
+        const totalDisplay = row.querySelector('.cust-bill-total');
         if (totalDisplay) {
-            totalDisplay.innerText = `₹${total.toFixed(2)}`;
+            totalDisplay.innerText = `₹${custTotal.toFixed(2)}`;
+        }
+
+        // Auto-update split box inputs if split mode is active
+        syncSplitBoxValues(cIdx, custTotal);
+
+        recalcAllSummaryMetrics();
+    }
+
+    /* ── Payment Mode Change (Opens Split Box) ── */
+    function onPaymentModeChange(cIdx, selectEl) {
+        const splitBox = document.getElementById(`splitBox_${cIdx}`);
+        if (!splitBox) return;
+
+        const mode = selectEl.value;
+        const row = document.getElementById(`dayCustRow_${cIdx}`);
+        const total = getCustomerTotal(cIdx);
+
+        if (mode === 'cash+upi') {
+            splitBox.className = 'split-payment-box theme-cash-upi';
+            splitBox.style.display = 'flex';
+            const halfCash = Math.round((total / 2) * 100) / 100;
+            const halfUpi = Math.round((total - halfCash) * 100) / 100;
+            splitBox.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:11px;">
+                    <span style="color:#15803D; font-weight:700;">💵 Cash:</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-size:11px; color:#64748B; margin-right:2px;">₹</span>
+                        <input type="number" step="0.01" min="0" class="split-cash-input day-input num-field"
+                               style="width:78px; height:26px; padding:2px 6px !important; font-size:11.5px !important;"
+                               value="${halfCash.toFixed(2)}"
+                               oninput="onSplitCashInput(${cIdx}, this)">
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:11px;">
+                    <span style="color:#1D4ED8; font-weight:700;">📱 UPI:</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-size:11px; color:#64748B; margin-right:2px;">₹</span>
+                        <input type="number" step="0.01" min="0" class="split-upi-input day-input num-field"
+                               style="width:78px; height:26px; padding:2px 6px !important; font-size:11.5px !important;"
+                               value="${halfUpi.toFixed(2)}"
+                               oninput="onSplitUpiInput(${cIdx}, this)">
+                    </div>
+                </div>
+            `;
+        } else if (mode === 'cash+udhari') {
+            splitBox.className = 'split-payment-box theme-udhari';
+            splitBox.style.display = 'flex';
+            splitBox.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:11px;">
+                    <span style="color:#15803D; font-weight:700;">💵 Cash Paid:</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-size:11px; color:#64748B; margin-right:2px;">₹</span>
+                        <input type="number" step="0.01" min="0" class="split-cash-input day-input num-field"
+                               style="width:78px; height:26px; padding:2px 6px !important; font-size:11.5px !important;"
+                               value="0.00"
+                               oninput="onCashUdhariInput(${cIdx}, this)">
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:11px;">
+                    <span style="color:#DC2626; font-weight:700;">📝 Khata Due:</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-size:11px; color:#64748B; margin-right:2px;">₹</span>
+                        <input type="number" step="0.01" min="0" class="split-udhari-input day-input num-field"
+                               style="width:78px; height:26px; padding:2px 6px !important; font-size:11.5px !important;"
+                               value="${total.toFixed(2)}"
+                               readonly>
+                    </div>
+                </div>
+            `;
+        } else if (mode === 'upi+udhari') {
+            splitBox.className = 'split-payment-box theme-udhari';
+            splitBox.style.display = 'flex';
+            splitBox.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:11px;">
+                    <span style="color:#1D4ED8; font-weight:700;">📱 UPI Paid:</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-size:11px; color:#64748B; margin-right:2px;">₹</span>
+                        <input type="number" step="0.01" min="0" class="split-upi-input day-input num-field"
+                               style="width:78px; height:26px; padding:2px 6px !important; font-size:11.5px !important;"
+                               value="0.00"
+                               oninput="onUpiUdhariInput(${cIdx}, this)">
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:11px;">
+                    <span style="color:#DC2626; font-weight:700;">📝 Khata Due:</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-size:11px; color:#64748B; margin-right:2px;">₹</span>
+                        <input type="number" step="0.01" min="0" class="split-udhari-input day-input num-field"
+                               style="width:78px; height:26px; padding:2px 6px !important; font-size:11.5px !important;"
+                               value="${total.toFixed(2)}"
+                               readonly>
+                    </div>
+                </div>
+            `;
+        } else {
+            splitBox.style.display = 'none';
+            splitBox.innerHTML = '';
         }
 
         recalcAllSummaryMetrics();
     }
 
+    function getCustomerTotal(cIdx) {
+        const row = document.getElementById(`dayCustRow_${cIdx}`);
+        if (!row) return 0;
+        let tot = 0;
+        row.querySelectorAll('.cust-item-line').forEach(l => {
+            const q = parseInt(l.querySelector('.item-qty-input')?.value || 1);
+            const p = parseFloat(l.querySelector('.item-price-input')?.value || 0);
+            if (q > 0 && p >= 0) tot += (q * p);
+        });
+        return tot;
+    }
+
+    /* ── Split Box Live Balancing ── */
+    function onSplitCashInput(cIdx, cashInput) {
+        const total = getCustomerTotal(cIdx);
+        const cashVal = parseFloat(cashInput.value) || 0;
+        const upiInput = document.querySelector(`#splitBox_${cIdx} .split-upi-input`);
+        if (upiInput) {
+            const remainder = Math.max(0, total - cashVal);
+            upiInput.value = remainder.toFixed(2);
+        }
+        recalcAllSummaryMetrics();
+    }
+
+    function onSplitUpiInput(cIdx, upiInput) {
+        const total = getCustomerTotal(cIdx);
+        const upiVal = parseFloat(upiInput.value) || 0;
+        const cashInput = document.querySelector(`#splitBox_${cIdx} .split-cash-input`);
+        if (cashInput) {
+            const remainder = Math.max(0, total - upiVal);
+            cashInput.value = remainder.toFixed(2);
+        }
+        recalcAllSummaryMetrics();
+    }
+
+    function onCashUdhariInput(cIdx, cashInput) {
+        const total = getCustomerTotal(cIdx);
+        const cashVal = parseFloat(cashInput.value) || 0;
+        const udhariInput = document.querySelector(`#splitBox_${cIdx} .split-udhari-input`);
+        if (udhariInput) {
+            const due = Math.max(0, total - cashVal);
+            udhariInput.value = due.toFixed(2);
+        }
+        recalcAllSummaryMetrics();
+    }
+
+    function onUpiUdhariInput(cIdx, upiInput) {
+        const total = getCustomerTotal(cIdx);
+        const upiVal = parseFloat(upiInput.value) || 0;
+        const udhariInput = document.querySelector(`#splitBox_${cIdx} .split-udhari-input`);
+        if (udhariInput) {
+            const due = Math.max(0, total - upiVal);
+            udhariInput.value = due.toFixed(2);
+        }
+        recalcAllSummaryMetrics();
+    }
+
+    function syncSplitBoxValues(cIdx, total) {
+        const splitBox = document.getElementById(`splitBox_${cIdx}`);
+        if (!splitBox || splitBox.style.display === 'none') return;
+
+        const row = document.getElementById(`dayCustRow_${cIdx}`);
+        const mode = row?.querySelector('.cust-payment-select')?.value;
+
+        if (mode === 'cash+upi') {
+            const cashInput = splitBox.querySelector('.split-cash-input');
+            const upiInput = splitBox.querySelector('.split-upi-input');
+            if (cashInput && upiInput) {
+                const cVal = parseFloat(cashInput.value) || 0;
+                if (cVal > total) {
+                    cashInput.value = total.toFixed(2);
+                    upiInput.value = '0.00';
+                } else {
+                    upiInput.value = Math.max(0, total - cVal).toFixed(2);
+                }
+            }
+        } else if (mode === 'cash+udhari') {
+            const cashInput = splitBox.querySelector('.split-cash-input');
+            const udhariInput = splitBox.querySelector('.split-udhari-input');
+            if (cashInput && udhariInput) {
+                const cVal = parseFloat(cashInput.value) || 0;
+                udhariInput.value = Math.max(0, total - cVal).toFixed(2);
+            }
+        } else if (mode === 'upi+udhari') {
+            const upiInput = splitBox.querySelector('.split-upi-input');
+            const udhariInput = splitBox.querySelector('.split-udhari-input');
+            if (upiInput && udhariInput) {
+                const uVal = parseFloat(upiInput.value) || 0;
+                udhariInput.value = Math.max(0, total - uVal).toFixed(2);
+            }
+        }
+    }
+
     /* ── Recalculate Summary Stats ── */
     function recalcAllSummaryMetrics() {
-        const rows = document.querySelectorAll('#daySalesRowsTbody .day-sale-row');
+        const rows = document.querySelectorAll('#daySalesRowsTbody .day-customer-row');
         let billsCount = 0;
         let phonesCount = 0;
         let accCount = 0;
@@ -556,28 +877,59 @@
         let khataTotal = 0;
 
         rows.forEach(r => {
-            const qty = parseInt(r.querySelector('.item-qty-input')?.value || 0);
-            const price = parseFloat(r.querySelector('.item-price-input')?.value || 0);
-            const itemType = r.querySelector('.item-type')?.value || 'accessory';
-            const payMode = r.querySelector('.item-payment-select')?.value || 'cash';
-            const itemName = (r.querySelector('.item-search-input')?.value || '').trim();
+            const cIdx = r.dataset.customerIndex;
+            const itemLines = r.querySelectorAll('.cust-item-line');
+            const payMode = r.querySelector('.cust-payment-select')?.value || 'cash';
+            const splitBox = document.getElementById(`splitBox_${cIdx}`);
 
-            const rowTotal = (qty > 0 && price > 0) ? (qty * price) : 0;
+            let custBillTotal = 0;
+            let hasAnyItem = false;
 
-            if (itemName || price > 0) {
-                billsCount++;
-                if (itemType === 'phone') {
-                    phonesCount += qty;
-                } else {
-                    accCount += qty;
+            itemLines.forEach(l => {
+                const qty = parseInt(l.querySelector('.item-qty-input')?.value || 0);
+                const price = parseFloat(l.querySelector('.item-price-input')?.value || 0);
+                const itemType = l.querySelector('.item-type')?.value || 'accessory';
+                const itemName = (l.querySelector('.item-search-input')?.value || '').trim();
+
+                if (itemName || price > 0) {
+                    hasAnyItem = true;
+                    if (itemType === 'phone') {
+                        phonesCount += qty;
+                    } else {
+                        accCount += qty;
+                    }
+                    custBillTotal += (qty * price);
                 }
+            });
 
-                grandTotal += rowTotal;
+            if (hasAnyItem && custBillTotal > 0) {
+                billsCount++;
+                grandTotal += custBillTotal;
 
-                if (payMode === 'cash') cashTotal += rowTotal;
-                else if (payMode === 'upi') upiTotal += rowTotal;
-                else if (payMode === 'emi') emiTotal += rowTotal;
-                else if (payMode === 'udhari') khataTotal += rowTotal;
+                if (payMode === 'cash') {
+                    cashTotal += custBillTotal;
+                } else if (payMode === 'upi') {
+                    upiTotal += custBillTotal;
+                } else if (payMode === 'emi') {
+                    emiTotal += custBillTotal;
+                } else if (payMode === 'udhari') {
+                    khataTotal += custBillTotal;
+                } else if (payMode === 'cash+upi') {
+                    const cVal = parseFloat(splitBox?.querySelector('.split-cash-input')?.value) || 0;
+                    const uVal = parseFloat(splitBox?.querySelector('.split-upi-input')?.value) || 0;
+                    cashTotal += cVal;
+                    upiTotal += uVal;
+                } else if (payMode === 'cash+udhari') {
+                    const cVal = parseFloat(splitBox?.querySelector('.split-cash-input')?.value) || 0;
+                    const kVal = parseFloat(splitBox?.querySelector('.split-udhari-input')?.value) || 0;
+                    cashTotal += cVal;
+                    khataTotal += kVal;
+                } else if (payMode === 'upi+udhari') {
+                    const uVal = parseFloat(splitBox?.querySelector('.split-upi-input')?.value) || 0;
+                    const kVal = parseFloat(splitBox?.querySelector('.split-udhari-input')?.value) || 0;
+                    upiTotal += uVal;
+                    khataTotal += kVal;
+                }
             }
         });
 
@@ -594,51 +946,66 @@
     /* ── Default Payment Apply ── */
     function applyDefaultPaymentToAllRows() {
         const newMode = document.getElementById('masterDefaultPayment')?.value || 'cash';
-        const selects = document.querySelectorAll('.item-payment-select');
-        selects.forEach(s => {
-            s.value = newMode;
+        const rows = document.querySelectorAll('.day-customer-row');
+        rows.forEach(r => {
+            const cIdx = r.dataset.customerIndex;
+            const sel = r.querySelector('.cust-payment-select');
+            if (sel) {
+                sel.value = newMode;
+                onPaymentModeChange(cIdx, sel);
+            }
         });
         recalcAllSummaryMetrics();
     }
 
     /* ── Autocomplete Customer Helpers ── */
-    function onCustNameInput(rIdx, input) {
-        const row = document.getElementById(`daySaleRow_${rIdx}`);
+    function onCustNameInput(cIdx, input) {
+        const row = document.getElementById(`dayCustRow_${cIdx}`);
         if (!row) return;
         const val = (input.value || '').trim().toLowerCase();
         if (!val) return;
 
         const match = customersData.find(c => (c.name || '').toLowerCase() === val);
-        if (match && match.phone) {
+        if (match) {
             const phoneInput = row.querySelector('.cust-phone-input');
-            if (phoneInput && !phoneInput.value) {
+            if (phoneInput && !phoneInput.value && match.phone) {
                 phoneInput.value = match.phone;
+            }
+            const khataBadge = row.querySelector('.cust-khata-badge');
+            if (khataBadge && match.udhari_balance > 0) {
+                khataBadge.innerText = `Khata Due: ₹${parseFloat(match.udhari_balance).toFixed(2)}`;
+                khataBadge.style.display = 'inline-block';
             }
         }
     }
 
-    function onCustPhoneInput(rIdx, input) {
-        const row = document.getElementById(`daySaleRow_${rIdx}`);
+    function onCustPhoneInput(cIdx, input) {
+        const row = document.getElementById(`dayCustRow_${cIdx}`);
         if (!row) return;
         const val = (input.value || '').trim();
         if (!val) return;
 
         const match = customersData.find(c => (c.phone || '').trim() === val);
-        if (match && match.name) {
+        if (match) {
             const nameInput = row.querySelector('.cust-name-input');
-            if (nameInput && !nameInput.value) {
+            if (nameInput && !nameInput.value && match.name) {
                 nameInput.value = match.name;
+            }
+            const khataBadge = row.querySelector('.cust-khata-badge');
+            if (khataBadge && match.udhari_balance > 0) {
+                khataBadge.innerText = `Khata Due: ₹${parseFloat(match.udhari_balance).toFixed(2)}`;
+                khataBadge.style.display = 'inline-block';
             }
         }
     }
 
     /* ── Item Search & Dropdown Picker ── */
-    function onItemInputFocus(rIdx, input) {
-        onItemInputSearch(rIdx, input);
+    function onItemInputFocus(itIdx, input) {
+        onItemInputSearch(itIdx, input);
     }
 
-    function onItemInputSearch(rIdx, input) {
-        const dropdown = document.getElementById(`itemSearchDropdown_${rIdx}`);
+    function onItemInputSearch(itIdx, input) {
+        const dropdown = document.getElementById(`itemSearchDropdown_${itIdx}`);
         if (!dropdown) return;
 
         const term = (input.value || '').toLowerCase().trim();
@@ -681,7 +1048,7 @@
                 const imei = ph.imei_1 ? `IMEI: ${ph.imei_1}` : '';
                 const price = parseFloat(ph.selling_price || 0);
                 html += `
-                    <div class="item-search-item" onclick="onPickPhoneItem(${rIdx}, ${ph.id}, '${escapeHtml(title)}', ${price})">
+                    <div class="item-search-item" onclick="onPickPhoneItem(${itIdx}, ${ph.id}, '${escapeHtml(title)}', ${price})">
                         <div>
                             <div style="font-weight:700; color:#0F172A; font-size:12.5px;">${escapeHtml(title)}</div>
                             <div style="font-size:11px; color:#64748B;">
@@ -706,7 +1073,7 @@
                 const sColor = stock > 0 ? '#059669' : '#DC2626';
                 const sBg = stock > 0 ? '#ECFDF5' : '#FEF2F2';
                 html += `
-                    <div class="item-search-item" onclick="onPickPartItem(${rIdx}, ${pt.id}, '${escapeHtml(pt.name)}', ${price})">
+                    <div class="item-search-item" onclick="onPickPartItem(${itIdx}, ${pt.id}, '${escapeHtml(pt.name)}', ${price})">
                         <div>
                             <div style="font-weight:700; color:#0F172A; font-size:12.5px;">${escapeHtml(pt.name)}</div>
                             <div style="font-size:11px; color:#64748B; display:flex; gap:6px; align-items:center;">
@@ -726,32 +1093,40 @@
         dropdown.style.display = 'block';
     }
 
-    function onPickPartItem(rIdx, partId, partName, price) {
-        const row = document.getElementById(`daySaleRow_${rIdx}`);
-        if (!row) return;
+    function onPickPartItem(itIdx, partId, partName, price) {
+        const itemLine = document.getElementById(`itemLine_${itIdx}`);
+        if (!itemLine) return;
 
-        row.querySelector('.item-search-input').value = partName;
-        row.querySelector('.item-part-id').value = partId;
-        row.querySelector('.item-device-id').value = 0;
-        row.querySelector('.item-type').value = 'accessory';
-        row.querySelector('.item-price-input').value = price.toFixed(2);
+        itemLine.querySelector('.item-search-input').value = partName;
+        itemLine.querySelector('.item-part-id').value = partId;
+        itemLine.querySelector('.item-device-id').value = 0;
+        itemLine.querySelector('.item-type').value = 'accessory';
+        itemLine.querySelector('.item-price-input').value = price.toFixed(2);
 
-        document.getElementById(`itemSearchDropdown_${rIdx}`).style.display = 'none';
-        recalcRowTotal(rIdx);
+        document.getElementById(`itemSearchDropdown_${itIdx}`).style.display = 'none';
+
+        const custRow = itemLine.closest('.day-customer-row');
+        if (custRow) {
+            recalcCustomerTotal(custRow.dataset.customerIndex);
+        }
     }
 
-    function onPickPhoneItem(rIdx, deviceId, phoneTitle, price) {
-        const row = document.getElementById(`daySaleRow_${rIdx}`);
-        if (!row) return;
+    function onPickPhoneItem(itIdx, deviceId, phoneTitle, price) {
+        const itemLine = document.getElementById(`itemLine_${itIdx}`);
+        if (!itemLine) return;
 
-        row.querySelector('.item-search-input').value = phoneTitle;
-        row.querySelector('.item-part-id').value = 0;
-        row.querySelector('.item-device-id').value = deviceId;
-        row.querySelector('.item-type').value = 'phone';
-        row.querySelector('.item-price-input').value = price.toFixed(2);
+        itemLine.querySelector('.item-search-input').value = phoneTitle;
+        itemLine.querySelector('.item-part-id').value = 0;
+        itemLine.querySelector('.item-device-id').value = deviceId;
+        itemLine.querySelector('.item-type').value = 'phone';
+        itemLine.querySelector('.item-price-input').value = price.toFixed(2);
 
-        document.getElementById(`itemSearchDropdown_${rIdx}`).style.display = 'none';
-        recalcRowTotal(rIdx);
+        document.getElementById(`itemSearchDropdown_${itIdx}`).style.display = 'none';
+
+        const custRow = itemLine.closest('.day-customer-row');
+        if (custRow) {
+            recalcCustomerTotal(custRow.dataset.customerIndex);
+        }
     }
 
     // Close dropdown on outside click
@@ -761,14 +1136,13 @@
         }
     });
 
-    /* ── Keyboard Shortcut: Ctrl + Enter to add new row ── */
+    /* ── Keyboard Shortcut: Ctrl + Enter to add new customer row ── */
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
-            addSaleRow();
-            // Focus on newly added row's item search
+            addCustomerSaleRow();
             setTimeout(() => {
-                const rows = document.querySelectorAll('#daySalesRowsTbody .day-sale-row');
+                const rows = document.querySelectorAll('#daySalesRowsTbody .day-customer-row');
                 const lastRow = rows[rows.length - 1];
                 if (lastRow) {
                     lastRow.querySelector('.item-search-input')?.focus();
@@ -783,60 +1157,112 @@
         if (alertBox) alertBox.style.display = 'none';
 
         const btn = document.getElementById('btnSaveAllDaySales');
-        const rows = document.querySelectorAll('#daySalesRowsTbody .day-sale-row');
+        const custRows = document.querySelectorAll('#daySalesRowsTbody .day-customer-row');
 
         const validSalesPayload = [];
 
-        for (let i = 0; i < rows.length; i++) {
-            const r = rows[i];
+        for (let i = 0; i < custRows.length; i++) {
+            const r = custRows[i];
+            const cIdx = r.dataset.customerIndex;
             const num = i + 1;
             const custName = (r.querySelector('.cust-name-input')?.value || '').trim() || 'Walk-in Customer';
             const custPhone = (r.querySelector('.cust-phone-input')?.value || '').trim() || '9999999999';
-            const itemName = (r.querySelector('.item-search-input')?.value || '').trim();
-            const partId = parseInt(r.querySelector('.item-part-id')?.value || 0);
-            const deviceId = parseInt(r.querySelector('.item-device-id')?.value || 0);
-            const itemType = r.querySelector('.item-type')?.value || 'accessory';
-            const qty = parseInt(r.querySelector('.item-qty-input')?.value || 0);
-            const price = parseFloat(r.querySelector('.item-price-input')?.value || 0);
-            const paymentMode = r.querySelector('.item-payment-select')?.value || 'cash';
-            const refNote = (r.querySelector('.item-note-input')?.value || '').trim();
+            const paymentMode = r.querySelector('.cust-payment-select')?.value || 'cash';
+            const refNote = (r.querySelector('.cust-note-input')?.value || '').trim();
+            const splitBox = document.getElementById(`splitBox_${cIdx}`);
 
-            // Skip completely empty blank rows
-            if (!itemName && price <= 0 && partId === 0 && deviceId === 0) {
+            const itemLines = r.querySelectorAll('.cust-item-line');
+            const items = [];
+            let custTotal = 0;
+
+            for (let j = 0; j < itemLines.length; j++) {
+                const l = itemLines[j];
+                const itNum = j + 1;
+                const itemName = (l.querySelector('.item-search-input')?.value || '').trim();
+                const partId = parseInt(l.querySelector('.item-part-id')?.value || 0);
+                const deviceId = parseInt(l.querySelector('.item-device-id')?.value || 0);
+                const itemType = l.querySelector('.item-type')?.value || 'accessory';
+                const qty = parseInt(l.querySelector('.item-qty-input')?.value || 0);
+                const price = parseFloat(l.querySelector('.item-price-input')?.value || 0);
+
+                if (!itemName && partId === 0 && deviceId === 0 && price <= 0) {
+                    continue; // skip blank item
+                }
+
+                if (!itemName && partId === 0 && deviceId === 0) {
+                    showPageWarning(`Customer #${num} (${custName}), Item #${itNum}: Please enter or search an item name.`, l.querySelector('.item-search-input'));
+                    return;
+                }
+
+                if (isNaN(qty) || qty < 1) {
+                    showPageWarning(`Customer #${num} (${custName}), Item #${itNum}: Quantity must be at least 1.`, l.querySelector('.item-qty-input'));
+                    return;
+                }
+
+                if (isNaN(price) || price < 0) {
+                    showPageWarning(`Customer #${num} (${custName}), Item #${itNum}: Price cannot be negative.`, l.querySelector('.item-price-input'));
+                    return;
+                }
+
+                items.push({
+                    part_id: partId,
+                    device_id: deviceId,
+                    part_name: itemName,
+                    item_type: itemType,
+                    quantity: qty,
+                    unit_price: price,
+                });
+                custTotal += (qty * price);
+            }
+
+            // Skip customer row if completely empty
+            if (items.length === 0 && custTotal <= 0) {
                 continue;
             }
 
-            if (!itemName && partId === 0 && deviceId === 0) {
-                showPageWarning(`Row #${num}: Please enter or search an item name.`, r.querySelector('.item-search-input'));
+            if (items.length === 0) {
+                showPageWarning(`Customer #${num} (${custName}): Please add at least one valid item.`);
                 return;
             }
 
-            if (isNaN(qty) || qty < 1) {
-                showPageWarning(`Row #${num}: Quantity must be at least 1.`, r.querySelector('.item-qty-input'));
-                return;
-            }
+            // Validate split payment values
+            let cashAmount = 0;
+            let upiAmount = 0;
 
-            if (isNaN(price) || price < 0) {
-                showPageWarning(`Row #${num}: Price cannot be negative.`, r.querySelector('.item-price-input'));
-                return;
+            if (paymentMode === 'cash+upi') {
+                cashAmount = parseFloat(splitBox?.querySelector('.split-cash-input')?.value) || 0;
+                upiAmount = parseFloat(splitBox?.querySelector('.split-upi-input')?.value) || 0;
+                if (Math.abs((cashAmount + upiAmount) - custTotal) > 0.05) {
+                    showPageWarning(`Customer #${num} (${custName}): Split Cash (₹${cashAmount.toFixed(2)}) + UPI (₹${upiAmount.toFixed(2)}) total ₹${(cashAmount + upiAmount).toFixed(2)}, which must equal total bill ₹${custTotal.toFixed(2)}.`);
+                    return;
+                }
+            } else if (paymentMode === 'cash+udhari') {
+                cashAmount = parseFloat(splitBox?.querySelector('.split-cash-input')?.value) || 0;
+                if (cashAmount > custTotal) {
+                    showPageWarning(`Customer #${num} (${custName}): Cash paid (₹${cashAmount.toFixed(2)}) cannot exceed total bill (₹${custTotal.toFixed(2)}).`);
+                    return;
+                }
+            } else if (paymentMode === 'upi+udhari') {
+                upiAmount = parseFloat(splitBox?.querySelector('.split-upi-input')?.value) || 0;
+                if (upiAmount > custTotal) {
+                    showPageWarning(`Customer #${num} (${custName}): UPI paid (₹${upiAmount.toFixed(2)}) cannot exceed total bill (₹${custTotal.toFixed(2)}).`);
+                    return;
+                }
             }
 
             validSalesPayload.push({
                 customer_name: custName,
                 customer_phone: custPhone,
-                item_name: itemName,
-                item_type: itemType,
-                part_id: partId,
-                device_id: deviceId,
-                quantity: qty,
-                unit_price: price,
                 payment_mode: paymentMode,
+                cash_amount: cashAmount,
+                upi_amount: upiAmount,
                 ref_note: refNote,
+                items: items,
             });
         }
 
         if (validSalesPayload.length === 0) {
-            showPageWarning('Please enter at least one sale item before saving.');
+            showPageWarning('Please enter at least one customer sale entry before saving.');
             return;
         }
 
@@ -893,9 +1319,9 @@
 
     // Initialize with 3 rows on start (matching user screenshot)
     document.addEventListener('DOMContentLoaded', () => {
-        addSaleRow();
-        addSaleRow();
-        addSaleRow();
+        addCustomerSaleRow();
+        addCustomerSaleRow();
+        addCustomerSaleRow();
     });
 </script>
 <style>
