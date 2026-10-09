@@ -296,6 +296,16 @@
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @media print {
+            nav, footer, #adminShortcutModal, .no-print {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+        }
     </style>
 
     <!-- Tailwind CSS with Cal.com Tokens -->

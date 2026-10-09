@@ -5,18 +5,89 @@
 
 @section('subnav_title', 'Digital Receipt')
 
+@push('styles')
+<style>
+@media print {
+    /* Hide all web chrome, navigation, footers, shortcuts and buttons */
+    nav,
+    footer,
+    header,
+    .no-print,
+    .action-buttons-container,
+    .header-download-btn,
+    #waDesktopModal,
+    #adminShortcutModal {
+        display: none !important;
+    }
+
+    /* Page & paper setup */
+    @page {
+        size: a4 portrait;
+        margin: 10mm 14mm 10mm 14mm;
+    }
+
+    html, body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 11pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .receipt-wrapper {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: auto !important;
+    }
+
+    .receipt-container {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .receipt-card {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        padding: 24px 28px !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        page-break-inside: avoid;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: avoid;
+    }
+
+    tr, td, th {
+        page-break-inside: avoid;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+</style>
+@endpush
+
 @section('content')
-<div class="bg-apple-parchment min-h-[80vh] py-10 sm:py-16 px-4">
-    <div class="max-w-[640px] mx-auto">
+<div class="receipt-wrapper bg-apple-parchment min-h-[80vh] py-10 sm:py-16 px-4">
+    <div class="receipt-container max-w-[640px] mx-auto">
 
         <!-- Top Status Card -->
-        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/80 space-y-6">
+        <div class="receipt-card bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/80 space-y-6">
 
             <!-- Header -->
             <div class="flex items-start justify-between border-b border-slate-100 pb-6">
                 <div>
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-300 mb-2">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                         Official Paid Receipt
                     </span>
                     <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -26,9 +97,9 @@
                         Invoice #{{ $invoice_number }} &bull; {{ date('d M Y, h:i A', strtotime($sale->created_at)) }}
                     </p>
                 </div>
-                <a href="{{ $pdfUrl }}" download="Invoice-{{ $invoice_number }}.pdf" onclick="handleDownloadFeedback(this)"
-                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <a href="{{ $pdfUrl }}" target="_blank" download="Invoice-{{ $invoice_number }}.pdf" onclick="handleDownloadFeedback(this)"
+                   class="header-download-btn no-print inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-md transition-all cursor-pointer">
+                    <svg class="w-4 h-4 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <span>Download PDF</span>
                 </a>
             </div>
@@ -44,8 +115,8 @@
                 </div>
                 <div class="text-right">
                     <span class="text-slate-400 font-semibold block uppercase tracking-wider text-[10px]">Payment Mode</span>
-                    <span class="font-bold text-slate-800 text-sm block mt-0.5">{{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</span>
-                    <span class="text-slate-700 font-semibold text-xs block">Verified Payment</span>
+                    <span class="font-bold text-slate-800 text-sm block mt-0.5">{{ strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode)) }}</span>
+                    <span class="text-emerald-700 font-semibold text-xs block">Verified Payment</span>
                 </div>
             </div>
 
@@ -117,6 +188,26 @@
                                         <td class="p-3 text-right font-bold text-slate-900">₹{{ number_format(round($item->line_total)) }}</td>
                                     </tr>
                                 @endforeach
+
+                                @if(!empty($returnedItems) && count($returnedItems) > 0)
+                                    <tr class="bg-rose-50/70 border-t border-rose-200">
+                                        <td colspan="3" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-rose-700">
+                                            Returned Items / Item Restocks
+                                        </td>
+                                    </tr>
+                                    @foreach($returnedItems as $retItem)
+                                        <tr class="bg-rose-50/40 text-rose-800">
+                                            <td class="p-3">
+                                                <div class="font-semibold text-rose-800">{{ $retItem->part_name }} <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-200 text-rose-900 font-bold ml-1">RETURNED</span></div>
+                                                @if(!empty($retItem->reason))
+                                                    <div class="text-[10px] text-rose-600 font-medium">Reason: {{ $retItem->reason }}</div>
+                                                @endif
+                                            </td>
+                                            <td class="p-3 text-center font-medium text-rose-700">-{{ $retItem->quantity }}</td>
+                                            <td class="p-3 text-right font-bold text-rose-700">-₹{{ number_format(round($retItem->line_total)) }}</td>
+                                        </tr>
+                                    @endforeach
+                                @endif
                             </tbody>
                         </table>
                     </div>
@@ -139,6 +230,16 @@
                     <span>Total Bill Amount</span>
                     <span class="text-slate-900 font-black">₹{{ number_format(round($sale->total_amount)) }}</span>
                 </div>
+                @if(!empty($totalRefund) && (float)$totalRefund > 0)
+                    <div class="flex justify-between text-rose-700 font-bold">
+                        <span>Total Refund / Returned Deduction</span>
+                        <span>-₹{{ number_format(round($totalRefund)) }}</span>
+                    </div>
+                    <div class="flex justify-between font-black text-emerald-800 text-base border-b border-emerald-200 pb-2">
+                        <span>Net Payable Amount</span>
+                        <span>₹{{ number_format(round($netPayable ?? max(0, $sale->total_amount - $totalRefund))) }}</span>
+                    </div>
+                @endif
                 <div class="flex justify-between text-slate-600 pt-1">
                     <span>Amount Paid</span>
                     <span class="font-bold text-slate-800">₹{{ number_format(round($sale->amount_paid)) }}</span>
@@ -151,22 +252,33 @@
                 @endif
             </div>
 
-            <!-- Primary Action Buttons -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <a href="{{ $pdfUrl }}" download="Invoice-{{ $invoice_number }}.pdf" onclick="handleDownloadFeedback(this)"
-                   class="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <span>Download Official PDF</span>
+            <!-- Primary Action Buttons (Screen Only) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 no-print action-buttons-container">
+                <!-- 1. Download PDF Button -->
+                <a href="{{ $pdfUrl }}" target="_blank" download="Invoice-{{ $invoice_number }}.pdf" onclick="handleDownloadFeedback(this)"
+                   class="group w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-black active:bg-slate-950 text-white font-bold text-xs shadow-md shadow-slate-900/15 hover:shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer">
+                    <svg class="w-4 h-4 text-indigo-400 group-hover:text-indigo-300 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span>Download PDF</span>
                 </a>
+
+                <!-- 2. Send on WhatsApp Button -->
                 <button type="button" onclick="sharePublicPdfWhatsApp()"
-                        class="w-full py-3 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                    <span>Send on WhatsApp</span>
+                        class="group w-full py-3 px-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] active:bg-[#1da850] text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                    </svg>
+                    <span>Send WhatsApp</span>
                 </button>
+
+                <!-- 3. Print Receipt Button -->
                 <button type="button" onclick="window.print()"
-                        class="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition-all border border-slate-200">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                    Print Receipt
+                        class="group w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-xs shadow-md shadow-indigo-600/25 hover:shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer">
+                    <svg class="w-4 h-4 text-indigo-200 group-hover:text-white transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    <span class="tracking-wide">Print Receipt</span>
                 </button>
             </div>
 
@@ -179,7 +291,6 @@
         </div>
 
     </div>
-</div>
 </div>
 
 <!-- DESKTOP WHATSAPP GUIDANCE MODAL -->
@@ -214,14 +325,23 @@
 <script>
 let activeWaTargetUrl = '';
 
+// Auto-trigger print if requested via query string ?print=1
+if (new URLSearchParams(window.location.search).get('print') === '1') {
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            window.print();
+        }, 500);
+    });
+}
+
 function handleDownloadFeedback(el) {
     const span = el.querySelector('span');
     if (!span) return;
     const oldText = span.textContent;
-    span.textContent = 'Downloading PDF...';
+    span.textContent = 'Downloading...';
     setTimeout(() => {
         span.textContent = oldText;
-    }, 4500);
+    }, 4000);
 }
 
 async function sharePublicPdfWhatsApp() {
@@ -268,6 +388,14 @@ async function sharePublicPdfWhatsApp() {
 
     } catch (err) {
         console.warn('Share notice:', err);
+        // Fallback directly to WhatsApp with text link
+        let phoneParam = customerPhone;
+        if (phoneParam.length === 10) phoneParam = '91' + phoneParam;
+        const fallbackText = encodeURIComponent(`Invoice #${invoiceNumber} from {{ addslashes(store_name()) }}. View bill: ${window.location.href}`);
+        const fallbackUrl = phoneParam
+            ? `https://api.whatsapp.com/send?phone=${phoneParam}&text=${fallbackText}`
+            : `https://api.whatsapp.com/send?text=${fallbackText}`;
+        window.open(fallbackUrl, '_blank');
     }
 }
 

@@ -17,12 +17,13 @@ $app = new Illuminate\Foundation\Application(
 
 // Bind public path for shared hosting (e.g. Hostinger public_html)
 $baseDir = dirname(__DIR__);
+if (!is_dir($baseDir . '/public')) {
+    @mkdir($baseDir . '/public', 0755, true);
+}
 if (is_dir($baseDir . '/../public_html')) {
     $app->usePublicPath(realpath($baseDir . '/../public_html'));
 } elseif (is_dir($baseDir . '/public_html')) {
     $app->usePublicPath(realpath($baseDir . '/public_html'));
-} elseif (!is_dir($baseDir . '/public')) {
-    @mkdir($baseDir . '/public', 0755, true);
 }
 
 /*
