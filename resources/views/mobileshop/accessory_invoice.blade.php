@@ -40,6 +40,13 @@
         default => strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode))
     };
 
+    $retList = $returnedItems ?? [];
+    $retRefund = (float)($totalRefund ?? 0);
+    if ($retRefund <= 0 && (float)($sale->refund_amount ?? 0) > 0) {
+        $retRefund = (float)$sale->refund_amount;
+    }
+    $finalNetPayable = isset($netPayable) ? (float)$netPayable : max(0.00, round((float)$sale->total_amount - $retRefund, 2));
+
     $waMsg = "*{$storeName}*\n";
     $waMsg .= ($sale->bill_type === 'non_gst' ? 'Estimate #' : 'Tax Invoice #') . $sale->invoice_number . "\n\n";
     $waMsg .= "Dear *" . ($sale->customer_name ?: 'Customer') . "*,\n";
@@ -50,6 +57,13 @@
         $itemNames[] = "{$it->part_name} × {$it->quantity}";
     }
     $waMsg .= "• *Items:* " . implode(', ', $itemNames) . "\n";
+    if (!empty($retList) && count($retList) > 0) {
+        $retNames = [];
+        foreach ($retList as $rit) {
+            $retNames[] = "↩ {$rit->part_name} × {$rit->quantity} (-₹" . number_format($rit->line_total, 2) . ")";
+        }
+        $waMsg .= "• *Returned Items:* " . implode(', ', $retNames) . "\n";
+    }
     if ($accDiscount > 0) {
         $waMsg .= "• *Full Price:* ₹" . number_format(round($accGross)) . "\n";
         $waMsg .= "• *Discount (Custom Price):* -₹" . number_format(round($accDiscount)) . "\n";
@@ -59,7 +73,13 @@
         $waMsg .= "• *Taxable Value:* ₹" . number_format($taxable, 2) . "\n";
         $waMsg .= "• *GST (18%):* ₹" . number_format((float)$sale->tax_amount, 2) . "\n";
     }
-    $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . $displayMode . ")\n";
+    if ($retRefund > 0) {
+        $waMsg .= "• *Billed Total:* ₹" . number_format(round($sale->total_amount)) . "\n";
+        $waMsg .= "• *Return Refund:* -₹" . number_format(round($retRefund)) . "\n";
+        $waMsg .= "• *Net Payable:* ₹" . number_format(round($finalNetPayable)) . " (" . $displayMode . ")\n";
+    } else {
+        $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . $displayMode . ")\n";
+    }
     $waMsg .= "• *Paid Now:* ₹" . number_format(round($sale->amount_paid)) . "\n";
     if ($sale->udhari_amount > 0) {
         $waMsg .= "• *Added to Khata (Udhari Due):* ₹" . number_format(round($sale->udhari_amount)) . "\n";
@@ -153,9 +173,19 @@
                     <div style="font-size: 18px; font-weight: 800; color: #111827; letter-spacing: 0.5px; text-transform: uppercase;">
                         {{ $sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE' }}
                     </div>
-                    <div style="font-size: 10.5px; color: #6B7280; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        Original for Recipient
-                    </div>
+                    @if($sale->status === 'voided')
+                        <div style="display:inline-block; background:#FEE2E2; border:1px solid #FECDD3; color:#DC2626; font-size:10px; font-weight:800; padding:2px 8px; border-radius:4px; text-transform:uppercase; margin-top:2px;">
+                            ● FULL RETURN / VOIDED
+                        </div>
+                    @elseif($sale->status === 'partially_returned' || $retRefund > 0)
+                        <div style="display:inline-block; background:#FEF3C7; border:1px solid #FDE68A; color:#B45309; font-size:10px; font-weight:800; padding:2px 8px; border-radius:4px; text-transform:uppercase; margin-top:2px;">
+                            ● PARTIALLY RETURNED
+                        </div>
+                    @else
+                        <div style="font-size: 10.5px; color: #6B7280; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Original for Recipient
+                        </div>
+                    @endif
                     <div style="font-size: 14px; font-weight: 800; color: #111827; margin-top: 6px;">
                         Invoice #: <span style="font-family: monospace;">{{ $sale->invoice_number }}</span>
                     </div>
@@ -225,6 +255,32 @@
                     <td style="padding: 10px; text-align: right; font-family: monospace; font-weight: 800; font-size: 12px; color: #111827;">{{ number_format($it->line_total, 2) }}</td>
                 </tr>
                 @endforeach
+
+                @if(!empty($retList) && count($retList) > 0)
+                <tr style="background: #FEF2F2; border-top: 1.5px solid #FECDD3; border-bottom: 1px solid #FECDD3;">
+                    <td colspan="6" style="padding: 7px 10px; font-weight: 800; font-size: 10px; color: #991B1B; text-transform: uppercase; letter-spacing: 0.5px;">
+                        ↩ Returned Items / Credit Memo Adjustments
+                    </td>
+                </tr>
+                @foreach($retList as $rIdx => $rIt)
+                <tr style="border-bottom: 1px solid #FECDD3; background: #FFFBFB;">
+                    <td style="padding: 8px 10px; text-align: center; font-weight: 800; color: #DC2626;">R{{ $rIdx + 1 }}</td>
+                    <td style="padding: 8px 10px;">
+                        <div style="font-weight: 800; font-size: 12px; color: #DC2626;">
+                            ↩ {{ $rIt->part_name }}
+                            <span style="font-size: 9px; background: #FEE2E2; color: #991B1B; padding: 1px 6px; border-radius: 4px; font-weight: 800; text-transform: uppercase; margin-left: 4px;">Returned</span>
+                        </div>
+                        <div style="font-size: 9.5px; color: #991B1B; margin-top: 2px;">
+                            Reason: {{ $rIt->reason ?? 'Customer Return' }}@if(!empty($rIt->return_date)) &bull; {{ date('d M Y', strtotime($rIt->return_date)) }}@endif
+                        </div>
+                    </td>
+                    <td style="padding: 8px 10px; text-align: center; font-family: monospace; font-size: 11px; color: #991B1B;">85177090</td>
+                    <td style="padding: 8px 10px; text-align: center; font-weight: 800; color: #DC2626;">-{{ $rIt->quantity }}</td>
+                    <td style="padding: 8px 10px; text-align: right; font-family: monospace; color: #DC2626;">₹{{ number_format($rIt->unit_price, 2) }}</td>
+                    <td style="padding: 8px 10px; text-align: right; font-family: monospace; font-weight: 900; font-size: 12px; color: #DC2626;">-₹{{ number_format($rIt->line_total, 2) }}</td>
+                </tr>
+                @endforeach
+                @endif
             </tbody>
         </table>
 
@@ -294,10 +350,27 @@
                             <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 600; color: #111827;">₹{{ number_format($sale->tax_amount, 2) }}</td>
                         </tr>
                         @endif
+
+                        @if($retRefund > 0)
+                        <tr style="border-bottom: 1px solid #E5E7EB;">
+                            <td style="padding: 7px 10px; background: #F9FAFB; color: #4B5563; width: 55%;">Total Items Billed (Gross)</td>
+                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #111827;">₹{{ number_format($sale->total_amount, 2) }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #FECDD3; background: #FEF2F2;">
+                            <td style="padding: 7px 10px; color: #DC2626; font-weight: 800;">Less: Returned Items (-)</td>
+                            <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 900; color: #DC2626;">-₹{{ number_format($retRefund, 2) }}</td>
+                        </tr>
+                        <tr style="background: #F3F4F6; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
+                            <td style="padding: 9px 10px; font-weight: 800; font-size: 13px; color: #111827;">Net Payable Amount</td>
+                            <td style="padding: 9px 10px; text-align: right; font-weight: 900; font-size: 15px; font-family: monospace; color: #111827;">₹{{ number_format($finalNetPayable, 2) }}</td>
+                        </tr>
+                        @else
                         <tr style="background: #F3F4F6; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
                             <td style="padding: 9px 10px; font-weight: 800; font-size: 13px; color: #111827;">Grand Total</td>
                             <td style="padding: 9px 10px; text-align: right; font-weight: 900; font-size: 15px; font-family: monospace; color: #111827;">₹{{ number_format($sale->total_amount, 2) }}</td>
                         </tr>
+                        @endif
+
                         <tr style="border-bottom: 1px solid #E5E7EB;">
                             <td style="padding: 7px 10px; background: #F9FAFB; color: #111827; font-weight: 700;">Amount Paid Now</td>
                             <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 700; color: #16A34A;">₹{{ number_format($sale->amount_paid, 2) }}</td>
@@ -362,6 +435,18 @@
                 <span>₹{{ number_format($it->line_total, 2) }}</span>
             </div>
             @endforeach
+
+            @if(!empty($retList) && count($retList) > 0)
+                <div style="border-top: 1px dashed #FECDD3; margin-top: 4px; padding-top: 4px; color: #DC2626;">
+                    <div style="font-size: 9.5px; font-weight: 800; text-transform: uppercase;">Returned Items:</div>
+                    @foreach($retList as $rIt)
+                    <div style="display:flex; justify-content:space-between; font-weight: 800;">
+                        <span>↩ {{ $rIt->part_name }} (-x{{ $rIt->quantity }})</span>
+                        <span>-₹{{ number_format($rIt->line_total, 2) }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 6px; margin-top: 6px; font-size:10px;">
             @if($accDiscount > 0)
@@ -372,7 +457,15 @@
             @if($sale->bill_type === 'gst')
             <div style="display:flex; justify-content:space-between;"><span>GST (18%):</span><span>₹{{ number_format($sale->tax_amount, 2) }}</span></div>
             @endif
-            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>GRAND TOTAL:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
+
+            @if($retRefund > 0)
+                <div style="display:flex; justify-content:space-between;"><span>Billed Total:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:700; color:#DC2626;"><span>Less Returns:</span><span>-₹{{ number_format($retRefund, 2) }}</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>NET TOTAL:</span><span>₹{{ number_format($finalNetPayable, 2) }}</span></div>
+            @else
+                <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>GRAND TOTAL:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
+            @endif
+
             <div style="display:flex; justify-content:space-between; font-weight:700; color:#16A34A;"><span>PAID NOW:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
             @if($sale->udhari_amount > 0)
                 <div style="display:flex; justify-content:space-between; font-weight:800; color:#DC2626;"><span>KHATA / UDHARI DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>

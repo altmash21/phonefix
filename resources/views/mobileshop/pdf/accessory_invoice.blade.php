@@ -20,6 +20,13 @@
         'credit_udhari', 'udhari', 'full_khata' => 'Full Khata (Udhari)',
         default => strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode))
     };
+
+    $retList = $returnedItems ?? [];
+    $retRefund = (float)($totalRefund ?? 0);
+    if ($retRefund <= 0 && (float)($sale->refund_amount ?? 0) > 0) {
+        $retRefund = (float)$sale->refund_amount;
+    }
+    $finalNetPayable = isset($netPayable) ? (float)$netPayable : max(0.00, round((float)$sale->total_amount - $retRefund, 2));
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -231,6 +238,27 @@
                 <td class="text-right font-mono" style="font-weight: bold;">{{ number_format($it->line_total, 2) }}</td>
             </tr>
             @endforeach
+
+            @if(!empty($retList) && count($retList) > 0)
+                <tr style="background-color: #fef2f2;">
+                    <td colspan="6" style="padding: 5px 8px; font-weight: bold; font-size: 9px; color: #991b1b; text-transform: uppercase; border-top: 1px solid #fecdd3; border-bottom: 1px solid #fecdd3;">
+                        Returned Items / Credit Adjustments
+                    </td>
+                </tr>
+                @foreach($retList as $rIdx => $rIt)
+                <tr style="background-color: #fffbfb; border-bottom: 1px solid #fecdd3; color: #dc2626;">
+                    <td class="text-center font-mono" style="color: #dc2626; font-weight: bold;">R{{ $rIdx + 1 }}</td>
+                    <td>
+                        <div style="font-weight: bold; font-size: 11px; color: #dc2626;">{{ $rIt->part_name }} (Returned)</div>
+                        <div style="font-size: 8px; color: #991b1b;">Reason: {{ $rIt->reason ?? 'Customer Return' }}@if(!empty($rIt->return_date)) &bull; {{ date('d M Y', strtotime($rIt->return_date)) }}@endif</div>
+                    </td>
+                    <td class="text-center font-mono" style="font-size: 9.5px; color: #991b1b;">85177090</td>
+                    <td class="text-center font-mono" style="font-weight: bold; color: #dc2626;">-{{ $rIt->quantity }}</td>
+                    <td class="text-right font-mono" style="color: #dc2626;">{{ number_format($rIt->unit_price, 2) }}</td>
+                    <td class="text-right font-mono" style="font-weight: bold; color: #dc2626;">-{{ number_format($rIt->line_total, 2) }}</td>
+                </tr>
+                @endforeach
+            @endif
         </tbody>
     </table>
 
@@ -298,10 +326,27 @@
                         <td style="text-align: right;" class="font-mono">{{ number_format($sale->tax_amount, 2) }}</td>
                     </tr>
                     @endif
+
+                    @if($retRefund > 0)
+                    <tr>
+                        <td style="background-color: #f9fafb; color: #4b5563; width: 55%;">Total Items Billed (Gross)</td>
+                        <td style="text-align: right;" class="font-mono">Rs. {{ number_format($sale->total_amount, 2) }}</td>
+                    </tr>
+                    <tr style="background-color: #fef2f2;">
+                        <td style="color: #dc2626; font-weight: bold;">Less: Returned Items (-)</td>
+                        <td style="text-align: right; color: #dc2626; font-weight: bold;" class="font-mono">-Rs. {{ number_format($retRefund, 2) }}</td>
+                    </tr>
+                    <tr style="background-color: #f3f4f6; font-size: 12px; font-weight: bold; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
+                        <td style="color: #111827;">Net Payable Amount</td>
+                        <td style="text-align: right; color: #111827;" class="font-mono">Rs. {{ number_format($finalNetPayable, 2) }}</td>
+                    </tr>
+                    @else
                     <tr style="background-color: #f3f4f6; font-size: 12px; font-weight: bold; border-top: 1.5px solid #374151; border-bottom: 1.5px solid #374151;">
                         <td style="color: #111827;">Invoice Grand Total</td>
                         <td style="text-align: right; color: #111827;" class="font-mono">Rs. {{ number_format($sale->total_amount, 2) }}</td>
                     </tr>
+                    @endif
+
                     <tr>
                         <td style="background-color: #f9fafb; color: #111827; font-weight: bold;">Amount Paid Now</td>
                         <td style="text-align: right; color: #16a34a; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->amount_paid, 2) }}</td>

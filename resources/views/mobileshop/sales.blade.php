@@ -766,9 +766,26 @@
                         </td>
                         <td>
                             <span class="badge badge-blue" style="text-transform:uppercase; font-size:10px;">{{ $asale->payment_mode }}</span>
+                            @if(($asale->status ?? '') === 'partially_returned')
+                                <span class="badge" style="background:#FEF3C7; color:#B45309; font-size:9.5px; font-weight:800; display:block; margin-top:3px;">Partially Returned</span>
+                            @elseif(($asale->status ?? '') === 'voided')
+                                <span class="badge" style="background:#FEE2E2; color:#DC2626; font-size:9.5px; font-weight:800; display:block; margin-top:3px;">Returned</span>
+                            @endif
                         </td>
                         <td style="text-align:right; font-weight:900; color:#0F172A; font-size:14px;">
-                            ₹{{ number_format($asale->total_amount, 2) }}
+                            @php
+                                $refAmt = (float)($asale->refund_amount ?? 0);
+                            @endphp
+                            @if(($asale->status ?? '') === 'voided')
+                                <span style="text-decoration:line-through; font-size:11.5px; color:#94A3B8;">₹{{ number_format($asale->total_amount, 2) }}</span>
+                                <div style="color:#DC2626; font-size:12px; font-weight:800;">₹0.00 <span style="font-size:9.5px;">(Returned)</span></div>
+                            @elseif(($asale->status ?? '') === 'partially_returned' || $refAmt > 0)
+                                <span style="text-decoration:line-through; font-size:11px; color:#94A3B8;">₹{{ number_format($asale->total_amount, 2) }}</span>
+                                <div style="color:#0F172A; font-size:13px; font-weight:900;">₹{{ number_format(max(0, (float)$asale->total_amount - $refAmt), 2) }}</div>
+                                <div style="font-size:10px; color:#DC2626; font-weight:700;">-₹{{ number_format($refAmt, 2) }} ret</div>
+                            @else
+                                ₹{{ number_format($asale->total_amount, 2) }}
+                            @endif
                         </td>
                         <td style="text-align:center; white-space:nowrap;">
                             <div style="display:inline-flex; gap:6px; align-items:center;">
@@ -833,6 +850,8 @@
                                 $itemsSummary .= ' (+' . (count($asale->items) - 2) . ' more)';
                             }
                         }
+
+                        $refAmt = (float)($asale->refund_amount ?? 0);
                     @endphp
                     <div class="sales-flat-row sales-row" data-type="accessory" data-date="{{ \Carbon\Carbon::parse($asale->created_at)->format('Y-m-d') }}">
                         <!-- Row 1: Invoice # + Payment Badge + Total Amount -->
@@ -842,8 +861,19 @@
                             </a>
                             <span class="pay-badge" style="background:{{ $badgeBg }}; color:{{ $badgeColor }};">
                                 {{ $asale->payment_mode }}
+                                @if(($asale->status ?? '') === 'partially_returned')
+                                    • Ret
+                                @elseif(($asale->status ?? '') === 'voided')
+                                    • Void
+                                @endif
                             </span>
-                            <div class="row-amount">₹{{ number_format($asale->total_amount, 2) }}</div>
+                            @if(($asale->status ?? '') === 'voided')
+                                <div class="row-amount" style="color:#DC2626; text-decoration:line-through; font-size:12px;">₹{{ number_format($asale->total_amount, 2) }}</div>
+                            @elseif(($asale->status ?? '') === 'partially_returned' || $refAmt > 0)
+                                <div class="row-amount" style="color:#0F172A;">₹{{ number_format(max(0, (float)$asale->total_amount - $refAmt), 2) }}</div>
+                            @else
+                                <div class="row-amount">₹{{ number_format($asale->total_amount, 2) }}</div>
+                            @endif
                         </div>
 
                         <!-- Row 2: Customer Name + Phone -->
@@ -903,8 +933,8 @@
             <div class="card-body" style="padding:20px;">
                 <form id="salesReturnForm" method="POST" action="">
                     @csrf
-                    <input type="hidden" name="reason_label" id="returnReasonLabel" value="Defective / Faulty Item (Dead on Arrival)">
-                    <input type="hidden" name="should_restock" id="returnShouldRestock" value="0">
+                    <input type="hidden" name="reason_label" id="returnReasonLabel" value="Customer Return (Restock to Store Inventory)">
+                    <input type="hidden" name="should_restock" id="returnShouldRestock" value="1">
 
                     <!-- Invoice & Refund Summary -->
                     <div style="background:#FEF2F2; border:1px solid #FECDD3; border-radius:8px; padding:12px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
@@ -932,28 +962,29 @@
                         </div>
                     </div>
 
-                    <!-- 6 Return Reason Options -->
+                    <!-- 7 Return Reason Options (Restock Default) -->
                     <div class="form-group" style="margin-bottom:12px;">
                         <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:12px; margin-bottom:4px;">Select Reason for Return</label>
                         <select name="return_reason_code" id="returnReasonSelect" class="form-control" onchange="onReturnReasonSelectChange(this.value)" style="font-weight:700; color:#0F172A; border-color:#CBD5E1;">
-                            <option value="defective_doa" data-restock="0" data-label="Defective / Faulty Item (Dead on Arrival)">1. Defective / Faulty Item (Dead on Arrival)</option>
-                            <option value="model_mismatch" data-restock="1" data-label="Incorrect Model / Size Mismatch">2. Incorrect Model / Size Mismatch</option>
+                            <option value="customer_return" data-restock="1" data-label="Customer Return (Restock to Store Inventory)" selected>1. Customer Return (Restock to Store Inventory)</option>
+                            <option value="exchange" data-restock="1" data-label="Exchange for Different Product">2. Exchange for Different Product</option>
                             <option value="mind_change" data-restock="1" data-label="Customer Changed Mind / Unwanted">3. Customer Changed Mind / Unwanted</option>
-                            <option value="billing_error" data-restock="1" data-label="Billing Error / Duplicate Entry">4. Billing Error / Duplicate Entry</option>
-                            <option value="exchange" data-restock="1" data-label="Exchange for Different Product">5. Exchange for Different Product</option>
-                            <option value="warranty_issue" data-restock="0" data-label="Warranty / Quality Issue">6. Warranty / Quality Issue</option>
+                            <option value="model_mismatch" data-restock="1" data-label="Incorrect Model / Size Mismatch">4. Incorrect Model / Size Mismatch</option>
+                            <option value="billing_error" data-restock="1" data-label="Billing Error / Duplicate Entry">5. Billing Error / Duplicate Entry</option>
+                            <option value="defective_doa" data-restock="0" data-label="Defective / Faulty Item (Dead on Arrival)">6. Defective / Faulty Item (Dead on Arrival)</option>
+                            <option value="warranty_issue" data-restock="0" data-label="Warranty / Quality Issue">7. Warranty / Quality Issue</option>
                         </select>
                     </div>
 
                     <!-- Dynamic Action Preview Notice -->
-                    <div id="returnActionNotice" style="background:#FFF1F2; border:1px solid #FECDD3; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#991B1B; display:flex; align-items:flex-start; gap:8px;">
-                        <i data-lucide="alert-triangle" style="width:16px;height:16px; flex-shrink:0; margin-top:1px;"></i>
-                        <span id="returnActionText"><strong>Defective / Damaged Item:</strong> Item will NOT be added to sellable stock. Marked as Quarantined / Scrap.</span>
+                    <div id="returnActionNotice" style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12px; color:#166534; display:flex; align-items:flex-start; gap:8px;">
+                        <i data-lucide="check-circle" style="width:16px;height:16px; flex-shrink:0; margin-top:1px; color:#16A34A;"></i>
+                        <span id="returnActionText"><strong>Customer Return:</strong> Item WILL be added back into sellable store inventory and stock count increased.</span>
                     </div>
 
                     <!-- Restock Override Checkbox -->
                     <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-                        <input type="checkbox" id="chkRestockOverride" onchange="onRestockOverrideChange(this.checked)" style="width:16px; height:16px; cursor:pointer;">
+                        <input type="checkbox" id="chkRestockOverride" checked onchange="onRestockOverrideChange(this.checked)" style="width:16px; height:16px; cursor:pointer;">
                         <label for="chkRestockOverride" style="font-size:12px; font-weight:700; color:#1E293B; margin-bottom:0; cursor:pointer;">
                             Add items back into sellable store inventory
                         </label>
@@ -1542,16 +1573,16 @@
     });
 
     const returnReasonActions = {
-        'defective_doa': {
-            restock: false,
-            label: 'Defective / Faulty Item (Dead on Arrival)',
-            notice: '<strong>Defective / Damaged Item:</strong> Item will NOT be added to sellable stock. Quarantined as damaged / scrap.',
-            bg: '#FFF1F2', border: '#FECDD3', text: '#991B1B'
-        },
-        'model_mismatch': {
+        'customer_return': {
             restock: true,
-            label: 'Incorrect Model / Size Mismatch',
-            notice: '<strong>Model Mismatch (Brand New Item):</strong> Item will be restocked into available sellable inventory.',
+            label: 'Customer Return (Restock to Store Inventory)',
+            notice: '<strong>Customer Return:</strong> Item WILL be added back into sellable store inventory and stock count increased.',
+            bg: '#F0FDF4', border: '#BBF7D0', text: '#166534'
+        },
+        'exchange': {
+            restock: true,
+            label: 'Exchange for Different Product',
+            notice: '<strong>Exchange Return:</strong> Original item restocked to inventory so customer can be billed for exchange.',
             bg: '#F0FDF4', border: '#BBF7D0', text: '#166534'
         },
         'mind_change': {
@@ -1560,17 +1591,23 @@
             notice: '<strong>Unwanted Return (Unopened):</strong> Item will be restocked into available sellable inventory.',
             bg: '#F0FDF4', border: '#BBF7D0', text: '#166534'
         },
+        'model_mismatch': {
+            restock: true,
+            label: 'Incorrect Model / Size Mismatch',
+            notice: '<strong>Model Mismatch (Brand New Item):</strong> Item will be restocked into available sellable inventory.',
+            bg: '#F0FDF4', border: '#BBF7D0', text: '#166534'
+        },
         'billing_error': {
             restock: true,
             label: 'Billing Error / Duplicate Entry',
             notice: '<strong>Billing Mistake Reversal:</strong> Mistake voided and item stock restored to original inventory count.',
             bg: '#F0FDF4', border: '#BBF7D0', text: '#166534'
         },
-        'exchange': {
-            restock: true,
-            label: 'Exchange for Different Product',
-            notice: '<strong>Exchange Return:</strong> Original item restocked to inventory so customer can be billed for exchange.',
-            bg: '#F0FDF4', border: '#BBF7D0', text: '#166534'
+        'defective_doa': {
+            restock: false,
+            label: 'Defective / Faulty Item (Dead on Arrival)',
+            notice: '<strong>Defective / Damaged Item:</strong> Item will NOT be added to sellable stock. Quarantined as damaged / scrap.',
+            bg: '#FFF1F2', border: '#FECDD3', text: '#991B1B'
         },
         'warranty_issue': {
             restock: false,
@@ -1581,7 +1618,7 @@
     };
 
     function onReturnReasonSelectChange(reasonCode) {
-        const info = returnReasonActions[reasonCode] || returnReasonActions['defective_doa'];
+        const info = returnReasonActions[reasonCode] || returnReasonActions['customer_return'];
         document.getElementById('returnReasonLabel').value = info.label;
         document.getElementById('returnShouldRestock').value = info.restock ? '1' : '0';
         document.getElementById('chkRestockOverride').checked = info.restock;
@@ -1637,10 +1674,10 @@
             { id: 1, part_name: 'Standard Order Item', quantity: 1, unit_price: parseFloat(amount.replace(/,/g, '')) || 0, line_total: parseFloat(amount.replace(/,/g, '')) || 0 }
         ];
 
-        // Reset to default option
-        document.getElementById('returnReasonSelect').value = 'defective_doa';
+        // Reset to default option: Customer Return (Restock)
+        document.getElementById('returnReasonSelect').value = 'customer_return';
         document.getElementById('returnReasonInput').value = '';
-        onReturnReasonSelectChange('defective_doa');
+        onReturnReasonSelectChange('customer_return');
 
         // Render line items
         itemsList.innerHTML = '';

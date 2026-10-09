@@ -252,10 +252,73 @@ class MobileShopInvoiceResolver
             ->where('accessory_sale_id', $id)
             ->get();
 
-        $amountInWords = self::amountToWords($sale->total_amount);
+        // Resolve Returned Items & Refund Calculations
+        $returnedItems = [];
+        $totalRefund = 0.0;
+
+        if (!empty($sale->return_details)) {
+            $batches = is_string($sale->return_details) ? json_decode($sale->return_details, true) : $sale->return_details;
+            if (is_array($batches)) {
+                foreach ($batches as $batch) {
+                    $bDate = $batch['date'] ?? null;
+                    $bReason = $batch['reason'] ?? 'Customer Return';
+                    foreach ($batch['items'] ?? [] as $bItem) {
+                        $unitP = (float) ($bItem['unit_price'] ?? 0);
+                        $qty = (int) ($bItem['quantity'] ?? $bItem['qty'] ?? 1);
+                        $lTot = (float) ($bItem['line_total'] ?? ($unitP * $qty));
+                        $returnedItems[] = (object) [
+                            'item_id'     => $bItem['item_id'] ?? null,
+                            'part_name'   => $bItem['part_name'] ?? 'Returned Item',
+                            'quantity'    => $qty,
+                            'unit_price'  => $unitP,
+                            'line_total'  => $lTot,
+                            'reason'      => $bReason,
+                            'return_date' => $bDate,
+                        ];
+                        $totalRefund += $lTot;
+                    }
+                }
+            }
+        }
+
+        // Fallback: If no return_details JSON, extract from items returned_qty
+        if (empty($returnedItems)) {
+            foreach ($items as $it) {
+                $rQty = (int) ($it->returned_qty ?? 0);
+                if ($rQty <= 0 && $sale->status === 'voided') {
+                    $rQty = $it->quantity;
+                }
+                if ($rQty > 0) {
+                    $unitP = (float) $it->unit_price > 0 ? (float) $it->unit_price : ((float) $it->line_total / max(1, $it->quantity));
+                    $lTot = round($unitP * $rQty, 2);
+                    $returnedItems[] = (object) [
+                        'item_id'     => $it->id,
+                        'part_name'   => $it->part_name,
+                        'quantity'    => $rQty,
+                        'unit_price'  => $unitP,
+                        'line_total'  => $lTot,
+                        'reason'      => $sale->void_reason ?: 'Customer Return',
+                        'return_date' => $sale->voided_at,
+                    ];
+                    $totalRefund += $lTot;
+                }
+            }
+        }
+
+        if ($totalRefund <= 0 && (float) ($sale->refund_amount ?? 0) > 0) {
+            $totalRefund = (float) $sale->refund_amount;
+        }
+        if ($totalRefund <= 0 && $sale->status === 'voided') {
+            $totalRefund = (float) $sale->total_amount;
+        }
+
+        $totalRefund = round($totalRefund, 2);
+        $netPayable = max(0.00, round((float) $sale->total_amount - $totalRefund, 2));
+
+        $amountInWords = self::amountToWords($netPayable > 0 ? $netPayable : $sale->total_amount);
         $customerStatement = $sale->customer_id ? self::buildCustomerLedgerStatement($companyId, (int) $sale->customer_id) : null;
 
-        return compact('sale', 'items', 'amountInWords', 'customerStatement');
+        return compact('sale', 'items', 'returnedItems', 'totalRefund', 'netPayable', 'amountInWords', 'customerStatement');
     }
 
     /**
