@@ -15,6 +15,16 @@ $app = new Illuminate\Foundation\Application(
     $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );
 
+// Bind public path for shared hosting (e.g. Hostinger public_html)
+$baseDir = dirname(__DIR__);
+if (is_dir($baseDir . '/../public_html')) {
+    $app->usePublicPath(realpath($baseDir . '/../public_html'));
+} elseif (is_dir($baseDir . '/public_html')) {
+    $app->usePublicPath(realpath($baseDir . '/public_html'));
+} elseif (!is_dir($baseDir . '/public')) {
+    @mkdir($baseDir . '/public', 0755, true);
+}
+
 /*
 |--------------------------------------------------------------------------
 | Bind Important Interfaces

@@ -35,6 +35,17 @@ class App extends Provider
      */
     public function boot()
     {
+        // Resolve public directory or public_html for DomPDF and asset resolution
+        if (!is_dir(public_path())) {
+            if (is_dir(base_path('../public_html'))) {
+                $this->app->usePublicPath(realpath(base_path('../public_html')));
+            } elseif (is_dir(base_path('public_html'))) {
+                $this->app->usePublicPath(realpath(base_path('public_html')));
+            } else {
+                @mkdir(base_path('public'), 0755, true);
+            }
+        }
+
         // Laravel db fix
         Schema::defaultStringLength(191);
 

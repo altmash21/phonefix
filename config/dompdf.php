@@ -15,7 +15,21 @@ return [
     */
     'show_warnings' => false,   // Throw an Exception on warnings from dompdf
 
-    'public_path' => null,  // Override the public path if needed
+    'public_path' => env('DOMPDF_PUBLIC_PATH', (function () {
+        $candidates = [
+            function_exists('public_path') ? public_path() : null,
+            base_path('../public_html'),
+            base_path('public_html'),
+            base_path('public'),
+            base_path(),
+        ];
+        foreach ($candidates as $cand) {
+            if ($cand && ($real = realpath($cand)) && is_dir($real)) {
+                return $real;
+            }
+        }
+        return base_path();
+    })()),
 
     /*
      * Dejavu Sans font is missing glyphs for converted entities, turn it off if you need to show € and £.
