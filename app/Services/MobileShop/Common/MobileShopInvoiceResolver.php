@@ -11,7 +11,10 @@ class MobileShopInvoiceResolver
      */
     public static function amountToWords($number): string
     {
-        $decimal = round($number - ($no = floor($number)), 2) * 100;
+        $number = abs((float) $number);
+        $no = (int) floor($number);
+        $decimal = (int) round(($number - $no) * 100);
+
         $words = [
             0 => '', 1 => 'One', 2 => 'Two', 3 => 'Three', 4 => 'Four', 5 => 'Five',
             6 => 'Six', 7 => 'Seven', 8 => 'Eight', 9 => 'Nine', 10 => 'Ten',
@@ -21,27 +24,36 @@ class MobileShopInvoiceResolver
             80 => 'Eighty', 90 => 'Ninety'
         ];
         $digits = ['', 'Hundred', 'Thousand', 'Lakh', 'Crore'];
-        $no = (int)$no;
+
         $str = [];
-        $n_length = strlen((string)$no);
+        $n_length = strlen((string) $no);
         $i = 0;
         while ($i < $n_length) {
             $divider = ($i == 2) ? 10 : 100;
-            $number = floor($no % $divider);
+            $unit = floor($no % $divider);
             $no = floor($no / $divider);
             $i += ($divider == 10) ? 1 : 2;
-            if ($number) {
-                $plural = (($counter = count($str)) && $number > 9) ? 's' : null;
-                $hundred = ($counter == 1 && $str[0]) ? ' and ' : null;
-                $str[] = ($number < 21) ? $words[$number] . ' ' . $digits[$counter] . $plural . ' ' . $hundred
-                    : $words[floor($number / 10) * 10] . ' ' . $words[$number % 10] . ' ' . $digits[$counter] . $plural . ' ' . $hundred;
+            if ($unit) {
+                $plural = (($counter = count($str)) && $unit > 9) ? 's' : null;
+                $hundred = ($counter == 1 && !empty($str[0])) ? ' and ' : null;
+                $str[] = ($unit < 21)
+                    ? ($words[$unit] ?? '') . ' ' . ($digits[$counter] ?? '') . $plural . ' ' . $hundred
+                    : (($words[(int)floor($unit / 10) * 10] ?? '') . ' ' . ($words[$unit % 10] ?? '')) . ' ' . ($digits[$counter] ?? '') . $plural . ' ' . $hundred;
             } else {
                 $str[] = null;
             }
         }
-        $rupees = implode('', array_reverse($str));
-        $paise = ($decimal > 0) ? " and " . ($words[$decimal / 10 * 10] . " " . $words[$decimal % 10]) . ' Paise' : '';
-        return 'Rupees ' . ($rupees ? trim($rupees) : 'Zero') . $paise . ' Only';
+        $rupees = trim(implode('', array_reverse(array_filter($str))));
+
+        $paise = '';
+        if ($decimal > 0) {
+            $paiseStr = ($decimal < 21)
+                ? ($words[$decimal] ?? '')
+                : (($words[(int)floor($decimal / 10) * 10] ?? '') . ' ' . ($words[$decimal % 10] ?? ''));
+            $paise = " and " . trim($paiseStr) . ' Paise';
+        }
+
+        return 'Rupees ' . ($rupees !== '' ? $rupees : 'Zero') . $paise . ' Only';
     }
 
     /**
