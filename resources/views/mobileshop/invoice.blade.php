@@ -57,6 +57,16 @@
 
     $pdfBillUrl = url('bill/' . $sale->invoice_number . '/pdf');
 
+    $displayMode = match(strtolower($sale->payment_mode ?? 'cash')) {
+        'cash' => 'Cash',
+        'upi' => 'UPI',
+        'cash+upi', 'split', 'cash_upi' => 'Cash + UPI',
+        'cash+udhari', 'cash_udhari' => 'Cash + Due',
+        'upi+udhari', 'upi_udhari' => 'UPI + Due',
+        'credit_udhari', 'udhari', 'full_khata' => 'Credit / Due',
+        default => strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode))
+    };
+
     $waMsg = "*{$storeName}*\n";
     $waMsg .= ($isGstBill ? "Tax Invoice #" : "Estimate #") . $sale->invoice_number . "\n\n";
     $waMsg .= "Dear *" . ($sale->customer_name ?: 'Customer') . "*,\n";
@@ -75,9 +85,9 @@
         $waMsg .= "• *Taxable Value:* ₹" . number_format($taxableAmount, 2) . "\n";
         $waMsg .= "• *GST ({$gstRate}%):* ₹" . number_format($totalTaxAmount, 2) . "\n";
     }
-    $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . strtoupper(str_replace('_', ' ', $sale->payment_mode)) . ")\n";
+    $waMsg .= "• *Total Amount:* ₹" . number_format(round($sale->total_amount)) . " (" . $displayMode . ")\n";
     if ($sale->udhari_amount > 0) {
-        $waMsg .= "• *Balance Due:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
+        $waMsg .= "• *Net Payable Amount:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
         if (!empty($storeUpi)) {
             $waMsg .= "• *Pay via UPI:* `{$storeUpi}`\n";
         }
@@ -206,7 +216,7 @@
                         Payment &amp; Dispatch Details
                     </div>
                     <div style="font-size: 11.5px; color: #111827; margin-bottom: 3px;">
-                        Payment Mode: <strong>{{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</strong>
+                        Payment Mode: <strong>{{ $displayMode }}</strong>
                     </div>
                     @if($sale->payment_mode === 'emi' && $emiProvider)
                         <div style="font-size: 11px; color: #374151;">Financier: <strong>{{ $emiProvider->name }}</strong> (Loan No: {{ $sale->emi_loan_no ?: 'N/A' }})</div>
@@ -428,7 +438,7 @@
                         </tr>
                         @if($sale->udhari_amount > 0)
                         <tr style="border-top: 1px solid #D1D5DB; background: #F9FAFB;">
-                            <td style="padding: 6px 10px; color: #111827; font-weight: 800;">Balance Due (Khata)</td>
+                            <td style="padding: 6px 10px; color: #111827; font-weight: 800;">Net Payable Amount</td>
                             <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: 900; color: #111827;">₹{{ number_format($sale->udhari_amount, 2) }}</td>
                         </tr>
                         @endif
@@ -507,11 +517,11 @@
                 <div style="display:flex; justify-content:space-between; font-weight:800; font-size:12px; border-top: 1px solid #CBD5E1; padding-top: 4px; margin-top: 4px;"><span>TOTAL:</span><span>₹{{ number_format($sale->total_amount, 2) }}</span></div>
                 <div style="display:flex; justify-content:space-between; font-weight:700; color:#111827;"><span>PAID:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
                 @if($sale->udhari_amount > 0)
-                    <div style="display:flex; justify-content:space-between; font-weight:700; color:#111827;"><span>UDHARI DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
+                    <div style="display:flex; justify-content:space-between; font-weight:700; color:#111827;"><span>BALANCE DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
                 @endif
             </div>
             <div style="border-top: 1px dashed #CBD5E1; padding-top: 8px; margin-top: 8px; text-align:center; font-size:9px; color:#6B7280; line-height:1.4;">
-                <div>Mode: {{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</div>
+                <div>Mode: {{ $displayMode }}</div>
                 <div>7 Days Replacement | 1 Year Brand Warranty</div>
                 <div style="font-weight:800; margin-top:4px;">*** THANK YOU - VISIT AGAIN ***</div>
             </div>

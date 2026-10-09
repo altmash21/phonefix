@@ -136,8 +136,31 @@ class AccessorySaleService
 
             $gstCalc = MobileShopInvoiceHelper::calculateGst($subtotal, 18.00, $billType, $storeState, $customer->state_code ?? null);
 
-            $amountPaid = (float) $request->amount_paid;
-            $udhariAmount = max(0.00, $subtotal - $amountPaid);
+            $mode = strtolower(trim((string) $request->input('payment_mode', 'cash')));
+            if ($mode === 'upi+cash') $mode = 'cash+upi';
+
+            if (in_array($mode, ['cash', 'upi', 'card'])) {
+                // If Cash, UPI, or Card is chosen, payment is paid in full across counter
+                $amountPaid = $subtotal;
+                $udhariAmount = 0.00;
+            } elseif (in_array($mode, ['udhari', 'credit_udhari', 'full_khata'])) {
+                $amountPaid = 0.00;
+                $udhariAmount = $subtotal;
+            } elseif (in_array($mode, ['cash+udhari', 'cash_udhari'])) {
+                $cPaid = (float) ($request->input('cash_amount') ?? ($request->filled('amount_paid') ? $request->amount_paid : 0));
+                $amountPaid = min($subtotal, max(0.00, $cPaid));
+                $udhariAmount = max(0.00, $subtotal - $amountPaid);
+            } elseif (in_array($mode, ['upi+udhari', 'upi_udhari'])) {
+                $uPaid = (float) ($request->input('upi_amount') ?? ($request->filled('amount_paid') ? $request->amount_paid : 0));
+                $amountPaid = min($subtotal, max(0.00, $uPaid));
+                $udhariAmount = max(0.00, $subtotal - $amountPaid);
+            } elseif (in_array($mode, ['cash+upi', 'upi+cash', 'split'])) {
+                $amountPaid = $subtotal;
+                $udhariAmount = 0.00;
+            } else {
+                $amountPaid = $request->filled('amount_paid') ? (float)$request->amount_paid : $subtotal;
+                $udhariAmount = max(0.00, $subtotal - $amountPaid);
+            }
 
             // Insert Header Record
             $saleId = DB::table('ms_accessory_sales')->insertGetId([
@@ -157,7 +180,7 @@ class AccessorySaleService
                 'total_amount'    => $subtotal,
                 'amount_paid'     => $amountPaid,
                 'udhari_amount'   => $udhariAmount,
-                'payment_mode'    => $request->payment_mode,
+                'payment_mode'    => $mode,
                 'sold_by'         => auth()->id(),
                 'status'          => 'completed',
                 'created_at'      => now(),

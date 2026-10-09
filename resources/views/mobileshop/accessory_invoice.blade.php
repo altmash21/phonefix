@@ -468,7 +468,7 @@
 
             <div style="display:flex; justify-content:space-between; font-weight:700; color:#16A34A;"><span>PAID NOW:</span><span>₹{{ number_format($sale->amount_paid, 2) }}</span></div>
             @if($sale->udhari_amount > 0)
-                <div style="display:flex; justify-content:space-between; font-weight:800; color:#DC2626;"><span>KHATA / UDHARI DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:800; color:#DC2626;"><span>NET PAYABLE / BALANCE DUE:</span><span>₹{{ number_format($sale->udhari_amount, 2) }}</span></div>
             @endif
         </div>
         <div style="border-top: 1px dashed #CBD5E1; padding-top: 8px; margin-top: 8px; text-align:center; font-size:9px; color:#6B7280; line-height:1.4;">

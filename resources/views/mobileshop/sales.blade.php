@@ -490,11 +490,11 @@
                         <select name="payment_mode" id="quickSalePaymentMode" class="app-input-field" required onchange="onQuickPaymentModeChange(this)">
                             <option value="cash" selected>Cash</option>
                             <option value="upi">UPI</option>
-                            <option value="udhari">Udhari</option>
+                            <option value="udhari">Pay Later (Balance Due)</option>
                             <option value="cash+upi">Cash + UPI</option>
                             <option value="upi+cash">UPI + Cash</option>
-                            <option value="cash+udhari">Cash + Udhari</option>
-                            <option value="upi+udhari">UPI + Udhari</option>
+                            <option value="cash+udhari">Cash + Balance Due</option>
+                            <option value="upi+udhari">UPI + Balance Due</option>
                         </select>
                     </div>
                 </div>
@@ -1037,7 +1037,7 @@
                             <datalist id="accCustomerList">
                                 @foreach($customers ?? [] as $c)
                                     <option value="{{ $c->phone }}" data-name="{{ $c->name }}" data-gstin="{{ $c->gstin ?? '' }}" data-address="{{ $c->address ?? '' }}" data-balance="{{ $c->udhari_balance ?? 0 }}">
-                                        {{ $c->name }} (Pending Khata: ₹{{ number_format($c->udhari_balance ?? 0, 2) }})
+                                        {{ $c->name }} (Pending Balance: ₹{{ number_format($c->udhari_balance ?? 0, 2) }})
                                     </option>
                                 @endforeach
                             </datalist>
@@ -1135,7 +1135,7 @@
                                 <option value="cash">💵 Cash</option>
                                 <option value="upi">📱 UPI / QR</option>
                                 <option value="card">💳 Card</option>
-                                <option value="credit_udhari">📒 Full Udhari (Khata)</option>
+                                <option value="credit_udhari">📒 Credit / Balance Due</option>
                                 <option value="split">⚖️ Split Payment</option>
                             </select>
                         </div>
@@ -1144,7 +1144,7 @@
                                 <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:12px; margin-bottom:0;">Amount Paid Now (₹)</label>
                                 <div style="display:flex; gap:4px;">
                                     <button type="button" onclick="setFullPayment()" style="font-size:10px; padding:2px 8px; border-radius:4px; font-weight:700; color:#16A34A; border:1px solid #BBF7D0; background:#F0FDF4; cursor:pointer;">Full Paid</button>
-                                    <button type="button" onclick="setZeroPayment()" style="font-size:10px; padding:2px 8px; border-radius:4px; font-weight:700; color:#DC2626; border:1px solid #FECDD3; background:#FFF1F2; cursor:pointer;">Udhari (₹0)</button>
+                                    <button type="button" onclick="setZeroPayment()" style="font-size:10px; padding:2px 8px; border-radius:4px; font-weight:700; color:#DC2626; border:1px solid #FECDD3; background:#FFF1F2; cursor:pointer;">Pay Later (₹0)</button>
                                 </div>
                             </div>
                             <input type="number" step="0.01" name="amount_paid" id="accAmountPaid" required placeholder="0.00" class="form-control" style="font-size:16px; font-weight:800; color:#16A34A; border-color:#CBD5E1;" oninput="onAmountPaidManualInput()">
@@ -1162,7 +1162,7 @@
                             <strong id="lblAccPaid" style="font-size:15px; font-weight:800; color:#16A34A;">₹0.00</strong>
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:13px; border-top:1px dashed #CBD5E1; padding-top:6px; font-weight:800;">
-                            <span style="color:#475569;">Added to Khata (Remaining Balance / Udhari):</span>
+                            <span style="color:#475569;">Net Payable / Balance Due:</span>
                             <span id="lblAccDue" style="color:#DC2626; font-size:15px;">₹0.00</span>
                         </div>
                     </div>
@@ -2351,6 +2351,14 @@
         if (badge) badge.textContent = 'Total: ₹' + grandTotal.toFixed(2);
 
         const mode = document.getElementById('quickSalePaymentMode')?.value || 'cash';
+        const amountPaidInput = document.getElementById('quickSaleAmountPaid');
+        if (amountPaidInput) {
+            if (['cash', 'upi', 'card', 'cash+upi', 'upi+cash'].includes(mode)) {
+                amountPaidInput.value = grandTotal.toFixed(2);
+            } else if (mode === 'udhari') {
+                amountPaidInput.value = '0';
+            }
+        }
         syncQuickSplitAmounts(mode, grandTotal);
     }
 
@@ -2413,8 +2421,8 @@
                     <input type="number" step="0.01" name="cash_amount" id="quickSplitCashPaid" class="app-input-field" placeholder="Cash Paid" value="${paid}" oninput="onQuickCashUdhariChange(this, ${total})">
                 </div>
                 <div style="display:flex;flex-direction:column;justify-content:center;">
-                    <span style="font-size:11px;color:#475569;font-weight:700;margin-bottom:4px;">Remaining to Khata</span>
-                    <span id="quickUdhariBadge" style="font-size:14px;font-weight:800;color:#dc2626;">Udhari: ₹${udhari}</span>
+                    <span style="font-size:11px;color:#475569;font-weight:700;margin-bottom:4px;">Net Payable / Balance Due</span>
+                    <span id="quickUdhariBadge" style="font-size:14px;font-weight:800;color:#dc2626;">Balance Due: ₹${udhari}</span>
                 </div>
             `;
         } else if (mode === 'upi+udhari') {
@@ -2427,8 +2435,8 @@
                     <input type="number" step="0.01" name="upi_amount" id="quickSplitUpiPaid" class="app-input-field" placeholder="UPI Paid" value="${paid}" oninput="onQuickUpiUdhariChange(this, ${total})">
                 </div>
                 <div style="display:flex;flex-direction:column;justify-content:center;">
-                    <span style="font-size:11px;color:#475569;font-weight:700;margin-bottom:4px;">Remaining to Khata</span>
-                    <span id="quickUdhariBadge" style="font-size:14px;font-weight:800;color:#dc2626;">Udhari: ₹${udhari}</span>
+                    <span style="font-size:11px;color:#475569;font-weight:700;margin-bottom:4px;">Net Payable / Balance Due</span>
+                    <span id="quickUdhariBadge" style="font-size:14px;font-weight:800;color:#dc2626;">Balance Due: ₹${udhari}</span>
                 </div>
             `;
         } else if (mode === 'udhari') {
@@ -2436,7 +2444,7 @@
             splitRow.innerHTML = `
                 <div style="grid-column: 1 / -1; font-size:12px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding: 10px 14px; display:flex; align-items:center; gap:8px;">
                     <i data-lucide="info" style="width:16px;height:16px;color:#d97706;flex-shrink:0;"></i>
-                    <span>Full invoice amount (<strong>₹${total.toFixed(2)}</strong>) will be recorded as <strong>Udhari</strong> in Customer Khata ledger.</span>
+                    <span>Full invoice amount (<strong>₹${total.toFixed(2)}</strong>) will be recorded as <strong>Balance Due</strong>.</span>
                 </div>
             `;
             if (window.refreshIcons) window.refreshIcons();
@@ -2459,14 +2467,14 @@
             const udhariBadge = document.getElementById('quickUdhariBadge');
             if (cashEl && udhariBadge) {
                 const cash = Math.min(total, parseFloat(cashEl.value) || 0);
-                udhariBadge.textContent = 'Udhari: ₹' + Math.max(0, total - cash).toFixed(2);
+                udhariBadge.textContent = 'Balance Due: ₹' + Math.max(0, total - cash).toFixed(2);
             }
         } else if (mode === 'upi+udhari') {
             const upiEl = document.getElementById('quickSplitUpiPaid');
             const udhariBadge = document.getElementById('quickUdhariBadge');
             if (upiEl && udhariBadge) {
                 const upi = Math.min(total, parseFloat(upiEl.value) || 0);
-                udhariBadge.textContent = 'Udhari: ₹' + Math.max(0, total - upi).toFixed(2);
+                udhariBadge.textContent = 'Balance Due: ₹' + Math.max(0, total - upi).toFixed(2);
             }
         }
     }
@@ -2487,7 +2495,7 @@
         const cash = Math.max(0, parseFloat(inputEl.value) || 0);
         const udhariBadge = document.getElementById('quickUdhariBadge');
         if (udhariBadge) {
-            udhariBadge.textContent = 'Udhari: ₹' + Math.max(0, total - cash).toFixed(2);
+            udhariBadge.textContent = 'Balance Due: ₹' + Math.max(0, total - cash).toFixed(2);
         }
     }
 
@@ -2495,7 +2503,7 @@
         const upi = Math.max(0, parseFloat(inputEl.value) || 0);
         const udhariBadge = document.getElementById('quickUdhariBadge');
         if (udhariBadge) {
-            udhariBadge.textContent = 'Udhari: ₹' + Math.max(0, total - upi).toFixed(2);
+            udhariBadge.textContent = 'Balance Due: ₹' + Math.max(0, total - upi).toFixed(2);
         }
     }
 
