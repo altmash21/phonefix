@@ -47,12 +47,10 @@
     <style>
         @page {
             size: a4 portrait;
-            margin: 12mm 14mm 12mm 14mm;
+            margin: 12mm 15mm 12mm 15mm;
         }
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -205,7 +203,15 @@
             </td>
             <td style="width: 50%;">
                 <div style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px;">Payment &amp; Dispatch Information</div>
-                <div style="font-size: 10px; color: #111827; margin-top: 2px;">Mode: <strong>{{ strtoupper(str_replace('_', ' ', $sale->payment_mode)) }}</strong></div>
+                @php
+                    $phonePaymentMode = match(strtolower($sale->payment_mode ?? 'cash')) {
+                        'credit_udhari', 'udhari', 'full_khata' => 'Credit / Due',
+                        'cash+udhari', 'cash_udhari' => 'Cash + Due',
+                        'upi+udhari', 'upi_udhari' => 'UPI + Due',
+                        default => strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode))
+                    };
+                @endphp
+                <div style="font-size: 10px; color: #111827; margin-top: 2px;">Mode: <strong>{{ $phonePaymentMode }}</strong></div>
                 @if($sale->payment_mode === 'emi' && $emiProvider)
                     <div style="font-size: 9.5px; color: #4b5563; margin-top: 2px;">Financier: <strong>{{ $emiProvider->name }}</strong> (Loan: {{ $sale->emi_loan_no ?: 'N/A' }})</div>
                 @endif
@@ -374,7 +380,7 @@
                     </tr>
                     @if($sale->udhari_amount > 0)
                     <tr style="background-color: #f9fafb;">
-                        <td style="color: #111827; font-weight: bold;">Balance Due (Khata)</td>
+                        <td style="color: #111827; font-weight: bold;">Net Payable Amount</td>
                         <td style="text-align: right; color: #111827; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->udhari_amount, 2) }}</td>
                     </tr>
                     @endif

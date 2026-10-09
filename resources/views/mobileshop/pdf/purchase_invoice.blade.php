@@ -6,12 +6,10 @@
     <style>
         @page {
             size: a4 portrait;
-            margin: 12mm 14mm 12mm 14mm;
+            margin: 12mm 15mm 12mm 15mm;
         }
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;

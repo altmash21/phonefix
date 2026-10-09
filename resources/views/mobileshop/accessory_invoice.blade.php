@@ -34,9 +34,9 @@
         'cash' => 'Cash',
         'upi' => 'UPI',
         'cash+upi', 'split', 'cash_upi' => 'Cash + UPI',
-        'cash+udhari', 'cash_udhari' => 'Cash + Udhari',
-        'upi+udhari', 'upi_udhari' => 'UPI + Udhari',
-        'credit_udhari', 'udhari', 'full_khata' => 'Full Khata (Udhari)',
+        'cash+udhari', 'cash_udhari' => 'Cash + Due',
+        'upi+udhari', 'upi_udhari' => 'UPI + Due',
+        'credit_udhari', 'udhari', 'full_khata' => 'Credit / Due',
         default => strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode))
     };
 
@@ -82,7 +82,7 @@
     }
     $waMsg .= "• *Paid Now:* ₹" . number_format(round($sale->amount_paid)) . "\n";
     if ($sale->udhari_amount > 0) {
-        $waMsg .= "• *Added to Khata (Udhari Due):* ₹" . number_format(round($sale->udhari_amount)) . "\n";
+        $waMsg .= "• *Net Payable Amount:* ₹" . number_format(round($sale->udhari_amount)) . "\n";
         if (!empty($storeUpi)) {
             $waMsg .= "• *Pay via UPI:* `{$storeUpi}`\n";
         }
@@ -377,7 +377,7 @@
                         </tr>
                         @if($sale->udhari_amount > 0)
                         <tr style="border-bottom: 1px solid #E5E7EB;">
-                            <td style="padding: 7px 10px; background: #FEF2F2; color: #DC2626; font-weight: 800;">Added to Khata (Udhari Due)</td>
+                            <td style="padding: 7px 10px; background: #FEF2F2; color: #DC2626; font-weight: 800;">Net Payable Amount</td>
                             <td style="padding: 7px 10px; text-align: right; font-family: monospace; font-weight: 800; color: #DC2626;">₹{{ number_format($sale->udhari_amount, 2) }}</td>
                         </tr>
                         @endif

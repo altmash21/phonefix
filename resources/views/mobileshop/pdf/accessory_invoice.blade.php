@@ -15,9 +15,9 @@
         'cash' => 'Cash',
         'upi' => 'UPI',
         'cash+upi', 'split', 'cash_upi' => 'Cash + UPI',
-        'cash+udhari', 'cash_udhari' => 'Cash + Udhari',
-        'upi+udhari', 'upi_udhari' => 'UPI + Udhari',
-        'credit_udhari', 'udhari', 'full_khata' => 'Full Khata (Udhari)',
+        'cash+udhari', 'cash_udhari' => 'Cash + Due',
+        'upi+udhari', 'upi_udhari' => 'UPI + Due',
+        'credit_udhari', 'udhari', 'full_khata' => 'Credit / Due',
         default => strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode))
     };
 
@@ -36,12 +36,10 @@
     <style>
         @page {
             size: a4 portrait;
-            margin: 12mm 14mm 12mm 14mm;
+            margin: 12mm 15mm 12mm 15mm;
         }
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -353,7 +351,7 @@
                     </tr>
                     @if($sale->udhari_amount > 0)
                     <tr>
-                        <td style="background-color: #fef2f2; color: #dc2626; font-weight: bold;">Added to Khata (Udhari Due)</td>
+                        <td style="background-color: #fef2f2; color: #dc2626; font-weight: bold;">Net Payable Amount</td>
                         <td style="text-align: right; color: #dc2626; font-weight: bold;" class="font-mono">Rs. {{ number_format($sale->udhari_amount, 2) }}</td>
                     </tr>
                     @endif

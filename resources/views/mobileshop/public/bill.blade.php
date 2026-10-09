@@ -115,7 +115,18 @@
                 </div>
                 <div class="text-right">
                     <span class="text-slate-400 font-semibold block uppercase tracking-wider text-[10px]">Payment Mode</span>
-                    <span class="font-bold text-slate-800 text-sm block mt-0.5">{{ strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode)) }}</span>
+                    @php
+                        $publicDisplayMode = match(strtolower($sale->payment_mode ?? 'cash')) {
+                            'cash' => 'CASH',
+                            'upi' => 'UPI',
+                            'cash+upi', 'split', 'cash_upi' => 'CASH + UPI',
+                            'cash+udhari', 'cash_udhari' => 'CASH + DUE',
+                            'upi+udhari', 'upi_udhari' => 'UPI + DUE',
+                            'credit_udhari', 'udhari', 'full_khata' => 'CREDIT / DUE',
+                            default => strtoupper(str_replace(['_', '+'], [' ', ' + '], $sale->payment_mode))
+                        };
+                    @endphp
+                    <span class="font-bold text-slate-800 text-sm block mt-0.5">{{ $publicDisplayMode }}</span>
                     <span class="text-emerald-700 font-semibold text-xs block">Verified Payment</span>
                 </div>
             </div>
@@ -246,7 +257,7 @@
                 </div>
                 @if($sale->udhari_amount > 0)
                     <div class="flex justify-between text-slate-900 font-bold">
-                        <span>Balance Due (Khata)</span>
+                        <span>Net Payable Amount</span>
                         <span>₹{{ number_format(round($sale->udhari_amount)) }}</span>
                     </div>
                 @endif
