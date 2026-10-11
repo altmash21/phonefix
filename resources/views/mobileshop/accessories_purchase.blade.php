@@ -2629,11 +2629,11 @@
                     <div id="rowWarning_${idx}" style="margin-top:3px; display:none;"></div>
                 </div>
 
-                <!-- 3. BRAND NAME INPUT -->
-                <div>
+                <!-- 3. BRAND NAME INPUT (hidden for folder_display category) -->
+                <div id="brandWrap_${idx}" style="${isFolder ? 'display:none;' : ''}">
                     <label class="mobile-card-label">Brand</label>
                     <input type="text" name="items[${idx}][brand]" id="brand_${idx}"
-                        value="${brandVal}" placeholder="Brand" list="bulkBrandsDatalist"
+                        value="${isFolder ? '' : brandVal}" placeholder="Brand" list="bulkBrandsDatalist"
                         class="restock-input" autocomplete="off">
                 </div>
 
@@ -2825,10 +2825,19 @@
 
     function onBulkCategoryChange(idx, val, cleanName = false) {
         const canonicalVal = canonicalizeCategory(val);
+        const isFolder = (canonicalVal === 'folder_display');
 
         const qualityToggle = document.getElementById(`qualityToggle_${idx}`);
         if (qualityToggle) {
-            qualityToggle.classList.toggle('visible', canonicalVal === 'folder_display' || val === 'display_folder');
+            qualityToggle.classList.toggle('visible', isFolder || val === 'display_folder');
+        }
+
+        // Show/hide Brand input — folders don't need brand, only item name + description
+        const brandWrap = document.getElementById(`brandWrap_${idx}`);
+        const brandInput = document.getElementById(`brand_${idx}`);
+        if (brandWrap) {
+            brandWrap.style.display = isFolder ? 'none' : '';
+            if (isFolder && brandInput) brandInput.value = ''; // clear brand for folders
         }
 
         const giftEl = document.getElementById(`gift_${idx}`);
