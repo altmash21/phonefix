@@ -2637,8 +2637,8 @@
                         class="restock-input" autocomplete="off">
                 </div>
 
-                <!-- 4. DESCRIPTION / SPECS -->
-                <div>
+                <!-- 4. DESCRIPTION / SPECS (spans into Brand column for folder_display) -->
+                <div style="${isFolder ? 'grid-column: span 2;' : ''}">
                     <label class="mobile-card-label">Description / Specs</label>
                     <input type="text" name="items[${idx}][description]" id="desc_${idx}"
                         value="${descVal}" placeholder="Description"
