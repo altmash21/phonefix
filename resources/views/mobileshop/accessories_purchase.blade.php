@@ -269,7 +269,7 @@
     @media (min-width: 880px) {
         .batch-grid-row {
             display: grid;
-            grid-template-columns: 180px minmax(210px, 2fr) minmax(130px, 1.2fr) 92px 95px 95px 65px 95px 68px;
+            grid-template-columns: 160px minmax(190px, 1.8fr) 115px minmax(130px, 1.2fr) 85px 90px 90px 60px 90px 65px;
             gap: 8px;
             align-items: center !important;
         }
@@ -870,6 +870,7 @@
             <div class="batch-table-header batch-grid-row" id="batchTableHeader">
                 <div>Category (Search) <span style="color:#EF4444;">*</span></div>
                 <div>Item &amp; Current Stock <span style="color:#EF4444;">*</span></div>
+                <div>Brand</div>
                 <div>Description / Specs</div>
                 <div style="text-align:center;">Qty <span style="color:#EF4444;">*</span></div>
                 <div style="text-align:right;">Cost ₹ <span style="color:#EF4444;">*</span></div>
@@ -1397,14 +1398,7 @@
     /* ── Clean redundant category terms from product name ── */
     function cleanItemNameForCategory(name, cat, brand) {
         if (!name) return '';
-        let cleaned = String(name).trim();
-        const c = canonicalizeCategory(cat, name);
-        if (c === 'folder_display' || c === 'display_folder') {
-            // Strip out display folder / combo redundant phrases
-            cleaned = cleaned.replace(/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/gi, ' ');
-            cleaned = cleaned.replace(/[\s\-_/]+$/, '').replace(/^[\s\-_/]+/, '').replace(/\s{2,}/g, ' ').trim();
-        }
-        return cleaned || String(name).trim();
+        return String(name).trim();
     }
     window.cleanItemNameForCategory = cleanItemNameForCategory;
 
@@ -1978,11 +1972,11 @@
             const catClearBtn = document.getElementById(`catClearBtn_${idx}`);
             if (catClearBtn) catClearBtn.style.display = 'flex';
 
-            onBulkCategoryChange(idx, targetCat);
+            onBulkCategoryChange(idx, targetCat, false);
         }
 
-        document.getElementById(`brand_${idx}`).value = '';
-        document.getElementById(`model_${idx}`).value = '';
+        const modelEl = document.getElementById(`model_${idx}`);
+        if (modelEl) modelEl.value = '';
 
         if (p.display_type) {
             applyFolderQualityToRow(idx, p.display_type);
@@ -2023,8 +2017,6 @@
             return;
         }
 
-        const brandEl = document.getElementById(`brand_${idx}`);
-        if (brandEl) brandEl.value = '';
         const modelEl = document.getElementById(`model_${idx}`);
         if (modelEl) modelEl.value = '';
 
@@ -2522,6 +2514,9 @@
 
             let rawItemName = itemData?.name || selectedPart?.name || '';
             const nameVal = escapeHtml(rawItemName);
+            let rawBrand = itemData?.brand || '';
+            if (rawBrand === 'Universal') rawBrand = '';
+            const brandVal = escapeHtml(rawBrand);
             const rawFolderDt = (itemData?.display_type || selectedPart?.display_type || 'Normal').trim();
             let folderType = 'Normal';
             let folderLabel = 'Normal';
@@ -2551,7 +2546,6 @@
                 <!-- Hidden form fields -->
                 <input type="hidden" name="items[${idx}][part_id]" id="partId_${idx}" value="${selectedPart?.id || itemData?.part_id || ''}">
                 <input type="hidden" name="items[${idx}][name]"    id="name_${idx}"   value="${nameVal}">
-                <input type="hidden" name="items[${idx}][brand]"   id="brand_${idx}"  value="">
                 <input type="hidden" name="items[${idx}][compatible_model]" id="model_${idx}" value="">
                 <input type="hidden" name="items[${idx}][is_gift_eligible]" id="gift_${idx}" value="${isGiftChecked ? '1' : '0'}">
                 <input type="hidden" name="items[${idx}][display_type]" id="displayTypeVal_${idx}" value="${folderType}">
@@ -2635,7 +2629,15 @@
                     <div id="rowWarning_${idx}" style="margin-top:3px; display:none;"></div>
                 </div>
 
-                <!-- 3. DESCRIPTION / SPECS -->
+                <!-- 3. BRAND NAME INPUT -->
+                <div>
+                    <label class="mobile-card-label">Brand</label>
+                    <input type="text" name="items[${idx}][brand]" id="brand_${idx}"
+                        value="${brandVal}" placeholder="Brand" list="bulkBrandsDatalist"
+                        class="restock-input" autocomplete="off">
+                </div>
+
+                <!-- 4. DESCRIPTION / SPECS -->
                 <div>
                     <label class="mobile-card-label">Description / Specs</label>
                     <input type="text" name="items[${idx}][description]" id="desc_${idx}"
@@ -2827,25 +2829,6 @@
         const qualityToggle = document.getElementById(`qualityToggle_${idx}`);
         if (qualityToggle) {
             qualityToggle.classList.toggle('visible', canonicalVal === 'folder_display' || val === 'display_folder');
-        }
-
-        // Only clean redundant terms if explicitly requested (e.g. initial intake), never during normal user typing
-        if (cleanName && (canonicalVal === 'folder_display' || val === 'display_folder')) {
-            const nameInput = document.getElementById(`name_${idx}`);
-            const searchInput = document.getElementById(`searchInput_${idx}`);
-            if (nameInput && nameInput.value) {
-                const cleaned = cleanItemNameForCategory(nameInput.value, canonicalVal);
-                if (cleaned && cleaned !== nameInput.value) {
-                    nameInput.value = cleaned;
-                    if (searchInput) searchInput.value = cleaned;
-                }
-            } else if (searchInput && searchInput.value) {
-                const cleaned = cleanItemNameForCategory(searchInput.value, canonicalVal);
-                if (cleaned && cleaned !== searchInput.value) {
-                    searchInput.value = cleaned;
-                    if (nameInput) nameInput.value = cleaned;
-                }
-            }
         }
 
         const giftEl = document.getElementById(`gift_${idx}`);
@@ -3613,14 +3596,14 @@
         bulkRowIndex = 0;
 
         const sampleItems = [
-            { name: '9D Super Clear Tempered Glass (iPhone 14/15)', category: 'tempered_glass', brand: '', compatible_model: '', qty: 50, unit_cost: 22.00, selling_price: 149.00, is_gift_eligible: 1 },
-            { name: 'Matte Smoke Anti-Drop Bumper Case (Galaxy S24)', category: 'back_cover', brand: '', compatible_model: '', qty: 25, unit_cost: 45.00, selling_price: 199.00, is_gift_eligible: 1 },
-            { name: 'Original OLED Display Screen Folder (iPhone 14)', category: 'folder_display', brand: '', compatible_model: '', display_type: 'OG', qty: 5, unit_cost: 1650.00, selling_price: 2499.00, is_gift_eligible: 0 },
-            { name: 'HD+ High Definition Folder Combo (Redmi Note 12)', category: 'folder_display', brand: '', compatible_model: '', display_type: 'HD+', qty: 10, unit_cost: 850.00, selling_price: 1499.00, is_gift_eligible: 0 },
-            { name: 'Samsung Galaxy A54 Front Outer Glass with OCA', category: 'front_glass', brand: '', compatible_model: '', qty: 15, unit_cost: 110.00, selling_price: 399.00, is_gift_eligible: 0 },
+            { name: '9D Super Clear Tempered Glass (iPhone 14/15)', category: 'tempered_glass', brand: 'Apple', compatible_model: '', qty: 50, unit_cost: 22.00, selling_price: 149.00, is_gift_eligible: 1 },
+            { name: 'Matte Smoke Anti-Drop Bumper Case (Galaxy S24)', category: 'back_cover', brand: 'Samsung', compatible_model: '', qty: 25, unit_cost: 45.00, selling_price: 199.00, is_gift_eligible: 1 },
+            { name: 'Original OLED Display Screen Folder (iPhone 14)', category: 'folder_display', brand: 'Apple', compatible_model: '', display_type: 'OG', qty: 5, unit_cost: 1650.00, selling_price: 2499.00, is_gift_eligible: 0 },
+            { name: 'HD+ High Definition Folder Combo (Redmi Note 12)', category: 'folder_display', brand: 'Xiaomi', compatible_model: '', display_type: 'HD+', qty: 10, unit_cost: 850.00, selling_price: 1499.00, is_gift_eligible: 0 },
+            { name: 'Samsung Galaxy A54 Front Outer Glass with OCA', category: 'front_glass', brand: 'Samsung', compatible_model: '', qty: 15, unit_cost: 110.00, selling_price: 399.00, is_gift_eligible: 0 },
             { name: 'Type-C 65W Braided Fast Charging Cable (1.5m)', category: 'charger_cable', brand: '', compatible_model: '', qty: 30, unit_cost: 38.00, selling_price: 199.00, is_gift_eligible: 1 },
             { name: 'Universal Type-C Charging Pin Connector Jack', category: 'charging_port', brand: '', compatible_model: '', qty: 40, unit_cost: 12.00, selling_price: 99.00, is_gift_eligible: 0 },
-            { name: 'High Capacity 5000mAh Battery (Redmi Note 12)', category: 'battery', brand: '', compatible_model: '', qty: 8, unit_cost: 340.00, selling_price: 799.00, is_gift_eligible: 0 }
+            { name: 'High Capacity 5000mAh Battery (Redmi Note 12)', category: 'battery', brand: 'Xiaomi', compatible_model: '', qty: 8, unit_cost: 340.00, selling_price: 799.00, is_gift_eligible: 0 }
         ];
 
         sampleItems.forEach(item => addBulkRow(item));

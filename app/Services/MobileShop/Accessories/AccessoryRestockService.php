@@ -41,19 +41,7 @@ class AccessoryRestockService
         };
 
         $cleanPartName = trim($request->name);
-        $brand = $request->brand ?: 'Universal';
-        if ($finalCategorySlug === 'folder_display') {
-            $stripped = trim(preg_replace('/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/i', ' ', $cleanPartName));
-            $stripped = trim(preg_replace('/\s{2,}/', ' ', $stripped));
-            if (!empty($stripped)) {
-                $cleanPartName = $stripped;
-            }
-        }
-        if (!empty($brand) && $brand !== 'Universal' && strtolower($brand) !== 'other') {
-            if (!preg_match('/\b' . preg_quote($brand, '/') . '\b/i', $cleanPartName)) {
-                $cleanPartName = trim($brand . ' ' . $cleanPartName);
-            }
-        }
+        $brand = trim((string) ($request->brand ?? ''));
 
         $insertPartData = [
             'company_id'       => $companyId,
@@ -191,19 +179,7 @@ class AccessoryRestockService
                 $sellingPrice = (float) ($item['selling_price'] ?? ($unitCost > 0 ? round($unitCost * 1.5, 2) : 0));
                 $partName = trim($item['name']);
                 $categorySlug = $item['category'] ?? 'tempered_glass';
-                if ($categorySlug === 'folder_display') {
-                    $cleanedName = trim(preg_replace('/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/i', ' ', $partName));
-                    $cleanedName = trim(preg_replace('/\s{2,}/', ' ', $cleanedName));
-                    if (!empty($cleanedName)) {
-                        $partName = $cleanedName;
-                    }
-                }
                 $brand = trim((string) ($item['brand'] ?? ''));
-                if (!empty($brand) && $brand !== 'Universal' && strtolower($brand) !== 'other') {
-                    if (!preg_match('/\b' . preg_quote($brand, '/') . '\b/i', $partName)) {
-                        $partName = trim($brand . ' ' . $partName);
-                    }
-                }
                 $model = trim((string) ($item['compatible_model'] ?? ''));
                 $isGift = !empty($item['is_gift_eligible']) ? 1 : 0;
                 $partId = !empty($item['part_id']) ? (int) $item['part_id'] : null;
@@ -537,9 +513,9 @@ class AccessoryRestockService
                 }
                 DB::table('ms_purchase_order_items')->insert([
                     'purchase_order_id' => $poId,
-                    'brand'             => $item['brand'] ?? 'Universal',
+                    'brand'             => trim((string) ($item['brand'] ?? '')),
                     'model'             => trim($item['name']),
-                    'variant'           => $item['compatible_model'] ?? ($item['category'] ?? 'Parts'),
+                    'variant'           => !empty($item['description']) ? trim((string) $item['description']) : ($item['compatible_model'] ?? ($item['category'] ?? 'Parts')),
                     'hsn_code'          => $item['hsn_code'] ?? '85177090',
                     'qty'               => $q,
                     'qty_received'      => $q,
