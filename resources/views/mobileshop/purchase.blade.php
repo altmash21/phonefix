@@ -485,7 +485,7 @@
                     </div>
 
                     <div>
-                        <input type="number" name="quantity" id="qpCardQty" class="app-input-field" placeholder="Quantity" value="1" min="1" required oninput="recalcQpCardTotal()">
+                        <input type="number" name="quantity" id="qpCardQty" class="app-input-field" placeholder="Quantity" value="1" min="0" required oninput="recalcQpCardTotal()">
                     </div>
 
                     <!-- Row 2: Category (Searchable & Typeable) & Purchase Price -->
@@ -1828,9 +1828,10 @@
     }
 
     function recalcQpCardTotal() {
-        const qty = parseInt(document.getElementById('qpCardQty')?.value || 1);
+        const qtyVal = document.getElementById('qpCardQty')?.value;
+        const qty = (qtyVal !== '' && !isNaN(parseInt(qtyVal))) ? parseInt(qtyVal) : 0;
         const price = parseFloat(document.getElementById('qpCardPurchasePrice')?.value || 0);
-        const total = (qty > 0 && price >= 0) ? (qty * price) : 0;
+        const total = (qty >= 0 && price >= 0) ? (qty * price) : 0;
         const badge = document.getElementById('qpCardTotalBadge');
         if (badge) {
             badge.textContent = 'Total: ₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

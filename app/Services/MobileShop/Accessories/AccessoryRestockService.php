@@ -144,7 +144,7 @@ class AccessoryRestockService
                 }
 
                 // Ensure non-negative numbers
-                $it['qty'] = max(1, (int) ($it['qty'] ?? 1));
+                $it['qty'] = max(0, (int) ($it['qty'] ?? 0));
                 $it['unit_cost'] = max(0.0, (float) ($it['unit_cost'] ?? 0));
                 if (isset($it['selling_price']) && $it['selling_price'] !== null && $it['selling_price'] !== '') {
                     $it['selling_price'] = max(0.0, (float) $it['selling_price']);
@@ -158,7 +158,7 @@ class AccessoryRestockService
         $request->validate([
             'items'                 => 'required|array|min:1',
             'items.*.name'          => 'required|string|max:150',
-            'items.*.qty'           => 'required|integer|min:1',
+            'items.*.qty'           => 'required|integer|min:0',
             'items.*.unit_cost'     => 'required|numeric|min:0',
             'items.*.selling_price' => 'nullable|numeric|min:0',
             'amount_paid'           => 'nullable|numeric|min:0',
@@ -168,7 +168,7 @@ class AccessoryRestockService
             'items.min'                  => 'Please add at least one item to the batch intake.',
             'items.*.name.required'      => 'Item name is required for all entered rows.',
             'items.*.qty.required'       => 'Quantity is required.',
-            'items.*.qty.min'            => 'Quantity must be at least 1 unit.',
+            'items.*.qty.min'            => 'Quantity cannot be negative.',
             'items.*.unit_cost.required' => 'Unit cost is required.',
             'items.*.unit_cost.min'      => 'Unit cost cannot be negative.',
             'items.*.selling_price.min'  => 'Selling price cannot be negative.',
@@ -186,7 +186,7 @@ class AccessoryRestockService
             $totalCost = 0.0;
 
             foreach ($request->items as $item) {
-                $qty = (int) ($item['qty'] ?? 1);
+                $qty = (int) ($item['qty'] ?? 0);
                 $unitCost = (float) ($item['unit_cost'] ?? 0);
                 $sellingPrice = (float) ($item['selling_price'] ?? ($unitCost > 0 ? round($unitCost * 1.5, 2) : 0));
                 $partName = trim($item['name']);
@@ -527,7 +527,7 @@ class AccessoryRestockService
             }
 
             foreach ($request->items as $item) {
-                $q = (int) ($item['qty'] ?? 1);
+                $q = (int) ($item['qty'] ?? 0);
                 $c = (float) ($item['unit_cost'] ?? 0);
                 $lineTot = $q * $c;
                 if ($calculatedCost > 0 && abs($totalCost - $calculatedCost) > 0.01) {

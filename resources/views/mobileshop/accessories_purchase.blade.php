@@ -2538,7 +2538,9 @@
             }
             const descVal = escapeHtml(itemData?.description || selectedPart?.description || '');
             const alertVal = itemData?.min_stock_alert !== undefined ? itemData.min_stock_alert : (selectedPart?.min_stock_alert ?? 3);
-            const qtyVal = itemData?.qty || 1;
+            const qtyVal = (itemData?.qty !== undefined && itemData?.qty !== null && !isNaN(parseInt(itemData.qty)))
+                ? Math.max(0, parseInt(itemData.qty))
+                : 1;
             const costVal = itemData?.unit_cost ? parseFloat(itemData.unit_cost).toFixed(2) : (selectedPart?.unit_cost ? parseFloat(selectedPart.unit_cost).toFixed(2) : '0.00');
             const priceVal = itemData?.selling_price ? parseFloat(itemData.selling_price).toFixed(2) : (selectedPart?.selling_price ? parseFloat(selectedPart.selling_price).toFixed(2) : (parseFloat(costVal) * 1.5).toFixed(2));
             const isGiftChecked = (itemData?.is_gift_eligible || (targetCat && (targetCat === 'tempered_glass' || targetCat === 'back_cover' || targetCat === 'charger_cable' || targetCat === 'earphones_audio' || targetCat === 'general_accessory'))) ? 'checked' : '';
@@ -2649,7 +2651,7 @@
                         <div class="stepper-wrap">
                             <button type="button" tabindex="-1" class="stepper-btn stepper-btn-minus" onclick="adjustBulkQty(${idx}, -1)">−</button>
                             <input type="number" name="items[${idx}][qty]" id="qty_${idx}"
-                                value="${qtyVal}" min="1" required
+                                value="${qtyVal}" min="0" required
                                 class="bulk-num-input stepper-input"
                                 oninput="updateBulkRowTotal(${idx})">
                             <button type="button" tabindex="-1" class="stepper-btn stepper-btn-plus" onclick="adjustBulkQty(${idx}, 1)">+</button>
@@ -2872,7 +2874,8 @@
     }
 
     function updateBulkRowTotal(idx) {
-        const qty = parseInt(document.getElementById(`qty_${idx}`)?.value || 0);
+        const qtyVal = document.getElementById(`qty_${idx}`)?.value;
+        const qty = (qtyVal !== '' && !isNaN(parseInt(qtyVal))) ? parseInt(qtyVal) : 0;
         const cost = parseFloat(document.getElementById(`cost_${idx}`)?.value || 0);
         const sell = parseFloat(document.getElementById(`price_${idx}`)?.value || 0);
         const total = qty * cost;
@@ -3023,8 +3026,8 @@
         }
 
         // Check 2: Invalid Qty
-        if (isNaN(qty) || qty < 1) {
-            errorMsg = errorMsg || '❌ Qty must be at least 1';
+        if (isNaN(qty) || qty < 0) {
+            errorMsg = errorMsg || '❌ Qty cannot be negative';
             if (qtyInput) qtyInput.style.borderColor = '#DC2626';
         } else {
             if (qtyInput) qtyInput.style.borderColor = '';
@@ -3117,7 +3120,7 @@
         if (!input) return;
         let val = parseInt(input.value) || 0;
         val += delta;
-        if (val < 1) val = 1;
+        if (val < 0) val = 0;
         input.value = val;
         updateBulkRowTotal(idx);
     }
@@ -3342,13 +3345,13 @@
             }
 
             // Validate Quantity
-            if (isNaN(qty) || qty < 1) {
+            if (isNaN(qty) || qty < 0) {
                 r.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 if (qtyInput) {
                     qtyInput.focus();
                     qtyInput.style.borderColor = '#DC2626';
                 }
-                alert(`⚠️ Invalid Quantity on Row #${rowNum} ("${name}"):\nQuantity must be at least 1 unit (currently: ${qtyInput?.value || 0}).`);
+                alert(`⚠️ Invalid Quantity on Row #${rowNum} ("${name}"):\nQuantity cannot be negative (currently: ${qtyInput?.value || 0}).`);
                 return false;
             }
 
@@ -3557,7 +3560,9 @@
                 displayType = 'OG';
             }
 
-            const qty = parseInt(it.qty) || 1;
+            const qty = (it.qty !== undefined && it.qty !== null && !isNaN(parseInt(it.qty)))
+                ? Math.max(0, parseInt(it.qty))
+                : 1;
             const cost = parseFloat(it.unit_cost) || 0;
             let sellingPrice = parseFloat(it.selling_price) || 0;
             if (sellingPrice < cost && cost > 0) {

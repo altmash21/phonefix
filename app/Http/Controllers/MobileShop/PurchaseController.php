@@ -260,7 +260,7 @@ class PurchaseController extends BaseMobileShopController
             $request->validate([
                 'name'           => 'required|string|max:150',
                 'category'       => 'nullable|string|max:100',
-                'quantity'       => 'required|integer|min:1',
+                'quantity'       => 'required|integer|min:0',
                 'purchase_price' => 'required|numeric|min:0',
                 'low_stock'      => 'nullable|integer|min:0',
                 'selling_price'  => 'nullable|numeric|min:0',
@@ -268,7 +268,7 @@ class PurchaseController extends BaseMobileShopController
 
             $companyId = $this->getCompanyId();
             $name = trim($request->input('name'));
-            $qty = max(1, (int) $request->input('quantity', 1));
+            $qty = max(0, (int) $request->input('quantity', 0));
             $purchasePrice = (float) $request->input('purchase_price', 0);
             $lowStock = $request->filled('low_stock') ? max(0, (int) $request->input('low_stock')) : 3;
             $sellingPrice = $request->filled('selling_price') && (float) $request->input('selling_price') > 0
