@@ -1425,9 +1425,14 @@
             input.value = '';
             input.focus();
         }
+        document.getElementById(`name_${idx}`).value = '';
+        document.getElementById(`partId_${idx}`).value = '';
+        const clearBtn = document.getElementById(`clearBtn_${idx}`);
+        if (clearBtn) clearBtn.style.display = 'none';
         const menuEl = document.getElementById(`comboboxMenu_${idx}`);
         if (menuEl) menuEl.style.display = 'none';
-        chooseAsNewItem(idx, '');
+        renderStockBadge(idx, 0, true);
+        updateBulkRowTotal(idx);
     }
     window.focusAndTypeNew = focusAndTypeNew;
 
@@ -1665,8 +1670,8 @@
         if (!menuEl) return;
 
         const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
-        const catSelect = document.getElementById(`catSelect_${idx}`);
-        const currentCat = catSelect ? catSelect.value : '';
+        const catValEl = document.getElementById(`catValue_${idx}`);
+        const currentCat = catValEl ? catValEl.value : '';
         const canonicalCat = canonicalizeCategory(currentCat);
 
         const q = (query || '').toLowerCase().trim();
@@ -1849,10 +1854,16 @@
                     } else {
                         chooseAsNewItem(idx, typed);
                     }
+                } else {
+                    const nameInput = document.getElementById(`name_${idx}`);
+                    if (nameInput) nameInput.value = typed;
                 }
             } else {
+                if (input) input.value = '';
                 document.getElementById(`name_${idx}`).value = '';
                 document.getElementById(`partId_${idx}`).value = '';
+                const clearBtn = document.getElementById(`clearBtn_${idx}`);
+                if (clearBtn) clearBtn.style.display = 'none';
                 renderStockBadge(idx, null);
                 updateBulkRowTotal(idx);
             }
@@ -1872,7 +1883,7 @@
         if (currentPartId) {
             const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
             const p = parts.find(item => item && String(item.id) === String(currentPartId));
-            if (p && p.name.toLowerCase() !== trimmed.toLowerCase()) {
+            if (!p || p.name.toLowerCase() !== trimmed.toLowerCase()) {
                 document.getElementById(`partId_${idx}`).value = '';
             }
         }
@@ -1901,11 +1912,13 @@
             if (autoCat && autoCat !== 'general_accessory') {
                 const catValEl = document.getElementById(`catValue_${idx}`);
                 const catSearchEl = document.getElementById(`catSearchInput_${idx}`);
-                if (catValEl) catValEl.value = autoCat;
-                if (catSearchEl) catSearchEl.value = formatCategoryLabel(autoCat);
-                const catClearBtn = document.getElementById(`catClearBtn_${idx}`);
-                if (catClearBtn) catClearBtn.style.display = 'flex';
-                onBulkCategoryChange(idx, autoCat);
+                if (catValEl && !catValEl.value) {
+                    catValEl.value = autoCat;
+                    if (catSearchEl) catSearchEl.value = formatCategoryLabel(autoCat);
+                    const catClearBtn = document.getElementById(`catClearBtn_${idx}`);
+                    if (catClearBtn) catClearBtn.style.display = 'flex';
+                    onBulkCategoryChange(idx, autoCat, false);
+                }
             }
         }
 
@@ -2008,37 +2021,39 @@
         }
 
         const searchInput = document.getElementById(`searchInput_${idx}`);
-        let rawName = (customName !== undefined && customName !== null && customName.trim() !== '')
+        let rawName = (customName !== undefined && customName !== null)
             ? customName.trim()
-            : (searchInput?.value.trim() || 'New Item');
+            : (searchInput?.value.trim() || '');
 
-        const catVal = document.getElementById(`catValue_${idx}`)?.value || '';
-        const brandEl = document.getElementById(`brand_${idx}`);
-        let currentBrand = brandEl ? brandEl.value : '';
-
-        // If category is display folder, strip redundant folder terms
-        if (catVal === 'folder_display' || catVal === 'display_folder') {
-            rawName = cleanItemNameForCategory(rawName, catVal, currentBrand);
+        if (!rawName) {
+            if (searchInput) searchInput.value = '';
+            document.getElementById(`name_${idx}`).value = '';
+            document.getElementById(`partId_${idx}`).value = '';
+            const clearBtn = document.getElementById(`clearBtn_${idx}`);
+            if (clearBtn) clearBtn.style.display = 'none';
+            const menuEl = document.getElementById(`comboboxMenu_${idx}`);
+            if (menuEl) menuEl.style.display = 'none';
+            renderStockBadge(idx, null);
+            updateBulkRowTotal(idx);
+            return;
         }
 
-        // Auto-detect brand & category if not already set, and ensure brand in item name
-        if (rawName && rawName !== 'New Item') {
-            const detectedB = guessBrand(rawName);
-            if (detectedB && detectedB !== 'Universal') {
-                currentBrand = detectedB;
-                if (brandEl) brandEl.value = detectedB;
-            }
-            if (currentBrand && currentBrand !== 'Universal') {
-                rawName = ensureBrandInItemName(rawName, currentBrand);
-            }
+        const brandEl = document.getElementById(`brand_${idx}`);
+        const detectedB = guessBrand(rawName);
+        if (detectedB && detectedB !== 'Universal') {
+            if (brandEl) brandEl.value = detectedB;
+        } else if (!brandEl?.value) {
+            if (brandEl) brandEl.value = 'Universal';
+        }
 
-            const autoCat = canonicalizeCategory(catVal, rawName);
-            const catValEl = document.getElementById(`catValue_${idx}`);
-            const catSearchEl = document.getElementById(`catSearchInput_${idx}`);
-            if (catValEl && !catValEl.value && autoCat && autoCat !== 'general_accessory') {
+        const catValEl = document.getElementById(`catValue_${idx}`);
+        const catSearchEl = document.getElementById(`catSearchInput_${idx}`);
+        if (catValEl && !catValEl.value) {
+            const autoCat = canonicalizeCategory('', rawName);
+            if (autoCat && autoCat !== 'general_accessory') {
                 catValEl.value = autoCat;
                 if (catSearchEl) catSearchEl.value = formatCategoryLabel(autoCat);
-                onBulkCategoryChange(idx, autoCat);
+                onBulkCategoryChange(idx, autoCat, false);
             }
         }
 
@@ -2047,7 +2062,7 @@
         document.getElementById(`partId_${idx}`).value = '';
 
         const clearBtn = document.getElementById(`clearBtn_${idx}`);
-        if (clearBtn) clearBtn.style.display = rawName ? 'flex' : 'none';
+        if (clearBtn) clearBtn.style.display = 'flex';
 
         const menuEl = document.getElementById(`comboboxMenu_${idx}`);
         if (menuEl) menuEl.style.display = 'none';
@@ -2132,6 +2147,14 @@
                 } else {
                     chooseAsNewItem(idx, typed);
                 }
+            } else {
+                if (input) input.value = '';
+                document.getElementById(`name_${idx}`).value = '';
+                document.getElementById(`partId_${idx}`).value = '';
+                const clearBtn = document.getElementById(`clearBtn_${idx}`);
+                if (clearBtn) clearBtn.style.display = 'none';
+                renderStockBadge(idx, null);
+                updateBulkRowTotal(idx);
             }
             if (menuEl) menuEl.style.display = 'none';
             const nextEl = document.getElementById(`desc_${idx}`) || document.getElementById(`qty_${idx}`);
@@ -2731,7 +2754,7 @@
             if (selectedPart) {
                 selectExistingPart(idx, selectedPart.id);
             } else if (itemData?.name) {
-                chooseAsNewItem(idx, itemData.name);
+                chooseAsNewItem(idx, rawItemName || itemData.name);
             } else {
                 renderStockBadge(idx, null);
             }
@@ -2829,7 +2852,7 @@
     }
     window.clearAllRows = clearAllRows;
 
-    function onBulkCategoryChange(idx, val) {
+    function onBulkCategoryChange(idx, val, cleanName = false) {
         const canonicalVal = canonicalizeCategory(val);
 
         const qualityToggle = document.getElementById(`qualityToggle_${idx}`);
@@ -2837,8 +2860,8 @@
             qualityToggle.classList.toggle('visible', canonicalVal === 'folder_display' || val === 'display_folder');
         }
 
-        // Clean redundant 'Display Folder' from item name when category is display folder
-        if (canonicalVal === 'folder_display' || val === 'display_folder') {
+        // Only clean redundant terms if explicitly requested (e.g. initial intake), never during normal user typing
+        if (cleanName && (canonicalVal === 'folder_display' || val === 'display_folder')) {
             const nameInput = document.getElementById(`name_${idx}`);
             const searchInput = document.getElementById(`searchInput_${idx}`);
             if (nameInput && nameInput.value) {
@@ -2935,7 +2958,7 @@
             const idMatch = r.id.match(/\d+$/);
             if (!idMatch) return;
             const i = parseInt(idMatch[0]);
-            const nameVal = (document.getElementById(`name_${i}`)?.value || document.getElementById(`searchInput_${i}`)?.value || '').trim().toLowerCase();
+            const nameVal = (document.getElementById(`searchInput_${i}`)?.value || document.getElementById(`name_${i}`)?.value || '').trim().toLowerCase();
             if (nameVal) {
                 nameMap[nameVal] = nameMap[nameVal] || [];
                 nameMap[nameVal].push(i);
@@ -2991,7 +3014,7 @@
 
         const nameInput = document.getElementById(`name_${idx}`);
         const searchInput = document.getElementById(`searchInput_${idx}`);
-        const name = (nameInput?.value || searchInput?.value || '').trim();
+        const name = (searchInput?.value || nameInput?.value || '').trim();
 
         const qtyInput = document.getElementById(`qty_${idx}`);
         const qty = parseInt(qtyInput?.value || 0);
@@ -3290,7 +3313,7 @@
         rows.forEach((r, idx) => {
             const nameInput = r.querySelector('input[name*="[name]"]');
             const searchInput = r.querySelector('.search-combobox-input');
-            const rawName = (nameInput?.value || searchInput?.value || '').trim();
+            const rawName = (searchInput?.value || nameInput?.value || '').trim();
             const partId = r.querySelector('input[name*="[part_id]"]')?.value;
             const costVal = parseFloat(r.querySelector('input[name*="[unit_cost]"]')?.value || 0);
 
