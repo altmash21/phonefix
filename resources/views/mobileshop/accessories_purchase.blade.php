@@ -3274,8 +3274,8 @@
         // 1. Sync fields and separate completely empty rows from active rows
         rows.forEach((r, idx) => {
             const nameInput = r.querySelector('input[name*="[name]"]');
-            const searchInput = r.querySelector('.search-combobox-input');
-            const rawName = (searchInput?.value || nameInput?.value || '').trim();
+            const searchInput = r.querySelector('.search-combobox-input:not(.cat-search-input)');
+            const rawName = (nameInput?.value || searchInput?.value || '').trim();
             const partId = r.querySelector('input[name*="[part_id]"]')?.value;
             const costVal = parseFloat(r.querySelector('input[name*="[unit_cost]"]')?.value || 0);
 
@@ -3312,7 +3312,7 @@
             const r = item.row;
             const rowNum = item.displayIndex;
             const nameInput = r.querySelector('input[name*="[name]"]');
-            const searchInput = r.querySelector('.search-combobox-input');
+            const searchInput = r.querySelector('.search-combobox-input:not(.cat-search-input)');
             const name = (nameInput?.value || searchInput?.value || '').trim();
 
             const qtyInput = r.querySelector('input[name*="[qty]"]');
