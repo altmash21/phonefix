@@ -200,7 +200,8 @@
                             </td>
                             <td style="text-align:center;" id="partStockCell_{{ $part->id }}">
                                 @if($part->stock_qty <= 0)
-                                    <span class="badge badge-gray">0 units</span>
+                                    <span class="badge badge-red" style="font-weight:900; background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5;">⚠️ 0 units (Low Stock)</span>
+                                    <div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; {{ $part->min_stock_alert ?? 3 }}</div>
                                 @elseif($isLow)
                                     <span class="badge badge-red" style="font-weight:900;">⚠️ {{ $part->stock_qty }} units</span>
                                     <div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; {{ $part->min_stock_alert ?? 3 }}</div>
@@ -295,7 +296,7 @@
                             <div style="font-weight:900; font-size:14px; color:#0F172A;">₹{{ number_format($part->selling_price, 0) }}</div>
                             <div id="partStockBadgeMobile_{{ $part->id }}">
                                 @if($part->stock_qty <= 0)
-                                    <span class="badge badge-gray" style="font-size:10px; padding:1px 6px;">0 left</span>
+                                    <span class="badge badge-red" style="font-size:10px; padding:1px 6px; font-weight:800; background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5;">⚠️ 0 left (Low Stock)</span>
                                 @elseif($isLow)
                                     <span class="badge badge-red" style="font-size:10px; padding:1px 6px;">⚠️ {{ $part->stock_qty }} left</span>
                                 @else
@@ -1774,7 +1775,7 @@
                         const qty = parseInt(item.stock_qty) || 0;
                         const alertLvl = parseInt(item.min_stock_alert) || 3;
                         if (qty <= 0) {
-                            stockCell.innerHTML = '<span class="badge badge-gray">0 units</span>';
+                            stockCell.innerHTML = `<span class="badge badge-red" style="font-weight:900; background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5;">⚠️ 0 units (Low Stock)</span><div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; ${alertLvl}</div>`;
                         } else if (qty <= alertLvl) {
                             stockCell.innerHTML = `<span class="badge badge-red" style="font-weight:900;">⚠️ ${qty} units</span><div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; ${alertLvl}</div>`;
                         } else {
@@ -1804,9 +1805,10 @@
                     const mBadge = document.getElementById(`partStockBadgeMobile_${item.id}`);
                     if (mBadge) {
                         const qty = parseInt(item.stock_qty) || 0;
+                        const alertLvl = parseInt(item.min_stock_alert) || 3;
                         if (qty <= 0) {
-                            mBadge.innerHTML = '<span class="badge badge-gray" style="font-size:10px; padding:1px 6px;">0 left</span>';
-                        } else if (qty <= 3) {
+                            mBadge.innerHTML = '<span class="badge badge-red" style="font-size:10px; padding:1px 6px; font-weight:800; background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5;">⚠️ 0 left (Low Stock)</span>';
+                        } else if (qty <= alertLvl) {
                             mBadge.innerHTML = `<span class="badge badge-red" style="font-size:10px; padding:1px 6px;">⚠️ ${qty} left</span>`;
                         } else {
                             mBadge.innerHTML = `<span class="badge badge-green" style="font-size:10px; padding:1px 6px;">${qty} in stock</span>`;
@@ -2253,11 +2255,11 @@
                     const cell = document.getElementById(`partStockCell_${id}`);
                     if (cell) {
                         if (newStock <= 0) {
-                            cell.innerHTML = '<span class="badge badge-gray">0 units</span>';
+                            cell.innerHTML = `<span class="badge badge-red" style="font-weight:900; background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5;">⚠️ 0 units (Low Stock)</span><div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; ${alertLvl}</div>`;
                         } else if (newStock <= alertLvl) {
-                            cell.innerHTML = `<span class="badge badge-red" style="font-weight:900;">⚠️ ${newStock} units</span>`;
+                            cell.innerHTML = `<span class="badge badge-red" style="font-weight:900;">⚠️ ${newStock} units</span><div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; ${alertLvl}</div>`;
                         } else {
-                            cell.innerHTML = `<span class="badge badge-green">${newStock} units</span>`;
+                            cell.innerHTML = `<span class="badge badge-green">${newStock} units</span><div style="font-size:10px; color:#64748B; margin-top:2px;">Min: ${alertLvl}</div>`;
                         }
                     }
                 }
@@ -2265,9 +2267,10 @@
                 // Update mobile card
                 const mBadge = document.getElementById(`partStockBadgeMobile_${id}`);
                 if (mBadge) {
+                    const alertLvl = parseInt(document.getElementById(`stockRow_part_${id}`)?.dataset.alert || 3);
                     if (newStock <= 0) {
-                        mBadge.innerHTML = '<span class="badge badge-gray" style="font-size:10px; padding:1px 6px;">0 left</span>';
-                    } else if (newStock <= 3) {
+                        mBadge.innerHTML = '<span class="badge badge-red" style="font-size:10px; padding:1px 6px; font-weight:800; background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5;">⚠️ 0 left (Low Stock)</span>';
+                    } else if (newStock <= alertLvl) {
                         mBadge.innerHTML = `<span class="badge badge-red" style="font-size:10px; padding:1px 6px;">⚠️ ${newStock} left</span>`;
                     } else {
                         mBadge.innerHTML = `<span class="badge badge-green" style="font-size:10px; padding:1px 6px;">${newStock} in stock</span>`;

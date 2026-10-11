@@ -1427,8 +1427,18 @@
         const badgeEl = document.getElementById(`stockBadge_${idx}`);
         if (!badgeEl) return;
 
+        const qtyInput = document.getElementById(`qty_${idx}`);
+        const currentQty = qtyInput ? parseInt(qtyInput.value || 0) : 0;
+        const alertThreshold = parseInt(document.getElementById(`alert_${idx}`)?.value || 3);
+
         if (isNew) {
-            badgeEl.innerHTML = `<span class="stock-badge-pill new-item" title="First time in inventory - initial stock entry">✨ New Item (First time in stock)</span>`;
+            if (currentQty <= 0) {
+                badgeEl.innerHTML = `<span class="stock-badge-pill new-item" title="First time in inventory - initial stock is 0 (Low Stock Alert)">✨ New Item (First time in stock) &bull; <strong style="color:#DC2626;">⚠️ 0 Qty (Low Stock)</strong></span>`;
+            } else if (currentQty <= alertThreshold) {
+                badgeEl.innerHTML = `<span class="stock-badge-pill new-item" title="First time in inventory - initial stock is below alert threshold">✨ New Item (First time in stock) &bull; <strong style="color:#D97706;">⚠️ Low Stock (${currentQty})</strong></span>`;
+            } else {
+                badgeEl.innerHTML = `<span class="stock-badge-pill new-item" title="First time in inventory - initial stock entry">✨ New Item (First time in stock)</span>`;
+            }
             badgeEl.style.display = 'inline-flex';
             return;
         }
@@ -1446,9 +1456,9 @@
 
         if (qty <= 0) {
             badgeClass = 'out-of-stock';
-            icon = '❌';
-            text = `Out of stock (0 pcs)`;
-        } else if (qty <= 3) {
+            icon = '⚠️';
+            text = `0 in stock (Low Stock)`;
+        } else if (qty <= alertThreshold) {
             badgeClass = 'low-stock';
             icon = '⚠️';
             text = `Low stock: ${qty} pcs`;
@@ -1753,8 +1763,10 @@
         if (displayMatches.length > 0) {
             displayMatches.forEach((p, itemIdx) => {
                 const qty = parseInt(p.stock_qty || 0);
-                const badgeColor = qty <= 0 ? '#DC2626' : (qty <= (p.min_stock_alert || 3) ? '#D97706' : '#059669');
-                const badgeBg = qty <= 0 ? '#FEE2E2' : (qty <= (p.min_stock_alert || 3) ? '#FEF3C7' : '#DCFCE7');
+                const alertLvl = parseInt(p.min_stock_alert || 3);
+                const badgeColor = qty <= 0 ? '#DC2626' : (qty <= alertLvl ? '#D97706' : '#059669');
+                const badgeBg = qty <= 0 ? '#FEE2E2' : (qty <= alertLvl ? '#FEF3C7' : '#DCFCE7');
+                const stockText = qty <= 0 ? '⚠️ 0 in stock (Low Stock)' : (qty <= alertLvl ? `⚠️ ${qty} in stock (Low)` : `${qty} in stock`);
 
                 html += `
                     <div class="combobox-item" data-id="${p.id}" data-idx="${itemIdx}"
@@ -1769,7 +1781,7 @@
                         </div>
                         <div class="combobox-item-stock">
                             <span style="background:${badgeBg}; color:${badgeColor}; font-weight:800; font-size:10.5px; padding:2px 7px; border-radius:4px; display:inline-block;">
-                                ${qty} in stock
+                                ${stockText}
                             </span>
                         </div>
                     </div>
@@ -2881,24 +2893,42 @@
         // Live preview of updated stock total
         const partId = document.getElementById(`partId_${idx}`)?.value;
         const stockAfterEl = document.getElementById(`stockAfter_${idx}`);
+        const alertThreshold = parseInt(document.getElementById(`alert_${idx}`)?.value || 3);
         if (stockAfterEl) {
             if (partId) {
                 const parts = Array.isArray(catalogParts) ? catalogParts : Object.values(catalogParts || {});
                 const p = parts.find(item => item && String(item.id) === String(partId));
                 const currentStock = parseInt(p?.stock_qty || 0);
                 const newTotal = currentStock + qty;
-                stockAfterEl.innerHTML = `<span title="Current: ${currentStock} + Inward: ${qty}" style="color:#059669; font-weight:700;">Total: <strong>${newTotal}</strong> pcs</span>`;
+                if (newTotal <= 0) {
+                    stockAfterEl.innerHTML = `<span title="Current: ${currentStock} + Inward: ${qty} (Low Stock Alert)" style="color:#DC2626; font-weight:800;">⚠️ Total: <strong>0</strong> pcs (Low Stock)</span>`;
+                } else if (newTotal <= alertThreshold) {
+                    stockAfterEl.innerHTML = `<span title="Current: ${currentStock} + Inward: ${qty} (Low Stock Alert)" style="color:#D97706; font-weight:700;">⚠️ Total: <strong>${newTotal}</strong> pcs (Low Stock)</span>`;
+                } else {
+                    stockAfterEl.innerHTML = `<span title="Current: ${currentStock} + Inward: ${qty}" style="color:#059669; font-weight:700;">Total: <strong>${newTotal}</strong> pcs</span>`;
+                }
                 stockAfterEl.style.display = 'block';
             } else {
-                const name = document.getElementById(`name_${idx}`)?.value || '';
-                if (name.trim()) {
-                    stockAfterEl.innerHTML = `<span title="New item starting inventory" style="color:#6366F1; font-weight:700;">New: <strong>${qty}</strong> pcs</span>`;
+                const name = (document.getElementById(`name_${idx}`)?.value || '').trim();
+                if (name) {
+                    if (qty <= 0) {
+                        stockAfterEl.innerHTML = `<span title="New item starting inventory - 0 quantity registered as Low Stock" style="color:#DC2626; font-weight:800;">⚠️ New: <strong>0</strong> pcs (Low Stock)</span>`;
+                    } else if (qty <= alertThreshold) {
+                        stockAfterEl.innerHTML = `<span title="New item starting inventory is below alert threshold" style="color:#D97706; font-weight:700;">⚠️ New: <strong>${qty}</strong> pcs (Low Stock)</span>`;
+                    } else {
+                        stockAfterEl.innerHTML = `<span title="New item starting inventory" style="color:#6366F1; font-weight:700;">New: <strong>${qty}</strong> pcs</span>`;
+                    }
                     stockAfterEl.style.display = 'block';
                 } else {
                     stockAfterEl.innerHTML = '';
                     stockAfterEl.style.display = 'none';
                 }
             }
+        }
+
+        // Keep stock badge updated for new items dynamically
+        if (!partId && (document.getElementById(`name_${idx}`)?.value || '').trim()) {
+            renderStockBadge(idx, 0, true);
         }
 
         updateBulkSummary();

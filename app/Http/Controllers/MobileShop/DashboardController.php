@@ -285,7 +285,7 @@ class DashboardController extends BaseMobileShopController
         if (in_array($niche, ['admin', 'accessories', 'covers'])) {
             $partsQuery = DB::table('ms_parts_inventory')
                 ->where('company_id', $companyId)
-                ->whereRaw('stock_qty <= min_stock_alert');
+                ->whereRaw('stock_qty <= COALESCE(min_stock_alert, 3)');
             if ($niche === 'covers') {
                 $partsQuery->whereIn('category', $this->coverCategories);
             }
