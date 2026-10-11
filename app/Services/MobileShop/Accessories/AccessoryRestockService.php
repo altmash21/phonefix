@@ -198,13 +198,13 @@ class AccessoryRestockService
                         $partName = $cleanedName;
                     }
                 }
-                $brand = $item['brand'] ?? 'Universal';
+                $brand = trim((string) ($item['brand'] ?? ''));
                 if (!empty($brand) && $brand !== 'Universal' && strtolower($brand) !== 'other') {
                     if (!preg_match('/\b' . preg_quote($brand, '/') . '\b/i', $partName)) {
                         $partName = trim($brand . ' ' . $partName);
                     }
                 }
-                $model = $item['compatible_model'] ?? 'Universal';
+                $model = trim((string) ($item['compatible_model'] ?? ''));
                 $isGift = !empty($item['is_gift_eligible']) ? 1 : 0;
                 $partId = !empty($item['part_id']) ? (int) $item['part_id'] : null;
 

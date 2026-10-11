@@ -1394,7 +1394,7 @@
     }
     window.ensureBrandInItemName = ensureBrandInItemName;
 
-    /* ── Clean redundant category terms from product name & ensure brand is present ── */
+    /* ── Clean redundant category terms from product name ── */
     function cleanItemNameForCategory(name, cat, brand) {
         if (!name) return '';
         let cleaned = String(name).trim();
@@ -1403,14 +1403,6 @@
             // Strip out display folder / combo redundant phrases
             cleaned = cleaned.replace(/\b(?:display\s*folder|folder\s*display|folder\s*combo|combo\s*folder|display\s*screen|touch\s*display|touch\s*screen|lcd\s*folder|display|folder|combo|lcd|screen)\b/gi, ' ');
             cleaned = cleaned.replace(/[\s\-_/]+$/, '').replace(/^[\s\-_/]+/, '').replace(/\s{2,}/g, ' ').trim();
-        }
-        if (brand && brand !== 'Universal') {
-            cleaned = ensureBrandInItemName(cleaned, brand);
-        } else {
-            const detected = guessBrand(cleaned);
-            if (detected && detected !== 'Universal') {
-                cleaned = ensureBrandInItemName(cleaned, detected);
-            }
         }
         return cleaned || String(name).trim();
     }
@@ -1903,9 +1895,6 @@
             }
         }
 
-        const b = guessBrand(trimmed);
-        const bEl = document.getElementById(`brand_${idx}`);
-        if (bEl && b !== 'Universal') bEl.value = b;
 
         if (trimmed.length >= 2) {
             const autoCat = canonicalizeCategory('', trimmed);
@@ -1966,11 +1955,7 @@
         const p = parts.find(item => item && String(item.id) === String(partId));
         if (!p) return;
 
-        const detectedB = (p.brand && p.brand !== 'Universal') ? p.brand : guessBrand(p.name);
         let partDisplayName = p.name;
-        if (detectedB && detectedB !== 'Universal') {
-            partDisplayName = ensureBrandInItemName(partDisplayName, detectedB);
-        }
 
         const searchInput = document.getElementById(`searchInput_${idx}`);
         if (searchInput) searchInput.value = partDisplayName;
@@ -1996,8 +1981,8 @@
             onBulkCategoryChange(idx, targetCat);
         }
 
-        document.getElementById(`brand_${idx}`).value = (detectedB || 'Universal');
-        if (p.compatible_model) document.getElementById(`model_${idx}`).value = p.compatible_model;
+        document.getElementById(`brand_${idx}`).value = '';
+        document.getElementById(`model_${idx}`).value = '';
 
         if (p.display_type) {
             applyFolderQualityToRow(idx, p.display_type);
@@ -2039,12 +2024,9 @@
         }
 
         const brandEl = document.getElementById(`brand_${idx}`);
-        const detectedB = guessBrand(rawName);
-        if (detectedB && detectedB !== 'Universal') {
-            if (brandEl) brandEl.value = detectedB;
-        } else if (!brandEl?.value) {
-            if (brandEl) brandEl.value = 'Universal';
-        }
+        if (brandEl) brandEl.value = '';
+        const modelEl = document.getElementById(`model_${idx}`);
+        if (modelEl) modelEl.value = '';
 
         const catValEl = document.getElementById(`catValue_${idx}`);
         const catSearchEl = document.getElementById(`catSearchInput_${idx}`);
@@ -2539,22 +2521,7 @@
             }
 
             let rawItemName = itemData?.name || selectedPart?.name || '';
-            let rawModel = itemData?.compatible_model || itemData?.model || selectedPart?.compatible_model || '';
-            let brandCandidate = itemData?.brand || selectedPart?.brand || '';
-            if (brandCandidate === 'Universal') brandCandidate = '';
-
-            const detectedBrand = brandCandidate || guessBrand(rawItemName) || guessBrand(rawModel) || 'Universal';
-
-            if (targetCat === 'folder_display' || targetCat === 'display_folder') {
-                rawItemName = cleanItemNameForCategory(rawItemName, targetCat, detectedBrand);
-                rawModel = cleanItemNameForCategory(rawModel, targetCat);
-            } else if (detectedBrand && detectedBrand !== 'Universal') {
-                rawItemName = ensureBrandInItemName(rawItemName, detectedBrand);
-            }
-
             const nameVal = escapeHtml(rawItemName);
-            const brandVal = escapeHtml(detectedBrand);
-            const modelVal = escapeHtml(rawModel);
             const rawFolderDt = (itemData?.display_type || selectedPart?.display_type || 'Normal').trim();
             let folderType = 'Normal';
             let folderLabel = 'Normal';
@@ -2582,8 +2549,8 @@
                 <!-- Hidden form fields -->
                 <input type="hidden" name="items[${idx}][part_id]" id="partId_${idx}" value="${selectedPart?.id || itemData?.part_id || ''}">
                 <input type="hidden" name="items[${idx}][name]"    id="name_${idx}"   value="${nameVal}">
-                <input type="hidden" name="items[${idx}][brand]"   id="brand_${idx}"  value="${escapeHtml(detectedBrand)}">
-                <input type="hidden" name="items[${idx}][compatible_model]" id="model_${idx}" value="${modelVal}">
+                <input type="hidden" name="items[${idx}][brand]"   id="brand_${idx}"  value="">
+                <input type="hidden" name="items[${idx}][compatible_model]" id="model_${idx}" value="">
                 <input type="hidden" name="items[${idx}][is_gift_eligible]" id="gift_${idx}" value="${isGiftChecked ? '1' : '0'}">
                 <input type="hidden" name="items[${idx}][display_type]" id="displayTypeVal_${idx}" value="${folderType}">
 
@@ -3334,15 +3301,6 @@
                     catValEl.value = guessedCat || 'general_accessory';
                 }
 
-                // Explicitly sync brand
-                const brandEl = r.querySelector('input[name*="[brand]"]');
-                if (brandEl && (!brandEl.value || brandEl.value === 'Universal')) {
-                    const detectedB = guessBrand(rawName);
-                    if (detectedB && detectedB !== 'Universal') {
-                        brandEl.value = detectedB;
-                    }
-                }
-
                 filledRows.push({ row: r, displayIndex: filledRows.length + 1 });
             }
         });
@@ -3589,11 +3547,7 @@
         items.forEach(it => {
             const rawName = it.name || it.model || 'Item';
             const cat = canonicalizeCategory(it.category, rawName);
-            const rawBrand = it.brand || guessBrand(rawName) || guessBrand(it.model || '');
-            let cleanedName = cleanItemNameForCategory(rawName, cat, rawBrand);
-            if (rawBrand && rawBrand !== 'Universal') {
-                cleanedName = ensureBrandInItemName(cleanedName, rawBrand);
-            }
+            let cleanedName = cleanItemNameForCategory(rawName, cat);
             const nameLower = cleanedName.toLowerCase();
 
             let displayType = 'Normal';
@@ -3616,14 +3570,11 @@
                 }
             }
 
-            const brand = (rawBrand && rawBrand !== 'Universal') ? rawBrand : (guessBrand(cleanedName) || 'Universal');
-            const model = cleanItemNameForCategory(it.model || it.compatible_model || '', cat);
-
             addBulkRow({
                 name: cleanedName,
                 category: cat,
-                brand: brand,
-                compatible_model: model,
+                brand: '',
+                compatible_model: '',
                 display_type: displayType,
                 qty: qty,
                 unit_cost: cost,
@@ -3657,14 +3608,14 @@
         bulkRowIndex = 0;
 
         const sampleItems = [
-            { name: '9D Super Clear Tempered Glass (iPhone 14/15)', category: 'tempered_glass', brand: 'Apple', compatible_model: 'iPhone 14 / 15', qty: 50, unit_cost: 22.00, selling_price: 149.00, is_gift_eligible: 1 },
-            { name: 'Matte Smoke Anti-Drop Bumper Case (Galaxy S24)', category: 'back_cover', brand: 'Samsung', compatible_model: 'Galaxy S24', qty: 25, unit_cost: 45.00, selling_price: 199.00, is_gift_eligible: 1 },
-            { name: 'Original OLED Display Screen Folder (iPhone 14)', category: 'folder_display', brand: 'Apple', compatible_model: 'iPhone 14', display_type: 'OG', qty: 5, unit_cost: 1650.00, selling_price: 2499.00, is_gift_eligible: 0 },
-            { name: 'HD+ High Definition Folder Combo (Redmi Note 12)', category: 'folder_display', brand: 'Xiaomi', compatible_model: 'Redmi Note 12 5G', display_type: 'HD+', qty: 10, unit_cost: 850.00, selling_price: 1499.00, is_gift_eligible: 0 },
-            { name: 'Samsung Galaxy A54 Front Outer Glass with OCA', category: 'front_glass', brand: 'Samsung', compatible_model: 'Galaxy A54', qty: 15, unit_cost: 110.00, selling_price: 399.00, is_gift_eligible: 0 },
-            { name: 'Type-C 65W Braided Fast Charging Cable (1.5m)', category: 'charger_cable', brand: 'Universal', compatible_model: 'Universal Type-C', qty: 30, unit_cost: 38.00, selling_price: 199.00, is_gift_eligible: 1 },
-            { name: 'Universal Type-C Charging Pin Connector Jack', category: 'charging_port', brand: 'Universal', compatible_model: 'Type-C All Devices', qty: 40, unit_cost: 12.00, selling_price: 99.00, is_gift_eligible: 0 },
-            { name: 'High Capacity 5000mAh Battery (Redmi Note 12)', category: 'battery', brand: 'Xiaomi', compatible_model: 'Redmi Note 12 5G', qty: 8, unit_cost: 340.00, selling_price: 799.00, is_gift_eligible: 0 }
+            { name: '9D Super Clear Tempered Glass (iPhone 14/15)', category: 'tempered_glass', brand: '', compatible_model: '', qty: 50, unit_cost: 22.00, selling_price: 149.00, is_gift_eligible: 1 },
+            { name: 'Matte Smoke Anti-Drop Bumper Case (Galaxy S24)', category: 'back_cover', brand: '', compatible_model: '', qty: 25, unit_cost: 45.00, selling_price: 199.00, is_gift_eligible: 1 },
+            { name: 'Original OLED Display Screen Folder (iPhone 14)', category: 'folder_display', brand: '', compatible_model: '', display_type: 'OG', qty: 5, unit_cost: 1650.00, selling_price: 2499.00, is_gift_eligible: 0 },
+            { name: 'HD+ High Definition Folder Combo (Redmi Note 12)', category: 'folder_display', brand: '', compatible_model: '', display_type: 'HD+', qty: 10, unit_cost: 850.00, selling_price: 1499.00, is_gift_eligible: 0 },
+            { name: 'Samsung Galaxy A54 Front Outer Glass with OCA', category: 'front_glass', brand: '', compatible_model: '', qty: 15, unit_cost: 110.00, selling_price: 399.00, is_gift_eligible: 0 },
+            { name: 'Type-C 65W Braided Fast Charging Cable (1.5m)', category: 'charger_cable', brand: '', compatible_model: '', qty: 30, unit_cost: 38.00, selling_price: 199.00, is_gift_eligible: 1 },
+            { name: 'Universal Type-C Charging Pin Connector Jack', category: 'charging_port', brand: '', compatible_model: '', qty: 40, unit_cost: 12.00, selling_price: 99.00, is_gift_eligible: 0 },
+            { name: 'High Capacity 5000mAh Battery (Redmi Note 12)', category: 'battery', brand: '', compatible_model: '', qty: 8, unit_cost: 340.00, selling_price: 799.00, is_gift_eligible: 0 }
         ];
 
         sampleItems.forEach(item => addBulkRow(item));
