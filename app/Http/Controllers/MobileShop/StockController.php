@@ -103,10 +103,11 @@ class StockController extends BaseMobileShopController
 
         $suppliers = DB::table('ms_suppliers')->where('company_id', $companyId)->orderBy('name')->get();
         $customers = DB::table('ms_customers')->where('company_id', $companyId)->orderBy('name')->get();
+        $brands    = $parts->pluck('brand')->filter(fn($b) => !empty(trim((string)$b)))->unique()->sort()->values();
 
         return view('mobileshop.stock', compact(
             'niche',
-            'newPhones', 'secondHandPhones', 'parts', 'repairTickets', 'categories', 'suppliers', 'customers',
+            'newPhones', 'secondHandPhones', 'parts', 'repairTickets', 'categories', 'brands', 'suppliers', 'customers',
             'canManagePhones', 'canManageSecondhand', 'canManageAccessories', 'canManageCovers', 'canManageRepairs',
             'totalNewPhonesInStock', 'totalSecondHandInStock', 'totalPartsInStock',
             'lowStockCount', 'valuationCost', 'valuationRetail'
