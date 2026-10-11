@@ -79,83 +79,17 @@
         </div>
 
         <div class="stock-search-wrap">
-            <div class="search-bar stock-search-input-box">
-                <i data-lucide="search" style="width:14px;height:14px;"></i>
-                <input type="text" id="stockLiveSearch" placeholder="Search part name, category, SKU, model..." oninput="filterStockRows()">
+            <div class="search-bar stock-search-input-box" style="position:relative; display:flex; align-items:center;">
+                <i data-lucide="search" style="width:14px;height:14px; margin-left:10px; color:#94A3B8; flex-shrink:0;"></i>
+                <input type="text" id="stockLiveSearch" placeholder="Search by item name only..." oninput="filterStockRows()" style="padding-left:8px; padding-right:28px;">
+                <button type="button" id="stockSearchClearBtn" onclick="clearStockSearch()" style="display:none; position:absolute; right:8px; border:none; background:transparent; color:#94A3B8; cursor:pointer; padding:2px;" title="Clear Search">
+                    <i data-lucide="x" style="width:13px;height:13px;"></i>
+                </button>
             </div>
             <button type="button" onclick="downloadFilteredStockCSV()" class="btn btn-outline btn-sm stock-csv-btn" id="btnDownloadStockCSV" title="Download Filtered Items as CSV Report">
                 <i data-lucide="download" style="width:13px;height:13px;"></i>
                 <span class="stock-csv-label-desktop">Download Filtered CSV (<span id="filteredCountBadge">{{ count($parts) }}</span>)</span>
                 <span class="stock-csv-label-mobile">CSV (<span id="filteredCountBadgeMobile">{{ count($parts) }}</span>)</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Inventory Filter Bar: Brand, Category, Stock Level & Quality -->
-    @php
-        $partBrands = $brands ?? $parts->pluck('brand')->filter(fn($b) => !empty(trim((string)$b)))->unique()->sort()->values();
-        $partCategories = $parts->pluck('category')->filter(fn($c) => !empty(trim((string)$c)))->unique()->sort()->values();
-    @endphp
-    <div class="stock-filters-bar">
-        <!-- Brand Filter Dropdown -->
-        <div class="stock-filter-group">
-            <label for="stockBrandFilter" class="stock-filter-label">
-                <i data-lucide="tag" style="width:12px;height:12px;"></i> Brand
-            </label>
-            <select id="stockBrandFilter" class="stock-filter-select" onchange="filterStockRows()">
-                <option value="all">All Brands ({{ count($partBrands) }})</option>
-                @foreach($partBrands as $brandName)
-                    <option value="{{ $brandName }}">{{ $brandName }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <!-- Category Filter Dropdown -->
-        <div class="stock-filter-group">
-            <label for="stockCategoryFilter" class="stock-filter-label">
-                <i data-lucide="layers" style="width:12px;height:12px;"></i> Category
-            </label>
-            <select id="stockCategoryFilter" class="stock-filter-select" onchange="filterStockRows()">
-                <option value="all">All Categories ({{ count($partCategories) }})</option>
-                @foreach($partCategories as $catSlug)
-                    <option value="{{ $catSlug }}">{{ ucwords(str_replace('_', ' ', $catSlug)) }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <!-- Stock Status Filter Dropdown -->
-        <div class="stock-filter-group">
-            <label for="stockStatusFilter" class="stock-filter-label">
-                <i data-lucide="alert-circle" style="width:12px;height:12px;"></i> Stock Level
-            </label>
-            <select id="stockStatusFilter" class="stock-filter-select" onchange="onStockStatusFilterChange()">
-                <option value="all">All Stock Levels</option>
-                <option value="low">⚠️ Low Stock & 0 Qty (≤ Alert)</option>
-                <option value="zero">❌ Out of Stock Only (0 Qty)</option>
-                <option value="instock">✅ Healthy In-Stock (> Alert)</option>
-            </select>
-        </div>
-
-        <!-- Quality / Display Type Filter Dropdown -->
-        <div class="stock-filter-group">
-            <label for="stockQualityFilter" class="stock-filter-label">
-                <i data-lucide="sparkles" style="width:12px;height:12px;"></i> Quality / Type
-            </label>
-            <select id="stockQualityFilter" class="stock-filter-select" onchange="filterStockRows()">
-                <option value="all">All Qualities</option>
-                <option value="original_oem">OG ✨ (Original OEM)</option>
-                <option value="oled">OLED</option>
-                <option value="hd_plus">HD+ ⚡</option>
-                <option value="in_cell">IN-CELL</option>
-                <option value="tft">TFT</option>
-                <option value="na">Standard / NA</option>
-            </select>
-        </div>
-
-        <!-- Filter Reset Action -->
-        <div class="stock-filter-actions">
-            <button type="button" onclick="resetAllStockFilters()" class="stock-filter-reset-btn" id="btnResetFilters" title="Reset all brand, category, status & search filters">
-                <i data-lucide="rotate-ccw" style="width:12px;height:12px;"></i> Reset Filters
             </button>
         </div>
     </div>
@@ -953,12 +887,13 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    width: 100%;
-    max-width: 380px;
+    width: auto;
+    flex: 1;
+    max-width: 540px;
 }
 .stock-search-input-box {
     flex: 1;
-    min-width: 0;
+    min-width: 200px;
 }
 .stock-csv-btn {
     color: #BE123C !important;
@@ -973,112 +908,6 @@
 }
 .stock-csv-label-mobile {
     display: none;
-}
-
-/* ════ COMPREHENSIVE STOCK FILTERS BAR ════ */
-.stock-filters-bar {
-    background: var(--color-surface, #FFFFFF);
-    border-radius: var(--radius-card, 10px);
-    border: 1px solid var(--color-border-subtle, #E2E8F0);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    padding: 10px 14px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-.stock-filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1 1 180px;
-    min-width: 140px;
-}
-.stock-filter-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--color-ink-muted, #64748B);
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin: 0;
-}
-.stock-filter-select {
-    width: 100%;
-    padding: 6px 10px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #0F172A;
-    background: #F8FAFC;
-    border: 1px solid #CBD5E1;
-    border-radius: 6px;
-    outline: none;
-    transition: all 0.15s ease;
-    cursor: pointer;
-    line-height: 1.4;
-}
-.stock-filter-select:hover {
-    border-color: #94A3B8;
-    background: #FFFFFF;
-}
-.stock-filter-select:focus {
-    border-color: #6366F1;
-    background: #FFFFFF;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-.stock-filter-actions {
-    display: flex;
-    align-items: flex-end;
-    margin-left: auto;
-    padding-top: 16px;
-}
-.stock-filter-reset-btn {
-    background: #F1F5F9;
-    border: 1px solid #CBD5E1;
-    color: #475569;
-    font-size: 11.5px;
-    font-weight: 700;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-    height: 32px;
-}
-.stock-filter-reset-btn:hover {
-    background: #FEE2E2;
-    border-color: #FCA5A5;
-    color: #B91C1C;
-}
-
-@media (max-width: 768px) {
-    .stock-filters-bar {
-        padding: 8px 10px;
-        gap: 8px;
-    }
-    .stock-filter-group {
-        flex: 1 1 calc(50% - 6px);
-        min-width: calc(50% - 6px);
-    }
-    .stock-filter-actions {
-        width: 100%;
-        margin-left: 0;
-        padding-top: 4px;
-        justify-content: flex-end;
-    }
-}
-@media (max-width: 480px) {
-    .stock-filter-group {
-        flex: 1 1 100%;
-        min-width: 100%;
-    }
 }
 
 /* Stock Inflow Card */
@@ -1421,11 +1250,6 @@
         const activeBtn = document.getElementById(`tabBtn_${tab}`);
         if (activeBtn) activeBtn.classList.add('active');
 
-        const statusSelect = document.getElementById('stockStatusFilter');
-        if (statusSelect) {
-            statusSelect.value = (tab === 'low') ? 'low' : 'all';
-        }
-
         const secParts = document.getElementById('stockSection_parts');
         if (secParts) secParts.style.display = 'block';
 
@@ -1433,44 +1257,16 @@
     }
 
     function filterLowStockOnly() {
-        currentStockTab = 'low';
-        document.querySelectorAll('.filter-pill-btn').forEach(btn => btn.classList.remove('active'));
-        const btnLow = document.getElementById('tabBtn_low');
-        if (btnLow) btnLow.classList.add('active');
-
-        const statusSelect = document.getElementById('stockStatusFilter');
-        if (statusSelect) statusSelect.value = 'low';
-
-        const secParts = document.getElementById('stockSection_parts');
-        if (secParts) secParts.style.display = 'block';
-
-        filterStockRows();
+        switchStockTab('low');
     }
 
-    function onStockStatusFilterChange() {
-        const statusVal = document.getElementById('stockStatusFilter')?.value || 'all';
-        if (statusVal === 'low' || statusVal === 'zero') {
-            currentStockTab = 'low';
-            document.querySelectorAll('.filter-pill-btn').forEach(btn => btn.classList.remove('active'));
-            const btnLow = document.getElementById('tabBtn_low');
-            if (btnLow) btnLow.classList.add('active');
-        } else {
-            currentStockTab = 'all';
-            document.querySelectorAll('.filter-pill-btn').forEach(btn => btn.classList.remove('active'));
-            const btnAll = document.getElementById('tabBtn_all');
-            if (btnAll) btnAll.classList.add('active');
+    function clearStockSearch() {
+        const searchInput = document.getElementById('stockLiveSearch');
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
         }
         filterStockRows();
-    }
-
-    function resetAllStockFilters() {
-        if (document.getElementById('stockLiveSearch')) document.getElementById('stockLiveSearch').value = '';
-        if (document.getElementById('stockBrandFilter')) document.getElementById('stockBrandFilter').value = 'all';
-        if (document.getElementById('stockCategoryFilter')) document.getElementById('stockCategoryFilter').value = 'all';
-        if (document.getElementById('stockStatusFilter')) document.getElementById('stockStatusFilter').value = 'all';
-        if (document.getElementById('stockQualityFilter')) document.getElementById('stockQualityFilter').value = 'all';
-        setStockDatePreset('all');
-        switchStockTab('all');
     }
 
     let currentStockDatePreset = 'all';
@@ -1541,12 +1337,21 @@
         filterStockRows();
     }
 
+    function clearStockSearch() {
+        const input = document.getElementById('stockLiveSearch');
+        if (input) {
+            input.value = '';
+            filterStockRows();
+            input.focus();
+        }
+    }
+
     function filterStockRows() {
-        const term = (document.getElementById('stockLiveSearch')?.value || '').toLowerCase().trim();
-        const brandVal = (document.getElementById('stockBrandFilter')?.value || 'all').toLowerCase();
-        const catVal = (document.getElementById('stockCategoryFilter')?.value || 'all').toLowerCase();
-        const statusVal = document.getElementById('stockStatusFilter')?.value || 'all';
-        const qualityVal = (document.getElementById('stockQualityFilter')?.value || 'all').toLowerCase();
+        const searchInput = document.getElementById('stockLiveSearch');
+        const term = (searchInput?.value || '').toLowerCase().trim();
+        const clearBtn = document.getElementById('stockSearchClearBtn');
+        if (clearBtn) clearBtn.style.display = term ? 'inline-flex' : 'none';
+
         const fromDate = document.getElementById('stockFromDate')?.value || '';
         const toDate = document.getElementById('stockToDate')?.value || '';
 
@@ -1554,57 +1359,25 @@
 
         // Desktop Rows
         document.querySelectorAll('.stock-row').forEach(row => {
-            const rowText = (row.textContent || '').toLowerCase();
             const rowName = (row.dataset.name || '').toLowerCase();
-            const rowBrand = (row.dataset.brand || 'universal').toLowerCase();
-            const rowCat = (row.dataset.category || '').toLowerCase();
-            const rowModel = (row.dataset.model || 'universal').toLowerCase();
-            const rowQuality = (row.dataset.quality || 'na').toLowerCase();
             const rawDate = (row.dataset.date || '').trim();
             const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const stock = parseInt(row.dataset.stock || 0);
             const alertLvl = parseInt(row.dataset.alert || 3);
             const isLow = row.dataset.low === '1' || (stock <= alertLvl);
 
-            // 1. Text Search (Matches name, brand, category, model, SKU, description)
-            const matchesText = !term || rowText.includes(term) || rowName.includes(term) || rowBrand.includes(term) || rowModel.includes(term);
+            // 1. Search Strictly By Item Name Only
+            const matchesName = !term || rowName.includes(term);
 
-            // 2. Brand Filter
-            const matchesBrand = (brandVal === 'all') || (rowBrand === brandVal);
+            // 2. Tab Filter: All Inventory or Low Stock Only
+            const matchesTab = (currentStockTab !== 'low') || isLow;
 
-            // 3. Category Filter
-            const matchesCat = (catVal === 'all') || (rowCat === catVal);
-
-            // 4. Quality / Display Type Filter
-            let matchesQuality = true;
-            if (qualityVal !== 'all') {
-                if (qualityVal === 'original_oem') {
-                    matchesQuality = ['original_oem', 'og', 'original'].includes(rowQuality);
-                } else if (qualityVal === 'hd_plus') {
-                    matchesQuality = ['hd_plus', 'hd+', 'hd plus', 'hd'].includes(rowQuality);
-                } else if (qualityVal === 'in_cell') {
-                    matchesQuality = ['in_cell', 'incell'].includes(rowQuality);
-                } else {
-                    matchesQuality = (rowQuality === qualityVal);
-                }
-            }
-
-            // 5. Stock Level / Tab Filter
-            let matchesStatus = true;
-            if (currentStockTab === 'low' || statusVal === 'low') {
-                matchesStatus = isLow;
-            } else if (statusVal === 'zero') {
-                matchesStatus = (stock <= 0);
-            } else if (statusVal === 'instock') {
-                matchesStatus = (stock > alertLvl);
-            }
-
-            // 6. Date Range Filter
+            // 3. Date Range Filter
             let matchesDate = true;
             if (fromDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate >= fromDate);
             if (toDate) matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
 
-            const isVisible = matchesText && matchesBrand && matchesCat && matchesQuality && matchesStatus && matchesDate;
+            const isVisible = matchesName && matchesTab && matchesDate;
             row.dataset.mobiHidden = isVisible ? '0' : '1';
             row.style.display = isVisible ? '' : 'none';
 
@@ -1613,51 +1386,30 @@
 
         // Mobile Cards
         document.querySelectorAll('#stockMobileCards .stock-card').forEach(card => {
-            const cardText = (card.dataset.search || card.textContent || '').toLowerCase();
-            const cardBrand = (card.dataset.brand || 'universal').toLowerCase();
-            const cardCat = (card.dataset.category || '').toLowerCase();
-            const cardQuality = (card.dataset.quality || 'na').toLowerCase();
+            const cardName = (card.dataset.name || card.querySelector('div[style*="font-weight:800"]')?.textContent || '').toLowerCase();
             const rawDate = (card.dataset.date || '').trim();
             const cleanCardDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const stock = parseInt(card.dataset.stock || 0);
-            const isLow = card.dataset.low === '1';
+            const alertLvl = parseInt(card.dataset.alert || 3);
+            const isLow = card.dataset.low === '1' || (stock <= alertLvl);
 
-            const matchesText = !term || cardText.includes(term);
-            const matchesBrand = (brandVal === 'all') || (cardBrand === brandVal);
-            const matchesCat = (catVal === 'all') || (cardCat === catVal);
+            // 1. Search Strictly By Item Name Only
+            const matchesName = !term || cardName.includes(term);
 
-            let matchesQuality = true;
-            if (qualityVal !== 'all') {
-                if (qualityVal === 'original_oem') {
-                    matchesQuality = ['original_oem', 'og', 'original'].includes(cardQuality);
-                } else if (qualityVal === 'hd_plus') {
-                    matchesQuality = ['hd_plus', 'hd+', 'hd plus', 'hd'].includes(cardQuality);
-                } else if (qualityVal === 'in_cell') {
-                    matchesQuality = ['in_cell', 'incell'].includes(cardQuality);
-                } else {
-                    matchesQuality = (cardQuality === qualityVal);
-                }
-            }
+            // 2. Tab Filter: All Inventory or Low Stock Only
+            const matchesTab = (currentStockTab !== 'low') || isLow;
 
-            let matchesStatus = true;
-            if (currentStockTab === 'low' || statusVal === 'low') {
-                matchesStatus = isLow;
-            } else if (statusVal === 'zero') {
-                matchesStatus = (stock <= 0);
-            } else if (statusVal === 'instock') {
-                matchesStatus = !isLow;
-            }
-
+            // 3. Date Range Filter
             let matchesDate = true;
             if (fromDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate >= fromDate);
             if (toDate) matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate <= toDate);
 
-            const isCardVisible = matchesText && matchesBrand && matchesCat && matchesQuality && matchesStatus && matchesDate;
+            const isCardVisible = matchesName && matchesTab && matchesDate;
             card.dataset.mobiHidden = isCardVisible ? '0' : '1';
             card.style.display = isCardVisible ? '' : 'none';
         });
 
-        // Update count badges
+        // Update count badges on Download button
         const badgeDesktop = document.getElementById('filteredCountBadge');
         if (badgeDesktop) badgeDesktop.textContent = visibleCount;
         const badgeMobile = document.getElementById('filteredCountBadgeMobile');
@@ -1700,13 +1452,12 @@
     function downloadFilteredStockCSV() {
         const visibleRows = Array.from(document.querySelectorAll('.stock-row')).filter(r => r.dataset.mobiHidden !== '1' && r.style.display !== 'none');
         if (!visibleRows || visibleRows.length === 0) {
-            alert('⚠️ No items match your current filter settings to export.');
+            alert('⚠️ No items match your search to export.');
             return;
         }
 
-        const brandVal = document.getElementById('stockBrandFilter')?.value || 'all';
-        const catVal = document.getElementById('stockCategoryFilter')?.value || 'all';
-        const statusVal = document.getElementById('stockStatusFilter')?.value || 'all';
+        const searchInput = document.getElementById('stockLiveSearch');
+        const term = (searchInput?.value || '').toLowerCase().trim();
 
         let csvContent = "\uFEFFItem Name,Brand,Category,Compatible Model,Quality / Type,In-Stock Qty,Min Alert,Stock Status,Unit Cost (INR),Retail Price (INR),Total Valuation (INR),Recommended Order Qty,Date Added\n";
 
@@ -1729,20 +1480,12 @@
         });
 
         const today = new Date().toISOString().slice(0, 10);
-        let fileNameParts = ['mobitrack'];
-        if (currentStockTab === 'low' || statusVal === 'low' || statusVal === 'zero') {
-            fileNameParts.push('low_stock');
-        } else {
-            fileNameParts.push('inventory');
+        let prefix = (currentStockTab === 'low') ? 'mobitrack_low_stock' : 'mobitrack_inventory';
+        if (term) {
+            const cleanTerm = term.replace(/[^a-z0-9]/g, '_');
+            prefix += `_${cleanTerm}`;
         }
-        if (brandVal !== 'all') {
-            fileNameParts.push(brandVal.toLowerCase().replace(/[^a-z0-9]/g, '_'));
-        }
-        if (catVal !== 'all') {
-            fileNameParts.push(catVal.toLowerCase().replace(/[^a-z0-9]/g, '_'));
-        }
-        fileNameParts.push(today);
-        const fileName = fileNameParts.join('_') + '.csv';
+        const fileName = `${prefix}_${today}.csv`;
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
