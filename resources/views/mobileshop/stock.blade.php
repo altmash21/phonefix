@@ -397,7 +397,6 @@
                 </table>
             </div>
         </div>
-        @endif
     </div>
 
     <!-- Mobile Zero-Depth Flat Cards Container -->
