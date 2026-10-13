@@ -936,6 +936,16 @@ class PurchaseController extends BaseMobileShopController
         ];
 
         $label = $statusLabels[$newStatus] ?? $newStatus;
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success'      => true,
+                'message'      => "Defective item #{$id} updated to '{$label}'.",
+                'status'       => $newStatus,
+                'status_label' => $label,
+            ]);
+        }
+
         return redirect()->back()->with('success', "Defective item #{$id} updated to '{$label}'.");
     }
 

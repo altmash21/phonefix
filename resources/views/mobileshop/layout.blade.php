@@ -85,33 +85,60 @@
     <!-- Lucide Icons (Local bundle with CDN fallback) -->
     <script src="{{ asset('public/vendor/lucide/lucide.min.js') }}"></script>
     <script>
-        window.refreshIcons = function () {
-            if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                try { window.lucide.createIcons(); } catch (e) { /* noop */ }
-            }
-        };
+        (function() {
+            function patchLucide() {
+                if (!window.lucide || typeof window.lucide.createIcons !== 'function' || window.lucide._isSafePatched) return;
+                var rawCreateIcons = window.lucide.createIcons;
+                window.lucide.createIcons = function (options) {
+                    var root = (options && options.root) || document;
+                    // Only target unrendered icon placeholders (elements that are NOT already SVG)
+                    var pending = root.querySelectorAll ? root.querySelectorAll('i[data-lucide], span[data-lucide], :not(svg)[data-lucide]') : [];
+                    if (!pending.length) return;
 
-        // Fallback to CDN if local bundle is somehow inaccessible
-        if (typeof lucide === 'undefined') {
-            (function () {
+                    try {
+                        rawCreateIcons.call(window.lucide, options);
+                        // Clean up: strip data-lucide attribute from generated SVGs so they are never targeted or re-rendered again
+                        var svgs = root.querySelectorAll ? root.querySelectorAll('svg[data-lucide]') : [];
+                        for (var i = 0; i < svgs.length; i++) {
+                            svgs[i].removeAttribute('data-lucide');
+                        }
+                    } catch (e) { /* noop */ }
+                };
+                window.lucide._isSafePatched = true;
+            }
+
+            window.refreshIcons = function (root) {
+                patchLucide();
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    try { window.lucide.createIcons(root ? { root: root } : {}); } catch (e) { /* noop */ }
+                }
+            };
+
+            // Fallback to CDN if local bundle is somehow inaccessible
+            if (typeof lucide === 'undefined') {
                 var script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js';
                 script.onload = function () {
+                    patchLucide();
                     window.refreshIcons();
                 };
                 script.onerror = function () {
                     var script2 = document.createElement('script');
                     script2.src = 'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js';
-                    script2.onload = function () { window.refreshIcons(); };
+                    script2.onload = function () {
+                        patchLucide();
+                        window.refreshIcons();
+                    };
                     document.head.appendChild(script2);
                 };
                 document.head.appendChild(script);
-            })();
-        } else {
-            document.addEventListener('DOMContentLoaded', function () {
-                window.refreshIcons();
-            });
-        }
+            } else {
+                patchLucide();
+                document.addEventListener('DOMContentLoaded', function () {
+                    window.refreshIcons();
+                });
+            }
+        })();
     </script>
 
     <!-- MobileShop Pre-Compiled Tailwind CSS (replaces cdn.tailwindcss.com) -->
@@ -279,6 +306,10 @@
                 border: none !important;
                 box-shadow: none !important;
             }
+        }
+        /* Ensure child svg icons inside action buttons never swallow or cancel click events */
+        button svg, .btn svg, [role="button"] svg, .stock-action-trigger-btn svg, .purchase-dots-btn svg {
+            pointer-events: none !important;
         }
     </style>
     @stack('styles')
@@ -721,7 +752,7 @@
         </div>
     </nav>
 
-    <script src="{{ asset('public/js/mobileshop/ui-utils.js') }}?v=2.5.0" defer></script>
+    <script src="{{ asset('public/js/mobileshop/ui-utils.js') }}?v=2.6.0" defer></script>
     @stack('scripts')
 
     <!-- Interactive Navigation Feedback -->

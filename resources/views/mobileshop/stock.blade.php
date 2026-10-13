@@ -76,6 +76,9 @@
                 <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i> Low Stock ({{ $lowStockCount }})
             </button>
             @endif
+            <button onclick="switchStockTab('defective')" id="tabBtn_defective" class="filter-pill-btn" style="color:#C2410C; border-color:#FED7AA;">
+                <i data-lucide="shield-alert" style="width:13px;height:13px; color:#EA580C;"></i> Defective Stock (<span id="defectiveTabCountBadge">{{ $totalDefectiveQty ?? 0 }}</span>)
+            </button>
         </div>
 
         <div class="stock-search-wrap">
@@ -156,7 +159,7 @@
                             <th style="text-align:center;">In-Stock Qty</th>
                             <th style="text-align:right;">Unit Cost (₹)</th>
                             <th style="text-align:right;">Retail Price (₹)</th>
-                            <th style="width:90px; text-align:center;">Actions</th>
+                            <th style="width:130px; text-align:center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -239,6 +242,21 @@
                                 </button>
                                 <button type="button" 
                                         class="btn btn-outline btn-xs" 
+                                        title="Mark Defective Stock" 
+                                        style="color:#EA580C; border-color:#FED7AA; background:#FFF7ED; padding:3px 7px; margin-right:4px;"
+                                        onclick="openMarkDefectiveModal({
+                                            id: {{ $part->id }},
+                                            name: '{{ addslashes($part->name) }}',
+                                            category: '{{ addslashes($part->category) }}',
+                                            brand: '{{ addslashes($part->brand ?: 'Universal') }}',
+                                            model: '{{ addslashes($part->compatible_model ?: '') }}',
+                                            stock: {{ (int)$part->stock_qty }},
+                                            cost: {{ (float)$part->unit_cost }}
+                                        })">
+                                    <i data-lucide="alert-triangle" style="width:13px;height:13px;"></i>
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-outline btn-xs" 
                                         title="View Inventory History" 
                                         style="padding:3px 7px; margin-right:4px;"
                                         onclick="openStockHistoryModal({
@@ -274,6 +292,110 @@
                 </table>
             </div>
             <div id="stockPartsPagination"></div>
+        </div>
+        @endif
+
+        <!-- ════ QUARANTINED DEFECTIVE STOCK SECTION ════ -->
+        <div id="stockSection_defective" class="stock-section card" style="display:none;">
+            <div class="card-header" style="background:#FFF7ED; border-bottom:1px solid #FED7AA; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:34px; height:34px; border-radius:8px; background:#FFEDD5; color:#EA580C; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i data-lucide="shield-alert" style="width:18px;height:18px;"></i>
+                    </div>
+                    <div>
+                        <div class="card-title" style="color:#9A3412; font-size:14px; font-weight:800; margin:0;">Quarantined Defective Stock</div>
+                        <div style="font-size:11px; color:#C2410C; margin-top:1px;">Faulty or damaged items separated from sellable inventory</div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="badge" style="background:#FFEDD5; color:#9A3412; border:1px solid #FDBA74; font-weight:800; font-size:11.5px; padding:4px 10px;">
+                        Quarantined: <span id="defectiveSectionTotalQty">{{ $totalDefectiveQty ?? 0 }}</span> units
+                    </span>
+                </div>
+            </div>
+            <div class="card-body" style="padding:0; overflow-x:auto;">
+                <table class="data-table" id="stockDefectiveTable" style="margin:0;">
+                    <thead>
+                        <tr style="background:#F8FAFC;">
+                            <th style="min-width:200px;">Item Name & Source</th>
+                            <th style="width:140px;">Defect Reason</th>
+                            <th style="width:100px; text-align:center;">Defect Qty</th>
+                            <th style="width:110px; text-align:right;">Unit Cost (₹)</th>
+                            <th style="width:120px; text-align:right;">Valuation (₹)</th>
+                            <th style="width:160px; text-align:center;">Quarantine Status</th>
+                            <th style="width:120px; text-align:center;">Date Marked</th>
+                            <th style="width:100px; text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockDefectiveTableBody">
+                        @forelse($defectiveItems ?? [] as $defect)
+                        <tr class="defective-row" id="defectRow_{{ $defect->id }}" data-id="{{ $defect->id }}" data-search="{{ strtolower(($defect->item_name ?? '') . ' ' . ($defect->defect_reason ?? '') . ' ' . ($defect->status ?? '')) }}">
+                            <td>
+                                <div style="font-weight:700; color:#0F172A; font-size:13px;">{{ $defect->item_name }}</div>
+                                <div style="font-size:11px; color:#64748B;">
+                                    Ref: {{ $defect->source_ref ?: 'Stock Quarantine' }}
+                                    @if(!empty($defect->supplier_name)) &bull; {{ $defect->supplier_name }} @endif
+                                </div>
+                                @if(!empty($defect->notes))
+                                <div style="font-size:10.5px; color:#94A3B8; margin-top:2px; font-style:italic;">{{ Str::limit($defect->notes, 65) }}</div>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="badge badge-red" style="font-size:11px; font-weight:700; background:#FEE2E2; color:#B91C1C; border:1px solid #FCA5A5;">
+                                    {{ $defect->defect_reason ?: 'Faulty' }}
+                                </span>
+                            </td>
+                            <td style="text-align:center;">
+                                <span class="badge" style="background:#FFEDD5; color:#C2410C; border:1px solid #FDBA74; font-weight:800; font-size:12px; padding:3px 8px;">
+                                    {{ $defect->qty }} pcs
+                                </span>
+                            </td>
+                            <td style="text-align:right; color:#64748B; font-size:12px;">₹{{ number_format($defect->unit_cost, 2) }}</td>
+                            <td style="text-align:right; font-weight:800; color:#0F172A; font-size:12.5px;">₹{{ number_format($defect->total_cost, 2) }}</td>
+                            <td style="text-align:center;" id="defectStatusCell_{{ $defect->id }}">
+                                @if($defect->status === 'pending_supplier_return')
+                                    <span class="badge badge-amber" style="font-size:10.5px; font-weight:700;">Pending Return</span>
+                                @elseif($defect->status === 'returned_to_supplier')
+                                    <span class="badge badge-blue" style="font-size:10.5px; font-weight:700;">Returned to Supplier</span>
+                                @elseif($defect->status === 'replaced_by_supplier')
+                                    <span class="badge badge-green" style="font-size:10.5px; font-weight:700;">Replaced by Supplier</span>
+                                @elseif($defect->status === 'scrap_written_off')
+                                    <span class="badge badge-gray" style="font-size:10.5px; font-weight:700;">Scrap / Written Off</span>
+                                @else
+                                    <span class="badge badge-gray" style="font-size:10.5px; font-weight:700;">{{ ucwords(str_replace('_', ' ', $defect->status)) }}</span>
+                                @endif
+                            </td>
+                            <td style="text-align:center; font-size:11px; color:#64748B;">
+                                {{ \Carbon\Carbon::parse($defect->created_at)->format('d M Y') }}
+                            </td>
+                            <td style="text-align:center;">
+                                <button type="button" 
+                                        class="btn btn-outline btn-xs" 
+                                        title="Update Status" 
+                                        style="color:#0284C7; border-color:#BAE6FD; background:#F0F9FF; padding:3px 7px;"
+                                        onclick="openUpdateDefectStatusModal({
+                                            id: {{ $defect->id }},
+                                            name: '{{ addslashes($defect->item_name) }}',
+                                            qty: {{ $defect->qty }},
+                                            currentStatus: '{{ $defect->status }}',
+                                            partId: {{ $defect->part_id ? $defect->part_id : 'null' }}
+                                        })">
+                                    <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr id="noDefectiveStockRow">
+                            <td colspan="8" style="text-align:center; padding:32px 16px; color:#94A3B8;">
+                                <i data-lucide="check-circle" style="width:28px;height:28px; color:#10B981; margin-bottom:6px;"></i>
+                                <div style="font-size:13px; font-weight:700; color:#334155;">No Defective Items Quarantined</div>
+                                <div style="font-size:11px; color:#94A3B8;">When damaged or faulty items are marked as defective, they are quarantined here and removed from healthy stock.</div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
         @endif
     </div>
@@ -353,6 +475,10 @@
         <button type="button" class="stock-dropdown-item" onclick="triggerStockHistory()">
             <i data-lucide="history" style="width:15px;height:15px;color:#2563EB;"></i>
             <span>Stock History</span>
+        </button>
+        <button type="button" class="stock-dropdown-item" id="menuDefectBtn" onclick="triggerStockDefect()" style="color:#C2410C;">
+            <i data-lucide="shield-alert" style="width:15px;height:15px;color:#EA580C;"></i>
+            <span>Mark Defective Stock</span>
         </button>
         <button type="button" class="stock-dropdown-item text-danger" id="menuDeleteBtn" onclick="triggerStockDelete()">
             <i data-lucide="trash-2" style="width:15px;height:15px;color:#DC2626;"></i>
@@ -526,6 +652,156 @@
                         <i data-lucide="check" style="width:14px;height:14px;"></i>
                         <span id="btnSaveStockEditText">Save Stock Changes</span>
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ════ MARK DEFECTIVE STOCK MODAL ════ -->
+    <div id="markDefectiveStockModal" style="display:none; position:fixed; inset:0; z-index:1220; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:16px;">
+        <div class="card" style="max-width:540px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); max-height:92vh; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; margin:0; border:1px solid #FED7AA;">
+            <div class="card-header" style="background:linear-gradient(135deg, #7C2D12 0%, #9A3412 100%); color:#fff; border-bottom:1px solid #EA580C; padding:16px 20px; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <div class="card-title" style="color:#fff; font-size:16px; margin:0; font-weight:800; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="shield-alert" style="width:18px;height:18px; color:#FDBA74;"></i> Mark Stock as Defective
+                    </div>
+                    <div class="card-subtitle" style="color:#FED7AA; font-size:11.5px; margin-top:2px;">
+                        Quarantine damaged units & deduct from healthy inventory
+                    </div>
+                </div>
+                <button type="button" onclick="closeMarkDefectiveModal()" style="background:transparent; border:none; color:#FED7AA; cursor:pointer; padding:4px;" title="Close">
+                    <i data-lucide="x" style="width:20px;height:20px;"></i>
+                </button>
+            </div>
+            
+            <form id="markDefectiveForm" onsubmit="submitMarkDefectiveForm(event)">
+                <input type="hidden" id="defectItemId" name="item_id" value="">
+                <input type="hidden" id="defectAvailableStock" value="0">
+
+                <div style="padding:20px; overflow-y:auto; flex:1;">
+                    <!-- Item Overview Banner -->
+                    <div style="background:#FFF7ED; border:1px solid #FED7AA; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+                        <div style="font-size:11px; color:#C2410C; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Target Catalog Item</div>
+                        <div id="defectItemNameDisplay" style="font-size:14px; font-weight:900; color:#0F172A; margin-top:2px;">-</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11.5px; color:#64748B;">
+                            <span id="defectItemSubtext">-</span>
+                            <span style="font-weight:800; color:#15803D; background:#DCFCE7; border:1px solid #BBF7D0; padding:2px 8px; border-radius:6px;">
+                                Healthy Stock: <strong id="defectHealthyStockDisplay">0</strong> pcs
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Defect Qty Selector -->
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="font-size:12.5px; font-weight:800; color:#0F172A; margin:0;">
+                                Defective Quantity <span style="color:#DC2626;">*</span>
+                            </label>
+                            <button type="button" onclick="setDefectAllStock()" style="font-size:11px; font-weight:700; color:#EA580C; background:transparent; border:none; cursor:pointer; text-decoration:underline;">
+                                Mark All Available (<span id="defectAllStockCount">0</span>)
+                            </button>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button type="button" class="btn btn-outline" onclick="adjustDefectQty(-1)" style="width:40px; height:38px; padding:0; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900;">-</button>
+                            <input type="number" id="defectQtyInput" name="qty" min="1" value="1" required 
+                                   oninput="onDefectQtyChange()" 
+                                   style="height:38px; text-align:center; font-size:16px; font-weight:900; color:#0F172A; width:100px; border:2px solid #FED7AA; border-radius:6px;">
+                            <button type="button" class="btn btn-outline" onclick="adjustDefectQty(1)" style="width:40px; height:38px; padding:0; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900;">+</button>
+                            <div style="font-size:11.5px; color:#64748B; margin-left:6px;" id="defectRemainingStockPreview">
+                                Remaining: 0 pcs
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Defect Reason -->
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block; font-size:12.5px; font-weight:800; color:#0F172A; margin-bottom:6px;">
+                            Defect / Fault Reason <span style="color:#DC2626;">*</span>
+                        </label>
+                        <select id="defectReasonSelect" name="reason" required class="form-control" style="font-size:13px; font-weight:600; height:38px; border:1px solid #CBD5E1; border-radius:6px; width:100%;">
+                            <option value="Display Dead / Blank">Display Dead / Blank</option>
+                            <option value="Touch Not Working / Ghost Touch">Touch Not Working / Ghost Touch</option>
+                            <option value="Screen Lines / Flickering">Screen Lines / Flickering</option>
+                            <option value="Physical Damage / Cracked / Broken">Physical Damage / Cracked / Broken</option>
+                            <option value="Charging / Connector Malfunction">Charging / Connector Malfunction</option>
+                            <option value="Audio / Mic / Speaker Defect">Audio / Mic / Speaker Defect</option>
+                            <option value="Battery Fast Drain / Bloated">Battery Fast Drain / Bloated</option>
+                            <option value="Fitting / Frame Incompatible">Fitting / Frame Incompatible</option>
+                            <option value="Factory Defect / DOA">Factory Defect / DOA (Dead on Arrival)</option>
+                            <option value="Customer Return - Defective">Customer Return - Defective</option>
+                            <option value="Other Fault">Other Fault</option>
+                        </select>
+                    </div>
+
+                    <!-- Additional Notes -->
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:4px;">
+                            Additional Notes (Optional)
+                        </label>
+                        <textarea id="defectNotesInput" name="notes" rows="2" placeholder="e.g. Customer reported flickering, flex cable torn, factory defect batch..." class="form-control" style="font-size:12px; width:100%; border:1px solid #CBD5E1; border-radius:6px; padding:8px;"></textarea>
+                    </div>
+
+                    <div id="defectModalError" style="display:none; background:#FEF2F2; border:1px solid #FCA5A5; color:#B91C1C; padding:10px; border-radius:6px; font-size:12px; margin-top:10px;"></div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px; padding:12px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0;">
+                    <button type="button" onclick="closeMarkDefectiveModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
+                    <button type="submit" id="submitDefectBtn" class="btn btn-primary" style="font-size:12px; background:#EA580C; border-color:#EA580C; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="shield-alert" style="width:14px;height:14px;"></i> Quarantine Defective Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ════ UPDATE DEFECTIVE ITEM STATUS MODAL ════ -->
+    <div id="updateDefectiveStatusModal" style="display:none; position:fixed; inset:0; z-index:1220; background:rgba(15,23,42,0.65); backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:16px;">
+        <div class="card" style="max-width:480px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35); max-height:92vh; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; margin:0; border:1px solid #BAE6FD;">
+            <div class="card-header" style="background:linear-gradient(135deg, #0369A1 0%, #0C4A6E 100%); color:#fff; border-bottom:1px solid #0284C7; padding:16px 20px; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <div class="card-title" style="color:#fff; font-size:15px; margin:0; font-weight:800; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="refresh-cw" style="width:16px;height:16px; color:#7DD3FC;"></i> Update Quarantine Status
+                    </div>
+                    <div class="card-subtitle" style="color:#BAE6FD; font-size:11px; margin-top:2px;" id="updateDefectSubtitle">
+                        Update resolution for quarantined defective item
+                    </div>
+                </div>
+                <button type="button" onclick="closeUpdateDefectStatusModal()" style="background:transparent; border:none; color:#BAE6FD; cursor:pointer; padding:4px;" title="Close">
+                    <i data-lucide="x" style="width:18px;height:18px;"></i>
+                </button>
+            </div>
+            
+            <form id="updateDefectStatusForm" onsubmit="submitUpdateDefectStatusForm(event)">
+                <input type="hidden" id="upDefectId" value="">
+                <div style="padding:18px; overflow-y:auto; flex:1;">
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:12.5px; font-weight:800; color:#0F172A; margin-bottom:6px;">Resolution Status</label>
+                        <select id="upDefectStatusSelect" onchange="onUpDefectStatusChange()" class="form-control" style="font-size:13px; font-weight:600; height:38px; border:1px solid #CBD5E1; border-radius:6px; width:100%;">
+                            <option value="pending_supplier_return">Pending Supplier Return</option>
+                            <option value="returned_to_supplier">Returned to Supplier (RMA Sent)</option>
+                            <option value="replaced_by_supplier">Replaced by Supplier (Replacement Received)</option>
+                            <option value="scrap_written_off">Scrap / Written Off (Loss Booked)</option>
+                        </select>
+                    </div>
+
+                    <div id="restockReplacementOption" style="display:none; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; font-weight:700; color:#166534; margin:0;">
+                            <input type="checkbox" id="upRestockReplacement" value="1" checked style="width:16px; height:16px; accent-color:#16A34A;">
+                            <span>Automatically restock healthy catalog inventory (+<span id="upRestockQty">1</span> pcs)</span>
+                        </label>
+                    </div>
+
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:4px;">Notes / RMA Details</label>
+                        <textarea id="upDefectNotes" rows="2" placeholder="e.g. RMA ticket #1234, returned via courier..." class="form-control" style="font-size:12px; width:100%; border:1px solid #CBD5E1; border-radius:6px; padding:8px;"></textarea>
+                    </div>
+
+                    <div id="updateDefectError" style="display:none; background:#FEF2F2; border:1px solid #FCA5A5; color:#B91C1C; padding:8px; border-radius:6px; font-size:12px;"></div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px; padding:12px 18px; background:#F8FAFC; border-top:1px solid #E2E8F0;">
+                    <button type="button" onclick="closeUpdateDefectStatusModal()" class="btn btn-outline" style="font-size:12px;">Cancel</button>
+                    <button type="submit" id="submitUpDefectBtn" class="btn btn-primary" style="font-size:12px;">Update Status</button>
                 </div>
             </form>
         </div>
@@ -1251,9 +1527,40 @@
         if (activeBtn) activeBtn.classList.add('active');
 
         const secParts = document.getElementById('stockSection_parts');
-        if (secParts) secParts.style.display = 'block';
+        const secDefective = document.getElementById('stockSection_defective');
+        const mobileContainer = document.getElementById('stockMobileCards');
 
-        filterStockRows();
+        if (tab === 'defective') {
+            if (secParts) secParts.style.display = 'none';
+            if (secDefective) secDefective.style.display = 'block';
+            filterDefectiveRows();
+        } else {
+            if (secDefective) secDefective.style.display = 'none';
+            if (secParts) secParts.style.display = 'block';
+            filterStockRows();
+        }
+    }
+
+    function filterDefectiveRows() {
+        const searchInput = document.getElementById('stockLiveSearch');
+        const term = (searchInput?.value || '').toLowerCase().trim();
+        const clearBtn = document.getElementById('stockSearchClearBtn');
+        if (clearBtn) clearBtn.style.display = term ? 'inline-flex' : 'none';
+
+        const rows = document.querySelectorAll('#stockDefectiveTableBody .defective-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const rowSearch = (row.dataset.search || '').toLowerCase();
+            const matches = !term || rowSearch.includes(term);
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount++;
+        });
+
+        const noRow = document.getElementById('noDefectiveStockRow');
+        if (noRow) {
+            noRow.style.display = (visibleCount === 0 && rows.length > 0 && term) ? '' : (rows.length === 0 ? '' : 'none');
+        }
     }
 
     function filterLowStockOnly() {
@@ -1266,7 +1573,11 @@
             searchInput.value = '';
             searchInput.focus();
         }
-        filterStockRows();
+        if (currentStockTab === 'defective') {
+            filterDefectiveRows();
+        } else {
+            filterStockRows();
+        }
     }
 
     let currentStockDatePreset = 'all';
@@ -1351,6 +1662,11 @@
         const term = (searchInput?.value || '').toLowerCase().trim();
         const clearBtn = document.getElementById('stockSearchClearBtn');
         if (clearBtn) clearBtn.style.display = term ? 'inline-flex' : 'none';
+
+        if (currentStockTab === 'defective') {
+            filterDefectiveRows();
+            return;
+        }
 
         const fromDate = document.getElementById('stockFromDate')?.value || '';
         const toDate = document.getElementById('stockToDate')?.value || '';
@@ -1524,6 +1840,11 @@
             photoBtn.style.display = item.is_phone ? 'flex' : 'none';
         }
 
+        const defectBtn = document.getElementById('menuDefectBtn');
+        if (defectBtn) {
+            defectBtn.style.display = (!item.is_phone && item.type === 'part' && parseInt(item.stock || 0) > 0) ? 'flex' : 'none';
+        }
+
         const delBtn = document.getElementById('menuDeleteBtn');
         const delText = document.getElementById('menuDeleteBtnText');
         if (delBtn && delText) {
@@ -1618,6 +1939,13 @@
         closeStockActionMenu();
         if (currentStockActionItem) {
             openStockHistoryModal(currentStockActionItem);
+        }
+    }
+
+    function triggerStockDefect() {
+        closeStockActionMenu();
+        if (currentStockActionItem) {
+            openMarkDefectiveModal(currentStockActionItem);
         }
     }
 
@@ -1883,6 +2211,430 @@
         .catch(err => {
             btn.disabled = false;
             btnText.textContent = 'Save Stock Changes';
+            if (errBox) {
+                errBox.style.display = 'block';
+                errBox.textContent = 'Network or server error: ' + err.message;
+            }
+        });
+    }
+
+    // ══════════════════════════════════════════════════════
+    // MARK DEFECTIVE STOCK MODAL & WORKFLOW
+    // ══════════════════════════════════════════════════════
+    let currentDefectiveTarget = null;
+
+    function openMarkDefectiveModal(item) {
+        currentDefectiveTarget = item;
+        const modal = document.getElementById('markDefectiveStockModal');
+        if (!modal) return;
+
+        const availStock = parseInt(item.stock || 0);
+        document.getElementById('defectItemId').value = item.id;
+        document.getElementById('defectAvailableStock').value = availStock;
+
+        const nameEl = document.getElementById('defectItemNameDisplay');
+        if (nameEl) nameEl.textContent = item.name || 'Catalog Item';
+
+        const subtextEl = document.getElementById('defectItemSubtext');
+        if (subtextEl) {
+            subtextEl.textContent = `${item.model || 'Universal'} • ${(item.category || '').replace(/_/g, ' ').toUpperCase()}`;
+        }
+
+        const healthyStockEl = document.getElementById('defectHealthyStockDisplay');
+        if (healthyStockEl) healthyStockEl.textContent = availStock;
+
+        const allCountEl = document.getElementById('defectAllStockCount');
+        if (allCountEl) allCountEl.textContent = availStock;
+
+        const qtyInput = document.getElementById('defectQtyInput');
+        if (qtyInput) {
+            qtyInput.max = availStock;
+            qtyInput.value = (availStock > 0) ? '1' : '0';
+        }
+
+        const notesInput = document.getElementById('defectNotesInput');
+        if (notesInput) notesInput.value = '';
+
+        const errBox = document.getElementById('defectModalError');
+        if (errBox) {
+            errBox.style.display = 'none';
+            errBox.textContent = '';
+        }
+
+        onDefectQtyChange();
+
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            if (qtyInput) qtyInput.focus();
+        }, 50);
+    }
+
+    function closeMarkDefectiveModal() {
+        const modal = document.getElementById('markDefectiveStockModal');
+        if (modal) modal.style.display = 'none';
+        currentDefectiveTarget = null;
+    }
+
+    function adjustDefectQty(delta) {
+        const qtyInput = document.getElementById('defectQtyInput');
+        const max = parseInt(document.getElementById('defectAvailableStock')?.value || 0);
+        if (!qtyInput) return;
+
+        let current = parseInt(qtyInput.value || 0);
+        let updated = current + delta;
+        if (updated < 1) updated = 1;
+        if (updated > max) updated = max;
+        qtyInput.value = updated;
+        onDefectQtyChange();
+    }
+
+    function onDefectQtyChange() {
+        const qtyInput = document.getElementById('defectQtyInput');
+        const max = parseInt(document.getElementById('defectAvailableStock')?.value || 0);
+        const preview = document.getElementById('defectRemainingStockPreview');
+        const submitBtn = document.getElementById('submitDefectBtn');
+        const errBox = document.getElementById('defectModalError');
+
+        let val = parseInt(qtyInput?.value || 0);
+        if (val > max) {
+            if (errBox) {
+                errBox.style.display = 'block';
+                errBox.textContent = `Cannot mark ${val} units as defective. Maximum available healthy stock is ${max}.`;
+            }
+            if (submitBtn) submitBtn.disabled = true;
+        } else if (val <= 0 || isNaN(val)) {
+            if (errBox) {
+                errBox.style.display = 'block';
+                errBox.textContent = 'Defect quantity must be at least 1.';
+            }
+            if (submitBtn) submitBtn.disabled = true;
+        } else {
+            if (errBox) {
+                errBox.style.display = 'none';
+                errBox.textContent = '';
+            }
+            if (submitBtn) submitBtn.disabled = false;
+        }
+
+        if (preview) {
+            const remaining = Math.max(0, max - (isNaN(val) ? 0 : val));
+            preview.textContent = `Remaining: ${remaining} pcs`;
+        }
+    }
+
+    function setDefectAllStock() {
+        const max = parseInt(document.getElementById('defectAvailableStock')?.value || 0);
+        const qtyInput = document.getElementById('defectQtyInput');
+        if (qtyInput && max > 0) {
+            qtyInput.value = max;
+            onDefectQtyChange();
+        }
+    }
+
+    function submitMarkDefectiveForm(event) {
+        event.preventDefault();
+        const itemId = document.getElementById('defectItemId')?.value;
+        const qtyInput = document.getElementById('defectQtyInput');
+        const reasonSelect = document.getElementById('defectReasonSelect');
+        const notesInput = document.getElementById('defectNotesInput');
+        const submitBtn = document.getElementById('submitDefectBtn');
+        const errBox = document.getElementById('defectModalError');
+
+        if (!itemId) return;
+
+        const qty = parseInt(qtyInput?.value || 0);
+        const reason = reasonSelect?.value || 'Defective';
+        const notes = notesInput?.value || '';
+
+        if (qty <= 0) {
+            if (errBox) {
+                errBox.style.display = 'block';
+                errBox.textContent = 'Please enter a valid defective quantity.';
+            }
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span style="display:inline-flex; align-items:center; gap:6px;">Quarantining...</span>';
+
+        const defectUrl = `/mobileshop/stock/${itemId}/defect`;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+        fetch(defectUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ qty, reason, notes })
+        })
+        .then(res => res.json())
+        .then(data => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i data-lucide="shield-alert" style="width:14px;height:14px;"></i> Quarantine Defective Stock';
+
+            if (!data.success) {
+                if (errBox) {
+                    errBox.style.display = 'block';
+                    errBox.textContent = data.message || 'Failed to mark defective stock.';
+                }
+                return;
+            }
+
+            closeMarkDefectiveModal();
+
+            if (window.showToast) {
+                window.showToast(data.message, 'success');
+            } else {
+                alert(data.message);
+            }
+
+            // 1. Update healthy stock cell & dataset in desktop row
+            const newStock = parseInt(data.new_stock);
+            const dRow = document.getElementById(`stockRow_part_${itemId}`);
+            if (dRow) {
+                dRow.dataset.stock = newStock;
+                const minAlert = parseInt(data.min_stock_alert || 3);
+                dRow.dataset.low = (newStock <= minAlert) ? '1' : '0';
+
+                const stockCell = document.getElementById(`partStockCell_${itemId}`);
+                if (stockCell) {
+                    if (newStock <= 0) {
+                        stockCell.innerHTML = `<span class="badge badge-red" style="font-weight:900; background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5;">⚠️ 0 units (Low Stock)</span><div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; ${minAlert}</div>`;
+                    } else if (newStock <= minAlert) {
+                        stockCell.innerHTML = `<span class="badge badge-red" style="font-weight:900;">⚠️ ${newStock} units</span><div style="font-size:10px; color:#DC2626; margin-top:2px;">Alert &le; ${minAlert}</div>`;
+                    } else {
+                        stockCell.innerHTML = `<span class="badge badge-green">${newStock} units</span><div style="font-size:10px; color:#64748B; margin-top:2px;">Min: ${minAlert}</div>`;
+                    }
+                }
+            }
+
+            // 2. Update Mobile card
+            const mCard = document.getElementById(`stockCard_part_${itemId}`);
+            if (mCard) {
+                mCard.dataset.stock = newStock;
+                const minAlert = parseInt(data.min_stock_alert || 3);
+                mCard.dataset.low = (newStock <= minAlert) ? '1' : '0';
+
+                const mBadge = document.getElementById(`partStockBadgeMobile_${itemId}`);
+                if (mBadge) {
+                    if (newStock <= 0) {
+                        mBadge.innerHTML = '<span class="badge badge-red" style="font-size:10px; padding:1px 6px; font-weight:800; background:#FEE2E2; color:#DC2626; border:1px solid #FCA5A5;">⚠️ 0 left (Low Stock)</span>';
+                    } else if (newStock <= minAlert) {
+                        mBadge.innerHTML = `<span class="badge badge-red" style="font-size:10px; padding:1px 6px; font-weight:800;">⚠️ ${newStock} left</span>`;
+                    } else {
+                        mBadge.innerHTML = `<span class="badge badge-green" style="font-size:10px; padding:1px 6px;">${newStock} in stock</span>`;
+                    }
+                }
+            }
+
+            // 3. Update Defective Tab Badge & Section Count
+            const tabBadge = document.getElementById('defectiveTabCountBadge');
+            if (tabBadge && data.total_defective !== undefined) {
+                tabBadge.textContent = data.total_defective;
+            }
+            const secTotal = document.getElementById('defectiveSectionTotalQty');
+            if (secTotal && data.total_defective !== undefined) {
+                secTotal.textContent = data.total_defective;
+            }
+
+            // 4. Prepend new row in stockDefectiveTableBody
+            const tableBody = document.getElementById('stockDefectiveTableBody');
+            if (tableBody) {
+                const noRow = document.getElementById('noDefectiveStockRow');
+                if (noRow) noRow.remove();
+
+                const totalCostVal = (data.defect_qty * data.unit_cost).toFixed(2);
+                const safeName = (data.item_name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const safeReason = (data.defect_reason || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+                const tr = document.createElement('tr');
+                tr.className = 'defective-row';
+                tr.id = `defectRow_${data.defect_id}`;
+                tr.dataset.id = data.defect_id;
+                tr.dataset.search = `${safeName.toLowerCase()} ${safeReason.toLowerCase()} pending_supplier_return`;
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight:700; color:#0F172A; font-size:13px;">${safeName}</div>
+                        <div style="font-size:11px; color:#64748B;">Ref: Catalog Stock Quarantine &bull; Stock Quarantine</div>
+                        ${notes ? `<div style="font-size:10.5px; color:#94A3B8; margin-top:2px; font-style:italic;">${notes.substring(0, 65)}</div>` : ''}
+                    </td>
+                    <td>
+                        <span class="badge badge-red" style="font-size:11px; font-weight:700; background:#FEE2E2; color:#B91C1C; border:1px solid #FCA5A5;">
+                            ${safeReason}
+                        </span>
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="badge" style="background:#FFEDD5; color:#C2410C; border:1px solid #FDBA74; font-weight:800; font-size:12px; padding:3px 8px;">
+                            ${data.defect_qty} pcs
+                        </span>
+                    </td>
+                    <td style="text-align:right; color:#64748B; font-size:12px;">₹${parseFloat(data.unit_cost).toFixed(2)}</td>
+                    <td style="text-align:right; font-weight:800; color:#0F172A; font-size:12.5px;">₹${totalCostVal}</td>
+                    <td style="text-align:center;" id="defectStatusCell_${data.defect_id}">
+                        <span class="badge badge-amber" style="font-size:10.5px; font-weight:700;">Pending Return</span>
+                    </td>
+                    <td style="text-align:center; font-size:11px; color:#64748B;">
+                        ${data.defect_date}
+                    </td>
+                    <td style="text-align:center;">
+                        <button type="button" 
+                                class="btn btn-outline btn-xs" 
+                                title="Update Status" 
+                                style="color:#0284C7; border-color:#BAE6FD; background:#F0F9FF; padding:3px 7px;"
+                                onclick="openUpdateDefectStatusModal({
+                                    id: ${data.defect_id},
+                                    name: '${(data.item_name || '').replace(/'/g, "\\'")}',
+                                    qty: ${data.defect_qty},
+                                    currentStatus: 'pending_supplier_return',
+                                    partId: ${data.item_id}
+                                })">
+                            <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.prepend(tr);
+            }
+
+            if (window.refreshIcons) window.refreshIcons();
+            filterStockRows();
+        })
+        .catch(err => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i data-lucide="shield-alert" style="width:14px;height:14px;"></i> Quarantine Defective Stock';
+            if (errBox) {
+                errBox.style.display = 'block';
+                errBox.textContent = 'Server error: ' + err.message;
+            }
+        });
+    }
+
+    // ══════════════════════════════════════════════════════
+    // UPDATE DEFECTIVE STATUS MODAL & WORKFLOW
+    // ══════════════════════════════════════════════════════
+    let currentUpdateDefect = null;
+
+    function openUpdateDefectStatusModal(defect) {
+        currentUpdateDefect = defect;
+        const modal = document.getElementById('updateDefectiveStatusModal');
+        if (!modal) return;
+
+        document.getElementById('upDefectId').value = defect.id;
+        const subEl = document.getElementById('updateDefectSubtitle');
+        if (subEl) subEl.textContent = `${defect.qty}x ${defect.name}`;
+
+        const sel = document.getElementById('upDefectStatusSelect');
+        if (sel) sel.value = defect.currentStatus || 'pending_supplier_return';
+
+        const restockBox = document.getElementById('restockReplacementOption');
+        const restockQtyEl = document.getElementById('upRestockQty');
+        if (restockQtyEl) restockQtyEl.textContent = defect.qty;
+
+        if (restockBox) {
+            restockBox.style.display = (sel.value === 'replaced_by_supplier' && defect.partId) ? 'block' : 'none';
+        }
+
+        const notes = document.getElementById('upDefectNotes');
+        if (notes) notes.value = '';
+
+        const err = document.getElementById('updateDefectError');
+        if (err) {
+            err.style.display = 'none';
+            err.textContent = '';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeUpdateDefectStatusModal() {
+        const modal = document.getElementById('updateDefectiveStatusModal');
+        if (modal) modal.style.display = 'none';
+        currentUpdateDefect = null;
+    }
+
+    function onUpDefectStatusChange() {
+        const sel = document.getElementById('upDefectStatusSelect');
+        const restockBox = document.getElementById('restockReplacementOption');
+        if (restockBox && currentUpdateDefect) {
+            restockBox.style.display = (sel.value === 'replaced_by_supplier' && currentUpdateDefect.partId) ? 'block' : 'none';
+        }
+    }
+
+    function submitUpdateDefectStatusForm(event) {
+        event.preventDefault();
+        const defectId = document.getElementById('upDefectId')?.value;
+        const statusSel = document.getElementById('upDefectStatusSelect');
+        const restockCheck = document.getElementById('upRestockReplacement');
+        const notesEl = document.getElementById('upDefectNotes');
+        const submitBtn = document.getElementById('submitUpDefectBtn');
+        const errBox = document.getElementById('updateDefectError');
+
+        if (!defectId) return;
+
+        const status = statusSel?.value;
+        const restock = restockCheck ? restockCheck.checked : false;
+        const notes = notesEl?.value || '';
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Updating...';
+
+        const url = `/mobileshop/defective-items/${defectId}/status`;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+        const formData = new FormData();
+        formData.append('status', status);
+        formData.append('notes', notes);
+        if (restock) formData.append('restock_replacement', '1');
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Update Status';
+
+            if (!data.success) {
+                if (errBox) {
+                    errBox.style.display = 'block';
+                    errBox.textContent = data.message || 'Failed to update status.';
+                }
+                return;
+            }
+
+            closeUpdateDefectStatusModal();
+
+            if (window.showToast) {
+                window.showToast(data.message, 'success');
+            } else {
+                alert(data.message);
+            }
+
+            // Update status cell in table
+            const cell = document.getElementById(`defectStatusCell_${defectId}`);
+            if (cell) {
+                let badgeClass = 'badge-gray';
+                if (status === 'pending_supplier_return') badgeClass = 'badge-amber';
+                else if (status === 'returned_to_supplier') badgeClass = 'badge-blue';
+                else if (status === 'replaced_by_supplier') badgeClass = 'badge-green';
+
+                cell.innerHTML = `<span class="badge ${badgeClass}" style="font-size:10.5px; font-weight:700;">${data.status_label || status}</span>`;
+            }
+
+            // If restocked replacement and page row exists, reload row or reload page
+            if (restock && currentUpdateDefect?.partId) {
+                setTimeout(() => window.location.reload(), 1200);
+            }
+        })
+        .catch(err => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Update Status';
             if (errBox) {
                 errBox.style.display = 'block';
                 errBox.textContent = 'Network or server error: ' + err.message;

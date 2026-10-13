@@ -105,12 +105,19 @@ class StockController extends BaseMobileShopController
         $customers = DB::table('ms_customers')->where('company_id', $companyId)->orderBy('name')->get();
         $brands    = $parts->pluck('brand')->filter(fn($b) => !empty(trim((string)$b)))->unique()->sort()->values();
 
+        $defectiveItems = DB::table('ms_defective_items')
+            ->where('company_id', $companyId)
+            ->orderBy('id', 'desc')
+            ->get();
+        $totalDefectiveQty = (int) $defectiveItems->where('status', '!=', 'scrap_written_off')->sum('qty');
+
         return view('mobileshop.stock', compact(
             'niche',
             'newPhones', 'secondHandPhones', 'parts', 'repairTickets', 'categories', 'brands', 'suppliers', 'customers',
             'canManagePhones', 'canManageSecondhand', 'canManageAccessories', 'canManageCovers', 'canManageRepairs',
             'totalNewPhonesInStock', 'totalSecondHandInStock', 'totalPartsInStock',
-            'lowStockCount', 'valuationCost', 'valuationRetail'
+            'lowStockCount', 'valuationCost', 'valuationRetail',
+            'defectiveItems', 'totalDefectiveQty'
         ));
     }
 
@@ -540,5 +547,113 @@ class StockController extends BaseMobileShopController
             'target_email' => $result['target_email'],
             'expires_in'   => $result['expires_in'],
         ]);
+    }
+
+    /**
+     * Mark stock item as defective, quarantine it into ms_defective_items,
+     * and deduct from healthy sellable inventory with audit trail.
+     */
+    public function markDefective(Request $request, $id)
+    {
+        $companyId = $this->getCompanyId();
+        $user      = auth()->user();
+
+        $request->validate([
+            'qty'    => 'required|integer|min:1',
+            'reason' => 'required|string|max:255',
+            'notes'  => 'nullable|string|max:1000',
+        ]);
+
+        $defectQty = (int) $request->input('qty');
+        $reason    = trim($request->input('reason'));
+        $notes     = $request->input('notes');
+
+        $part = DB::table('ms_parts_inventory')
+            ->where('company_id', $companyId)
+            ->where('id', $id)
+            ->first();
+
+        if (!$part) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Stock catalog item not found.',
+            ], 404);
+        }
+
+        if ((int) $part->stock_qty < $defectQty) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot mark {$defectQty} items as defective. Available healthy stock is only {$part->stock_qty} units.",
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($part, $defectQty, $reason, $notes, $companyId, $user) {
+            $newStock = max(0, (int) $part->stock_qty - $defectQty);
+
+            // 1. Deduct healthy stock count
+            DB::table('ms_parts_inventory')->where('id', $part->id)->update([
+                'stock_qty'  => $newStock,
+                'updated_at' => now(),
+            ]);
+
+            // 2. Audit Trail in Inventory History
+            DB::table('ms_parts_inventory_history')->insert([
+                'part_id'       => $part->id,
+                'type'          => 'deduction',
+                'quantity'      => $defectQty,
+                'balance_after' => $newStock,
+                'reference'     => "DEFECTIVE STOCK QUARANTINE: {$defectQty}x {$part->name} ({$reason}) by " . ($user?->name ?? 'Staff'),
+                'user_id'       => $user?->id,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ]);
+
+            // 3. Insert into Defective Stock Registry
+            $unitCost  = (float) ($part->unit_cost ?? 0);
+            $totalCost = round($unitCost * $defectQty, 2);
+
+            $defectId = DB::table('ms_defective_items')->insertGetId([
+                'company_id'    => $companyId,
+                'part_id'       => $part->id,
+                'item_name'     => $part->name,
+                'source_type'   => 'stock_defect',
+                'source_id'     => $part->id,
+                'source_ref'    => 'Catalog Stock Quarantine',
+                'supplier_id'   => null,
+                'supplier_name' => 'Stock Quarantine',
+                'customer_name' => null,
+                'qty'           => $defectQty,
+                'unit_cost'     => $unitCost,
+                'total_cost'    => $totalCost,
+                'defect_reason' => $reason,
+                'status'        => 'pending_supplier_return',
+                'notes'         => $notes,
+                'created_by'    => $user?->id,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ]);
+
+            $totalDefectiveQty = (int) DB::table('ms_defective_items')
+                ->where('company_id', $companyId)
+                ->where('status', '!=', 'scrap_written_off')
+                ->sum('qty');
+
+            return response()->json([
+                'success'         => true,
+                'message'         => "Successfully quarantined {$defectQty}x \"{$part->name}\" to Defective Stock. Healthy stock reduced to {$newStock} units.",
+                'new_stock'       => $newStock,
+                'defect_id'       => $defectId,
+                'total_defective' => $totalDefectiveQty,
+                'item_id'         => $part->id,
+                'item_name'       => $part->name,
+                'item_model'      => $part->compatible_model ?? 'Universal',
+                'item_category'   => $part->category ?? '',
+                'defect_qty'      => $defectQty,
+                'defect_reason'   => $reason,
+                'unit_cost'       => $unitCost,
+                'defect_date'     => now()->format('d M Y'),
+                'min_stock_alert' => $part->min_stock_alert ?? 3,
+            ]);
+        });
     }
 }

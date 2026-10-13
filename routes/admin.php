@@ -157,6 +157,10 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
         ->middleware('permission:manage-stock-accessories|manage-stock-covers|manage-stock-repairs|manage-stock-phones|manage-stock-secondhand')
         ->name('stock.update');
 
+    Route::post('stock/{id}/defect', 'MobileShop\StockController@markDefective')
+        ->middleware('permission:manage-stock-accessories|manage-stock-covers|manage-stock-repairs|manage-stock-phones|manage-stock-secondhand')
+        ->name('stock.defect');
+
     Route::get('stock/{id}/details', 'MobileShop\StockController@getStockDetails')
         ->middleware('permission:read-mobileshop-stock|read-mobileshop-accessories|manage-stock-accessories|manage-stock-covers|manage-stock-repairs|manage-stock-phones|manage-stock-secondhand')
         ->name('stock.details');
