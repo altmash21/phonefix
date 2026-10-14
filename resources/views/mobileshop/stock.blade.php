@@ -311,6 +311,9 @@
                     <span class="badge" style="background:#FFEDD5; color:#9A3412; border:1px solid #FDBA74; font-weight:800; font-size:11.5px; padding:4px 10px;">
                         Quarantined: <span id="defectiveSectionTotalQty">{{ $totalDefectiveQty ?? 0 }}</span> units
                     </span>
+                    <button type="button" onclick="openMarkDefectiveModal()" class="btn btn-sm" style="background:#EA580C; color:#fff; border:none; display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:12px; padding:5px 12px; border-radius:6px; cursor:pointer;">
+                        <i data-lucide="plus" style="width:13px;height:13px;"></i> Add Defective Item
+                    </button>
                 </div>
             </div>
             <div class="card-body" style="padding:0; overflow-x:auto;">
@@ -678,8 +681,29 @@
                 <input type="hidden" id="defectAvailableStock" value="0">
 
                 <div style="padding:20px; overflow-y:auto; flex:1;">
+                    <!-- Item Selector (when opened without preselected item or to switch item) -->
+                    <div id="defectItemSelectWrapper" style="margin-bottom:14px;">
+                        <label style="display:block; font-size:12.5px; font-weight:800; color:#0F172A; margin-bottom:6px;">
+                            Select Stock Item <span style="color:#DC2626;">*</span>
+                        </label>
+                        <select id="defectItemSelect" class="form-control" style="font-size:13px; font-weight:600; height:38px; border:1px solid #CBD5E1; border-radius:6px; width:100%;" onchange="onDefectItemSelectChange(this.value)">
+                            <option value="">-- Choose item from inventory --</option>
+                            @foreach($parts ?? [] as $p)
+                                @if((int)($p->stock_qty ?? 0) > 0)
+                                    <option value="{{ $p->id }}" 
+                                            data-name="{{ $p->name }}" 
+                                            data-model="{{ $p->compatible_model ?? 'Universal' }}" 
+                                            data-cat="{{ $p->category ?? '' }}" 
+                                            data-stock="{{ (int)$p->stock_qty }}">
+                                        {{ $p->name }} — {{ $p->compatible_model ?? 'Universal' }} (Stock: {{ (int)$p->stock_qty }} pcs)
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+
                     <!-- Item Overview Banner -->
-                    <div style="background:#FFF7ED; border:1px solid #FED7AA; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+                    <div id="defectItemOverviewBanner" style="background:#FFF7ED; border:1px solid #FED7AA; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
                         <div style="font-size:11px; color:#C2410C; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Target Catalog Item</div>
                         <div id="defectItemNameDisplay" style="font-size:14px; font-weight:900; color:#0F172A; margin-top:2px;">-</div>
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11.5px; color:#64748B;">
@@ -2222,21 +2246,39 @@
     // ══════════════════════════════════════════════════════
     let currentDefectiveTarget = null;
 
-    function openMarkDefectiveModal(item) {
-        currentDefectiveTarget = item;
-        const modal = document.getElementById('markDefectiveStockModal');
-        if (!modal) return;
+    function onDefectItemSelectChange(val) {
+        const select = document.getElementById('defectItemSelect');
+        const opt = select?.selectedOptions ? select.selectedOptions[0] : null;
+        if (!opt || !val) {
+            document.getElementById('defectItemId').value = '';
+            document.getElementById('defectAvailableStock').value = 0;
+            document.getElementById('defectItemNameDisplay').textContent = '-';
+            document.getElementById('defectItemSubtext').textContent = '-';
+            document.getElementById('defectHealthyStockDisplay').textContent = '0';
+            document.getElementById('defectAllStockCount').textContent = '0';
+            const qtyInput = document.getElementById('defectQtyInput');
+            if (qtyInput) {
+                qtyInput.max = 0;
+                qtyInput.value = 0;
+            }
+            onDefectQtyChange();
+            return;
+        }
 
-        const availStock = parseInt(item.stock || 0);
-        document.getElementById('defectItemId').value = item.id;
+        const name = opt.getAttribute('data-name') || opt.text;
+        const model = opt.getAttribute('data-model') || 'Universal';
+        const cat = opt.getAttribute('data-cat') || '';
+        const availStock = parseInt(opt.getAttribute('data-stock') || 0);
+
+        document.getElementById('defectItemId').value = val;
         document.getElementById('defectAvailableStock').value = availStock;
 
         const nameEl = document.getElementById('defectItemNameDisplay');
-        if (nameEl) nameEl.textContent = item.name || 'Catalog Item';
+        if (nameEl) nameEl.textContent = name;
 
         const subtextEl = document.getElementById('defectItemSubtext');
         if (subtextEl) {
-            subtextEl.textContent = `${item.model || 'Universal'} • ${(item.category || '').replace(/_/g, ' ').toUpperCase()}`;
+            subtextEl.textContent = `${model} • ${(cat || '').replace(/_/g, ' ').toUpperCase()}`;
         }
 
         const healthyStockEl = document.getElementById('defectHealthyStockDisplay');
@@ -2251,21 +2293,70 @@
             qtyInput.value = (availStock > 0) ? '1' : '0';
         }
 
-        const notesInput = document.getElementById('defectNotesInput');
-        if (notesInput) notesInput.value = '';
+        onDefectQtyChange();
+    }
 
+    function openMarkDefectiveModal(item) {
+        currentDefectiveTarget = item || null;
+        const modal = document.getElementById('markDefectiveStockModal');
+        if (!modal) return;
+
+        const itemSelect = document.getElementById('defectItemSelect');
         const errBox = document.getElementById('defectModalError');
         if (errBox) {
             errBox.style.display = 'none';
             errBox.textContent = '';
         }
 
-        onDefectQtyChange();
+        const notesInput = document.getElementById('defectNotesInput');
+        if (notesInput) notesInput.value = '';
+
+        if (item && item.id) {
+            if (itemSelect) itemSelect.value = item.id;
+            const availStock = parseInt(item.stock || 0);
+            document.getElementById('defectItemId').value = item.id;
+            document.getElementById('defectAvailableStock').value = availStock;
+
+            const nameEl = document.getElementById('defectItemNameDisplay');
+            if (nameEl) nameEl.textContent = item.name || 'Catalog Item';
+
+            const subtextEl = document.getElementById('defectItemSubtext');
+            if (subtextEl) {
+                subtextEl.textContent = `${item.model || 'Universal'} • ${(item.category || '').replace(/_/g, ' ').toUpperCase()}`;
+            }
+
+            const healthyStockEl = document.getElementById('defectHealthyStockDisplay');
+            if (healthyStockEl) healthyStockEl.textContent = availStock;
+
+            const allCountEl = document.getElementById('defectAllStockCount');
+            if (allCountEl) allCountEl.textContent = availStock;
+
+            const qtyInput = document.getElementById('defectQtyInput');
+            if (qtyInput) {
+                qtyInput.max = availStock;
+                qtyInput.value = (availStock > 0) ? '1' : '0';
+            }
+
+            onDefectQtyChange();
+        } else {
+            if (itemSelect) {
+                itemSelect.value = '';
+                if (itemSelect.options.length > 1) {
+                    itemSelect.selectedIndex = 1;
+                    onDefectItemSelectChange(itemSelect.value);
+                } else {
+                    onDefectItemSelectChange('');
+                }
+            }
+        }
 
         modal.style.display = 'flex';
         setTimeout(() => {
-            if (qtyInput) qtyInput.focus();
+            const qtyInput = document.getElementById('defectQtyInput');
+            if (qtyInput && parseInt(qtyInput.value) > 0) qtyInput.focus();
+            else if (itemSelect) itemSelect.focus();
         }, 50);
+        if (window.refreshIcons) window.refreshIcons();
     }
 
     function closeMarkDefectiveModal() {
@@ -2339,7 +2430,13 @@
         const submitBtn = document.getElementById('submitDefectBtn');
         const errBox = document.getElementById('defectModalError');
 
-        if (!itemId) return;
+        if (!itemId) {
+            if (errBox) {
+                errBox.style.display = 'block';
+                errBox.textContent = 'Please select an item from stock.';
+            }
+            return;
+        }
 
         const qty = parseInt(qtyInput?.value || 0);
         const reason = reasonSelect?.value || 'Defective';
@@ -2356,7 +2453,8 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span style="display:inline-flex; align-items:center; gap:6px;">Quarantining...</span>';
 
-        const defectUrl = `/mobileshop/stock/${itemId}/defect`;
+        const defectUrlTemplate = "{{ route('mobileshop.stock.defect', ['company_id' => company_id(), 'id' => ':id'], false) }}";
+        const defectUrl = defectUrlTemplate.replace(':id', itemId);
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
         fetch(defectUrl, {
@@ -2368,7 +2466,13 @@
             },
             body: JSON.stringify({ qty, reason, notes })
         })
-        .then(res => res.json())
+        .then(async res => {
+            const data = await res.json().catch(() => null);
+            if (!res.ok) {
+                throw new Error((data && data.message) ? data.message : `Server returned HTTP ${res.status}`);
+            }
+            return data;
+        })
         .then(data => {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i data-lucide="shield-alert" style="width:14px;height:14px;"></i> Quarantine Defective Stock';
@@ -2387,6 +2491,20 @@
                 window.showToast(data.message, 'success');
             } else {
                 alert(data.message);
+            }
+
+            // Update item select option stock in modal
+            const selOpt = document.querySelector(`#defectItemSelect option[value="${itemId}"]`);
+            if (selOpt) {
+                const updatedStock = parseInt(data.new_stock);
+                selOpt.setAttribute('data-stock', updatedStock);
+                if (updatedStock <= 0) {
+                    selOpt.remove();
+                } else {
+                    const oName = selOpt.getAttribute('data-name') || '';
+                    const oModel = selOpt.getAttribute('data-model') || 'Universal';
+                    selOpt.text = `${oName} — ${oModel} (Stock: ${updatedStock} pcs)`;
+                }
             }
 
             // 1. Update healthy stock cell & dataset in desktop row
@@ -2578,7 +2696,8 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Updating...';
 
-        const url = `/mobileshop/defective-items/${defectId}/status`;
+        const defectStatusUrlTemplate = "{{ route('mobileshop.defective.status', ['company_id' => company_id(), 'id' => ':id'], false) }}";
+        const url = defectStatusUrlTemplate.replace(':id', defectId);
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
         const formData = new FormData();
@@ -2902,7 +3021,8 @@
         if (!modal) return;
 
         const form = document.getElementById('uploadPhotoForm');
-        form.action = "{{ url('mobileshop/stock') }}/" + deviceId + "/update";
+        const updateUrlTemplate = "{{ route('mobileshop.stock.update', ['company_id' => company_id(), 'id' => ':id'], false) }}";
+        form.action = updateUrlTemplate.replace(':id', deviceId);
 
         document.getElementById('uploadPhotoModalSubtitle').textContent = `${deviceName} (IMEI: ${imei})`;
 
