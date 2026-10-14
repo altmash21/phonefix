@@ -539,12 +539,17 @@
                                        required
                                        oninput="onRowItemSearchInput(this)">
                                 <input type="hidden" name="items[0][part_id]" class="input-part-id">
+                                <input type="hidden" name="items[0][category]" class="input-item-category" value="">
                                 <button type="button"
                                         class="btn-item-clear"
                                         onclick="clearRowItemSelection(this)"
                                         title="Clear item"
-                                        style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                                        style="display:none; position: absolute; right: 8px; top: 18px; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
                                 <div class="search-picker-dropdown"></div>
+                                <div class="new-item-pill" style="display:none; margin-top:4px; font-size:11px; align-items:center; gap:5px; background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; border-radius:4px; padding:2px 7px; width:fit-content;">
+                                    <span>✨ New Item &bull; <strong class="pill-category-name">General Accessory</strong></span>
+                                    <button type="button" onclick="editRowNewItemCategory(this)" style="background:none; border:none; color:#6366F1; cursor:pointer; padding:0 2px; font-size:10px; text-decoration:underline;">Change</button>
+                                </div>
                             </div>
 
                             <div>
@@ -915,6 +920,91 @@
                 </div>
             </div>
             <div id="salesPagination"></div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- MODAL: Quick Sale New / Custom Item (Name & Category)     -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div id="quickNewItemModal" style="display:none; position: fixed; inset: 0; z-index: 1250; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+        <div class="card" style="max-width: 480px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; border:1px solid #C7D2FE; background:#fff; overflow:hidden;">
+            <div style="background:linear-gradient(135deg, #3730A3 0%, #4F46E5 100%); color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="sparkles" style="width:18px;height:18px; color:#FDE047;"></i>
+                        New Item Details
+                    </div>
+                    <div style="font-size:11px; color:#E0E7FF; margin-top:2px;">
+                        Item not found in stock. Set name & category to sell and auto-add to catalog.
+                    </div>
+                </div>
+                <button type="button" onclick="closeQuickNewItemModal()" style="background:rgba(255,255,255,0.15); border:none; color:#FFFFFF; font-size:16px; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+            <div class="card-body" style="padding:20px;">
+                <form id="quickNewItemForm" onsubmit="confirmQuickNewItemModal(event)">
+                    <!-- Item Name -->
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:5px;">
+                            Item Name <span style="color:#DC2626;">*</span>
+                        </label>
+                        <input type="text" id="modalNewItemName" required class="app-input-field" placeholder="e.g. iPhone 15 Pro Max UV Glass, 65W Fast Charger..." style="font-size:13px; font-weight:700; width:100%;">
+                    </div>
+
+                    <!-- Category Selector -->
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:5px;">
+                            Category <span style="color:#DC2626;">*</span>
+                        </label>
+                        <select id="modalNewItemCategory" class="app-input-field" onchange="onModalNewItemCategoryChange(this.value)" style="font-size:13px; font-weight:600; width:100%;">
+                            <optgroup label="Popular Categories">
+                                <option value="tempered_glass">Tempered Glass</option>
+                                <option value="back_cover">Back Cover / Case</option>
+                                <option value="charger_cable">Charger & Cable</option>
+                                <option value="earphones_audio">Earphones & Audio</option>
+                                <option value="battery">Battery</option>
+                                <option value="folder_display">Folder / Combo Screen</option>
+                                <option value="charging_port">Charging Port / Pin</option>
+                                <option value="front_glass">Front Outer Glass</option>
+                                <option value="general_accessory" selected>General Accessory</option>
+                            </optgroup>
+                            @if(isset($categories) && count($categories) > 0)
+                            <optgroup label="Shop Custom Categories">
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->slug ?: Str::slug($cat->name, '_') }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </optgroup>
+                            @endif
+                            <option value="__custom__">+ Type New Custom Category...</option>
+                        </select>
+                        <!-- Custom Category Input (shown when __custom__ is selected) -->
+                        <div id="modalCustomCatWrap" style="display:none; margin-top:8px;">
+                            <input type="text" id="modalCustomCatInput" class="app-input-field" placeholder="Type new category name..." style="font-size:12.5px; width:100%;">
+                        </div>
+                    </div>
+
+                    <!-- Selling Price -->
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:5px;">
+                            Selling Price (₹) <span style="color:#DC2626;">*</span>
+                        </label>
+                        <div style="position:relative;">
+                            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:800; color:#64748B;">₹</span>
+                            <input type="number" step="0.01" min="0" id="modalNewItemPrice" required class="app-input-field" placeholder="0.00" style="padding-left:26px; font-size:14px; font-weight:800; width:100%;">
+                        </div>
+                        <div style="font-size:10.5px; color:#64748B; margin-top:4px;">
+                            This item will be automatically registered in your inventory catalog and sold directly in this invoice.
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display:flex; justify-content:flex-end; gap:10px; padding-top:10px; border-top:1px solid #F1F5F9;">
+                        <button type="button" onclick="closeQuickNewItemModal()" class="btn btn-outline" style="border:1px solid #CBD5E1; color:#475569; font-weight:700; padding:8px 16px; border-radius:8px;">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="background:#4F46E5; border:none; color:#FFFFFF; font-weight:800; padding:8px 20px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+                            <i data-lucide="check" style="width:14px;height:14px;"></i> Confirm & Add to Bill
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -2058,6 +2148,7 @@
     /* ─── Global Inventory & Customer Data ─── */
     window.allPartsData = @json($parts ?? []);
     window.customersList = @json($customers ?? []);
+    window.allCategoriesData = @json($categories ?? []);
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -2069,6 +2160,24 @@
             .replace(/'/g, '&#039;');
     }
 
+    function getCategoryDisplayName(slugOrName) {
+        if (!slugOrName) return 'General Accessory';
+        const found = (window.allCategoriesData || []).find(c => c.slug === slugOrName || c.name === slugOrName);
+        if (found) return found.name;
+        const defaults = {
+            'tempered_glass': 'Tempered Glass',
+            'back_cover': 'Back Cover / Case',
+            'charger_cable': 'Charger & Cable',
+            'earphones_audio': 'Earphones & Audio',
+            'battery': 'Battery',
+            'folder_display': 'Folder / Combo Screen',
+            'charging_port': 'Charging Port / Pin',
+            'front_glass': 'Front Outer Glass',
+            'general_accessory': 'General Accessory'
+        };
+        return defaults[slugOrName] || slugOrName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
     /* ─── Generic Row Item Autocomplete (Quick Sale & Bulk Sale) ─── */
     function onRowItemSearchInput(inputEl) {
         const wrapper = inputEl.closest('.search-picker-wrapper');
@@ -2076,6 +2185,7 @@
         const clearBtn = wrapper?.querySelector('.btn-item-clear');
         const row = inputEl.closest('.item-search-row');
         const partIdInput = row?.querySelector('.input-part-id');
+        const pill = row?.querySelector('.new-item-pill');
         const rawVal = inputEl.value || '';
         const query = rawVal.trim().toLowerCase();
 
@@ -2086,6 +2196,7 @@
             dropdown.innerHTML = '';
             if (clearBtn) clearBtn.style.display = 'none';
             if (partIdInput) partIdInput.value = '';
+            if (pill) pill.style.display = 'none';
             if (row.closest('#bulkSaleModal')) {
                 recalcBulkCustomerTotals(row.closest('.bulk-customer-card'));
             } else {
@@ -2102,20 +2213,16 @@
             return name.includes(query) || cat.includes(query);
         }).slice(0, 30);
 
-        if (matches.length === 0) {
-            dropdown.innerHTML = `
-                <div style="padding: 10px 12px; text-align: center; color: #64748b; font-size: 12px;">
-                    No inventory match for "<strong>${escapeHtml(rawVal.trim())}</strong>"
-                    <div style="font-size: 11px; color:#4338ca; margin-top: 4px; font-weight: 600;">Custom item will be created with custom price</div>
-                </div>
-            `;
-        } else {
-            dropdown.innerHTML = matches.map(item => {
+        const exactMatch = (window.allPartsData || []).find(item => (item.name || '').trim().toLowerCase() === query);
+
+        let html = '';
+        if (matches.length > 0) {
+            html += matches.map(item => {
                 const price = parseFloat(item.selling_price || 0);
                 const stock = parseInt(item.stock_qty || 0);
                 const stockBadgeColor = stock > 0 ? '#059669' : '#dc2626';
                 const stockBadgeBg = stock > 0 ? '#ecfdf5' : '#fef2f2';
-                const categoryText = item.category ? escapeHtml(item.category) : 'General';
+                const categoryText = item.category ? escapeHtml(getCategoryDisplayName(item.category)) : 'General';
                 const safeName = escapeHtml(item.name);
                 return `
                     <div class="search-picker-item" onclick="selectRowItem(this, ${item.id})">
@@ -2134,6 +2241,24 @@
                 `;
             }).join('');
         }
+
+        // Add "Sell New Item" option if exact item doesn't exist or if matches are empty
+        if (!exactMatch && rawVal.trim().length > 0) {
+            const safeQuery = escapeHtml(rawVal.trim());
+            html += `
+                <div class="search-picker-item new-custom-item-option" onclick="promptNewItemCategory(this, '${escapeHtml(rawVal.trim()).replace(/'/g, "\\'")}')" style="background:#F5F3FF; border-top:1px dashed #C7D2FE; cursor:pointer; padding:9px 12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:26px; height:26px; border-radius:6px; background:#4F46E5; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">+</div>
+                        <div style="min-width:0; text-align:left;">
+                            <div style="font-weight:800; font-size:12.5px; color:#3730A3;">Sell New Item: "<strong>${safeQuery}</strong>"</div>
+                            <div style="font-size:10.5px; color:#6366F1;">Item not in stock? Click to set category & sell directly</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        dropdown.innerHTML = html;
         dropdown.style.display = 'block';
     }
 
@@ -2144,12 +2269,17 @@
 
         const input = row.querySelector('.input-item-name');
         const partIdInput = row.querySelector('.input-part-id');
+        const catInput = row.querySelector('.input-item-category');
         const priceInput = row.querySelector('.input-unit-price');
         const dropdown = row.querySelector('.search-picker-dropdown');
         const clearBtn = row.querySelector('.btn-item-clear');
+        const pill = row.querySelector('.new-item-pill');
 
         if (input) input.value = item.name;
         if (partIdInput) partIdInput.value = item.id;
+        if (catInput) catInput.value = item.category || '';
+        if (pill) pill.style.display = 'none';
+
         if (dropdown) {
             dropdown.style.display = 'none';
             dropdown.innerHTML = '';
@@ -2175,14 +2305,19 @@
 
         const input = row.querySelector('.input-item-name');
         const partIdInput = row.querySelector('.input-part-id');
+        const catInput = row.querySelector('.input-item-category');
         const priceInput = row.querySelector('.input-unit-price');
         const dropdown = row.querySelector('.search-picker-dropdown');
+        const pill = row.querySelector('.new-item-pill');
 
         if (input) {
             input.value = '';
             input.focus();
         }
         if (partIdInput) partIdInput.value = '';
+        if (catInput) catInput.value = '';
+        if (pill) pill.style.display = 'none';
+
         if (priceInput) {
             priceInput.value = '';
             priceInput.placeholder = 'Price (₹)';
@@ -2197,6 +2332,145 @@
             recalcBulkCustomerTotals(row.closest('.bulk-customer-card'));
         } else {
             recalcQuickSaleRow(row);
+        }
+    }
+
+    /* ─── New / Custom Item Category Modal Handlers ─── */
+    let activeQuickRowForNewItem = null;
+
+    function promptNewItemCategory(dropdownItemEl, typedName) {
+        const row = dropdownItemEl.closest('.item-search-row');
+        promptNewItemCategoryForRow(row, typedName);
+    }
+
+    function promptNewItemCategoryForRow(row, typedName) {
+        if (!row) return;
+        activeQuickRowForNewItem = row;
+
+        const nameInput = row.querySelector('.input-item-name');
+        const priceInput = row.querySelector('.input-unit-price');
+        const catInput = row.querySelector('.input-item-category');
+        const dropdown = row.querySelector('.search-picker-dropdown');
+        if (dropdown) dropdown.style.display = 'none';
+
+        const modal = document.getElementById('quickNewItemModal');
+        if (!modal) return;
+
+        const initialName = typedName || (nameInput?.value || '').trim();
+        const initialPrice = (priceInput?.value || '').trim();
+        const initialCat = (catInput?.value || 'general_accessory').trim();
+
+        document.getElementById('modalNewItemName').value = initialName;
+        document.getElementById('modalNewItemPrice').value = initialPrice;
+
+        const catSelect = document.getElementById('modalNewItemCategory');
+        if (catSelect) {
+            let found = false;
+            for (let opt of catSelect.options) {
+                if (opt.value === initialCat) {
+                    catSelect.value = initialCat;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && initialCat && initialCat !== 'general_accessory') {
+                catSelect.value = '__custom__';
+                document.getElementById('modalCustomCatWrap').style.display = 'block';
+                document.getElementById('modalCustomCatInput').value = initialCat;
+            } else {
+                if (!found) catSelect.value = 'general_accessory';
+                document.getElementById('modalCustomCatWrap').style.display = 'none';
+                document.getElementById('modalCustomCatInput').value = '';
+            }
+        }
+
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            const priceEl = document.getElementById('modalNewItemPrice');
+            const nameEl = document.getElementById('modalNewItemName');
+            if (!nameEl.value) nameEl.focus();
+            else if (!priceEl.value || parseFloat(priceEl.value) <= 0) priceEl.focus();
+            else priceEl.select();
+        }, 60);
+    }
+
+    function closeQuickNewItemModal() {
+        const modal = document.getElementById('quickNewItemModal');
+        if (modal) modal.style.display = 'none';
+        activeQuickRowForNewItem = null;
+    }
+
+    function onModalNewItemCategoryChange(val) {
+        const wrap = document.getElementById('modalCustomCatWrap');
+        if (wrap) {
+            wrap.style.display = (val === '__custom__') ? 'block' : 'none';
+            if (val === '__custom__') {
+                const input = document.getElementById('modalCustomCatInput');
+                if (input) input.focus();
+            }
+        }
+    }
+
+    function confirmQuickNewItemModal(e) {
+        e.preventDefault();
+        if (!activeQuickRowForNewItem) return;
+
+        const row = activeQuickRowForNewItem;
+        const nameVal = document.getElementById('modalNewItemName')?.value.trim();
+        const priceVal = document.getElementById('modalNewItemPrice')?.value.trim();
+        const catSelect = document.getElementById('modalNewItemCategory');
+        let catVal = catSelect?.value || 'general_accessory';
+        let catLabel = catSelect ? catSelect.options[catSelect.selectedIndex].text : 'General Accessory';
+
+        if (catVal === '__custom__') {
+            const customInput = document.getElementById('modalCustomCatInput');
+            catVal = customInput?.value.trim() || 'general_accessory';
+            catLabel = catVal;
+        }
+
+        if (!nameVal) {
+            alert('Please enter an item name.');
+            document.getElementById('modalNewItemName')?.focus();
+            return;
+        }
+
+        const nameInput = row.querySelector('.input-item-name');
+        const partIdInput = row.querySelector('.input-part-id');
+        const catInput = row.querySelector('.input-item-category');
+        const priceInput = row.querySelector('.input-unit-price');
+        const clearBtn = row.querySelector('.btn-item-clear');
+        const pill = row.querySelector('.new-item-pill');
+        const pillCatName = row.querySelector('.pill-category-name');
+
+        if (nameInput) nameInput.value = nameVal;
+        if (partIdInput) partIdInput.value = ''; // Empty part_id means auto-register new item
+        if (catInput) catInput.value = catVal;
+        if (priceInput && priceVal !== '') {
+            priceInput.value = parseFloat(priceVal);
+        }
+        if (clearBtn) clearBtn.style.display = 'block';
+
+        if (pill) {
+            pill.style.display = 'inline-flex';
+            if (pillCatName) pillCatName.textContent = catLabel;
+        }
+
+        closeQuickNewItemModal();
+
+        recalcQuickSaleRow(row);
+
+        const qtyInput = row.querySelector('.input-quantity');
+        if (priceInput && (!priceVal || parseFloat(priceVal) <= 0)) {
+            priceInput.focus();
+        } else if (qtyInput) {
+            qtyInput.focus();
+        }
+    }
+
+    function editRowNewItemCategory(btnEl) {
+        const row = btnEl.closest('.item-search-row');
+        if (row) {
+            promptNewItemCategoryForRow(row);
         }
     }
 
@@ -2232,12 +2506,17 @@
                        required
                        oninput="onRowItemSearchInput(this)">
                 <input type="hidden" name="items[${idx}][part_id]" class="input-part-id">
+                <input type="hidden" name="items[${idx}][category]" class="input-item-category" value="">
                 <button type="button"
                         class="btn-item-clear"
                         onclick="clearRowItemSelection(this)"
                         title="Clear item"
-                        style="display:none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
+                        style="display:none; position: absolute; right: 8px; top: 18px; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
                 <div class="search-picker-dropdown"></div>
+                <div class="new-item-pill" style="display:none; margin-top:4px; font-size:11px; align-items:center; gap:5px; background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; border-radius:4px; padding:2px 7px; width:fit-content;">
+                    <span>✨ New Item &bull; <strong class="pill-category-name">General Accessory</strong></span>
+                    <button type="button" onclick="editRowNewItemCategory(this)" style="background:none; border:none; color:#6366F1; cursor:pointer; padding:0 2px; font-size:10px; text-decoration:underline;">Change</button>
+                </div>
             </div>
 
             <div>
@@ -2555,6 +2834,24 @@
                 showQuickSaleWarning(`Item #${i + 1}: Please select or enter an item name.`, nameInput);
                 if (e) e.preventDefault();
                 return false;
+            }
+
+            const partIdInput = r.querySelector('.input-part-id');
+            const catInput = r.querySelector('.input-item-category');
+            const partId = (partIdInput?.value || '').trim();
+            const cat = (catInput?.value || '').trim();
+
+            if (!partId && !cat) {
+                const exact = (window.allPartsData || []).find(p => (p.name || '').trim().toLowerCase() === name.toLowerCase());
+                if (exact) {
+                    if (partIdInput) partIdInput.value = exact.id;
+                    if (catInput) catInput.value = exact.category || '';
+                } else {
+                    showQuickSaleWarning(`Item #${i + 1} ("${name}"): Please select a category for this new item before selling.`, nameInput);
+                    if (e) e.preventDefault();
+                    promptNewItemCategoryForRow(r, name);
+                    return false;
+                }
             }
 
             const qtyInput = r.querySelector('.input-quantity');

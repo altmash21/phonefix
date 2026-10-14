@@ -11,6 +11,7 @@ use App\Services\MobileShop\Accessories\AccessorySaleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class SalesController extends BaseMobileShopController
@@ -301,10 +302,13 @@ class SalesController extends BaseMobileShopController
                         }
                     } else {
                         $pPrice = $uPrice !== null ? max(0, $uPrice) : 0.0;
+                        $catInfo = $this->resolvePartCategory($companyId, $item['category'] ?? $item['cat'] ?? null);
+
                         $pId = DB::table('ms_parts_inventory')->insertGetId([
                             'company_id'       => $companyId,
                             'name'             => $pName,
-                            'category'         => 'general_accessory',
+                            'category'         => $catInfo['slug'],
+                            'category_id'      => $catInfo['id'],
                             'brand'            => 'Universal',
                             'compatible_model' => 'Universal',
                             'display_type'     => 'na',
@@ -316,6 +320,19 @@ class SalesController extends BaseMobileShopController
                             'created_at'       => now(),
                             'updated_at'       => now(),
                         ]);
+
+                        try {
+                            DB::table('ms_parts_inventory_history')->insert([
+                                'part_id'       => $pId,
+                                'type'          => 'addition',
+                                'quantity'      => max(10, $qty),
+                                'balance_after' => max(10, $qty),
+                                'reference'     => "Auto-created via Quick Sale: {$pName} (" . ucwords(str_replace('_', ' ', $catInfo['slug'])) . ")",
+                                'user_id'       => auth()->id(),
+                                'created_at'    => now(),
+                                'updated_at'    => now(),
+                            ]);
+                        } catch (\Throwable $e) {}
                     }
                 }
 
@@ -416,10 +433,13 @@ class SalesController extends BaseMobileShopController
                 $partId = (int) $existing->id;
             } else {
                 $customPrice = (float) ($request->input('custom_price') ?: 0);
+                $catInfo = $this->resolvePartCategory($companyId, $request->input('category') ?: $request->input('cat'));
+
                 $partId = DB::table('ms_parts_inventory')->insertGetId([
                     'company_id'       => $companyId,
                     'name'             => $itemName,
-                    'category'         => 'general_accessory',
+                    'category'         => $catInfo['slug'],
+                    'category_id'      => $catInfo['id'],
                     'brand'            => 'Universal',
                     'compatible_model' => 'Universal',
                     'display_type'     => 'na',
@@ -679,10 +699,13 @@ class SalesController extends BaseMobileShopController
                             if ($uPrice === null) $uPrice = (float) ($existing->selling_price ?? 0);
                         } else {
                             $pPrice = $uPrice !== null ? max(0, $uPrice) : 0.0;
+                            $catInfo = $this->resolvePartCategory($companyId, $it['category'] ?? $it['cat'] ?? null);
+
                             $pId = DB::table('ms_parts_inventory')->insertGetId([
                                 'company_id'       => $companyId,
                                 'name'             => $pName,
-                                'category'         => 'general_accessory',
+                                'category'         => $catInfo['slug'],
+                                'category_id'      => $catInfo['id'],
                                 'brand'            => 'Universal',
                                 'compatible_model' => 'Universal',
                                 'display_type'     => 'na',
@@ -944,5 +967,48 @@ class SalesController extends BaseMobileShopController
         }
 
         return redirect()->away($url);
+    }
+
+    /**
+     * Resolve or insert category for newly added inventory item
+     */
+    protected function resolvePartCategory(int $companyId, ?string $rawCat): array
+    {
+        $rawCat = trim((string) ($rawCat ?: 'general_accessory'));
+        if (empty($rawCat)) {
+            $rawCat = 'general_accessory';
+        }
+
+        $catRecord = DB::table('ms_part_categories')
+            ->where('company_id', $companyId)
+            ->where(function ($q) use ($rawCat) {
+                $q->where('slug', $rawCat)
+                  ->orWhere('name', $rawCat);
+            })
+            ->first();
+
+        if ($catRecord) {
+            $catSlug = $catRecord->slug ?: Str::slug($catRecord->name, '_');
+            return ['slug' => $catSlug, 'id' => $catRecord->id];
+        }
+
+        $catSlug = Str::slug($rawCat, '_') ?: 'general_accessory';
+        $catName = ucwords(str_replace('_', ' ', $rawCat));
+        $catId = null;
+
+        try {
+            $catId = DB::table('ms_part_categories')->insertGetId([
+                'company_id'       => $companyId,
+                'name'             => $catName,
+                'slug'             => $catSlug,
+                'is_gift_eligible' => false,
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
+        } catch (\Throwable $e) {
+            // Already exists or table issue
+        }
+
+        return ['slug' => $catSlug, 'id' => $catId];
     }
 }
