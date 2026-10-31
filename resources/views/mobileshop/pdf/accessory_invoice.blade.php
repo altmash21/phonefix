@@ -158,7 +158,7 @@
                 <div class="company-name">{{ store_name() }}</div>
                 <div style="font-size: 9.5px; color: #4b5563; margin-top: 3px;">
                     {{ store_address() }}<br>
-                    Phone: {{ store_phone() }}@if(!empty(store_landline())) &bull; Landline: {{ store_landline() }}@endif &bull; Email: {{ setting('company.email', 'support@mobitrack.local') }}
+                    Phone: {{ store_phone() }} &bull; Email: {{ setting('company.email', 'support@mobitrack.local') }}
                 </div>
                 <div style="font-size: 9.5px; font-weight: bold; color: #111827; margin-top: 3px;">
                     GSTIN: <span class="font-mono">{{ store_gstin() }}</span>

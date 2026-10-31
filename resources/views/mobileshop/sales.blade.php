@@ -800,7 +800,12 @@
                                 <a href="{{ route('mobileshop.accessories.whatsapp', ['id' => $asale->id]) }}" target="_blank" class="btn btn-outline btn-icon" style="color:#16A34A; border-color:#BBF7D0; background:#F0FDF4;" title="Share Invoice on WhatsApp">
                                     <svg style="width:14px;height:14px;fill:currentColor;" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
                                 </a>
-                                @if(($asale->status ?? '') !== 'voided')
+                                @php
+                                    $hasReturnableItems = collect($asale->items ?? [])->contains(function($it) {
+                                        return ((int)$it->quantity - (int)($it->returned_qty ?? 0)) > 0;
+                                    });
+                                @endphp
+                                @if(($asale->status ?? '') !== 'voided' && $hasReturnableItems)
                                     <button type="button" onclick="handleReturnButtonClick(this, 'accessory', {{ $asale->id }}, '{{ $asale->invoice_number }}', '{{ number_format($asale->total_amount, 2) }}')" data-items="{{ json_encode($asale->items ?? []) }}" class="btn btn-outline btn-icon" style="color:#DC2626; border-color:#FECDD3; background:#FFF1F2; cursor:pointer;" title="Process Return & Restock">
                                         <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i>
                                     </button>
@@ -899,12 +904,17 @@
                                 <a href="{{ route('mobileshop.accessories.invoice', ['id' => $asale->id, 'print' => 1]) }}" target="_blank" rel="noopener" class="compact-action-btn mobile-print-btn" title="Print Invoice" style="cursor:pointer;">
                                     <i data-lucide="printer" style="width:15px;height:15px;pointer-events:none;"></i>
                                 </a>
-                                @if(($asale->status ?? '') !== 'voided')
+                                @php
+                                    $hasReturnableItemsMobile = collect($asale->items ?? [])->contains(function($it) {
+                                        return ((int)$it->quantity - (int)($it->returned_qty ?? 0)) > 0;
+                                    });
+                                @endphp
+                                @if(($asale->status ?? '') !== 'voided' && $hasReturnableItemsMobile)
                                     <button type="button" onclick="handleReturnButtonClick(this, 'accessory', {{ $asale->id }}, '{{ $asale->invoice_number }}', '{{ number_format($asale->total_amount, 2) }}')" data-items="{{ json_encode($asale->items ?? []) }}" class="compact-action-btn mobile-return-btn" title="Process Return & Restock">
                                         <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i>
                                     </button>
                                 @else
-                                    <span style="font-size:9.5px; font-weight:700; color:#DC2626; background:#FEE2E2; padding:3px 6px; border-radius:4px;">Void</span>
+                                    <span style="font-size:9.5px; font-weight:700; color:#DC2626; background:#FEE2E2; padding:3px 6px; border-radius:4px;">Returned</span>
                                 @endif
                             </div>
                         </div>
@@ -1088,7 +1098,7 @@
 
                     <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 12px; border-top: 1px solid #E2E8F0;">
                         <button type="button" onclick="closeReturnModal()" class="btn btn-outline" style="border:1px solid #CBD5E1; color:#475569; font-weight:700; padding:8px 18px; border-radius:8px; cursor:pointer;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background:#DC2626; color:#FFFFFF; font-weight:800; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <button type="submit" id="btnSubmitReturnModal" class="btn btn-primary" style="background:#DC2626; color:#FFFFFF; font-weight:800; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
                             <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i> Confirm Return & Refund
                         </button>
                     </div>
@@ -1758,11 +1768,38 @@
         const lblInvoice = document.getElementById('lblReturnInvoice');
         const itemsList = document.getElementById('returnItemsList');
         const countNotice = document.getElementById('lblItemCountNotice');
+        const submitBtn = document.getElementById('btnSubmitReturnModal');
 
         lblInvoice.textContent = invoiceNumber;
-        currentReturnItems = (Array.isArray(items) && items.length > 0) ? items : [
-            { id: 1, part_name: 'Standard Order Item', quantity: 1, unit_price: parseFloat(amount.replace(/,/g, '')) || 0, line_total: parseFloat(amount.replace(/,/g, '')) || 0 }
+        const rawItems = (Array.isArray(items) && items.length > 0) ? items : [
+            { id: 1, part_name: 'Standard Order Item', quantity: 1, returned_qty: 0, unit_price: parseFloat(amount.replace(/,/g, '')) || 0, line_total: parseFloat(amount.replace(/,/g, '')) || 0 }
         ];
+
+        // Filter out items that have already been fully returned
+        const returnableItems = [];
+        const alreadyReturnedItems = [];
+
+        rawItems.forEach(item => {
+            const billedQty = parseInt(item.quantity) || 1;
+            const retQty = parseInt(item.returned_qty) || 0;
+            const availableQty = Math.max(0, billedQty - retQty);
+
+            if (availableQty > 0) {
+                returnableItems.push({
+                    ...item,
+                    available_qty: availableQty,
+                    returned_qty: retQty
+                });
+            } else {
+                alreadyReturnedItems.push({
+                    ...item,
+                    available_qty: 0,
+                    returned_qty: retQty
+                });
+            }
+        });
+
+        currentReturnItems = returnableItems;
 
         // Reset to default option: Customer Return (Restock)
         document.getElementById('returnReasonSelect').value = 'customer_return';
@@ -1771,36 +1808,65 @@
 
         // Render line items
         itemsList.innerHTML = '';
-        if (currentReturnItems.length > 1) {
-            countNotice.textContent = `(${currentReturnItems.length} items in invoice — select items being returned)`;
-            countNotice.style.color = '#DC2626';
-        } else {
-            countNotice.textContent = `(1 item in invoice)`;
-            countNotice.style.color = '#64748B';
-        }
 
-        currentReturnItems.forEach((item, idx) => {
-            const unitPrice = parseFloat(item.unit_price) || (parseFloat(item.line_total) / Math.max(1, item.quantity));
-            const row = document.createElement('div');
-            row.style.cssText = 'background:#fff; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px;';
-            row.innerHTML = `
-                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                    <input type="checkbox" id="chk_item_${item.id}" class="return-item-chk" checked onchange="recalcReturnRefund()" style="width:16px; height:16px; cursor:pointer; accent-color:#DC2626;">
-                    <div style="min-width:0;">
-                        <label for="chk_item_${item.id}" style="font-size:12px; font-weight:700; color:#0F172A; margin:0; cursor:pointer; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                            ${item.part_name || 'Item #' + (idx+1)}
-                        </label>
-                        <div style="font-size:11px; color:#64748B;">Unit: ₹${unitPrice.toFixed(2)} | Billed Qty: ${item.quantity}</div>
-                    </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-                    <span style="font-size:11px; font-weight:700; color:#475569;">Return Qty:</span>
-                    <input type="number" name="returned_items[${item.id}]" id="qty_item_${item.id}" min="1" max="${item.quantity}" value="${item.quantity}" oninput="recalcReturnRefund()" data-unit-price="${unitPrice}" style="width:55px; padding:3px 6px; font-size:12px; font-weight:800; text-align:center; border:1px solid #CBD5E1; border-radius:4px; color:#0F172A;">
-                    <span id="sub_item_${item.id}" style="font-size:12px; font-weight:800; color:#0F172A; min-width:65px; text-align:right;">₹${(unitPrice * item.quantity).toFixed(2)}</span>
+        if (returnableItems.length === 0) {
+            countNotice.textContent = `(All items already returned)`;
+            countNotice.style.color = '#DC2626';
+            itemsList.innerHTML = `
+                <div style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:12px; border-radius:6px; font-size:12px; font-weight:700; text-align:center;">
+                    ✓ All items from this invoice have already been returned and refunded.
                 </div>
             `;
-            itemsList.appendChild(row);
-        });
+            if (submitBtn) submitBtn.disabled = true;
+        } else {
+            if (submitBtn) submitBtn.disabled = false;
+            if (returnableItems.length > 1) {
+                countNotice.textContent = `(${returnableItems.length} returnable items in invoice — select items being returned)`;
+                countNotice.style.color = '#DC2626';
+            } else {
+                countNotice.textContent = `(1 returnable item in invoice)`;
+                countNotice.style.color = '#64748B';
+            }
+
+            returnableItems.forEach((item, idx) => {
+                const unitPrice = parseFloat(item.unit_price) || (parseFloat(item.line_total) / Math.max(1, item.quantity));
+                const maxQty = item.available_qty;
+                const row = document.createElement('div');
+                row.style.cssText = 'background:#fff; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px;';
+                row.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                        <input type="checkbox" id="chk_item_${item.id}" class="return-item-chk" checked onchange="recalcReturnRefund()" style="width:16px; height:16px; cursor:pointer; accent-color:#DC2626;">
+                        <div style="min-width:0;">
+                            <label for="chk_item_${item.id}" style="font-size:12px; font-weight:700; color:#0F172A; margin:0; cursor:pointer; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                ${item.part_name || 'Item #' + (idx+1)}
+                            </label>
+                            <div style="font-size:11px; color:#64748B;">
+                                Unit: ₹${unitPrice.toFixed(2)} | Billed Qty: ${item.quantity}
+                                ${item.returned_qty > 0 ? `<span style="color:#DC2626; font-weight:700;">(Prev Returned: ${item.returned_qty})</span>` : ''}
+                                | <span style="color:#16A34A; font-weight:700;">Returnable: ${maxQty}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                        <span style="font-size:11px; font-weight:700; color:#475569;">Return Qty:</span>
+                        <input type="number" name="returned_items[${item.id}]" id="qty_item_${item.id}" min="1" max="${maxQty}" value="${maxQty}" oninput="recalcReturnRefund()" data-unit-price="${unitPrice}" data-max-qty="${maxQty}" style="width:55px; padding:3px 6px; font-size:12px; font-weight:800; text-align:center; border:1px solid #CBD5E1; border-radius:4px; color:#0F172A;">
+                        <span id="sub_item_${item.id}" style="font-size:12px; font-weight:800; color:#0F172A; min-width:65px; text-align:right;">₹${(unitPrice * maxQty).toFixed(2)}</span>
+                    </div>
+                `;
+                itemsList.appendChild(row);
+            });
+        }
+
+        // Show summary of already returned items if any
+        if (alreadyReturnedItems.length > 0) {
+            const returnedBox = document.createElement('div');
+            returnedBox.style.cssText = 'background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:6px; padding:8px 12px; margin-top:8px; font-size:11px; color:#64748B;';
+            returnedBox.innerHTML = `
+                <div style="font-weight:700; color:#475569; margin-bottom:3px;">Previously Returned in this Invoice (${alreadyReturnedItems.length}):</div>
+                ${alreadyReturnedItems.map(it => `• <strong>${it.part_name}</strong>: ${it.returned_qty} pc(s) already refunded & restocked`).join('<br>')}
+            `;
+            itemsList.appendChild(returnedBox);
+        }
 
         recalcReturnRefund();
 
@@ -1830,9 +1896,10 @@
                 
                 if (isChecked) {
                     const unitPrice = parseFloat(qtyInput.dataset.unitPrice) || 0;
+                    const maxQty = parseInt(qtyInput.dataset.maxQty) || parseInt(item.available_qty) || 1;
                     let qty = parseInt(qtyInput.value) || 0;
-                    if (qty > item.quantity) {
-                        qty = item.quantity;
+                    if (qty > maxQty) {
+                        qty = maxQty;
                         qtyInput.value = qty;
                     }
                     if (qty < 1) {
@@ -2954,3 +3021,4 @@
 
 </script>
 @endpush
+b

@@ -29,9 +29,21 @@
     
     foreach ($ledger as $item) {
         $itemName = $item->item_name ?? $item->particulars;
-        $refStr = !empty($item->ref_no) ? " [Bill #{$item->ref_no}]" : "";
-        $isRepay = $item->paid > 0 && $item->billed <= 0;
-        $part = $isRepay ? "💵 Payment Received" : "🛍️ {$itemName}{$refStr}";
+        $refStr = !empty($item->ref_no) ? " [Ref #{$item->ref_no}]" : "";
+        $isOldUdhar = in_array($item->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']);
+        $isRepay = ($item->paid > 0 && $item->billed <= 0) || in_array($item->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received']);
+        
+        if ($isOldUdhar) {
+            $descStr = (!empty($item->description) && !in_array(strtolower($item->description), ['old udhar / opening balance', 'old udhar', 'opening balance']))
+                ? " — Details: {$item->description}"
+                : "";
+            $part = "📜 Old Udhar{$refStr}{$descStr}";
+        } elseif ($isRepay) {
+            $part = "💵 " . ($itemName ?: 'Payment Received') . "{$refStr}";
+        } else {
+            $part = "🛍️ {$itemName}{$refStr}";
+        }
+        
         $waMsg .= "▪️ *{$item->date}* — {$part}\n";
         if ($item->billed > 0) {
             $waMsg .= "   • Billed: ₹" . number_format($item->billed, 2) . "\n";
@@ -47,16 +59,14 @@
     $waMsg .= "• *Total Credit Billed:* ₹" . number_format($totalBilled, 2) . "\n";
     $waMsg .= "• *Total Amount Received:* ₹" . number_format($totalPaid, 2) . "\n";
     $waMsg .= "👉 *NET OUTSTANDING BALANCE:* *₹" . number_format($closingBalance, 2) . "*\n";
-    $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    $waMsg .= "📄 *Download Complete PDF Statement:*\n" . route('public.statement.pdf', ['id' => $customer->id]) . "\n\n";
     if (!empty($storeUpi)) {
         $waMsg .= "💡 _Please clear the pending balance via UPI (`{$storeUpi}`) or Cash at our store counter at your earliest convenience._\n\n";
     } else {
         $waMsg .= "💡 _Please clear the pending balance via UPI or Cash at our store counter at your earliest convenience._\n\n";
     }
     $waMsg .= "📞 *Accounts Desk:* {$storePhone}\n";
-    if (!empty($storeLandline)) {
-        $waMsg .= "☎️ *Landline:* {$storeLandline}\n";
-    }
     $waMsg .= "🏢 *Showroom:* {$storeAddress}\n";
     $waMsg .= "_Note: Please report any discrepancies within 7 business days._";
 
@@ -95,7 +105,7 @@
                 {{ $storeAddress }}
             </div>
             <div style="font-size: 11.5px; color: #6B7280; margin-top: 2px;">
-                Phone: {{ $storePhone }} &middot; GSTIN: {{ $storeGstin }}
+                Phone: {{ $storePhone }}@if(!empty($storeGstin)) &middot; GSTIN: {{ $storeGstin }}@endif
             </div>
         </div>
 
@@ -138,7 +148,8 @@
             <tbody>
                 @foreach($ledger as $entry)
                 @php
-                    $isRepayment = $entry->paid > 0 && $entry->billed <= 0;
+                    $isOldUdhar = in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']);
+                    $isRepayment = ($entry->paid > 0 && $entry->billed <= 0) || in_array($entry->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received']);
                     $itemName = $entry->item_name ?? $entry->particulars;
                     $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
                 @endphp
@@ -147,7 +158,21 @@
                         {{ $dateFormatted }}
                     </td>
                     <td style="padding: 9px 6px; vertical-align: top;">
-                        @if($isRepayment)
+                        @if($isOldUdhar)
+                            <div style="font-weight: 800; color: #B45309; font-size: 13px;">
+                                📜 Old Udhar / Opening Balance
+                            </div>
+                            @if(!empty($entry->description) && !in_array(strtolower($entry->description), ['old udhar / opening balance', 'old udhar', 'opening balance']))
+                                <div style="font-size: 12px; color: #1E293B; margin-top: 2px; font-weight: 600;">
+                                    <strong>Details:</strong> {{ $entry->description }}
+                                </div>
+                            @endif
+                            @if(!empty($entry->ref_no))
+                                <div style="font-size: 10.5px; color: #64748B; font-family: monospace; margin-top: 2px;">
+                                    Ref: #{{ $entry->ref_no }}
+                                </div>
+                            @endif
+                        @elseif($isRepayment)
                             <div style="color: #16A34A; font-weight: 600; font-size: 12.5px;">
                                 💵 {{ $itemName ?: 'Payment / Settlement Received' }}
                             </div>

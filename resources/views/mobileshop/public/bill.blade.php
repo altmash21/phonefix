@@ -296,7 +296,7 @@
             <!-- Store Info Footer -->
             <div class="text-center pt-4 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
                 <div>{{ store_name() }} &bull; {{ store_address() }}</div>
-                <div>Customer Support: <a href="tel:{{ preg_replace('/[^0-9]/', '', store_phone()) }}" class="font-bold text-slate-600">{{ store_phone() }}</a>@if(!empty(store_landline())) &bull; Landline: <a href="tel:{{ preg_replace('/[^0-9]/', '', store_landline()) }}" class="font-bold text-slate-600">{{ store_landline() }}</a>@endif</div>
+                <div>Customer Support: <a href="tel:{{ preg_replace('/[^0-9]/', '', store_phone()) }}" class="font-bold text-slate-600">{{ store_phone() }}</a></div>
             </div>
 
         </div>

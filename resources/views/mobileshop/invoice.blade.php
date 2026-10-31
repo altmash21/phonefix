@@ -95,9 +95,6 @@
     $waMsg .= "\n📄 *Download / View PDF Bill:*\n";
     $waMsg .= $pdfBillUrl . "\n\n";
     $waMsg .= "Support: {$storePhone}\n";
-    if (!empty($storeLandline)) {
-        $waMsg .= "Landline: {$storeLandline}\n";
-    }
     $waMsg .= "{$storeAddress}";
 
     $waInvoiceUrl = 'https://wa.me/' . $cleanPhone . '?text=' . rawurlencode($waMsg);

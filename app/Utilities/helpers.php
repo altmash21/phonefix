@@ -462,18 +462,26 @@ if (! function_exists('calculation_to_quantity')) {
 if (! function_exists('store_name')) {
     function store_name(?string $default = null): string
     {
+        $settingName = setting('mobileshop.store_name') ?: setting('company.name');
+        if (!empty($settingName)) {
+            return trim((string) $settingName);
+        }
+
         return config('mobileshop.store_name')
-            ?: (env('STORE_NAME')
-            ?: (setting('company.name') ?: ($default ?? 'PhoneFix Azamgarh')));
+            ?: (env('STORE_NAME') ?: ($default ?? 'PhoneFix Azamgarh'));
     }
 }
 
 if (! function_exists('store_phone')) {
     function store_phone(?string $default = null): string
     {
+        $settingPhone = setting('mobileshop.store_phone') ?: setting('company.phone');
+        if (!empty($settingPhone)) {
+            return trim((string) $settingPhone);
+        }
+
         return config('mobileshop.store_phone')
-            ?: (env('STORE_PHONE')
-            ?: (setting('company.phone') ?: ($default ?? '+91 98765 43210')));
+            ?: (env('STORE_PHONE') ?: ($default ?? '+91 98765 43210'));
     }
 }
 
@@ -553,25 +561,40 @@ if (! function_exists('store_address_short')) {
 if (! function_exists('store_gstin')) {
     function store_gstin(?string $default = null): string
     {
-        return config('mobileshop.store_gstin')
-            ?: (env('STORE_GSTIN')
-            ?: (setting('company.tax_number') ?: (setting('company.gstin') ?: ($default ?? '09AAACA1234F1Z5'))));
+        $settingGst = setting('mobileshop.store_gstin');
+        if ($settingGst === null || $settingGst === '') {
+            $settingGst = setting('company.tax_number');
+        }
+        if ($settingGst === null || $settingGst === '') {
+            $settingGst = setting('company.gstin');
+        }
+
+        if ($settingGst !== null && trim((string) $settingGst) !== '') {
+            return trim((string) $settingGst);
+        }
+
+        $envGst = config('mobileshop.store_gstin') ?: env('STORE_GSTIN');
+        if (!empty($envGst)) {
+            return trim((string) $envGst);
+        }
+
+        return $default ?? '';
     }
 }
 
 if (! function_exists('store_upi_id')) {
     function store_upi_id(?string $default = null): string
     {
-        return config('mobileshop.store_upi_id')
-            ?: (env('STORE_UPI_ID') ?: ($default ?? ''));
+        return setting('mobileshop.store_upi_id')
+            ?: (config('mobileshop.store_upi_id')
+            ?: (env('STORE_UPI_ID') ?: ($default ?? '')));
     }
 }
 
 if (! function_exists('store_landline')) {
     function store_landline(?string $default = null): string
     {
-        return config('mobileshop.store_landline')
-            ?: (env('STORE_LANDLINE') ?: ($default ?? ''));
+        return '';
     }
 }
 

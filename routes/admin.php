@@ -80,6 +80,12 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('masters/user/{id}/update', 'MobileShop\MastersController@updateUserCredentials')
         ->middleware('permission:read-mobileshop-masters|read-admin-panel')
         ->name('masters.user.update');
+    Route::post('masters/settings/quicksale-gst', 'MobileShop\MastersController@saveQuickSaleGstSettings')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel')
+        ->name('masters.quicksale_gst');
+    Route::post('masters/settings/store', 'MobileShop\MastersController@saveStoreSettings')
+        ->middleware('permission:read-mobileshop-masters|read-admin-panel')
+        ->name('masters.store_settings');
     Route::post('accounts/invite/generate', 'MobileShop\MastersController@generateInviteToken')
         ->middleware('permission:read-mobileshop-masters|read-admin-panel')
         ->name('accounts.invite.generate');

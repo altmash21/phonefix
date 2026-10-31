@@ -444,4 +444,78 @@ class MastersController extends BaseMobileShopController
 
         return response()->json(['success' => true, 'message' => 'Device session terminated successfully.']);
     }
+
+    /**
+     * Save Master Settings for Quick Sale & GST Controls
+     */
+    public function saveQuickSaleGstSettings(Request $request)
+    {
+        return $this->saveStoreSettings($request);
+    }
+
+    /**
+     * Save Master Settings for Store Profile & GST Controls
+     */
+    public function saveStoreSettings(Request $request)
+    {
+        $currentUser = auth()->user();
+        abort_unless($currentUser && (
+            $currentUser->hasRole('store-admin') ||
+            $currentUser->hasRole('admin') ||
+            $currentUser->hasRole('owner') ||
+            $currentUser->can('read-mobileshop-masters')
+        ), 403, 'Admin privileges required to save Master Billing Settings.');
+
+        $companyId = $this->getCompanyId();
+
+        $settings = [];
+
+        if ($request->has('store_gstin') || $request->has('gstin')) {
+            $gstin = strtoupper(trim((string) ($request->input('store_gstin') ?? $request->input('gstin') ?? '')));
+            $settings['mobileshop.store_gstin'] = $gstin;
+            $settings['company.tax_number']     = $gstin;
+            $settings['company.gstin']          = $gstin;
+        }
+
+        if ($request->has('store_name')) {
+            $name = trim((string) $request->input('store_name'));
+            if (!empty($name)) {
+                $settings['mobileshop.store_name'] = $name;
+                $settings['company.name']          = $name;
+            }
+        }
+
+        if ($request->has('store_phone')) {
+            $phone = trim((string) $request->input('store_phone'));
+            if (!empty($phone)) {
+                $settings['mobileshop.store_phone'] = $phone;
+                $settings['company.phone']          = $phone;
+            }
+        }
+
+        if ($request->has('store_address')) {
+            $addr = trim((string) $request->input('store_address'));
+            if (!empty($addr)) {
+                $settings['mobileshop.store_address'] = $addr;
+                $settings['company.address']          = $addr;
+            }
+        }
+
+        if ($request->has('quicksale_gst_enabled') || $request->has('quicksale_gst_rate') || $request->has('quicksale_default_bill_type')) {
+            $settings['mobileshop.quicksale_gst_enabled'] = $request->has('quicksale_gst_enabled') ? 1 : 0;
+            $settings['mobileshop.quicksale_default_bill_type'] = $request->input('quicksale_default_bill_type', 'non_gst') === 'gst' ? 'gst' : 'non_gst';
+            $settings['mobileshop.quicksale_gst_rate'] = (float) $request->input('quicksale_gst_rate', 18);
+        }
+
+        if (!empty($settings)) {
+            setting($settings);
+            setting()->save();
+        }
+
+        \Illuminate\Support\Facades\Cache::flush();
+
+        return redirect()->route('mobileshop.masters', ['company_id' => $companyId, 'tab' => 'store-gst'])
+            ->with('success', 'Store Profile & GST Settings saved successfully!');
+    }
 }
+

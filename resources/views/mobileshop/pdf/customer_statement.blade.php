@@ -142,7 +142,7 @@
     <div class="header-section">
         <div class="company-name">{{ store_name('PhoneFix Azamgarh') }}</div>
         <div class="company-meta">{{ store_address() }}</div>
-        <div class="company-meta">Phone: {{ store_phone() }} &middot; GSTIN: {{ store_gstin() }}</div>
+        <div class="company-meta">Phone: {{ store_phone() }}@if(!empty(store_gstin())) &middot; GSTIN: {{ store_gstin() }}@endif</div>
     </div>
 
     <!-- DOTTED DIVIDER -->
@@ -180,14 +180,29 @@
         <tbody>
             @foreach($ledger as $entry)
             @php
-                $isRepayment = $entry->paid > 0 && $entry->billed <= 0;
+                $isOldUdhar = in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']);
+                $isRepayment = ($entry->paid > 0 && $entry->billed <= 0) || in_array($entry->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received']);
                 $itemName = $entry->item_name ?? $entry->particulars;
                 $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
             @endphp
             <tr>
                 <td class="font-mono" style="color: #4b5563; vertical-align: top;">{{ $dateFormatted }}</td>
                 <td style="vertical-align: top;">
-                    @if($isRepayment)
+                    @if($isOldUdhar)
+                        <div style="font-weight: bold; color: #b45309; font-size: 10px;">
+                            📜 Old Udhar / Opening Balance
+                        </div>
+                        @if(!empty($entry->description) && !in_array(strtolower($entry->description), ['old udhar / opening balance', 'old udhar', 'opening balance']))
+                            <div style="font-size: 9px; color: #111827; margin-top: 1px; font-weight: normal;">
+                                <strong>Details:</strong> {{ $entry->description }}
+                            </div>
+                        @endif
+                        @if(!empty($entry->ref_no))
+                            <div style="font-size: 8.5px; color: #6b7280; font-family: monospace; margin-top: 1px;">
+                                Ref: #{{ $entry->ref_no }}
+                            </div>
+                        @endif
+                    @elseif($isRepayment)
                         <div style="font-weight: bold; color: #16a34a;">
                             {{ $itemName ?: 'Payment / Settlement Received' }}
                         </div>

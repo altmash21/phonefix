@@ -30,6 +30,9 @@
         <!-- Quick Jump Pills -->
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:0.5px; margin-right:4px;">Jump to:</span>
+            <button type="button" onclick="focusMasterCategory('sec-store-gst')" class="btn btn-outline btn-xs" style="border-radius:20px; font-weight:600; font-size:11.5px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;">
+                <i data-lucide="building" style="width:13px;height:13px; color:#2563EB;"></i> Store &amp; GST Setup
+            </button>
             <button type="button" onclick="focusMasterCategory('sec-staff')" class="btn btn-outline btn-xs" style="border-radius:20px; font-weight:600; font-size:11.5px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px;">
                 <i data-lucide="users" style="width:13px;height:13px; color:#0F766E;"></i> Staff &amp; Access ({{ count($staffUsers) }})
             </button>
@@ -56,6 +59,117 @@
             <button type="button" onclick="openGenerateInviteModal()" class="btn btn-primary btn-xs" style="background:#0F766E; border-color:#0F766E; font-size:11.5px; font-weight:700; display:inline-flex; align-items:center; gap:5px;">
                 <i data-lucide="ticket" style="width:13px;height:13px;"></i> Issue Invite Token
             </button>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         CATEGORY 0: STORE PROFILE & GST CONFIGURATION (COLLAPSIBLE)
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="card master-category-card" id="sec-store-gst" style="margin:0 0 20px 0; border:1px solid #E2E8F0; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+        <!-- Collapsible Header -->
+        <div class="card-header master-category-header" onclick="toggleMasterAccordion('sec-store-gst')" style="background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:14px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:36px; height:36px; border-radius:10px; background:#EFF6FF; color:#2563EB; display:flex; align-items:center; justify-content:center; border:1px solid #DBEAFE;">
+                    <i data-lucide="building" style="width:18px;height:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-weight:800; color:#0F172A; font-size:14px; display:flex; align-items:center; gap:8px;">
+                        Store Profile &amp; GST Configuration
+                        @if(store_gstin())
+                            <span class="badge" style="background:#DEF7EC; color:#03543F; font-size:10.5px; padding:2px 8px; font-weight:700;">GSTIN: {{ store_gstin() }}</span>
+                        @else
+                            <span class="badge" style="background:#F3F4F6; color:#4B5563; font-size:10.5px; padding:2px 8px; font-weight:700;">Non-GST Store</span>
+                        @endif
+                    </div>
+                    <div style="font-size:11.5px; color:#64748B; margin-top:2px;">
+                        Set up your official Store GSTIN, Trade Name, Support Phone, Address, and Counter Billing GST rules.
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button type="button" class="btn btn-outline btn-xs" style="border:none; background:transparent; padding:4px;">
+                    <i data-lucide="chevron-up" id="sec-store-gst-chevron" style="width:16px;height:16px;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Collapsible Body -->
+        <div id="sec-store-gst-body" style="display:block; padding:20px; background:#fff;">
+            <form method="POST" action="{{ route('mobileshop.masters.store_settings') }}">
+                @csrf
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:16px;">
+                    <div>
+                        <label class="form-label" style="font-weight:700; font-size:12.5px; color:#0F172A;">Store GSTIN (Tax Identification Number)</label>
+                        <input type="text" name="store_gstin" value="{{ store_gstin() }}" placeholder="e.g. 09AAACA1234F1Z5 (leave empty if non-GST)" style="text-transform:uppercase; font-family:monospace; font-weight:700; font-size:13px;" class="form-control">
+                        <div style="font-size:11px; color:#64748B; margin-top:4px;">
+                            Appears on PDF bills, customer statements, counter cash memos, and GST reports. Clear this field if you operate as a non-GST / composition dealer.
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" style="font-weight:700; font-size:12.5px; color:#0F172A;">Store Name (Trade / Showroom Name)</label>
+                        <input type="text" name="store_name" value="{{ store_name() }}" placeholder="e.g. PhoneFix Azamgarh" style="font-weight:700; font-size:13px;" class="form-control">
+                        <div style="font-size:11px; color:#64748B; margin-top:4px;">
+                            Displayed as the header across all invoices, statements, and WhatsApp alerts.
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" style="font-weight:700; font-size:12.5px; color:#0F172A;">Store Official Phone / WhatsApp</label>
+                        <input type="text" name="store_phone" value="{{ store_phone() }}" placeholder="e.g. +91 98765 43210" style="font-weight:600; font-size:13px;" class="form-control">
+                        <div style="font-size:11px; color:#64748B; margin-top:4px;">
+                            Primary contact number printed on invoices and sent in WhatsApp messages.
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" style="font-weight:700; font-size:12.5px; color:#0F172A;">Store Address</label>
+                        <input type="text" name="store_address" value="{{ store_address_short() }}" placeholder="e.g. Shankar ji tiraha Mukeriganj, Azamgarh" style="font-weight:600; font-size:13px;" class="form-control">
+                        <div style="font-size:11px; color:#64748B; margin-top:4px;">
+                            Official location printed on bill headers and statements.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Sale Counter GST Defaults -->
+                <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+                    <div style="font-weight:700; font-size:12.5px; color:#1E293B; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="badge-percent" style="width:15px;height:15px;color:#4F46E5;"></i>
+                        Counter Billing (Quick Sale &amp; POS) GST Defaults
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; align-items:center;">
+                        <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:#334155; margin:0; cursor:pointer;">
+                            <input type="checkbox" name="quicksale_gst_enabled" value="1" {{ setting('mobileshop.quicksale_gst_enabled') ? 'checked' : '' }} style="width:16px; height:16px; accent-color:#4F46E5; cursor:pointer;">
+                            <span>Enable GST Toggle on Counter POS</span>
+                        </label>
+
+                        <div>
+                            <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Default Bill Mode:</label>
+                            <select name="quicksale_default_bill_type" class="form-control" style="font-size:12px; padding:5px 8px;">
+                                <option value="non_gst" {{ setting('mobileshop.quicksale_default_bill_type', 'non_gst') === 'non_gst' ? 'selected' : '' }}>Standard / Non-GST (Default)</option>
+                                <option value="gst" {{ setting('mobileshop.quicksale_default_bill_type') === 'gst' ? 'selected' : '' }}>Tax Invoice (GST Billed)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:3px;">Default Tax Rate:</label>
+                            <select name="quicksale_gst_rate" class="form-control" style="font-size:12px; padding:5px 8px;">
+                                <option value="18" {{ ((float)setting('mobileshop.quicksale_gst_rate', 18)) == 18 ? 'selected' : '' }}>18% (Accessories standard)</option>
+                                <option value="12" {{ ((float)setting('mobileshop.quicksale_gst_rate', 18)) == 12 ? 'selected' : '' }}>12% (Mobile handsets)</option>
+                                <option value="5" {{ ((float)setting('mobileshop.quicksale_gst_rate', 18)) == 5 ? 'selected' : '' }}>5% (Parts / repairs reduced)</option>
+                                <option value="28" {{ ((float)setting('mobileshop.quicksale_gst_rate', 18)) == 28 ? 'selected' : '' }}>28% (Luxury / audio)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end;">
+                    <button type="submit" class="btn btn-primary" style="background:#2563EB; border-color:#2563EB; font-weight:700; font-size:12.5px; padding:8px 18px; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="check" style="width:14px;height:14px;"></i>
+                        Save Store &amp; GST Settings
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -669,7 +783,7 @@
         var isExpanded = btn && btn.getAttribute('data-expanded') === '1';
         var newExpanded = !isExpanded;
 
-        var categories = ['sec-staff', 'sec-categories', 'sec-suppliers', 'sec-security'];
+        var categories = ['sec-store-gst', 'sec-staff', 'sec-categories', 'sec-suppliers', 'sec-security'];
         categories.forEach(function(catId) {
             var body = document.getElementById(catId + '-body');
             var chevron = document.getElementById(catId + '-chevron');

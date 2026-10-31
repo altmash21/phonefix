@@ -68,10 +68,6 @@ class WhatsAppReceiptService
         $mobMsg .= "\n📄 *Download / View PDF Bill:*\n";
         $mobMsg .= "{$pdfUrl}\n\n";
         $mobMsg .= "Support: {$sPhone}\n";
-        $landline = store_landline();
-        if (!empty($landline)) {
-            $mobMsg .= "Landline: {$landline}\n";
-        }
         $mobMsg .= "{$sAddress}";
 
         return 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($mobMsg);

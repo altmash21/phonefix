@@ -103,4 +103,56 @@ class PublicBillController extends BaseMobileShopController
 
         abort(404, 'Invoice not found.');
     }
+
+    /**
+     * Public responsive customer account statement viewer (from WhatsApp link)
+     */
+    public function customerStatement($id)
+    {
+        $customer = DB::table('ms_customers')->where('id', (int) $id)->first();
+        if (!$customer) {
+            abort(404, 'Customer account not found.');
+        }
+
+        $statement = MobileShopInvoiceResolver::buildCustomerLedgerStatement((int) $customer->company_id, (int) $id);
+        $statement['pdfUrl'] = route('public.statement.pdf', ['id' => $customer->id], false);
+
+        return view('mobileshop.public.statement', $statement);
+    }
+
+    /**
+     * Direct PDF download of customer statement (from WhatsApp link)
+     */
+    public function customerStatementPdf($id)
+    {
+        $customer = DB::table('ms_customers')->where('id', (int) $id)->first();
+        if (!$customer) {
+            abort(404, 'Customer account not found.');
+        }
+
+        if (!is_dir(base_path('public'))) {
+            @mkdir(base_path('public'), 0755, true);
+        }
+        $resolvedPublic = is_dir(public_path()) ? public_path() : (is_dir(base_path('../public_html')) ? realpath(base_path('../public_html')) : (realpath(base_path('public')) ?: base_path()));
+        config(['dompdf.public_path' => $resolvedPublic]);
+
+        try {
+            $statement = MobileShopInvoiceResolver::buildCustomerLedgerStatement((int) $customer->company_id, (int) $id);
+            $pdf = Pdf::loadView('mobileshop.pdf.customer_statement', $statement);
+            $pdf->setPaper('a4', 'portrait');
+
+            $safeName = Str::slug($customer->name, '_') ?: 'Customer';
+            $filename = "Statement-{$safeName}.pdf";
+
+            return (request()->has('stream') || request()->has('view'))
+                ? $pdf->stream($filename)
+                : $pdf->download($filename);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Public statement PDF generation error for customer {$id}: " . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            return redirect()->route('public.statement.show', ['id' => $id, 'print' => 1]);
+        }
+    }
 }
+

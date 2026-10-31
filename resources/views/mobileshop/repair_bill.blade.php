@@ -104,7 +104,6 @@
                     <div style="font-size:12px; color:#475569; margin-top:2px;">{{ $storeAddress }}</div>
                     <div style="font-size:12px; color:#475569; margin-top:2px;">
                         <strong>Phone:</strong> {{ $storePhone }}
-                        @if($storeLandline) • <strong>Landline:</strong> {{ $storeLandline }} @endif
                     </div>
                     @if($storeGstin)
                         <div style="font-size:11.5px; color:#64748B; font-family:monospace; margin-top:2px;">

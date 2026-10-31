@@ -70,7 +70,7 @@ class SalesController extends BaseMobileShopController
             $allItems = DB::table('ms_accessory_sale_items')
                 ->where('company_id', $companyId)
                 ->whereIn('accessory_sale_id', $saleIds)
-                ->select('id', 'accessory_sale_id', 'part_id', 'part_name', 'quantity', 'unit_price', 'line_total')
+                ->select('id', 'accessory_sale_id', 'part_id', 'part_name', 'quantity', 'returned_qty', 'unit_price', 'line_total')
                 ->get()
                 ->groupBy('accessory_sale_id');
 

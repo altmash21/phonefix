@@ -96,11 +96,40 @@ class MobileShopInvoiceResolver
             )
             ->get();
 
+        $mobEntries = collect();
         foreach ($mobileSales as $ms) {
-            $ms->item_name = $ms->particulars;
+            $mobEntries->push((object) [
+                'id'            => 'mob_' . $ms->id,
+                'created_at'    => $ms->created_at,
+                'sort_order'    => 0,
+                'ref_no'        => $ms->ref_no,
+                'particulars'   => $ms->particulars,
+                'item_name'     => $ms->particulars,
+                'description'   => '',
+                'billed_amount' => (float) $ms->billed_amount,
+                'paid_amount'   => 0.00,
+                'due_amount'    => (float) $ms->billed_amount,
+                'entry_type'    => 'mobile_sale',
+            ]);
+
+            if ((float) $ms->paid_amount > 0) {
+                $mobEntries->push((object) [
+                    'id'            => 'mob_' . $ms->id . '_paid',
+                    'created_at'    => $ms->created_at,
+                    'sort_order'    => 999,
+                    'ref_no'        => $ms->ref_no,
+                    'particulars'   => "Payment at Counter (Ref #{$ms->ref_no})",
+                    'item_name'     => "Payment at Counter",
+                    'description'   => "Advance / Cash payment received at billing for #{$ms->ref_no}",
+                    'billed_amount' => 0.00,
+                    'paid_amount'   => (float) $ms->paid_amount,
+                    'due_amount'    => 0.00,
+                    'entry_type'    => 'payment_received',
+                ]);
+            }
         }
 
-        // 2. Accessory Sales (Only include sales where a balance was left)
+        // 2. Accessory Sales (Expand each line item separately)
         $accSales = DB::table('ms_accessory_sales')
             ->where('ms_accessory_sales.company_id', $companyId)
             ->where('ms_accessory_sales.customer_id', $customerId)
@@ -120,26 +149,70 @@ class MobileShopInvoiceResolver
             )
             ->get();
 
+        $accEntries = collect();
+
         if ($accSales->isNotEmpty()) {
             $saleIds = $accSales->pluck('id')->toArray();
             $itemsGrouped = DB::table('ms_accessory_sale_items')
                 ->where('company_id', $companyId)
                 ->whereIn('accessory_sale_id', $saleIds)
-                ->select('accessory_sale_id', 'part_name', 'quantity')
+                ->select('id', 'accessory_sale_id', 'part_name', 'quantity', 'unit_price', 'line_total', 'created_at')
+                ->orderBy('id', 'asc')
                 ->get()
                 ->groupBy('accessory_sale_id');
 
             foreach ($accSales as $sale) {
                 $items = $itemsGrouped[$sale->id] ?? collect();
                 if ($items->isNotEmpty()) {
-                    $itemNames = $items->map(function ($it) {
-                        return $it->part_name . ($it->quantity > 1 ? " (x{$it->quantity})" : "");
-                    })->implode(', ');
-                    $sale->particulars = $itemNames;
-                    $sale->item_name   = $itemNames;
+                    foreach ($items as $idx => $it) {
+                        $itemName = $it->part_name . ($it->quantity > 1 ? " (x{$it->quantity})" : "");
+                        $itemBilled = (float) ($it->line_total > 0 ? $it->line_total : ($it->unit_price * $it->quantity));
+
+                        $accEntries->push((object) [
+                            'id'            => 'acc_' . $sale->id . '_' . $it->id,
+                            'created_at'    => $sale->created_at,
+                            'sort_order'    => $idx,
+                            'ref_no'        => $sale->ref_no,
+                            'particulars'   => $itemName,
+                            'item_name'     => $itemName,
+                            'description'   => '',
+                            'billed_amount' => $itemBilled,
+                            'paid_amount'   => 0.00,
+                            'due_amount'    => $itemBilled,
+                            'entry_type'    => 'accessory_sale',
+                        ]);
+                    }
+
+                    // If upfront payment was made on this sale, record as a separate line
+                    if ((float) $sale->paid_amount > 0) {
+                        $accEntries->push((object) [
+                            'id'            => 'acc_' . $sale->id . '_paid',
+                            'created_at'    => $sale->created_at,
+                            'sort_order'    => 999,
+                            'ref_no'        => $sale->ref_no,
+                            'particulars'   => "Payment at Counter (Ref #{$sale->ref_no})",
+                            'item_name'     => "Payment at Counter",
+                            'description'   => "Payment received at billing for #{$sale->ref_no}",
+                            'billed_amount' => 0.00,
+                            'paid_amount'   => (float) $sale->paid_amount,
+                            'due_amount'    => 0.00,
+                            'entry_type'    => 'payment_received',
+                        ]);
+                    }
                 } else {
-                    $sale->particulars = "Accessory Purchase";
-                    $sale->item_name   = "Accessory Purchase";
+                    $accEntries->push((object) [
+                        'id'            => 'acc_' . $sale->id,
+                        'created_at'    => $sale->created_at,
+                        'sort_order'    => 0,
+                        'ref_no'        => $sale->ref_no,
+                        'particulars'   => 'Accessory Purchase',
+                        'item_name'     => 'Accessory Purchase',
+                        'description'   => '',
+                        'billed_amount' => (float) $sale->billed_amount,
+                        'paid_amount'   => (float) $sale->paid_amount,
+                        'due_amount'    => (float) $sale->due_amount,
+                        'entry_type'    => 'accessory_sale',
+                    ]);
                 }
             }
         }
@@ -152,13 +225,23 @@ class MobileShopInvoiceResolver
             ->get()
             ->map(function ($tx) {
                 $isDebit = in_array($tx->type, ['opening_balance', 'old_udhar', 'debit_adjustment']);
-                $itemDesc = $tx->remarks ?: ($isDebit ? 'Old Udhar / Opening Balance' : 'Payment / Settlement Received');
+                $rawRemarks = trim((string) ($tx->remarks ?? ''));
+                $hasCustomDesc = !empty($rawRemarks) && !in_array(strtolower($rawRemarks), ['old udhar / opening balance', 'old udhar', 'opening balance']);
+                
+                if ($isDebit) {
+                    $itemDesc = $hasCustomDesc ? "Old Udhar: {$rawRemarks}" : 'Old Udhar / Opening Balance';
+                } else {
+                    $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Payment / Settlement Received';
+                }
+
                 return (object) [
                     'id'            => $tx->id,
                     'created_at'    => $tx->created_at,
-                    'ref_no'        => $tx->reference_no ?: ('KHATA-' . $tx->id),
+                    'sort_order'    => 500,
+                    'ref_no'        => $tx->reference_no ?: ($isDebit ? 'OLD-UDHAR' : ('KHATA-' . $tx->id)),
                     'particulars'   => $itemDesc,
                     'item_name'     => $itemDesc,
+                    'description'   => $rawRemarks,
                     'billed_amount' => $isDebit ? (float) $tx->amount : 0.00,
                     'paid_amount'   => $isDebit ? 0.00 : (float) $tx->amount,
                     'due_amount'    => $isDebit ? (float) $tx->amount : 0.00,
@@ -167,7 +250,11 @@ class MobileShopInvoiceResolver
             });
 
         // Merge and sort chronologically
-        $allEntries = $mobileSales->concat($accSales)->concat($khataTxs)->sortBy('created_at')->values();
+        $allEntries = $mobEntries->concat($accEntries)->concat($khataTxs)->sortBy(function ($entry) {
+            $ts = strtotime($entry->created_at);
+            $order = isset($entry->sort_order) ? (int)$entry->sort_order : 0;
+            return sprintf('%012d_%04d', $ts, $order);
+        })->values();
 
         $runningBalance = 0.00;
         $totalBilled = 0.00;
@@ -194,6 +281,7 @@ class MobileShopInvoiceResolver
                 'ref_no'       => $entry->ref_no,
                 'particulars'  => $entry->particulars,
                 'item_name'    => $entry->item_name ?? $entry->particulars,
+                'description'  => $entry->description ?? '',
                 'billed'       => $billed,
                 'paid'         => $paid,
                 'balance_left' => $runningBalance,

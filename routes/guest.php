@@ -53,6 +53,8 @@ Route::get('shipping-policy', 'MobileShop\PublicStoreController@publicShipping')
 // Public Customer Bill & PDF Routes (from WhatsApp links)
 Route::get('bill/{invoice_number}', 'MobileShop\PublicBillController@show')->name('public.bill.show');
 Route::get('bill/{invoice_number}/pdf', 'MobileShop\PublicBillController@pdf')->name('public.bill.pdf');
+Route::get('statement/{id}', 'MobileShop\PublicBillController@customerStatement')->name('public.statement.show');
+Route::get('statement/{id}/pdf', 'MobileShop\PublicBillController@customerStatementPdf')->name('public.statement.pdf');
 
 // Compatibility & Clean Short Aliases
 Route::get('home', function() { return redirect()->route('public.landing'); });

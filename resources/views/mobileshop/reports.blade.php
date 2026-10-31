@@ -583,6 +583,7 @@
                                 $dMsg .= "Greetings from *{$stName}*!\n\n";
                                 $dMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
                                 $dMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($debtor->udhari_balance, 2) . "*\n\n";
+                                $dMsg .= "📄 *Download Complete PDF Statement:*\n" . route('public.statement.pdf', ['id' => $debtor->id]) . "\n\n";
                                 if (!empty($stUpi)) {
                                     $dMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI (`{$stUpi}`) or Cash at our store counter.\n\n";
                                 } else {
@@ -590,9 +591,6 @@
                                 }
                                 $dMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                                 $dMsg .= "📞 *Accounts Desk:* {$stPhone}\n";
-                                if (!empty($stLandline)) {
-                                    $dMsg .= "☎️ *Landline:* {$stLandline}\n";
-                                }
                                 $dMsg .= "🏢 *Showroom:* {$stAddress}\n";
                                 $dMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                                 $dWaUrl = 'https://wa.me/' . $dPhone . '?text=' . rawurlencode($dMsg);

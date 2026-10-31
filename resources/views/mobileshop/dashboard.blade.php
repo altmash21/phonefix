@@ -612,6 +612,7 @@
                             $debMsg .= "Greetings from *{$sName}*!\n\n";
                             $debMsg .= "This is a polite reminder regarding your pending store credit balance:\n";
                             $debMsg .= "📌 *Outstanding Balance Due:* *₹" . number_format($deb->udhari_balance, 2) . "*\n\n";
+                            $debMsg .= "📄 *Download Complete PDF Statement:*\n" . route('public.statement.pdf', ['id' => $deb->id]) . "\n\n";
                             if (!empty($sUpi)) {
                                 $debMsg .= "Kindly arrange to clear this balance at your earliest convenience via UPI (`{$sUpi}`) or Cash at our store counter.\n\n";
                             } else {
@@ -619,9 +620,6 @@
                             }
                             $debMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                             $debMsg .= "📞 *Accounts Desk:* {$sPhone}\n";
-                            if (!empty($sLandline)) {
-                                $debMsg .= "☎️ *Landline:* {$sLandline}\n";
-                            }
                             $debMsg .= "🏢 *Showroom:* {$sAddress}\n";
                             $debMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                         @endphp

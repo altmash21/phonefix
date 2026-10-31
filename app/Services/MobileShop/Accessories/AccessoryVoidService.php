@@ -66,13 +66,20 @@ class AccessoryVoidService
             foreach ($items as $item) {
                 // Determine if this item is selected for return
                 $returnQty = 0;
+                $alreadyReturned = (int) ($item->returned_qty ?? 0);
+                $maxReturnable = max(0, (int) $item->quantity - $alreadyReturned);
+
+                if ($maxReturnable <= 0) {
+                    continue; // Skip items that have already been fully returned
+                }
+
                 if (!empty($returnedItemsInput)) {
                     if (isset($returnedItemsInput[$item->id]) && (int) $returnedItemsInput[$item->id] > 0) {
-                        $returnQty = min((int) $returnedItemsInput[$item->id], $item->quantity);
+                        $returnQty = min((int) $returnedItemsInput[$item->id], $maxReturnable);
                     }
                 } else {
                     // Full return fallback
-                    $returnQty = $item->quantity;
+                    $returnQty = $maxReturnable;
                 }
 
                 if ($returnQty <= 0) {
@@ -247,8 +254,17 @@ class AccessoryVoidService
             $cumulativeRefund = round($prevRefund + $totalRefundCalculated, 2);
             $netAmount = max(0.00, round((float) $sale->total_amount - $cumulativeRefund, 2));
 
-            // Mark Header status (voided if all items returned, or partially_returned)
-            $isAllReturned = ($cumulativeRefund >= (float) $sale->total_amount || $itemsProcessedCount >= $totalOriginalItemsCount);
+            // Check if all items in this sale have now been returned
+            $allSaleItems = DB::table('ms_accessory_sale_items')
+                ->where('company_id', $companyId)
+                ->where('accessory_sale_id', $id)
+                ->get();
+
+            $allReturned = $allSaleItems->isNotEmpty() && $allSaleItems->every(function ($it) {
+                return (int) ($it->returned_qty ?? 0) >= (int) $it->quantity;
+            });
+
+            $isAllReturned = $allReturned || ($cumulativeRefund >= (float) $sale->total_amount);
             $newStatus = $isAllReturned ? 'voided' : 'partially_returned';
 
             // Decode and append existing return details

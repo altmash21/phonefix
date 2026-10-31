@@ -598,10 +598,6 @@ class AccessoriesController extends BaseMobileShopController
         $accMsg .= "\n📄 *Download / View PDF Bill:*\n";
         $accMsg .= "{$pdfUrl}\n\n";
         $accMsg .= "Support: {$sPhone}\n";
-        $landline = store_landline();
-        if (!empty($landline)) {
-            $accMsg .= "Landline: {$landline}\n";
-        }
         $accMsg .= "{$sAddress}";
 
         return redirect()->away('https://wa.me/' . $cPhone . '?text=' . rawurlencode($accMsg));

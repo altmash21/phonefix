@@ -181,7 +181,8 @@ class KhataController extends BaseMobileShopController
             'amount'         => 'required|numeric|min:0.01',
             'date'           => 'nullable|date',
             'reference_no'   => 'nullable|string|max:191',
-            'remarks'        => 'nullable|string|max:191',
+            'description'    => 'nullable|string|max:500',
+            'remarks'        => 'nullable|string|max:500',
         ]);
 
         $companyId = $this->getCompanyId();
@@ -235,6 +236,11 @@ class KhataController extends BaseMobileShopController
 
             $txDate = $request->filled('date') ? \Carbon\Carbon::parse($request->date) : now();
 
+            $desc = trim((string) ($request->input('description') ?? $request->input('remarks') ?? 'Old Udhar / Opening Balance'));
+            if (empty($desc)) {
+                $desc = 'Old Udhar / Opening Balance';
+            }
+
             DB::table('ms_customer_khata_transactions')->insert([
                 'company_id'    => $companyId,
                 'customer_id'   => $customer->id,
@@ -242,8 +248,8 @@ class KhataController extends BaseMobileShopController
                 'amount'        => $amount,
                 'balance_after' => $newBalance,
                 'payment_mode'  => null,
-                'reference_no'  => $request->reference_no ?: 'OLD-KHATA',
-                'remarks'       => $request->remarks ?: 'Old Udhar / Opening Balance',
+                'reference_no'  => $request->reference_no ?: 'OLD-UDHAR',
+                'remarks'       => $desc,
                 'recorded_by'   => auth()->id(),
                 'created_at'    => $txDate,
             ]);
