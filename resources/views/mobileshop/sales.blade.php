@@ -45,26 +45,9 @@
         box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.05);
         border-color: #CBD5E1;
     }
-    .kpi-icon-box {
-        width: 2.15rem;
-        height: 2.15rem;
-        border-radius: var(--radius-md, 0.5rem);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    .kpi-icon-box svg, .kpi-icon-box i {
-        width: 1.15rem;
-        height: 1.15rem;
-    }
-
 
     .sales-search-wrapper {
         width: 22rem;
-    }
-    .sales-search-box {
-        width: 100%;
     }
 
     /* ─── RESPONSIVE BREAKPOINTS (Mobile < 768px) ─── */
@@ -111,17 +94,11 @@
         .sales-search-wrapper {
             width: 100% !important;
         }
-        .sales-search-box {
+        .sales-search-wrapper .search-bar {
             width: 100% !important;
-        }
-        .sales-search-input {
-            min-height: 2.45rem !important;
-            font-size: var(--fs-sm, 0.857rem) !important;
-            border-radius: var(--radius-md, 0.5rem) !important;
-            padding: 0.4rem 4.5rem 0.4rem 2.2rem !important;
+            min-width: 0 !important;
         }
         .sales-filter-toolbar {
-            padding: 0.45rem 0.7rem !important;
             background: #F8FAFC !important;
             border-left: 1px solid #E2E8F0 !important;
             border-right: 1px solid #E2E8F0 !important;
@@ -168,9 +145,6 @@
     }
 
     @media (min-width: 768px) {
-        .sales-search-input {
-            padding-right: 2.4rem !important;
-        }
         .mobile-filter-btn {
             display: none !important;
         }
@@ -274,7 +248,7 @@
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: var(--radius-lg, 0.75rem);
-        padding: 1.15rem 1.35rem;
+        padding: 1.15rem .6rem;
         color: #0f172a;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
     }

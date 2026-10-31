@@ -1393,7 +1393,7 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     #stockDesktopKpiGrid { display: none !important; }
     #stockDesktopTables { display: none !important; }
     #stockMobileCards { display: flex !important; }
@@ -1404,9 +1404,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: var(--radius-sm, 0.375rem);
     border: 1px solid #E2E8F0;
     background: #FFFFFF;
     color: #475569;

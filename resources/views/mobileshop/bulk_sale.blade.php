@@ -42,9 +42,10 @@
         font-weight: 600 !important;
         background: #FFFFFF !important;
         border: 1px solid #CBD5E1 !important;
-        border-radius: 6px !important;
-        padding: 6px 10px !important;
-        font-size: 13px !important;
+        border-radius: var(--radius-sm, 0.375rem) !important;
+        padding: 0.38rem 0.65rem !important;
+        min-height: 2.25rem !important;
+        font-size: var(--fs-base, 0.929rem) !important;
         font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
         box-sizing: border-box;

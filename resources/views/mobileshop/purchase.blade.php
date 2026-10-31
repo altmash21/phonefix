@@ -275,14 +275,11 @@
         .purchase-search-wrapper {
             width: 100% !important;
         }
-        .purchase-search-input {
-            min-height: 2.45rem !important;
-            font-size: var(--fs-sm, 0.857rem) !important;
-            border-radius: var(--radius-md, 0.5rem) !important;
-            padding: 0.4rem 4.5rem 0.4rem 2.2rem !important;
+        .purchase-search-wrapper .search-bar {
+            width: 100% !important;
+            min-width: 0 !important;
         }
         .purchase-filter-toolbar {
-            padding: 0.45rem 0.7rem !important;
             background: #F8FAFC !important;
             border-left: 1px solid #E2E8F0 !important;
             border-right: 1px solid #E2E8F0 !important;
