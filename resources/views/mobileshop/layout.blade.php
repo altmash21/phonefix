@@ -143,7 +143,7 @@
 
     <!-- MobileShop Pre-Compiled Tailwind CSS (replaces cdn.tailwindcss.com) -->
     <link rel="stylesheet" href="{{ asset('public/css/mobileshop-panel.css') }}?v=2.6.0">
-    <link rel="stylesheet" href="{{ asset('public/css/admin-panel.css') }}?v=2.5.0">
+    <link rel="stylesheet" href="{{ asset('public/css/admin-panel.css') }}?v=2.7.0">
 
     <!-- Dedicated Print Media Engine: Eliminates UI chrome, sidebars, headers, and buttons on Print/PDF -->
     <style>
