@@ -151,7 +151,7 @@
     <!-- 2. DOCUMENT TITLE -->
     <div class="header-section" style="margin-bottom: 16px;">
         <div class="doc-title">Statement of account</div>
-        <div class="doc-date">As of {{ date('d M Y') }}</div>
+        <div class="doc-date" style="font-weight: bold; color: #4338ca;">{{ $periodLabel ?? 'Active Unsettled Dues' }} &bull; As of {{ date('d M Y') }}</div>
     </div>
 
     <!-- 3. ACCOUNT HOLDER METADATA -->
@@ -180,11 +180,35 @@
         <tbody>
             @foreach($ledger as $entry)
             @php
-                $isOldUdhar = in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']);
-                $isRepayment = ($entry->paid > 0 && $entry->billed <= 0) || in_array($entry->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received']);
+                $isOpening = !empty($entry->is_opening);
+                $isOldUdhar = in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']) && !$isOpening;
+                $isRepayment = (($entry->paid > 0 && $entry->billed <= 0) || in_array($entry->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received'])) && !$isOpening;
                 $itemName = $entry->item_name ?? $entry->particulars;
                 $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
             @endphp
+            @if($isOpening)
+            <tr style="background-color: #fffbeb;">
+                <td class="font-mono font-bold" style="color: #92400e; vertical-align: top;">{{ $dateFormatted }}</td>
+                <td style="vertical-align: top;">
+                    <div style="font-weight: bold; color: #b45309; font-size: 10px;">
+                        🏛️ Opening Balance Brought Forward
+                    </div>
+                    <div style="font-size: 8.5px; color: #92400e; margin-top: 1px;">
+                        Accumulated balance prior to {{ $entry->date }}
+                    </div>
+                </td>
+                <td class="text-right font-mono font-bold" style="vertical-align: top; color: #92400e;">
+                    {{ number_format($entry->billed, 2) }}
+                </td>
+                <td class="text-right font-mono" style="vertical-align: top; color: #6b7280;">
+                    —
+                </td>
+                <td class="text-right font-mono font-bold" style="color: #92400e; vertical-align: top;">
+                    {{ number_format($entry->balance_left, 2) }}
+                </td>
+            </tr>
+            @continue
+            @endif
             <tr>
                 <td class="font-mono" style="color: #4b5563; vertical-align: top;">{{ $dateFormatted }}</td>
                 <td style="vertical-align: top;">
@@ -238,13 +262,19 @@
 
     <!-- 5. SUMMARY TOTALS -->
     <table class="totals-table">
+        @if(!empty($openingBalance) && $openingBalance > 0)
+        <tr style="background-color: #fffbeb;">
+            <td class="font-bold" style="color: #92400e; padding: 4px 6px;">Opening Balance Brought Forward</td>
+            <td class="text-right font-mono font-bold" style="color: #92400e; font-size: 12px; padding: 4px 6px;">₹{{ number_format($openingBalance, 2) }}</td>
+        </tr>
+        @endif
         <tr>
-            <td class="font-bold" style="color: #111827;">Total Billed</td>
+            <td class="font-bold" style="color: #111827;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Purchases / Debits' : 'Total Billed' }}</td>
             <td class="text-right font-mono font-bold" style="color: #111827; font-size: 12px;">₹{{ number_format($totalBilled, 2) }}</td>
         </tr>
         <tr>
-            <td class="font-bold" style="color: #111827;">Total Received / Paid</td>
-            <td class="text-right font-mono font-bold" style="color: #111827; font-size: 12px;">₹{{ number_format($totalPaid, 2) }}</td>
+            <td class="font-bold" style="color: #111827;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Received / Paid' : 'Total Received / Paid' }}</td>
+            <td class="text-right font-mono font-bold" style="color: #16a34a; font-size: 12px;">₹{{ number_format($totalPaid, 2) }}</td>
         </tr>
     </table>
 

@@ -295,12 +295,12 @@ class MobileShopController extends BaseMobileShopController
 
     public function customerStatement($id)
     {
-        return app(KhataController::class)->customerStatement($id);
+        return app(KhataController::class)->customerStatement(request(), $id);
     }
 
     public function customerStatementPdf($id)
     {
-        return app(KhataController::class)->customerStatementPdf($id);
+        return app(KhataController::class)->customerStatementPdf(request(), $id);
     }
 
     /* ══════════════════════════════════════════════════════════════════════

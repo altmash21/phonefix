@@ -265,7 +265,7 @@ class KhataController extends BaseMobileShopController
     /**
      * Customer Account Statement / Tally Ledger View (A4 Printable)
      */
-    public function customerStatement($id)
+    public function customerStatement(Request $request, $id)
     {
         abort_unless(auth()->check() && (
             auth()->user()->can('read-mobileshop-khata') ||
@@ -280,7 +280,12 @@ class KhataController extends BaseMobileShopController
         ), 403, 'Unauthorized access to customer statement.');
 
         $companyId = $this->getCompanyId();
-        $statement = $this->buildCustomerLedgerStatement($companyId, (int) $id);
+        $filters = [
+            'filter' => $request->get('filter', 'active'),
+            'from'   => $request->get('from'),
+            'to'     => $request->get('to'),
+        ];
+        $statement = $this->buildCustomerLedgerStatement($companyId, (int) $id, $filters);
 
         if (!$statement['customer']) {
             abort(404, 'Customer not found.');
@@ -292,7 +297,7 @@ class KhataController extends BaseMobileShopController
     /**
      * Download Customer Statement PDF
      */
-    public function customerStatementPdf($id)
+    public function customerStatementPdf(Request $request, $id)
     {
         abort_unless(auth()->check() && (
             auth()->user()->can('read-mobileshop-khata') ||
@@ -305,7 +310,12 @@ class KhataController extends BaseMobileShopController
         ), 403, 'Unauthorized access to customer statement PDF.');
 
         $companyId = $this->getCompanyId();
-        $statement = $this->buildCustomerLedgerStatement($companyId, (int) $id);
+        $filters = [
+            'filter' => $request->get('filter', 'active'),
+            'from'   => $request->get('from'),
+            'to'     => $request->get('to'),
+        ];
+        $statement = $this->buildCustomerLedgerStatement($companyId, (int) $id, $filters);
 
         if (!$statement['customer']) {
             abort(404, 'Customer not found.');
@@ -314,6 +324,7 @@ class KhataController extends BaseMobileShopController
         $pdf = Pdf::loadView('mobileshop.pdf.customer_statement', $statement);
         $pdf->setPaper('a4', 'portrait');
         $safeName = Str::slug($statement['customer']->name, '_');
-        return $pdf->download("Statement-{$safeName}.pdf");
+        $suffix = $statement['currentFilter'] === 'active' ? 'ActiveDues' : Str::slug($statement['periodLabel'], '_');
+        return $pdf->download("Statement-{$safeName}-{$suffix}.pdf");
     }
 }

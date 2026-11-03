@@ -84,10 +84,49 @@
             <button onclick="window.print()" class="btn btn-outline">
                 <i data-lucide="printer" style="width:14px;height:14px;"></i> Print
             </button>
-            <a href="{{ route('public.statement.pdf', ['id' => $customer->id]) }}" class="btn btn-primary">
+            <a href="{{ $pdfUrl ?? route('public.statement.pdf', ['id' => $customer->id]) }}" class="btn btn-primary">
                 <i data-lucide="download" style="width:14px;height:14px;"></i> Download PDF
             </a>
         </div>
+    </div>
+
+    <!-- Filter Presets & Date Range Selector (Screen Only) -->
+    <div class="action-bar" style="background:#ffffff; border:1px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-bottom:14px; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase;">Period:</span>
+            
+            <a href="{{ route('public.statement.show', ['id' => $customer->id, 'filter' => 'active']) }}" 
+               class="btn {{ ($currentFilter ?? 'active') === 'active' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size:11.5px; padding:4px 10px; border-radius:999px; text-decoration:none; @if(($currentFilter ?? 'active') === 'active') background:#16A34A; @endif">
+                ⚡ Active Dues
+            </a>
+
+            <a href="{{ route('public.statement.show', ['id' => $customer->id, 'filter' => 'this_month']) }}" 
+               class="btn {{ ($currentFilter ?? '') === 'this_month' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size:11.5px; padding:4px 10px; border-radius:999px; text-decoration:none;">
+                📅 This Month
+            </a>
+
+            <a href="{{ route('public.statement.show', ['id' => $customer->id, 'filter' => 'last_30_days']) }}" 
+               class="btn {{ ($currentFilter ?? '') === 'last_30_days' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size:11.5px; padding:4px 10px; border-radius:999px; text-decoration:none;">
+                ⏳ Last 30 Days
+            </a>
+
+            <a href="{{ route('public.statement.show', ['id' => $customer->id, 'filter' => 'all']) }}" 
+               class="btn {{ ($currentFilter ?? '') === 'all' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size:11.5px; padding:4px 10px; border-radius:999px; text-decoration:none;">
+                📖 All Time
+            </a>
+        </div>
+
+        <form method="GET" action="{{ route('public.statement.show', ['id' => $customer->id]) }}" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:0;">
+            <input type="hidden" name="filter" value="custom">
+            <input type="date" name="from" value="{{ $fromDate ?? date('Y-m-01') }}" required style="font-size:11px; padding:3px 6px; border:1px solid #CBD5E1; border-radius:6px;">
+            <span style="font-size:11px; color:#64748B;">to</span>
+            <input type="date" name="to" value="{{ $toDate ?? date('Y-m-d') }}" required style="font-size:11px; padding:3px 6px; border:1px solid #CBD5E1; border-radius:6px;">
+            <button type="submit" class="btn btn-outline" style="font-size:11px; padding:4px 10px;">Filter</button>
+        </form>
     </div>
 
     <!-- Main Card -->
@@ -119,8 +158,8 @@
                 </div>
             </div>
             <div style="text-align: right;">
-                <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Statement Date</div>
-                <div style="font-size: 14px; font-weight: 800; color: #0F172A; margin-top: 2px;">{{ date('d M Y') }}</div>
+                <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">{{ $periodLabel ?? 'Active Unsettled Dues' }}</div>
+                <div style="font-size: 14px; font-weight: 800; color: #0F172A; margin-top: 2px;">As of {{ date('d M Y') }}</div>
             </div>
         </div>
 
@@ -139,11 +178,37 @@
                 <tbody>
                     @forelse($ledger as $entry)
                         @php
-                            $isOldUdhar = in_array($entry->entry_type, ['opening_balance', 'old_udhar', 'debit_adjustment']);
-                            $isRepayment = $entry->paid > 0 && $entry->billed <= 0;
+                            $isOpening = !empty($entry->is_opening);
+                            $isOldUdhar = in_array($entry->entry_type, ['opening_balance', 'old_udhar', 'debit_adjustment']) && !$isOpening;
+                            $isRepayment = ($entry->paid > 0 && $entry->billed <= 0) && !$isOpening;
                             $itemName = $entry->item_name ?? $entry->particulars;
                             $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
                         @endphp
+                        @if($isOpening)
+                        <tr style="border-bottom: 1.5px solid #F59E0B; background: #FFFBEB;">
+                            <td style="padding: 10px 8px; color: #92400E; font-family: monospace; font-size: 12px; vertical-align: top; font-weight: 700;">
+                                {{ $dateFormatted }}
+                            </td>
+                            <td style="padding: 10px 8px; vertical-align: top;">
+                                <div style="font-weight: 800; color: #B45309; font-size: 13px;">
+                                    🏛️ Opening Balance Brought Forward
+                                </div>
+                                <div style="font-size: 11px; color: #92400E; margin-top: 1px;">
+                                    Net balance accumulated prior to {{ $entry->date }}
+                                </div>
+                            </td>
+                            <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-size: 12.5px; color: #92400E; font-weight: 800; vertical-align: top;">
+                                {{ number_format($entry->billed, 2) }}
+                            </td>
+                            <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-size: 12px; color: #64748B; vertical-align: top;">
+                                —
+                            </td>
+                            <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-size: 13px; font-weight: 900; color: #92400E; vertical-align: top;">
+                                ₹{{ number_format($entry->balance_left, 2) }}
+                            </td>
+                        </tr>
+                        @continue
+                        @endif
                         <tr style="border-bottom: 1px solid #E2E8F0;">
                             <td style="padding: 10px 8px; color: #475569; font-family: monospace; font-size: 12px; vertical-align: top;">
                                 {{ $dateFormatted }}
@@ -204,14 +269,22 @@
 
         <!-- Summary Totals Table -->
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+            @if(!empty($openingBalance) && $openingBalance > 0)
+            <tr style="background:#FFFBEB;">
+                <td style="font-weight: 700; color: #92400E; padding: 5px 6px;">Opening Balance Brought Forward:</td>
+                <td style="text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #92400E; padding: 5px 6px;">
+                    ₹{{ number_format($openingBalance, 2) }}
+                </td>
+            </tr>
+            @endif
             <tr>
-                <td style="font-weight: 700; color: #475569; padding: 4px 0;">Total Credit Billed:</td>
+                <td style="font-weight: 700; color: #475569; padding: 4px 0;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Purchases / Billed:' : 'Total Credit Billed:' }}</td>
                 <td style="text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #0F172A; padding: 4px 0;">
                     ₹{{ number_format($totalBilled, 2) }}
                 </td>
             </tr>
             <tr>
-                <td style="font-weight: 700; color: #475569; padding: 4px 0;">Total Received / Settled:</td>
+                <td style="font-weight: 700; color: #475569; padding: 4px 0;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Received / Settled:' : 'Total Received / Settled:' }}</td>
                 <td style="text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #16A34A; padding: 4px 0;">
                     ₹{{ number_format($totalPaid, 2) }}
                 </td>

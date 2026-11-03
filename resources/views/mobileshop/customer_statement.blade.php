@@ -16,6 +16,21 @@
         $cleanPhone = '91' . $cleanPhone;
     }
 
+    $currentFilter = $currentFilter ?? 'active';
+    $periodLabel = $periodLabel ?? 'Active Unsettled Dues';
+    $openingBalance = (float) ($openingBalance ?? 0.00);
+    $hasPriorHistory = (bool) ($hasPriorHistory ?? false);
+    $priorSettledCount = (int) ($priorSettledCount ?? 0);
+
+    $pdfQuery = array_filter([
+        'filter' => $currentFilter !== 'active' ? $currentFilter : null,
+        'from'   => $fromDate ?? null,
+        'to'     => $toDate ?? null,
+    ]);
+    $adminPdfUrl = route('mobileshop.khata.customer_statement_pdf', array_merge(['id' => $customer->id], $pdfQuery));
+    $publicPdfUrl = route('public.statement.pdf', array_merge(['id' => $customer->id], $pdfQuery));
+    $publicStatementUrl = route('public.statement.show', array_merge(['id' => $customer->id], $pdfQuery));
+
     $waMsg = "📊 *STATEMENT OF ACCOUNT*\n";
     $waMsg .= "🏪 *{$storeName}*\n";
     $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
@@ -23,11 +38,17 @@
     if (!empty($customer->phone)) {
         $waMsg .= "📱 *Mobile:* {$customer->phone}\n";
     }
+    $waMsg .= "📅 *Period:* *{$periodLabel}*\n";
     $waMsg .= "📅 *Statement Date:* " . date('d M Y') . "\n";
     $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
     $waMsg .= "📋 *CREDIT & TRANSACTION LEDGER*\n\n";
     
+    if ($openingBalance > 0) {
+        $waMsg .= "🏛️ *Opening Balance Brought Forward:* *₹" . number_format($openingBalance, 2) . "*\n\n";
+    }
+
     foreach ($ledger as $item) {
+        if (!empty($item->is_opening)) continue;
         $itemName = $item->item_name ?? $item->particulars;
         $refStr = !empty($item->ref_no) ? " [Ref #{$item->ref_no}]" : "";
         $isOldUdhar = in_array($item->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']);
@@ -56,11 +77,17 @@
     
     $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
     $waMsg .= "📈 *ACCOUNT FINANCIAL SUMMARY*\n";
-    $waMsg .= "• *Total Credit Billed:* ₹" . number_format($totalBilled, 2) . "\n";
-    $waMsg .= "• *Total Amount Received:* ₹" . number_format($totalPaid, 2) . "\n";
+    if ($openingBalance > 0) {
+        $waMsg .= "• *Opening Balance Brought Forward:* ₹" . number_format($openingBalance, 2) . "\n";
+        $waMsg .= "• *Period Billed:* ₹" . number_format($totalBilled, 2) . "\n";
+        $waMsg .= "• *Period Received:* ₹" . number_format($totalPaid, 2) . "\n";
+    } else {
+        $waMsg .= "• *Total Credit Billed:* ₹" . number_format($totalBilled, 2) . "\n";
+        $waMsg .= "• *Total Amount Received:* ₹" . number_format($totalPaid, 2) . "\n";
+    }
     $waMsg .= "👉 *NET OUTSTANDING BALANCE:* *₹" . number_format($closingBalance, 2) . "*\n";
     $waMsg .= "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-    $waMsg .= "📄 *Download Complete PDF Statement:*\n" . route('public.statement.pdf', ['id' => $customer->id]) . "\n\n";
+    $waMsg .= "📄 *Download Complete PDF Statement:*\n" . $publicPdfUrl . "\n\n";
     if (!empty($storeUpi)) {
         $waMsg .= "💡 _Please clear the pending balance via UPI (`{$storeUpi}`) or Cash at our store counter at your earliest convenience._\n\n";
     } else {
@@ -78,7 +105,7 @@
         <button onclick="window.print()" class="btn btn-outline btn-sm" style="font-weight:700; color:#0F172A; border-color:#94A3B8;">
             <i data-lucide="printer" style="width:13px;height:13px;"></i> Print / Save as PDF
         </button>
-        <a href="{{ route('mobileshop.khata.customer_statement_pdf', ['id' => $customer->id]) }}" class="btn btn-primary btn-sm" style="font-weight:700; background:#5E6AD2;">
+        <a href="{{ $adminPdfUrl }}" class="btn btn-primary btn-sm" style="font-weight:700; background:#5E6AD2;">
             <i data-lucide="download" style="width:13px;height:13px;"></i> Download PDF
         </a>
         <button type="button" id="btnSendWaPdf" onclick="shareStatementPdfWhatsApp()" class="btn btn-sm" style="font-weight:700; background:#25D366; color:#ffffff; display:inline-flex; align-items:center; gap:6px; border:none; box-shadow:0 2px 5px rgba(37,211,102,0.3); cursor:pointer;">
@@ -92,7 +119,66 @@
 @endsection
 
 @section('content')
-<div class="statement-page-wrapper" style="width: 100%; margin: 0; padding-bottom: 40px; display: flex; justify-content: center;">
+<div class="statement-page-wrapper" style="width: 100%; margin: 0; padding-bottom: 40px; display: flex; flex-direction: column; align-items: center;">
+
+    <!-- Filter Presets & Date Picker Bar (Screen Only) -->
+    <div class="statement-filter-bar no-print" style="width: 100%; background: #ffffff; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; margin-right: 4px; letter-spacing: 0.3px;">Period:</span>
+            
+            <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'active']) }}" 
+               class="btn btn-sm {{ $currentFilter === 'active' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'active') background: #16A34A; border-color: #16A34A; @endif"
+               title="Current Unsettled Dues Only (Khatabook Style)">
+                ⚡ Active Dues Only
+            </a>
+
+            <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'this_month']) }}" 
+               class="btn btn-sm {{ $currentFilter === 'this_month' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'this_month') background: #4F46E5; border-color: #4F46E5; @endif">
+                📅 This Month
+            </a>
+
+            <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'last_30_days']) }}" 
+               class="btn btn-sm {{ $currentFilter === 'last_30_days' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'last_30_days') background: #4F46E5; border-color: #4F46E5; @endif">
+                ⏳ Last 30 Days
+            </a>
+
+            <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'all']) }}" 
+               class="btn btn-sm {{ $currentFilter === 'all' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'all') background: #4F46E5; border-color: #4F46E5; @endif">
+                📖 All Time
+            </a>
+        </div>
+
+        <!-- Custom Date Range Picker Form -->
+        <form method="GET" action="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id]) }}" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0;">
+            <input type="hidden" name="filter" value="custom">
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; color: #475569;">
+                <span>From:</span>
+                <input type="date" name="from" value="{{ $fromDate ?: date('Y-m-01') }}" required class="form-control" style="font-size: 11.5px; padding: 4px 8px; height: 30px; width: 130px; border-radius: 6px; border: 1px solid #CBD5E1;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; color: #475569;">
+                <span>To:</span>
+                <input type="date" name="to" value="{{ $toDate ?: date('Y-m-d') }}" required class="form-control" style="font-size: 11.5px; padding: 4px 8px; height: 30px; width: 130px; border-radius: 6px; border: 1px solid #CBD5E1;">
+            </div>
+            <button type="submit" class="btn btn-sm {{ $currentFilter === 'custom' ? 'btn-primary' : 'btn-outline' }}" style="font-size: 11.5px; font-weight: 700; height: 30px; padding: 0 12px; border-radius: 6px;">
+                Filter Range
+            </button>
+        </form>
+    </div>
+
+    @if($currentFilter === 'active' && $hasPriorHistory && $priorSettledCount > 0)
+    <div class="no-print" style="width: 100%; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 12.5px; color: #1E40AF; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div>
+            ⚡ <strong>Current Unsettled Dues Only (Khatabook Style):</strong> Showing bills and repayments since the last zero balance. <strong>{{ $priorSettledCount }}</strong> earlier settled transactions are hidden.
+        </div>
+        <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'all']) }}" style="font-weight: 700; color: #2563EB; text-decoration: underline;">
+            View Full History &rarr;
+        </a>
+    </div>
+    @endif
 
     <div class="printable-invoice-container" style="background: #ffffff; border: 1px solid #E5E7EB; border-radius: 6px; padding: 36px 40px; color: #111827; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.06); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
@@ -117,8 +203,8 @@
             <div style="font-size: 16px; font-weight: 800; color: #111827; letter-spacing: 0.5px; text-transform: uppercase;">
                 Statement of account
             </div>
-            <div style="font-size: 11.5px; color: #6B7280; margin-top: 3px;">
-                As of {{ date('d M Y') }}
+            <div style="font-size: 12px; font-weight: 600; color: #4F46E5; margin-top: 3px;">
+                {{ $periodLabel }} &bull; As of {{ date('d M Y') }}
             </div>
         </div>
 
@@ -148,11 +234,37 @@
             <tbody>
                 @foreach($ledger as $entry)
                 @php
-                    $isOldUdhar = in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']);
-                    $isRepayment = ($entry->paid > 0 && $entry->billed <= 0) || in_array($entry->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received']);
+                    $isOpening = !empty($entry->is_opening);
+                    $isOldUdhar = in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']) && !$isOpening;
+                    $isRepayment = (($entry->paid > 0 && $entry->billed <= 0) || in_array($entry->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received'])) && !$isOpening;
                     $itemName = $entry->item_name ?? $entry->particulars;
                     $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
                 @endphp
+                @if($isOpening)
+                <tr style="border-bottom: 1.5px solid #F59E0B; background: #FFFBEB;">
+                    <td style="padding: 9px 6px; color: #92400E; font-family: monospace; font-size: 12px; vertical-align: top; font-weight: 700;">
+                        {{ $dateFormatted }}
+                    </td>
+                    <td style="padding: 9px 6px; vertical-align: top;">
+                        <div style="font-weight: 800; color: #B45309; font-size: 13px;">
+                            🏛️ Opening Balance Brought Forward
+                        </div>
+                        <div style="font-size: 11px; color: #92400E; margin-top: 1px;">
+                            Net balance accumulated prior to {{ $entry->date }}
+                        </div>
+                    </td>
+                    <td style="padding: 9px 6px; text-align: right; font-family: monospace; font-size: 12.5px; color: #92400E; font-weight: 800; vertical-align: top;">
+                        {{ number_format($entry->billed, 2) }}
+                    </td>
+                    <td style="padding: 9px 6px; text-align: right; font-family: monospace; font-size: 12px; color: #6B7280; vertical-align: top;">
+                        —
+                    </td>
+                    <td style="padding: 9px 6px; text-align: right; font-family: monospace; font-size: 12.5px; font-weight: 900; color: #92400E; vertical-align: top;">
+                        {{ number_format($entry->balance_left, 2) }}
+                    </td>
+                </tr>
+                @continue
+                @endif
                 <tr style="border-bottom: 1px solid #E5E7EB;">
                     <td style="padding: 9px 6px; color: #4B5563; font-family: monospace; font-size: 12px; vertical-align: top;">
                         {{ $dateFormatted }}
@@ -208,15 +320,23 @@
 
         <!-- 5. SUMMARY TOTALS -->
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+            @if($openingBalance > 0)
+            <tr style="background: #FFFBEB; border-bottom: 1px solid #FEF3C7;">
+                <td style="font-weight: 800; color: #92400E; padding: 5px 6px;">Opening Balance Brought Forward</td>
+                <td style="text-align: right; font-family: monospace; font-size: 14px; font-weight: 800; color: #92400E; padding: 5px 6px;">
+                    ₹{{ number_format($openingBalance, 2) }}
+                </td>
+            </tr>
+            @endif
             <tr>
-                <td style="font-weight: 800; color: #111827; padding: 4px 0;">Total Billed</td>
-                <td style="text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111827; padding: 4px 0;">
+                <td style="font-weight: 800; color: #111827; padding: 4px 6px;">{{ $openingBalance > 0 ? 'Period Purchases / Debits' : 'Total Billed' }}</td>
+                <td style="text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111827; padding: 4px 6px;">
                     ₹{{ number_format($totalBilled, 2) }}
                 </td>
             </tr>
             <tr>
-                <td style="font-weight: 800; color: #111827; padding: 4px 0;">Total Received / Paid</td>
-                <td style="text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #111827; padding: 4px 0;">
+                <td style="font-weight: 800; color: #111827; padding: 4px 6px;">{{ $openingBalance > 0 ? 'Period Amount Received' : 'Total Received / Paid' }}</td>
+                <td style="text-align: right; font-family: monospace; font-size: 14px; font-weight: 700; color: #16A34A; padding: 4px 6px;">
                     ₹{{ number_format($totalPaid, 2) }}
                 </td>
             </tr>
@@ -306,10 +426,10 @@
         const btn = document.getElementById('btnSendWaPdf');
         const label = document.getElementById('waBtnLabel');
         const originalLabel = 'Send on WhatsApp';
-        const pdfUrl = "{{ route('mobileshop.khata.customer_statement_pdf', ['id' => $customer->id]) }}";
+        const pdfUrl = "{{ $adminPdfUrl }}";
         const customerPhone = "{{ $cleanPhone }}";
         const customerName = "{{ addslashes($customer->name) }}";
-        const filename = "Statement-{{ \Illuminate\Support\Str::slug($customer->name, '_') }}.pdf";
+        const filename = "Statement-{{ \Illuminate\Support\Str::slug($customer->name, '_') }}-{{ $currentFilter === 'active' ? 'ActiveDues' : \Illuminate\Support\Str::slug($periodLabel, '_') }}.pdf";
         const waTextUrl = "{{ $waStatementUrl }}";
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 

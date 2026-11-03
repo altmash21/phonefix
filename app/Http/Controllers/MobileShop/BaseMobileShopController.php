@@ -259,9 +259,9 @@ abstract class BaseMobileShopController extends Controller
     /**
      * Build Tally-Style Customer Ledger Statement
      */
-    public function buildCustomerLedgerStatement(int $companyId, int $customerId): array
+    public function buildCustomerLedgerStatement(int $companyId, int $customerId, array $filters = []): array
     {
-        return MobileShopInvoiceResolver::buildCustomerLedgerStatement($companyId, $customerId);
+        return MobileShopInvoiceResolver::buildCustomerLedgerStatement($companyId, $customerId, $filters);
     }
 
     /**

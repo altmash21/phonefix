@@ -59,16 +59,25 @@ class MobileShopInvoiceResolver
     /**
      * Build Tally-Style Customer Ledger Statement (Chronological with running balance)
      */
-    public static function buildCustomerLedgerStatement(int $companyId, int $customerId): array
+    public static function buildCustomerLedgerStatement(int $companyId, int $customerId, array $filters = []): array
     {
         $customer = DB::table('ms_customers')->where('company_id', $companyId)->where('id', $customerId)->first();
         if (!$customer) {
             return [
-                'customer'       => null,
-                'ledger'         => collect([]),
-                'totalBilled'    => 0.00,
-                'totalPaid'      => 0.00,
-                'closingBalance' => 0.00,
+                'customer'            => null,
+                'ledger'              => collect([]),
+                'fullLedgerCount'     => 0,
+                'filteredLedgerCount' => 0,
+                'currentFilter'       => 'active',
+                'periodLabel'         => 'Statement',
+                'fromDate'            => null,
+                'toDate'              => null,
+                'openingBalance'      => 0.00,
+                'hasPriorHistory'     => false,
+                'priorSettledCount'   => 0,
+                'totalBilled'         => 0.00,
+                'totalPaid'           => 0.00,
+                'closingBalance'      => 0.00,
             ];
         }
 
@@ -289,12 +298,142 @@ class MobileShopInvoiceResolver
             ];
         });
 
+        // Resolve filter mode: 'active' (default), 'this_month', 'last_30_days', 'all', 'custom'
+        $filter = strtolower(trim((string) ($filters['filter'] ?? 'active')));
+        if (!in_array($filter, ['active', 'this_month', 'last_30_days', 'all', 'custom'])) {
+            $filter = 'active';
+        }
+
+        $now = now();
+        $startDate = null;
+        $endDate = null;
+        $periodLabel = 'Active Unsettled Dues';
+
+        if ($filter === 'this_month') {
+            $startDate = $now->copy()->startOfMonth()->format('Y-m-d 00:00:00');
+            $endDate   = $now->copy()->endOfMonth()->format('Y-m-d 23:59:59');
+            $periodLabel = 'This Month (' . $now->format('M Y') . ')';
+        } elseif ($filter === 'last_30_days') {
+            $startDate = $now->copy()->subDays(30)->startOfDay()->format('Y-m-d 00:00:00');
+            $endDate   = $now->copy()->endOfDay()->format('Y-m-d 23:59:59');
+            $periodLabel = 'Last 30 Days (' . $now->copy()->subDays(30)->format('d M') . ' — ' . $now->format('d M Y') . ')';
+        } elseif ($filter === 'custom') {
+            $rawFrom = $filters['from'] ?? null;
+            $rawTo   = $filters['to'] ?? null;
+            if ($rawFrom && $rawTo) {
+                $startDate = date('Y-m-d 00:00:00', strtotime($rawFrom));
+                $endDate   = date('Y-m-d 23:59:59', strtotime($rawTo));
+                $periodLabel = date('d M Y', strtotime($rawFrom)) . ' — ' . date('d M Y', strtotime($rawTo));
+            } else {
+                $filter = 'active';
+                $periodLabel = 'Active Unsettled Dues';
+            }
+        } elseif ($filter === 'all') {
+            $periodLabel = 'All Time History';
+        }
+
+        $openingBalance = 0.00;
+        $hasPriorHistory = false;
+        $priorSettledCount = 0;
+        $displayLedger = collect();
+
+        if ($filter === 'active') {
+            // Option 1: Khatabook Style — Current Unsettled Dues Only
+            // Locate the last entry where the running balance was 0.00
+            $lastZeroIndex = null;
+            foreach ($ledger as $idx => $entry) {
+                if ($entry->balance_left <= 0.0001) {
+                    $lastZeroIndex = $idx;
+                }
+            }
+
+            if ($lastZeroIndex !== null && $lastZeroIndex < $ledger->count() - 1) {
+                // Has prior settled transactions; return only items after the last zero balance
+                $displayLedger = $ledger->slice($lastZeroIndex + 1)->values();
+                $hasPriorHistory = true;
+                $priorSettledCount = $lastZeroIndex + 1;
+            } elseif ($lastZeroIndex !== null && $lastZeroIndex === $ledger->count() - 1) {
+                // Customer has completely cleared their account (current balance is 0.00)
+                // Show the latest settled transactions as receipt of closure
+                $displayLedger = $ledger->slice(max(0, $ledger->count() - 3))->values();
+                $hasPriorHistory = $ledger->count() > $displayLedger->count();
+                $priorSettledCount = max(0, $ledger->count() - $displayLedger->count());
+                $periodLabel = 'Account Fully Settled (Balance: ₹0.00)';
+            } else {
+                // Customer never reached 0.00 balance in their entire history
+                $displayLedger = $ledger;
+                $hasPriorHistory = false;
+                $priorSettledCount = 0;
+            }
+
+            $totalBilled = (float) $displayLedger->sum('billed');
+            $totalPaid   = (float) $displayLedger->sum('paid');
+        } elseif ($filter === 'all') {
+            $displayLedger = $ledger;
+            $hasPriorHistory = false;
+            $priorSettledCount = 0;
+            $totalBilled = (float) $ledger->sum('billed');
+            $totalPaid   = (float) $ledger->sum('paid');
+        } else {
+            // Date-range filtering ('this_month', 'last_30_days', 'custom')
+            $startTs = strtotime($startDate);
+            $endTs   = strtotime($endDate);
+
+            $priorEntries = $ledger->filter(function ($entry) use ($startTs) {
+                return strtotime($entry->created_at) < $startTs;
+            })->values();
+
+            $periodEntries = $ledger->filter(function ($entry) use ($startTs, $endTs) {
+                $t = strtotime($entry->created_at);
+                return $t >= $startTs && $t <= $endTs;
+            })->values();
+
+            if ($priorEntries->isNotEmpty()) {
+                $openingBalance = (float) $priorEntries->last()->balance_left;
+                $hasPriorHistory = true;
+                $priorSettledCount = $priorEntries->count();
+            }
+
+            if ($openingBalance > 0.0001 || $hasPriorHistory) {
+                $openingEntry = (object) [
+                    'id'           => 'opening_balance_forward',
+                    'created_at'   => $startDate,
+                    'date'         => date('d/m/Y', $startTs),
+                    'datetime'     => date('d M Y, h:i A', $startTs),
+                    'ref_no'       => 'OPENING',
+                    'particulars'  => 'Opening Balance Brought Forward',
+                    'item_name'    => 'Opening Balance Brought Forward',
+                    'description'  => 'Balance accumulated prior to ' . date('d M Y', $startTs),
+                    'billed'       => $openingBalance,
+                    'paid'         => 0.00,
+                    'balance_left' => $openingBalance,
+                    'entry_type'   => 'opening_balance',
+                    'is_opening'   => true,
+                ];
+                $displayLedger = collect([$openingEntry])->concat($periodEntries)->values();
+            } else {
+                $displayLedger = $periodEntries;
+            }
+
+            $totalBilled = (float) $periodEntries->sum('billed');
+            $totalPaid   = (float) $periodEntries->sum('paid');
+        }
+
         return [
-            'customer'       => $customer,
-            'ledger'         => $ledger,
-            'totalBilled'    => $totalBilled,
-            'totalPaid'      => $totalPaid,
-            'closingBalance' => (float) $customer->udhari_balance,
+            'customer'            => $customer,
+            'ledger'              => $displayLedger,
+            'fullLedgerCount'     => $ledger->count(),
+            'filteredLedgerCount' => $displayLedger->count(),
+            'currentFilter'       => $filter,
+            'periodLabel'         => $periodLabel,
+            'fromDate'            => $startDate ? date('Y-m-d', strtotime($startDate)) : null,
+            'toDate'              => $endDate ? date('Y-m-d', strtotime($endDate)) : null,
+            'openingBalance'      => $openingBalance,
+            'hasPriorHistory'     => $hasPriorHistory,
+            'priorSettledCount'   => $priorSettledCount,
+            'totalBilled'         => $totalBilled,
+            'totalPaid'           => $totalPaid,
+            'closingBalance'      => (float) $customer->udhari_balance,
         ];
     }
 

@@ -107,15 +107,21 @@ class PublicBillController extends BaseMobileShopController
     /**
      * Public responsive customer account statement viewer (from WhatsApp link)
      */
-    public function customerStatement($id)
+    public function customerStatement(Request $request, $id)
     {
         $customer = DB::table('ms_customers')->where('id', (int) $id)->first();
         if (!$customer) {
             abort(404, 'Customer account not found.');
         }
 
-        $statement = MobileShopInvoiceResolver::buildCustomerLedgerStatement((int) $customer->company_id, (int) $id);
-        $statement['pdfUrl'] = route('public.statement.pdf', ['id' => $customer->id], false);
+        $filters = [
+            'filter' => $request->get('filter', 'active'),
+            'from'   => $request->get('from'),
+            'to'     => $request->get('to'),
+        ];
+
+        $statement = MobileShopInvoiceResolver::buildCustomerLedgerStatement((int) $customer->company_id, (int) $id, $filters);
+        $statement['pdfUrl'] = route('public.statement.pdf', array_merge(['id' => $customer->id], array_filter($filters)), false);
 
         return view('mobileshop.public.statement', $statement);
     }
@@ -123,7 +129,7 @@ class PublicBillController extends BaseMobileShopController
     /**
      * Direct PDF download of customer statement (from WhatsApp link)
      */
-    public function customerStatementPdf($id)
+    public function customerStatementPdf(Request $request, $id)
     {
         $customer = DB::table('ms_customers')->where('id', (int) $id)->first();
         if (!$customer) {
@@ -137,12 +143,19 @@ class PublicBillController extends BaseMobileShopController
         config(['dompdf.public_path' => $resolvedPublic]);
 
         try {
-            $statement = MobileShopInvoiceResolver::buildCustomerLedgerStatement((int) $customer->company_id, (int) $id);
+            $filters = [
+                'filter' => $request->get('filter', 'active'),
+                'from'   => $request->get('from'),
+                'to'     => $request->get('to'),
+            ];
+
+            $statement = MobileShopInvoiceResolver::buildCustomerLedgerStatement((int) $customer->company_id, (int) $id, $filters);
             $pdf = Pdf::loadView('mobileshop.pdf.customer_statement', $statement);
             $pdf->setPaper('a4', 'portrait');
 
             $safeName = Str::slug($customer->name, '_') ?: 'Customer';
-            $filename = "Statement-{$safeName}.pdf";
+            $suffix = $statement['currentFilter'] === 'active' ? 'ActiveDues' : Str::slug($statement['periodLabel'], '_');
+            $filename = "Statement-{$safeName}-{$suffix}.pdf";
 
             return (request()->has('stream') || request()->has('view'))
                 ? $pdf->stream($filename)

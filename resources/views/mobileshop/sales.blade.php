@@ -24,6 +24,29 @@
 
 @push('styles')
 <style>
+    /* Quick Sale Customer Autocomplete Dropdown */
+    .quick-cust-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 100%;
+        min-width: 280px;
+        max-width: 380px;
+        background: #ffffff;
+        border: 1px solid #CBD5E1;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+        z-index: 1050;
+        overflow: hidden;
+    }
+    @media (max-width: 640px) {
+        .quick-cust-dropdown {
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+        }
+    }
+
     /* Safe container padding */
     .sales-page-wrapper {
         position: relative;
@@ -439,24 +462,17 @@
 
                 <!-- 1. Customer & Payment Details Bar -->
                 <div class="quick-sale-cust-grid">
-                    <div>
+                    <div style="position:relative;" id="quickCustNameWrapper">
                         <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Customer Name</label>
-                        <input type="text" name="customer_name" id="quickSaleCustName" class="app-input-field" placeholder="Customer Name (Walk-in Customer)" list="quickCustNames">
-                        <datalist id="quickCustNames">
-                            @foreach($customers as $c)
-                                <option value="{{ $c->name }}">{{ $c->phone }}</option>
-                            @endforeach
-                        </datalist>
+                        <input type="text" name="customer_name" id="quickSaleCustName" class="app-input-field" placeholder="Customer Name (Walk-in Customer)" autocomplete="off">
+                        
+                        <!-- Previous Customer Autocomplete Dropdown -->
+                        <div id="quickSaleCustDropdown" class="quick-cust-dropdown" style="display:none;"></div>
                     </div>
 
-                    <div>
+                    <div style="position:relative;" id="quickCustPhoneWrapper">
                         <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Mobile Number</label>
-                        <input type="tel" name="customer_phone" id="quickSaleCustPhone" class="app-input-field" placeholder="Mobile Number (Optional)" list="quickCustPhones" onchange="onQuickPhoneChange(this)">
-                        <datalist id="quickCustPhones">
-                            @foreach($customers as $c)
-                                <option value="{{ $c->phone }}">{{ $c->name }}</option>
-                            @endforeach
-                        </datalist>
+                        <input type="tel" name="customer_phone" id="quickSaleCustPhone" class="app-input-field" placeholder="Mobile Number (Optional)" autocomplete="off" onchange="onQuickPhoneChange(this)">
                     </div>
 
                     <div>
@@ -471,6 +487,15 @@
                             <option value="upi+udhari">UPI + Balance Due</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Customer Khata Balance Alert / Info Notice -->
+                <div id="quickSaleCustKhataNotice" style="display:none; background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:12px; color:#92400E; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:14px;">⚠️</span>
+                        <span id="quickSaleCustKhataNoticeText">Customer has an existing Khata balance.</span>
+                    </div>
+                    <button type="button" onclick="dismissQuickCustNotice()" style="background:transparent; border:none; color:#B45309; font-weight:bold; cursor:pointer; font-size:14px; line-height:1; padding:0 4px;" title="Dismiss">&times;</button>
                 </div>
 
                 <!-- Dynamic Split Payment Fields (Cash+UPI, Cash+Udhari, UPI+Udhari, Udhari) -->
@@ -2992,7 +3017,208 @@
         return true;
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // PREVIOUS CUSTOMER AUTOCOMPLETE DROPDOWN (QUICK SALE)
+    // ─────────────────────────────────────────────────────────────────
+    const quickRegisteredCustomers = @json($customers->map(function($c) {
+        return [
+            'id'    => $c->id,
+            'name'  => $c->name,
+            'phone' => $c->phone ?? '',
+            'due'   => (float) ($c->udhari_balance ?? 0),
+        ];
+    })->values());
 
+    let quickCustActiveIndex = -1;
+    let quickCustFilteredList = [];
+
+    function setupQuickCustomerAutocomplete() {
+        const nameInput = document.getElementById('quickSaleCustName');
+        const phoneInput = document.getElementById('quickSaleCustPhone');
+        const dropdown = document.getElementById('quickSaleCustDropdown');
+        if (!nameInput || !dropdown) return;
+
+        function renderMatches(query, isPhoneSearch = false) {
+            const q = (query || '').trim().toLowerCase();
+            if (!q) {
+                // Show customers with pending dues first, then others
+                quickCustFilteredList = quickRegisteredCustomers.slice().sort((a, b) => b.due - a.due).slice(0, 8);
+            } else {
+                quickCustFilteredList = quickRegisteredCustomers.filter(c => {
+                    const cName = (c.name || '').toLowerCase();
+                    const cPhone = (c.phone || '').toLowerCase();
+                    return cName.includes(q) || cPhone.includes(q);
+                }).sort((a, b) => {
+                    const aStarts = (isPhoneSearch ? a.phone : a.name).toLowerCase().startsWith(q);
+                    const bStarts = (isPhoneSearch ? b.phone : b.name).toLowerCase().startsWith(q);
+                    if (aStarts && !bStarts) return -1;
+                    if (!aStarts && bStarts) return 1;
+                    return b.due - a.due;
+                }).slice(0, 10);
+            }
+
+            if (quickCustFilteredList.length === 0) {
+                dropdown.innerHTML = `
+                    <div style="padding:10px 14px; font-size:12px; color:#64748B; text-align:center;">
+                        No previous customer found. <span style="font-weight:700; color:#0F172A;">"${escapeQuickHtml(query)}"</span> will be recorded as new.
+                    </div>
+                `;
+                dropdown.style.display = 'block';
+                quickCustActiveIndex = -1;
+                return;
+            }
+
+            let html = '<div style="max-height:240px; overflow-y:auto;">';
+            quickCustFilteredList.forEach((c, idx) => {
+                const initial = (c.name || 'C').charAt(0).toUpperCase();
+                const dueBadge = c.due > 0
+                    ? `<span style="background:#FEE2E2; color:#DC2626; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; white-space:nowrap;">₹${c.due.toLocaleString('en-IN', {minimumFractionDigits: 2})} Due</span>`
+                    : `<span style="background:#F0FDF4; color:#16A34A; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:999px; white-space:nowrap;">Clean</span>`;
+
+                html += `
+                    <div class="quick-cust-item" data-index="${idx}" onclick="selectQuickCustomer(${idx})" onmouseover="highlightQuickCustomerItem(${idx})" style="display:flex; align-items:center; justify-content:space-between; padding:9px 12px; cursor:pointer; border-bottom:1px solid #F1F5F9; transition:background 0.1s ease;">
+                        <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
+                            <div style="width:28px; height:28px; border-radius:50%; background:#EEF2FF; color:#4F46E5; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11px; flex-shrink:0;">
+                                ${initial}
+                            </div>
+                            <div style="overflow:hidden;">
+                                <div style="font-size:12.5px; font-weight:700; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    ${escapeQuickHtml(c.name)}
+                                </div>
+                                <div style="font-size:11px; color:#64748B; font-family:monospace; margin-top:1px;">
+                                    📱 ${c.phone ? escapeQuickHtml(c.phone) : '<span style="color:#94A3B8; font-style:italic;">No mobile</span>'}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="flex-shrink:0; margin-left:8px;">
+                            ${dueBadge}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            html += `
+                <div style="padding:6px 10px; background:#F8FAFC; border-top:1px solid #E2E8F0; font-size:10.5px; color:#64748B; display:flex; justify-content:space-between; align-items:center;">
+                    <span>Previous Customers (${quickRegisteredCustomers.length})</span>
+                    <span style="font-weight:600;">&uarr;&darr; Navigate &bull; Enter Select</span>
+                </div>
+            `;
+
+            dropdown.innerHTML = html;
+            dropdown.style.display = 'block';
+            quickCustActiveIndex = -1;
+        }
+
+        nameInput.addEventListener('focus', function () {
+            renderMatches(this.value, false);
+        });
+
+        nameInput.addEventListener('input', function () {
+            renderMatches(this.value, false);
+        });
+
+        nameInput.addEventListener('keydown', function (e) {
+            const items = dropdown.querySelectorAll('.quick-cust-item');
+            if (dropdown.style.display !== 'block' || items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                quickCustActiveIndex = (quickCustActiveIndex + 1) % items.length;
+                updateDropdownHighlight(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                quickCustActiveIndex = (quickCustActiveIndex - 1 + items.length) % items.length;
+                updateDropdownHighlight(items);
+            } else if (e.key === 'Enter') {
+                if (quickCustActiveIndex >= 0 && quickCustActiveIndex < quickCustFilteredList.length) {
+                    e.preventDefault();
+                    selectQuickCustomer(quickCustActiveIndex);
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function () {
+                const val = this.value.trim();
+                if (val.length >= 3) {
+                    renderMatches(val, true);
+                }
+            });
+            phoneInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!dropdown.contains(e.target) && e.target !== nameInput && e.target !== phoneInput) {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+
+    function highlightQuickCustomerItem(idx) {
+        quickCustActiveIndex = idx;
+        const dropdown = document.getElementById('quickSaleCustDropdown');
+        if (!dropdown) return;
+        const items = dropdown.querySelectorAll('.quick-cust-item');
+        updateDropdownHighlight(items);
+    }
+
+    function updateDropdownHighlight(items) {
+        items.forEach((item, idx) => {
+            if (idx === quickCustActiveIndex) {
+                item.style.background = '#EEF2FF';
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.style.background = '#ffffff';
+            }
+        });
+    }
+
+    function selectQuickCustomer(index) {
+        if (!quickCustFilteredList || !quickCustFilteredList[index]) return;
+        const c = quickCustFilteredList[index];
+        const nameInput = document.getElementById('quickSaleCustName');
+        const phoneInput = document.getElementById('quickSaleCustPhone');
+        const dropdown = document.getElementById('quickSaleCustDropdown');
+
+        if (nameInput) nameInput.value = c.name;
+        if (phoneInput && c.phone) phoneInput.value = c.phone;
+        if (dropdown) dropdown.style.display = 'none';
+
+        const noticeBox = document.getElementById('quickSaleCustKhataNotice');
+        const noticeText = document.getElementById('quickSaleCustKhataNoticeText');
+        if (noticeBox && noticeText) {
+            if (c.due > 0) {
+                noticeText.innerHTML = `<strong>${escapeQuickHtml(c.name)}</strong> has an outstanding Khata balance of <strong style="color:#B91C1C;">₹${c.due.toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong>.`;
+                noticeBox.style.display = 'flex';
+            } else {
+                noticeBox.style.display = 'none';
+            }
+        }
+    }
+
+    function dismissQuickCustNotice() {
+        const noticeBox = document.getElementById('quickSaleCustKhataNotice');
+        if (noticeBox) noticeBox.style.display = 'none';
+    }
+
+    function escapeQuickHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setupQuickCustomerAutocomplete();
+    });
 </script>
 @endpush
-b
