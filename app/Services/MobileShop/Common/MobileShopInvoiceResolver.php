@@ -298,9 +298,9 @@ class MobileShopInvoiceResolver
             ];
         });
 
-        // Resolve filter mode: 'active' (default), 'this_month', 'last_30_days', 'all', 'custom'
+        // Resolve filter mode: 'active' (default), 'last_payment', 'this_month', 'last_30_days', 'all', 'custom'
         $filter = strtolower(trim((string) ($filters['filter'] ?? 'active')));
-        if (!in_array($filter, ['active', 'this_month', 'last_30_days', 'all', 'custom'])) {
+        if (!in_array($filter, ['active', 'last_payment', 'this_month', 'last_30_days', 'all', 'custom'])) {
             $filter = 'active';
         }
 
@@ -309,7 +309,9 @@ class MobileShopInvoiceResolver
         $endDate = null;
         $periodLabel = 'Active Unsettled Dues';
 
-        if ($filter === 'this_month') {
+        if ($filter === 'last_payment') {
+            $periodLabel = 'From Last Payment';
+        } elseif ($filter === 'this_month') {
             $startDate = $now->copy()->startOfMonth()->format('Y-m-d 00:00:00');
             $endDate   = $now->copy()->endOfMonth()->format('Y-m-d 23:59:59');
             $periodLabel = 'This Month (' . $now->format('M Y') . ')';
@@ -337,7 +339,66 @@ class MobileShopInvoiceResolver
         $priorSettledCount = 0;
         $displayLedger = collect();
 
-        if ($filter === 'active') {
+        if ($filter === 'last_payment') {
+            // Find the last entry where a payment was received (paid > 0)
+            $lastPaymentIndex = null;
+            foreach ($ledger as $idx => $entry) {
+                if ($entry->paid > 0.0001) {
+                    $lastPaymentIndex = $idx;
+                }
+            }
+
+            if ($lastPaymentIndex !== null) {
+                $lastPaymentEntry = $ledger[$lastPaymentIndex];
+                $periodLabel = 'From Last Payment (' . date('d M Y', strtotime($lastPaymentEntry->created_at)) . ')';
+
+                // Prior entries before the last payment
+                $priorEntries = $ledger->slice(0, $lastPaymentIndex)->values();
+                if ($priorEntries->isNotEmpty()) {
+                    $openingBalance = (float) $priorEntries->last()->balance_left;
+                    $hasPriorHistory = true;
+                    $priorSettledCount = $priorEntries->count();
+                } else {
+                    $openingBalance = 0.00;
+                    $hasPriorHistory = false;
+                    $priorSettledCount = 0;
+                }
+
+                $periodEntries = $ledger->slice($lastPaymentIndex)->values();
+
+                if ($openingBalance > 0.0001 || $hasPriorHistory) {
+                    $openingEntry = (object) [
+                        'id'           => 'opening_balance_forward',
+                        'created_at'   => $lastPaymentEntry->created_at,
+                        'date'         => date('d/m/Y', strtotime($lastPaymentEntry->created_at)),
+                        'datetime'     => date('d M Y, h:i A', strtotime($lastPaymentEntry->created_at)),
+                        'ref_no'       => 'OPENING',
+                        'particulars'  => 'Opening Balance Brought Forward',
+                        'item_name'    => 'Opening Balance Brought Forward',
+                        'description'  => 'Balance accumulated prior to last payment on ' . date('d M Y', strtotime($lastPaymentEntry->created_at)),
+                        'billed'       => $openingBalance,
+                        'paid'         => 0.00,
+                        'balance_left' => $openingBalance,
+                        'entry_type'   => 'opening_balance',
+                        'is_opening'   => true,
+                    ];
+                    $displayLedger = collect([$openingEntry])->concat($periodEntries)->values();
+                } else {
+                    $displayLedger = $periodEntries;
+                }
+
+                $totalBilled = (float) $periodEntries->sum('billed');
+                $totalPaid   = (float) $periodEntries->sum('paid');
+            } else {
+                // If customer has never made any payment, fallback to active dues
+                $displayLedger = $ledger;
+                $hasPriorHistory = false;
+                $priorSettledCount = 0;
+                $periodLabel = 'Active Dues (No prior repayments)';
+                $totalBilled = (float) $ledger->sum('billed');
+                $totalPaid   = (float) $ledger->sum('paid');
+            }
+        } elseif ($filter === 'active') {
             // Option 1: Khatabook Style — Current Unsettled Dues Only
             // Locate the last entry where the running balance was 0.00
             $lastZeroIndex = null;

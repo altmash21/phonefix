@@ -133,6 +133,13 @@
                 ⚡ Active Dues Only
             </a>
 
+            <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'last_payment']) }}" 
+               class="btn btn-sm {{ $currentFilter === 'last_payment' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'last_payment') background: #059669; border-color: #059669; @endif"
+               title="From Last Payment Received (Includes latest payment and subsequent bills)">
+                💵 From Last Payment
+            </a>
+
             <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'this_month']) }}" 
                class="btn btn-sm {{ $currentFilter === 'this_month' ? 'btn-primary' : 'btn-outline' }}" 
                style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'this_month') background: #4F46E5; border-color: #4F46E5; @endif">
@@ -175,6 +182,17 @@
             ⚡ <strong>Current Unsettled Dues Only (Khatabook Style):</strong> Showing bills and repayments since the last zero balance. <strong>{{ $priorSettledCount }}</strong> earlier settled transactions are hidden.
         </div>
         <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'all']) }}" style="font-weight: 700; color: #2563EB; text-decoration: underline;">
+            View Full History &rarr;
+        </a>
+    </div>
+    @endif
+
+    @if($currentFilter === 'last_payment')
+    <div class="no-print" style="width: 100%; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 12.5px; color: #065F46; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div>
+            💵 <strong>From Last Payment Received:</strong> Showing the most recent payment received, opening balance prior to it, and all subsequent purchases.
+        </div>
+        <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'all']) }}" style="font-weight: 700; color: #047857; text-decoration: underline;">
             View Full History &rarr;
         </a>
     </div>

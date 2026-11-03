@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="UTF-8">
-    <title>Statement of Account — {{ $customer->name }}</title>
+    <title>Statement of Account - {{ $customer->name }}</title>
     <style>
         @page {
             size: a4 portrait;
@@ -12,7 +13,7 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'DejaVu Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
             font-size: 10.5px;
             line-height: 1.4;
             color: #111827;
@@ -162,7 +163,7 @@
         </tr>
         <tr>
             <td style="color: #6b7280;">Mobile Number</td>
-            <td class="text-right font-mono" style="color: #111827;">{{ $customer->phone ?: '—' }}</td>
+            <td class="text-right font-mono" style="color: #111827;">{{ $customer->phone ?: '-' }}</td>
         </tr>
     </table>
 
@@ -172,9 +173,9 @@
             <tr>
                 <th class="text-left" style="width: 12%;">Date</th>
                 <th class="text-left" style="width: 40%;">Items Purchased / Particulars</th>
-                <th class="text-right" style="width: 16%;">Total Amount (₹)</th>
-                <th class="text-right" style="width: 16%;">Amount Received (₹)</th>
-                <th class="text-right" style="width: 16%;">Balance (₹)</th>
+                <th class="text-right" style="width: 16%;">Total Amount (Rs.)</th>
+                <th class="text-right" style="width: 16%;">Amount Received (Rs.)</th>
+                <th class="text-right" style="width: 16%;">Balance (Rs.)</th>
             </tr>
         </thead>
         <tbody>
@@ -184,14 +185,14 @@
                 $isOldUdhar = in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']) && !$isOpening;
                 $isRepayment = (($entry->paid > 0 && $entry->billed <= 0) || in_array($entry->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received'])) && !$isOpening;
                 $itemName = $entry->item_name ?? $entry->particulars;
-                $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
+                $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '-');
             @endphp
             @if($isOpening)
             <tr style="background-color: #fffbeb;">
                 <td class="font-mono font-bold" style="color: #92400e; vertical-align: top;">{{ $dateFormatted }}</td>
                 <td style="vertical-align: top;">
                     <div style="font-weight: bold; color: #b45309; font-size: 10px;">
-                        🏛️ Opening Balance Brought Forward
+                        Opening Balance Brought Forward
                     </div>
                     <div style="font-size: 8.5px; color: #92400e; margin-top: 1px;">
                         Accumulated balance prior to {{ $entry->date }}
@@ -201,7 +202,7 @@
                     {{ number_format($entry->billed, 2) }}
                 </td>
                 <td class="text-right font-mono" style="vertical-align: top; color: #6b7280;">
-                    —
+                    -
                 </td>
                 <td class="text-right font-mono font-bold" style="color: #92400e; vertical-align: top;">
                     {{ number_format($entry->balance_left, 2) }}
@@ -214,7 +215,7 @@
                 <td style="vertical-align: top;">
                     @if($isOldUdhar)
                         <div style="font-weight: bold; color: #b45309; font-size: 10px;">
-                            📜 Old Udhar / Opening Balance
+                            Old Udhar / Opening Balance
                         </div>
                         @if(!empty($entry->description) && !in_array(strtolower($entry->description), ['old udhar / opening balance', 'old udhar', 'opening balance']))
                             <div style="font-size: 9px; color: #111827; margin-top: 1px; font-weight: normal;">
@@ -247,10 +248,10 @@
                     @endif
                 </td>
                 <td class="text-right font-mono" style="vertical-align: top;">
-                    {{ $entry->billed > 0 ? number_format($entry->billed, 2) : '—' }}
+                    {{ $entry->billed > 0 ? number_format($entry->billed, 2) : '-' }}
                 </td>
                 <td class="text-right font-mono" style="vertical-align: top; color: #16a34a;">
-                    {{ $entry->paid > 0 ? number_format($entry->paid, 2) : '—' }}
+                    {{ $entry->paid > 0 ? number_format($entry->paid, 2) : '-' }}
                 </td>
                 <td class="text-right font-mono font-bold" style="color: #111827; vertical-align: top;">
                     {{ number_format($entry->balance_left, 2) }}
@@ -265,16 +266,16 @@
         @if(!empty($openingBalance) && $openingBalance > 0)
         <tr style="background-color: #fffbeb;">
             <td class="font-bold" style="color: #92400e; padding: 4px 6px;">Opening Balance Brought Forward</td>
-            <td class="text-right font-mono font-bold" style="color: #92400e; font-size: 12px; padding: 4px 6px;">₹{{ number_format($openingBalance, 2) }}</td>
+            <td class="text-right font-mono font-bold" style="color: #92400e; font-size: 12px; padding: 4px 6px;">Rs. {{ number_format($openingBalance, 2) }}</td>
         </tr>
         @endif
         <tr>
             <td class="font-bold" style="color: #111827;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Purchases / Debits' : 'Total Billed' }}</td>
-            <td class="text-right font-mono font-bold" style="color: #111827; font-size: 12px;">₹{{ number_format($totalBilled, 2) }}</td>
+            <td class="text-right font-mono font-bold" style="color: #111827; font-size: 12px;">Rs. {{ number_format($totalBilled, 2) }}</td>
         </tr>
         <tr>
             <td class="font-bold" style="color: #111827;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Received / Paid' : 'Total Received / Paid' }}</td>
-            <td class="text-right font-mono font-bold" style="color: #16a34a; font-size: 12px;">₹{{ number_format($totalPaid, 2) }}</td>
+            <td class="text-right font-mono font-bold" style="color: #16a34a; font-size: 12px;">Rs. {{ number_format($totalPaid, 2) }}</td>
         </tr>
     </table>
 
@@ -282,7 +283,7 @@
     <table class="balance-box">
         <tr>
             <td class="balance-title" style="vertical-align: middle;">Net Outstanding Balance</td>
-            <td class="balance-amt font-mono" style="vertical-align: middle;">₹{{ number_format($closingBalance, 2) }}</td>
+            <td class="balance-amt font-mono" style="vertical-align: middle;">Rs. {{ number_format($closingBalance, 2) }}</td>
         </tr>
     </table>
 
