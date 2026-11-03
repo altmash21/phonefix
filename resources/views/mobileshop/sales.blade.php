@@ -477,8 +477,9 @@
 
                     <div>
                         <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Payment Mode</label>
-                        <select name="payment_mode" id="quickSalePaymentMode" class="app-input-field" required onchange="onQuickPaymentModeChange(this)">
-                            <option value="cash" selected>Cash</option>
+                        <select name="payment_mode" id="quickSalePaymentMode" class="app-input-field" required onchange="onQuickPaymentModeChange(this)" style="font-weight:700;">
+                            <option value="" disabled selected>-- Select Payment Mode --</option>
+                            <option value="cash">Cash</option>
                             <option value="upi">UPI</option>
                             <option value="udhari">Pay Later (Balance Due)</option>
                             <option value="cash+upi">Cash + UPI</option>
@@ -2695,16 +2696,20 @@
         const badge = document.getElementById('quickSaleTotalBadge');
         if (badge) badge.textContent = 'Total: ₹' + grandTotal.toFixed(2);
 
-        const mode = document.getElementById('quickSalePaymentMode')?.value || 'cash';
+        const mode = document.getElementById('quickSalePaymentMode')?.value || '';
         const amountPaidInput = document.getElementById('quickSaleAmountPaid');
         if (amountPaidInput) {
             if (['cash', 'upi', 'card', 'cash+upi', 'upi+cash'].includes(mode)) {
                 amountPaidInput.value = grandTotal.toFixed(2);
             } else if (mode === 'udhari') {
                 amountPaidInput.value = '0';
+            } else {
+                amountPaidInput.value = '0';
             }
         }
-        syncQuickSplitAmounts(mode, grandTotal);
+        if (mode) {
+            syncQuickSplitAmounts(mode, grandTotal);
+        }
     }
 
     function getQuickSaleCurrentTotal() {
@@ -2944,7 +2949,15 @@
             return false;
         }
 
-        const mode = document.getElementById('quickSalePaymentMode')?.value || 'cash';
+        const paymentModeSelect = document.getElementById('quickSalePaymentMode');
+        const mode = (paymentModeSelect?.value || '').trim();
+        if (!mode) {
+            showQuickSaleWarning('Please select a Payment Mode before completing the sale.', paymentModeSelect);
+            paymentModeSelect?.focus();
+            if (e) e.preventDefault();
+            return false;
+        }
+
         const amountPaidInput = document.getElementById('quickSaleAmountPaid');
 
         if (mode === 'cash+upi' || mode === 'upi+cash') {

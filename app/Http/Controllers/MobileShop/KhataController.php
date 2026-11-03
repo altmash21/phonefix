@@ -119,9 +119,13 @@ class KhataController extends BaseMobileShopController
         ), 403, 'Unauthorized action.');
 
         $request->validate([
-            'customer_id' => 'required|exists:ms_customers,id',
-            'amount' => 'required|numeric|min:0.01',
-            'payment_mode' => 'required|in:cash,upi,bank_transfer,cheque',
+            'customer_id'   => 'required|exists:ms_customers,id',
+            'amount'        => 'required|numeric|min:0.01',
+            'payment_mode'  => 'required|in:cash,upi,cash+upi,bank_transfer,cheque',
+            'cash_amount'   => 'nullable|numeric|min:0',
+            'upi_amount'    => 'nullable|numeric|min:0',
+            'reference_no'  => 'nullable|string|max:191',
+            'remarks'       => 'nullable|string|max:500',
         ]);
 
         $companyId = $this->getCompanyId();
@@ -132,27 +136,79 @@ class KhataController extends BaseMobileShopController
                 return redirect()->back()->with('error', 'Customer not found.');
             }
             $amount = (float) $request->amount;
+            $paymentMode = $request->payment_mode;
             $newBalance = max(0.00, $customer->udhari_balance - $amount);
 
             DB::table('ms_customers')->where('id', $customer->id)->update([
                 'udhari_balance' => $newBalance,
-                'updated_at' => now(),
+                'updated_at'     => now(),
             ]);
+
+            if ($paymentMode === 'cash+upi') {
+                $cashPart = (float) ($request->cash_amount ?? 0);
+                $upiPart  = (float) ($request->upi_amount ?? 0);
+
+                if ($cashPart <= 0 && $upiPart <= 0) {
+                    $cashPart = round($amount / 2, 2);
+                    $upiPart  = round($amount - $cashPart, 2);
+                } elseif ($cashPart > 0 && $upiPart <= 0) {
+                    $upiPart = max(0.0, round($amount - $cashPart, 2));
+                } elseif ($upiPart > 0 && $cashPart <= 0) {
+                    $cashPart = max(0.0, round($amount - $upiPart, 2));
+                }
+
+                $userNotes = trim((string) ($request->remarks ?? ''));
+                $userRef   = trim((string) ($request->reference_no ?? ''));
+
+                $balAfterCash = max(0.00, $customer->udhari_balance - $cashPart);
+
+                if ($cashPart > 0) {
+                    DB::table('ms_customer_khata_transactions')->insert([
+                        'company_id'    => $companyId,
+                        'customer_id'   => $customer->id,
+                        'type'          => 'payment_received',
+                        'amount'        => $cashPart,
+                        'balance_after' => $balAfterCash,
+                        'payment_mode'  => 'cash',
+                        'reference_no'  => $userRef ? "{$userRef} (Cash)" : null,
+                        'remarks'       => $userNotes ? "{$userNotes} [Cash portion]" : 'Khata repayment received (Cash)',
+                        'recorded_by'   => auth()->id(),
+                        'created_at'    => now(),
+                    ]);
+                }
+
+                if ($upiPart > 0) {
+                    DB::table('ms_customer_khata_transactions')->insert([
+                        'company_id'    => $companyId,
+                        'customer_id'   => $customer->id,
+                        'type'          => 'payment_received',
+                        'amount'        => $upiPart,
+                        'balance_after' => $newBalance,
+                        'payment_mode'  => 'upi',
+                        'reference_no'  => $userRef ? "{$userRef} (UPI)" : null,
+                        'remarks'       => $userNotes ? "{$userNotes} [UPI portion]" : 'Khata repayment received (UPI)',
+                        'recorded_by'   => auth()->id(),
+                        'created_at'    => now()->addSecond(),
+                    ]);
+                }
+
+                return redirect()->route('mobileshop.khata')->with('success', "Split repayment of ₹" . number_format($amount, 2) . " (Cash: ₹" . number_format($cashPart, 2) . ", UPI: ₹" . number_format($upiPart, 2) . ") received from {$customer->name}! New balance: ₹" . number_format($newBalance, 2));
+            }
 
             DB::table('ms_customer_khata_transactions')->insert([
-                'company_id' => $companyId,
-                'customer_id' => $customer->id,
-                'type' => 'payment_received',
-                'amount' => $amount,
+                'company_id'    => $companyId,
+                'customer_id'   => $customer->id,
+                'type'          => 'payment_received',
+                'amount'        => $amount,
                 'balance_after' => $newBalance,
-                'payment_mode' => $request->payment_mode,
-                'reference_no' => $request->reference_no,
-                'remarks' => $request->remarks ?? 'Khata repayment received',
-                'recorded_by' => auth()->id(),
-                'created_at' => now(),
+                'payment_mode'  => $paymentMode,
+                'reference_no'  => $request->reference_no,
+                'remarks'       => $request->remarks ?? 'Khata repayment received',
+                'recorded_by'   => auth()->id(),
+                'created_at'    => now(),
             ]);
 
-            return redirect()->route('mobileshop.khata')->with('success', "Repayment of ₹" . number_format($amount, 2) . " received from {$customer->name}! New balance: ₹" . number_format($newBalance, 2));
+            return redirect()->route('mobileshop.khata')->with('success', "Repayment of ₹" . number_format($amount, 2) . " received via " . strtoupper($paymentMode) . " from {$customer->name}! New balance: ₹" . number_format($newBalance, 2));
         });
     }
 

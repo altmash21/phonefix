@@ -625,7 +625,7 @@
             <button type="button" onclick="closeRepayModal()" style="background:rgba(255,255,255,0.1); border:none; color:#FFFFFF; font-size:16px; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
         </div>
         <div class="card-body" style="padding:20px;">
-            <form action="{{ route('mobileshop.khata.collect', ['company_id' => session('company_id', 1)]) }}" method="POST">
+            <form action="{{ route('mobileshop.khata.collect', ['company_id' => session('company_id', 1)]) }}" method="POST" id="repayForm" onsubmit="return validateRepayForm(event)">
                 @csrf
                 <div class="form-group" style="margin-bottom:14px;">
                     <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:12px;">Select Customer</label>
@@ -647,17 +647,36 @@
                             <button type="button" onclick="setHalfDueAmount()" style="font-size:10px; padding:2px 8px; border-radius:4px; font-weight:700; color:#2563EB; border:1px solid #BFDBFE; background:#EFF6FF; cursor:pointer;">50% Partial</button>
                         </div>
                     </div>
-                    <input type="number" step="0.01" name="amount" id="repayAmount" required placeholder="0.00" class="form-control" style="font-size:18px; font-weight:900; color:#16A34A; border-color:#CBD5E1;">
+                    <input type="number" step="0.01" name="amount" id="repayAmount" required placeholder="0.00" oninput="onRepayAmountInput(this)" class="form-control" style="font-size:18px; font-weight:900; color:#16A34A; border-color:#CBD5E1;">
                 </div>
 
                 <div class="form-group" style="margin-bottom:14px;">
                     <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:12px;">Payment Mode</label>
-                    <select name="payment_mode" required class="form-control" style="font-weight:700; color:#0F172A; border-color:#CBD5E1;">
-                        <option value="cash">💵 Cash Payment</option>
+                    <select name="payment_mode" id="repayPaymentMode" required class="form-control" onchange="onRepayPaymentModeChange(this)" style="font-weight:700; color:#0F172A; border-color:#CBD5E1;">
+                        <option value="cash" selected>💵 Cash Payment</option>
                         <option value="upi">📱 UPI / QR Transfer</option>
+                        <option value="cash+upi">⚡ Cash + UPI (Split Payment)</option>
                         <option value="bank_transfer">🏦 Direct Bank Transfer</option>
                         <option value="cheque">📝 Cheque</option>
                     </select>
+                </div>
+
+                <!-- Dynamic Cash + UPI Split Container -->
+                <div id="repaySplitRow" style="display:none; background:#F8FAFC; border:1.5px dashed #CBD5E1; border-radius:8px; padding:12px; margin-bottom:14px;">
+                    <div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>Split Breakdown: Cash &amp; UPI</span>
+                        <span id="repaySplitStatus" style="font-size:11px; font-weight:700; color:#16A34A;">Matched</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Cash Portion (₹)</label>
+                            <input type="number" step="0.01" name="cash_amount" id="repaySplitCash" class="form-control" placeholder="0.00" oninput="onRepaySplitCashChange(this)">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">UPI Portion (₹)</label>
+                            <input type="number" step="0.01" name="upi_amount" id="repaySplitUpi" class="form-control" placeholder="0.00" oninput="onRepaySplitUpiChange(this)">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom:16px;">
@@ -1415,8 +1434,11 @@
 
     function openRepayForCustomer(id, name, due) {
         const select = document.getElementById('repayCustomerSelect');
-        select.value = id;
-        document.getElementById('repayAmount').value = Number(due).toFixed(2);
+        if (select) select.value = id;
+        const dueVal = Number(due) || 0;
+        const repayAmountInput = document.getElementById('repayAmount');
+        if (repayAmountInput) repayAmountInput.value = dueVal.toFixed(2);
+        syncRepaySplitFields();
         openRepayModal();
     }
 
@@ -1424,7 +1446,9 @@
         const opt = select.options[select.selectedIndex];
         if (opt && opt.dataset.due) {
             const due = parseFloat(opt.dataset.due) || 0;
-            document.getElementById('repayAmount').value = due > 0 ? due.toFixed(2) : '';
+            const repayAmountInput = document.getElementById('repayAmount');
+            if (repayAmountInput) repayAmountInput.value = due > 0 ? due.toFixed(2) : '';
+            syncRepaySplitFields();
         }
     }
 
@@ -1434,6 +1458,7 @@
         if (opt && opt.dataset.due) {
             const due = parseFloat(opt.dataset.due) || 0;
             document.getElementById('repayAmount').value = due.toFixed(2);
+            syncRepaySplitFields();
         }
     }
 
@@ -1443,7 +1468,99 @@
         if (opt && opt.dataset.due) {
             const due = parseFloat(opt.dataset.due) || 0;
             document.getElementById('repayAmount').value = (due / 2).toFixed(2);
+            syncRepaySplitFields();
         }
+    }
+
+    function onRepayPaymentModeChange(select) {
+        const splitRow = document.getElementById('repaySplitRow');
+        if (!splitRow) return;
+        if (select.value === 'cash+upi') {
+            splitRow.style.display = 'block';
+            syncRepaySplitFields();
+        } else {
+            splitRow.style.display = 'none';
+        }
+    }
+
+    function onRepayAmountInput(input) {
+        syncRepaySplitFields();
+    }
+
+    function syncRepaySplitFields() {
+        const mode = document.getElementById('repayPaymentMode')?.value;
+        if (mode !== 'cash+upi') return;
+        const total = parseFloat(document.getElementById('repayAmount')?.value) || 0;
+        const cashEl = document.getElementById('repaySplitCash');
+        const upiEl = document.getElementById('repaySplitUpi');
+        if (!cashEl || !upiEl) return;
+
+        const half = (total / 2).toFixed(2);
+        const rem = (total - parseFloat(half)).toFixed(2);
+        cashEl.value = half;
+        upiEl.value = rem;
+        updateRepaySplitStatus(total, parseFloat(half), parseFloat(rem));
+    }
+
+    function onRepaySplitCashChange(input) {
+        const total = parseFloat(document.getElementById('repayAmount')?.value) || 0;
+        const cash = parseFloat(input.value) || 0;
+        const upiEl = document.getElementById('repaySplitUpi');
+        if (upiEl) {
+            const upi = Math.max(0, total - cash);
+            upiEl.value = upi.toFixed(2);
+            updateRepaySplitStatus(total, cash, upi);
+        }
+    }
+
+    function onRepaySplitUpiChange(input) {
+        const total = parseFloat(document.getElementById('repayAmount')?.value) || 0;
+        const upi = parseFloat(input.value) || 0;
+        const cashEl = document.getElementById('repaySplitCash');
+        if (cashEl) {
+            const cash = Math.max(0, total - upi);
+            cashEl.value = cash.toFixed(2);
+            updateRepaySplitStatus(total, cash, upi);
+        }
+    }
+
+    function updateRepaySplitStatus(total, cash, upi) {
+        const statusEl = document.getElementById('repaySplitStatus');
+        if (!statusEl) return;
+        const sum = cash + upi;
+        if (Math.abs(sum - total) < 0.01) {
+            statusEl.textContent = 'Matched (₹' + total.toFixed(2) + ')';
+            statusEl.style.color = '#16A34A';
+        } else {
+            statusEl.textContent = 'Mismatch (₹' + sum.toFixed(2) + ' / ₹' + total.toFixed(2) + ')';
+            statusEl.style.color = '#DC2626';
+        }
+    }
+
+    function validateRepayForm(e) {
+        const mode = document.getElementById('repayPaymentMode')?.value;
+        const total = parseFloat(document.getElementById('repayAmount')?.value) || 0;
+        if (total <= 0) {
+            alert('Payment amount must be greater than zero.');
+            if (e) e.preventDefault();
+            return false;
+        }
+
+        if (mode === 'cash+upi') {
+            const cash = parseFloat(document.getElementById('repaySplitCash')?.value) || 0;
+            const upi = parseFloat(document.getElementById('repaySplitUpi')?.value) || 0;
+            if (cash < 0 || upi < 0) {
+                alert('Cash and UPI portions cannot be negative.');
+                if (e) e.preventDefault();
+                return false;
+            }
+            if (Math.abs((cash + upi) - total) > 0.05) {
+                alert('Sum of Cash (₹' + cash.toFixed(2) + ') and UPI (₹' + upi.toFixed(2) + ') must equal the Total Payment Amount (₹' + total.toFixed(2) + ').');
+                if (e) e.preventDefault();
+                return false;
+            }
+        }
+        return true;
     }
 
     function openDebtorsModal() {
