@@ -3033,14 +3033,14 @@
     // ─────────────────────────────────────────────────────────────────
     // PREVIOUS CUSTOMER AUTOCOMPLETE DROPDOWN (QUICK SALE)
     // ─────────────────────────────────────────────────────────────────
-    const quickRegisteredCustomers = @json($customers->map(function($c) {
-        return [
-            'id'    => $c->id,
-            'name'  => $c->name,
-            'phone' => $c->phone ?? '',
-            'due'   => (float) ($c->udhari_balance ?? 0),
-        ];
-    })->values());
+    const quickRegisteredCustomers = (window.customersList || []).map(function(c) {
+        return {
+            id: c.id,
+            name: c.name || '',
+            phone: c.phone || '',
+            due: parseFloat(c.udhari_balance) || 0
+        };
+    });
 
     let quickCustActiveIndex = -1;
     let quickCustFilteredList = [];
