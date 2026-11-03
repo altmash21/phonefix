@@ -67,6 +67,16 @@ class KhataController extends BaseMobileShopController
 
         $transactions = $txQuery->orderBy('ms_customer_khata_transactions.id', 'desc')->get();
 
+        foreach ($transactions as $tx) {
+            if ($tx->type === 'adjustment' && !empty($tx->remarks) && str_contains($tx->remarks, 'Returned') && preg_match('/#([A-Za-z0-9\-_]+)/', $tx->remarks, $m)) {
+                $inv = $m[1];
+                $returnedItem = \App\Services\MobileShop\Common\MobileShopInvoiceResolver::resolveReturnedItemSummary($companyId, $inv, (float) $tx->amount);
+                if ($returnedItem && !str_contains($tx->remarks, $returnedItem)) {
+                    $tx->remarks = "Reversal for Returned: {$returnedItem} (Sale #{$inv})";
+                }
+            }
+        }
+
         // Always fetch all customers for the store so operators can view and search any customer's udhari
         $customers = DB::table('ms_customers')
             ->where('company_id', $companyId)

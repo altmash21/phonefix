@@ -60,7 +60,10 @@
                 : "";
             $part = "📜 Old Udhar{$refStr}{$descStr}";
         } elseif ($isRepay) {
-            $part = "💵 " . ($itemName ?: 'Payment Received') . "{$refStr}";
+            $descStr = (!empty($item->description) && !in_array($item->description, [$itemName, $item->particulars, $item->ref_no, 'Payment / Settlement Received', 'Khata repayment received', 'Khata repayment received (Cash)', 'Khata repayment received (UPI)']))
+                ? " [{$item->description}]"
+                : "";
+            $part = "💵 " . ($itemName ?: 'Payment Received') . "{$descStr}{$refStr}";
         } else {
             $part = "🛍️ {$itemName}{$refStr}";
         }
@@ -306,6 +309,11 @@
                             <div style="color: #16A34A; font-weight: 600; font-size: 12.5px;">
                                 💵 {{ $itemName ?: 'Payment / Settlement Received' }}
                             </div>
+                            @if(!empty($entry->description) && !in_array($entry->description, [$itemName, $entry->particulars, $entry->ref_no, 'Payment / Settlement Received', 'Khata repayment received', 'Khata repayment received (Cash)', 'Khata repayment received (UPI)']))
+                                <div style="font-size: 11px; color: #475569; margin-top: 1px; font-weight: 500;">
+                                    {{ $entry->description }}
+                                </div>
+                            @endif
                             @if(!empty($entry->ref_no))
                                 <div style="font-size: 10.5px; color: #64748B; font-family: monospace; margin-top: 2px;">
                                     Ref: #{{ $entry->ref_no }}

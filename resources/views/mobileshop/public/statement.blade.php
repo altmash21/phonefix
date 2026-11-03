@@ -239,6 +239,11 @@
                                     <div style="color: #16A34A; font-weight: 700; font-size: 13px;">
                                         💵 {{ $itemName ?: 'Payment / Settlement Received' }}
                                     </div>
+                                    @if(!empty($entry->description) && !in_array($entry->description, [$itemName, $entry->particulars, $entry->ref_no, 'Payment / Settlement Received', 'Khata repayment received', 'Khata repayment received (Cash)', 'Khata repayment received (UPI)']))
+                                        <div style="font-size: 11px; color: #475569; margin-top: 1px; font-weight: 500;">
+                                            {{ $entry->description }}
+                                        </div>
+                                    @endif
                                     @if(!empty($entry->ref_no))
                                         <div style="font-size: 11px; color: #64748B; font-family: monospace; margin-top: 2px;">
                                             Ref: #{{ $entry->ref_no }}

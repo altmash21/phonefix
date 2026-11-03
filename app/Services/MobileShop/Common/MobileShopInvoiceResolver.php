@@ -232,15 +232,29 @@ class MobileShopInvoiceResolver
             ->where('customer_id', $customerId)
             ->where('type', '!=', 'udhari_sale')
             ->get()
-            ->map(function ($tx) {
+            ->map(function ($tx) use ($companyId) {
                 $isDebit = in_array($tx->type, ['opening_balance', 'old_udhar', 'debit_adjustment']);
                 $rawRemarks = trim((string) ($tx->remarks ?? ''));
                 $hasCustomDesc = !empty($rawRemarks) && !in_array(strtolower($rawRemarks), ['old udhar / opening balance', 'old udhar', 'opening balance']);
                 
+                $detailsDesc = $rawRemarks;
+
                 if ($isDebit) {
                     $itemDesc = $hasCustomDesc ? "Old Udhar: {$rawRemarks}" : 'Old Udhar / Opening Balance';
                 } else {
-                    $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Payment / Settlement Received';
+                    $isReversal = ($tx->type === 'adjustment' || stripos($rawRemarks, 'reversal') !== false || stripos($rawRemarks, 'returned') !== false);
+                    if ($isReversal && preg_match('/#([A-Za-z0-9\-_]+)/', $rawRemarks, $m)) {
+                        $invoiceRef = $m[1];
+                        $returnedSummary = self::resolveReturnedItemSummary($companyId, $invoiceRef, (float) $tx->amount);
+                        if ($returnedSummary && !str_contains($rawRemarks, $returnedSummary)) {
+                            $itemDesc = "Reversal for Returned: {$returnedSummary}";
+                            $detailsDesc = "Sale #{$invoiceRef}";
+                        } else {
+                            $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Payment / Settlement Received';
+                        }
+                    } else {
+                        $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Payment / Settlement Received';
+                    }
                 }
 
                 return (object) [
@@ -250,7 +264,7 @@ class MobileShopInvoiceResolver
                     'ref_no'        => $tx->reference_no ?: ($isDebit ? 'OLD-UDHAR' : ('KHATA-' . $tx->id)),
                     'particulars'   => $itemDesc,
                     'item_name'     => $itemDesc,
-                    'description'   => $rawRemarks,
+                    'description'   => $detailsDesc,
                     'billed_amount' => $isDebit ? (float) $tx->amount : 0.00,
                     'paid_amount'   => $isDebit ? 0.00 : (float) $tx->amount,
                     'due_amount'    => $isDebit ? (float) $tx->amount : 0.00,
@@ -641,5 +655,115 @@ class MobileShopInvoiceResolver
         $amountInWords = self::amountToWords($po->total_amount);
 
         return compact('po', 'items', 'amountInWords');
+    }
+
+    /**
+     * Resolve a summary of returned item names for a given sale invoice.
+     */
+    public static function resolveReturnedItemSummary(int $companyId, string $invoiceNumber, float $refundAmount = 0.0): ?string
+    {
+        $cleanInv = trim(str_replace('#', '', $invoiceNumber));
+        if (empty($cleanInv)) {
+            return null;
+        }
+
+        // 1. Try Accessory Sales
+        $accSale = DB::table('ms_accessory_sales')
+            ->where('company_id', $companyId)
+            ->where('invoice_number', $cleanInv)
+            ->first();
+
+        if ($accSale) {
+            $returnedItems = [];
+
+            // A. Check return_details JSON
+            if (!empty($accSale->return_details)) {
+                $batches = is_string($accSale->return_details) ? json_decode($accSale->return_details, true) : $accSale->return_details;
+                if (is_array($batches)) {
+                    $targetBatch = null;
+                    if ($refundAmount > 0.001) {
+                        foreach ($batches as $b) {
+                            if (abs((float)($b['refund_amount'] ?? 0) - $refundAmount) < 0.05) {
+                                $targetBatch = $b;
+                                break;
+                            }
+                        }
+                    }
+                    if (!$targetBatch && !empty($batches)) {
+                        $targetBatch = end($batches);
+                    }
+
+                    if ($targetBatch && !empty($targetBatch['items']) && is_array($targetBatch['items'])) {
+                        foreach ($targetBatch['items'] as $bItem) {
+                            $name = trim((string)($bItem['part_name'] ?? ''));
+                            $qty = (int)($bItem['quantity'] ?? $bItem['qty'] ?? 1);
+                            if (!empty($name)) {
+                                $returnedItems[] = ($qty > 1 ? "{$qty}x " : "") . $name;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // B. Fallback to ms_accessory_sale_items
+            if (empty($returnedItems)) {
+                $saleItems = DB::table('ms_accessory_sale_items')
+                    ->where('company_id', $companyId)
+                    ->where('accessory_sale_id', $accSale->id)
+                    ->get();
+
+                // Look for items with returned_qty > 0
+                $itemsWithReturnedQty = $saleItems->filter(fn($it) => (int)($it->returned_qty ?? 0) > 0);
+                if ($itemsWithReturnedQty->isNotEmpty()) {
+                    if ($refundAmount > 0.001) {
+                        $matchedItem = $itemsWithReturnedQty->first(fn($it) => abs((float)($it->returned_amount ?? 0) - $refundAmount) < 0.05);
+                        if ($matchedItem) {
+                            $qty = (int)$matchedItem->returned_qty;
+                            $returnedItems[] = ($qty > 1 ? "{$qty}x " : "") . $matchedItem->part_name;
+                        }
+                    }
+
+                    if (empty($returnedItems)) {
+                        foreach ($itemsWithReturnedQty as $it) {
+                            $qty = (int)$it->returned_qty;
+                            $returnedItems[] = ($qty > 1 ? "{$qty}x " : "") . $it->part_name;
+                        }
+                    }
+                } elseif (in_array($accSale->status, ['voided', 'partially_returned'])) {
+                    if ($refundAmount > 0.001) {
+                        $matchedItem = $saleItems->first(fn($it) => abs((float)$it->line_total - $refundAmount) < 0.05 || abs((float)$it->unit_price - $refundAmount) < 0.05);
+                        if ($matchedItem) {
+                            $qty = (int)$matchedItem->quantity;
+                            $returnedItems[] = ($qty > 1 ? "{$qty}x " : "") . $matchedItem->part_name;
+                        }
+                    }
+
+                    if (empty($returnedItems)) {
+                        foreach ($saleItems as $it) {
+                            $qty = (int)$it->quantity;
+                            $returnedItems[] = ($qty > 1 ? "{$qty}x " : "") . $it->part_name;
+                        }
+                    }
+                }
+            }
+
+            if (!empty($returnedItems)) {
+                return implode(', ', array_unique($returnedItems));
+            }
+        }
+
+        // 2. Try Mobile Sales
+        $mobSale = DB::table('ms_mobile_sales')
+            ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
+            ->where('ms_mobile_sales.company_id', $companyId)
+            ->where('ms_mobile_sales.invoice_number', $cleanInv)
+            ->select('ms_mobile_devices.brand', 'ms_mobile_devices.model')
+            ->first();
+
+        if ($mobSale) {
+            return trim("{$mobSale->brand} {$mobSale->model}");
+        }
+
+        return null;
     }
 }

@@ -69,13 +69,16 @@ class SaleVoidService
                         'updated_at' => now(),
                     ]);
 
+                    $device = DB::table('ms_mobile_devices')->where('id', $sale->device_id)->first();
+                    $deviceName = $device ? trim("{$device->brand} {$device->model}") : 'Mobile Device';
+
                     DB::table('ms_customer_khata_transactions')->insert([
                         'company_id' => $companyId,
                         'customer_id' => $customer->id,
                         'type' => 'adjustment',
                         'amount' => $sale->udhari_amount,
                         'balance_after' => $newBal,
-                        'remarks' => "Reversal for Returned Mobile Sale #{$sale->invoice_number}",
+                        'remarks' => "Reversal for Returned: {$deviceName} (Sale #{$sale->invoice_number})",
                         'recorded_by' => $userId,
                         'created_at' => now(),
                     ]);

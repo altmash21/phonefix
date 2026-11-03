@@ -236,13 +236,18 @@ class AccessoryVoidService
                         'updated_at'     => now(),
                     ]);
 
+                    $returnedNames = collect($returnedItemRecords)->map(function ($it) {
+                        return ($it['quantity'] > 1 ? "{$it['quantity']}x " : "") . $it['part_name'];
+                    })->filter()->values();
+                    $returnedSummary = $returnedNames->isNotEmpty() ? $returnedNames->join(', ') : 'Returned Items';
+
                     DB::table('ms_customer_khata_transactions')->insert([
                         'company_id'    => $companyId,
                         'customer_id'   => $customer->id,
                         'type'          => 'adjustment',
                         'amount'        => $khataReversal,
                         'balance_after' => $newBal,
-                        'remarks'       => "Reversal for Returned Items on Sale #{$sale->invoice_number}",
+                        'remarks'       => "Reversal for Returned: {$returnedSummary} (Sale #{$sale->invoice_number})",
                         'recorded_by'   => auth()->id(),
                         'created_at'    => now(),
                     ]);
