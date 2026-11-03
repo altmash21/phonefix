@@ -23,6 +23,7 @@ class AccessoryVoidService
         $customDetails       = $request->input('void_reason') ? " — {$request->input('void_reason')}" : "";
         $auditReason         = "{$reasonLabel}{$customDetails}";
         $returnedItemsInput  = $request->input('returned_items', []);
+        $hasItemSelection    = $request->has('has_item_selection');
 
         // OTP Security Gate: Only owner can void without OTP
         $itemRef = "acc_sale:{$id}";
@@ -39,7 +40,7 @@ class AccessoryVoidService
             }
         }
 
-        return DB::transaction(function () use ($id, $companyId, $shouldRestock, $auditReason, $returnedItemsInput) {
+        return DB::transaction(function () use ($id, $companyId, $shouldRestock, $auditReason, $returnedItemsInput, $hasItemSelection) {
             $sale = DB::table('ms_accessory_sales')
                 ->where('company_id', $companyId)
                 ->where('id', $id)
@@ -77,6 +78,8 @@ class AccessoryVoidService
                     if (isset($returnedItemsInput[$item->id]) && (int) $returnedItemsInput[$item->id] > 0) {
                         $returnQty = min((int) $returnedItemsInput[$item->id], $maxReturnable);
                     }
+                } elseif ($hasItemSelection) {
+                    $returnQty = 0;
                 } else {
                     // Full return fallback
                     $returnQty = $maxReturnable;

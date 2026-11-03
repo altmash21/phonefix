@@ -1031,10 +1031,11 @@
                 <button type="button" onclick="closeReturnModal()" style="background:rgba(255,255,255,0.15); border:none; color:#FFFFFF; font-size:16px; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
             </div>
             <div class="card-body" style="padding:20px;">
-                <form id="salesReturnForm" method="POST" action="">
+                <form id="salesReturnForm" method="POST" action="" onsubmit="return validateReturnFormSubmission(event)">
                     @csrf
                     <input type="hidden" name="reason_label" id="returnReasonLabel" value="Customer Return (Restock to Store Inventory)">
                     <input type="hidden" name="should_restock" id="returnShouldRestock" value="1">
+                    <input type="hidden" name="has_item_selection" value="1">
 
                     <!-- Invoice & Refund Summary -->
                     <div style="background:#FEF2F2; border:1px solid #FECDD3; border-radius:8px; padding:12px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
@@ -1044,7 +1045,7 @@
                         </div>
                         <div style="text-align:right;">
                             <div style="font-size:11px; color:#991B1B; font-weight:700; text-transform:uppercase;">Total Refund Amount</div>
-                            <strong id="lblReturnAmount" style="font-size:16px; color:#DC2626; font-weight:900;"></strong>
+                            <strong id="lblReturnAmount" style="font-size:16px; color:#DC2626; font-weight:900;">₹0.00</strong>
                         </div>
                     </div>
 
@@ -1055,7 +1056,10 @@
                                 <i data-lucide="layers" style="width:14px;height:14px; color:#DC2626;"></i>
                                 Select Items to Return
                             </label>
-                            <span id="lblItemCountNotice" style="font-size:11px; color:#64748B; font-weight:600;"></span>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button type="button" onclick="toggleSelectAllReturnItems()" id="btnToggleSelectAll" style="font-size:11px; font-weight:700; color:#DC2626; background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;">Select All</button>
+                                <span id="lblItemCountNotice" style="font-size:11px; color:#64748B; font-weight:600;"></span>
+                            </div>
                         </div>
                         <div id="returnItemsList" style="border:1px solid #CBD5E1; border-radius:8px; background:#F8FAFC; max-height:190px; overflow-y:auto; padding:6px; display:flex; flex-direction:column; gap:6px;">
                             <!-- Injected dynamically via JS -->
@@ -1832,10 +1836,11 @@
                 const unitPrice = parseFloat(item.unit_price) || (parseFloat(item.line_total) / Math.max(1, item.quantity));
                 const maxQty = item.available_qty;
                 const row = document.createElement('div');
-                row.style.cssText = 'background:#fff; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px;';
+                row.className = 'return-item-row';
+                row.style.cssText = 'background:#fff; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; transition:all 0.15s ease;';
                 row.innerHTML = `
                     <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
-                        <input type="checkbox" id="chk_item_${item.id}" class="return-item-chk" checked onchange="recalcReturnRefund()" style="width:16px; height:16px; cursor:pointer; accent-color:#DC2626;">
+                        <input type="checkbox" id="chk_item_${item.id}" class="return-item-chk" onchange="recalcReturnRefund()" style="width:16px; height:16px; cursor:pointer; accent-color:#DC2626;">
                         <div style="min-width:0;">
                             <label for="chk_item_${item.id}" style="font-size:12px; font-weight:700; color:#0F172A; margin:0; cursor:pointer; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                 ${item.part_name || 'Item #' + (idx+1)}
@@ -1849,8 +1854,8 @@
                     </div>
                     <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
                         <span style="font-size:11px; font-weight:700; color:#475569;">Return Qty:</span>
-                        <input type="number" name="returned_items[${item.id}]" id="qty_item_${item.id}" min="1" max="${maxQty}" value="${maxQty}" oninput="recalcReturnRefund()" data-unit-price="${unitPrice}" data-max-qty="${maxQty}" style="width:55px; padding:3px 6px; font-size:12px; font-weight:800; text-align:center; border:1px solid #CBD5E1; border-radius:4px; color:#0F172A;">
-                        <span id="sub_item_${item.id}" style="font-size:12px; font-weight:800; color:#0F172A; min-width:65px; text-align:right;">₹${(unitPrice * maxQty).toFixed(2)}</span>
+                        <input type="number" name="returned_items[${item.id}]" id="qty_item_${item.id}" min="1" max="${maxQty}" value="${maxQty}" disabled oninput="recalcReturnRefund()" data-unit-price="${unitPrice}" data-max-qty="${maxQty}" style="width:55px; padding:3px 6px; font-size:12px; font-weight:800; text-align:center; border:1px solid #CBD5E1; border-radius:4px; color:#0F172A; background:#F1F5F9;">
+                        <span id="sub_item_${item.id}" style="font-size:12px; font-weight:800; color:#64748B; min-width:65px; text-align:right;">₹0.00</span>
                     </div>
                 `;
                 itemsList.appendChild(row);
@@ -1881,6 +1886,24 @@
         else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
     }
 
+    function toggleSelectAllReturnItems() {
+        const chks = document.querySelectorAll('.return-item-chk');
+        if (!chks.length) return;
+        const allChecked = Array.from(chks).every(c => c.checked);
+        chks.forEach(c => c.checked = !allChecked);
+        recalcReturnRefund();
+    }
+
+    function validateReturnFormSubmission(e) {
+        const checked = document.querySelectorAll('.return-item-chk:checked');
+        if (currentReturnItems && currentReturnItems.length > 0 && checked.length === 0) {
+            if (e) e.preventDefault();
+            alert('Please select at least one item to return before confirming.');
+            return false;
+        }
+        return true;
+    }
+
     function recalcReturnRefund() {
         let totalRefund = 0;
         let selectedCount = 0;
@@ -1889,12 +1912,18 @@
             const chk = document.getElementById(`chk_item_${item.id}`);
             const qtyInput = document.getElementById(`qty_item_${item.id}`);
             const subSpan = document.getElementById(`sub_item_${item.id}`);
+            const row = chk ? chk.closest('.return-item-row') : null;
 
             if (chk && qtyInput) {
                 const isChecked = chk.checked;
                 qtyInput.disabled = !isChecked;
                 
                 if (isChecked) {
+                    if (row) {
+                        row.style.background = '#FEF2F2';
+                        row.style.borderColor = '#FCA5A5';
+                    }
+                    qtyInput.style.background = '#FFFFFF';
                     const unitPrice = parseFloat(qtyInput.dataset.unitPrice) || 0;
                     const maxQty = parseInt(qtyInput.dataset.maxQty) || parseInt(item.available_qty) || 1;
                     let qty = parseInt(qtyInput.value) || 0;
@@ -1909,14 +1938,57 @@
                     const sub = unitPrice * qty;
                     totalRefund += sub;
                     selectedCount++;
-                    if (subSpan) subSpan.textContent = '₹' + sub.toFixed(2);
+                    if (subSpan) {
+                        subSpan.textContent = '₹' + sub.toFixed(2);
+                        subSpan.style.color = '#DC2626';
+                    }
                 } else {
-                    if (subSpan) subSpan.textContent = '₹0.00';
+                    if (row) {
+                        row.style.background = '#FFFFFF';
+                        row.style.borderColor = '#E2E8F0';
+                    }
+                    qtyInput.style.background = '#F1F5F9';
+                    if (subSpan) {
+                        subSpan.textContent = '₹0.00';
+                        subSpan.style.color = '#94A3B8';
+                    }
                 }
             }
         });
 
         document.getElementById('lblReturnAmount').textContent = '₹' + totalRefund.toFixed(2);
+
+        const submitBtn = document.getElementById('btnSubmitReturnModal');
+        const countNotice = document.getElementById('lblItemCountNotice');
+        const toggleBtn = document.getElementById('btnToggleSelectAll');
+
+        if (submitBtn) {
+            if (currentReturnItems.length > 0 && selectedCount === 0) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+                submitBtn.style.cursor = 'not-allowed';
+                submitBtn.title = 'Please select at least one item to return';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+                submitBtn.title = '';
+            }
+        }
+
+        if (countNotice && currentReturnItems.length > 0) {
+            if (selectedCount === 0) {
+                countNotice.textContent = `(0 of ${currentReturnItems.length} selected — select items to return)`;
+                countNotice.style.color = '#DC2626';
+            } else {
+                countNotice.textContent = `(${selectedCount} of ${currentReturnItems.length} selected)`;
+                countNotice.style.color = '#16A34A';
+            }
+        }
+
+        if (toggleBtn && currentReturnItems.length > 0) {
+            toggleBtn.textContent = (selectedCount === currentReturnItems.length) ? 'Deselect All' : 'Select All';
+        }
     }
 
     function closeReturnModal() {
