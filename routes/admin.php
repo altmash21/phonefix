@@ -272,6 +272,15 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::get('khata/customer/{id}/statement/pdf', 'MobileShop\KhataController@customerStatementPdf')
         ->middleware('permission:read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|read-mobileshop-dashboard')
         ->name('khata.customer_statement_pdf');
+    Route::post('khata/transaction/{id}/update', 'MobileShop\KhataController@updateTransaction')
+        ->middleware('permission:create-mobileshop-khata|read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|create-sale-accessories|create-mobileshop-pos')
+        ->name('khata.transaction.update');
+    Route::post('khata/transaction/{id}/delete', 'MobileShop\KhataController@deleteTransaction')
+        ->middleware('permission:create-mobileshop-khata|read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|create-sale-accessories|create-mobileshop-pos')
+        ->name('khata.transaction.delete');
+    Route::post('khata/customer/{id}/sync-balance', 'MobileShop\KhataController@syncCustomerBalance')
+        ->middleware('permission:create-mobileshop-khata|read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|create-sale-accessories|create-mobileshop-pos')
+        ->name('khata.customer.sync_balance');
     Route::get('purchase-orders', 'MobileShop\PurchaseController@purchaseOrders')
         ->middleware('permission:read-mobileshop-procurement')
         ->name('purchase_orders');

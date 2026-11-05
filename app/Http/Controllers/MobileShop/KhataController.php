@@ -393,4 +393,154 @@ class KhataController extends BaseMobileShopController
         $suffix = $statement['currentFilter'] === 'active' ? 'ActiveDues' : Str::slug($statement['periodLabel'], '_');
         return $pdf->download("Statement-{$safeName}-{$suffix}.pdf");
     }
+
+    /**
+     * Delete Duplicate Khata Entry (Statement Edit / Correction)
+     */
+    public function deleteTransaction(Request $request, $id)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-sales') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('repair-technician')
+        ), 403, 'Unauthorized action.');
+
+        $companyId = $this->getCompanyId();
+
+        return DB::transaction(function () use ($id, $companyId) {
+            $tx = DB::table('ms_customer_khata_transactions')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$tx) {
+                return redirect()->back()->with('error', 'Khata entry not found or already deleted.');
+            }
+
+            $customerId = (int) $tx->customer_id;
+            $amount = (float) $tx->amount;
+            $isDebit = in_array($tx->type, ['opening_balance', 'old_udhar', 'debit_adjustment', 'udhari_sale']);
+
+            DB::table('ms_customer_khata_transactions')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->delete();
+
+            // Recalculate customer's balance accurately
+            $newBalance = self::syncCustomerUdhariBalance($companyId, $customerId);
+
+            $typeLabel = $isDebit ? 'Debit / Old Udhar' : 'Payment / Credit';
+            return redirect()->back()->with('success', "Duplicate {$typeLabel} entry of ₹" . number_format($amount, 2) . " deleted successfully! Customer balance is now ₹" . number_format($newBalance, 2) . ".");
+        });
+    }
+
+    /**
+     * Update Khata Entry (Statement Edit / Correction)
+     */
+    public function updateTransaction(Request $request, $id)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-sales') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('repair-technician')
+        ), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'amount'       => 'required|numeric|min:0.01',
+            'date'         => 'nullable|date',
+            'remarks'      => 'nullable|string|max:500',
+            'reference_no' => 'nullable|string|max:191',
+            'payment_mode' => 'nullable|string|in:cash,upi,bank_transfer,cheque,cash+upi',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        return DB::transaction(function () use ($request, $id, $companyId) {
+            $tx = DB::table('ms_customer_khata_transactions')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$tx) {
+                return redirect()->back()->with('error', 'Khata entry not found.');
+            }
+
+            $customerId = (int) $tx->customer_id;
+            $newAmount = (float) $request->amount;
+            $txDate = $request->filled('date') ? \Carbon\Carbon::parse($request->date) : $tx->created_at;
+
+            $updateData = [
+                'amount'       => $newAmount,
+                'created_at'   => $txDate,
+                'reference_no' => $request->filled('reference_no') ? $request->reference_no : $tx->reference_no,
+                'remarks'      => $request->filled('remarks') ? $request->remarks : $tx->remarks,
+            ];
+
+            if ($request->filled('payment_mode')) {
+                $updateData['payment_mode'] = $request->payment_mode;
+            }
+
+            DB::table('ms_customer_khata_transactions')
+                ->where('company_id', $companyId)
+                ->where('id', $id)
+                ->update($updateData);
+
+            // Recalculate customer's balance accurately
+            $newBalance = self::syncCustomerUdhariBalance($companyId, $customerId);
+
+            return redirect()->back()->with('success', "Khata entry updated successfully! Customer balance is now ₹" . number_format($newBalance, 2) . ".");
+        });
+    }
+
+    /**
+     * Recalculate and Sync Customer Udhari Balance against Ledger
+     */
+    public function syncCustomerBalance(Request $request, $id)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-sales') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('repair-technician')
+        ), 403, 'Unauthorized action.');
+
+        $companyId = $this->getCompanyId();
+        $balance = self::syncCustomerUdhariBalance($companyId, (int) $id);
+
+        return redirect()->back()->with('success', "Customer balance verified and synchronized with ledger! Current Due: ₹" . number_format($balance, 2));
+    }
+
+    /**
+     * Helper to compute true balance from full ledger and update ms_customers table
+     */
+    public static function syncCustomerUdhariBalance(int $companyId, int $customerId): float
+    {
+        $statement = \App\Services\MobileShop\Common\MobileShopInvoiceResolver::buildCustomerLedgerStatement($companyId, $customerId, ['filter' => 'all']);
+        $closingBalance = (float) ($statement['closingBalance'] ?? 0.00);
+
+        DB::table('ms_customers')
+            ->where('company_id', $companyId)
+            ->where('id', $customerId)
+            ->update([
+                'udhari_balance' => $closingBalance,
+                'updated_at'     => now(),
+            ]);
+
+        \Illuminate\Support\Facades\Cache::forget("ms_customers_picker_v2_{$companyId}");
+
+        return $closingBalance;
+    }
 }

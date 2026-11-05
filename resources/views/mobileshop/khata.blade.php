@@ -515,6 +515,14 @@
                                 @else
                                     <span class="badge" style="background:#DCFCE7; color:#15803D; font-weight:700; font-size:10px; padding:3px 6px;">Settled</span>
                                 @endif
+                                @if($t->type !== 'udhari_sale')
+                                    <form method="POST" action="{{ route('mobileshop.khata.transaction.delete', ['id' => $t->id]) }}" onsubmit="return confirm('Delete duplicate entry #{{ $t->reference_no ?: $t->id }} (₹{{ number_format($t->amount, 2) }})? This will automatically restore {{ addslashes($t->customer_name) }}\'s balance.');" style="margin:0; display:inline;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline btn-sm" style="font-size:11px; padding:4px 6px; color:#DC2626; border-color:#FECACA; background:#FEF2F2;" title="Delete Duplicate Entry">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

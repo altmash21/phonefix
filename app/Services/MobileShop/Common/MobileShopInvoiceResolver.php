@@ -119,6 +119,10 @@ class MobileShopInvoiceResolver
                 'paid_amount'   => 0.00,
                 'due_amount'    => (float) $ms->billed_amount,
                 'entry_type'    => 'mobile_sale',
+                'source'        => 'mobile_sale',
+                'source_id'     => (int) $ms->id,
+                'payment_mode'  => null,
+                'raw_remarks'   => '',
             ]);
 
             if ((float) $ms->paid_amount > 0) {
@@ -134,6 +138,10 @@ class MobileShopInvoiceResolver
                     'paid_amount'   => (float) $ms->paid_amount,
                     'due_amount'    => 0.00,
                     'entry_type'    => 'payment_received',
+                    'source'        => 'counter_payment',
+                    'source_id'     => (int) $ms->id,
+                    'payment_mode'  => 'cash',
+                    'raw_remarks'   => "Payment received at billing for #{$ms->ref_no}",
                 ]);
             }
         }
@@ -189,6 +197,10 @@ class MobileShopInvoiceResolver
                             'paid_amount'   => 0.00,
                             'due_amount'    => $itemBilled,
                             'entry_type'    => 'accessory_sale',
+                            'source'        => 'accessory_sale',
+                            'source_id'     => (int) $sale->id,
+                            'payment_mode'  => null,
+                            'raw_remarks'   => '',
                         ]);
                     }
 
@@ -206,6 +218,10 @@ class MobileShopInvoiceResolver
                             'paid_amount'   => (float) $sale->paid_amount,
                             'due_amount'    => 0.00,
                             'entry_type'    => 'payment_received',
+                            'source'        => 'counter_payment',
+                            'source_id'     => (int) $sale->id,
+                            'payment_mode'  => 'cash',
+                            'raw_remarks'   => "Payment received at billing for #{$sale->ref_no}",
                         ]);
                     }
                 } else {
@@ -221,6 +237,10 @@ class MobileShopInvoiceResolver
                         'paid_amount'   => (float) $sale->paid_amount,
                         'due_amount'    => (float) $sale->due_amount,
                         'entry_type'    => 'accessory_sale',
+                        'source'        => 'accessory_sale',
+                        'source_id'     => (int) $sale->id,
+                        'payment_mode'  => null,
+                        'raw_remarks'   => '',
                     ]);
                 }
             }
@@ -269,6 +289,10 @@ class MobileShopInvoiceResolver
                     'paid_amount'   => $isDebit ? 0.00 : (float) $tx->amount,
                     'due_amount'    => $isDebit ? (float) $tx->amount : 0.00,
                     'entry_type'    => $tx->type,
+                    'source'        => 'khata_transaction',
+                    'source_id'     => (int) $tx->id,
+                    'payment_mode'  => $tx->payment_mode ?? null,
+                    'raw_remarks'   => $tx->remarks ?? '',
                 ];
             });
 
@@ -309,6 +333,10 @@ class MobileShopInvoiceResolver
                 'paid'         => $paid,
                 'balance_left' => $runningBalance,
                 'entry_type'   => $entry->entry_type,
+                'source'       => $entry->source ?? 'unknown',
+                'source_id'    => $entry->source_id ?? null,
+                'payment_mode' => $entry->payment_mode ?? null,
+                'raw_remarks'  => $entry->raw_remarks ?? '',
             ];
         });
 
