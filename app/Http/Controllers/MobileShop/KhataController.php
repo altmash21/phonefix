@@ -107,7 +107,23 @@ class KhataController extends BaseMobileShopController
             ->pluck('id', 'invoice_number')
             ->toArray();
 
-        return view('mobileshop.khata', compact('customers', 'transactions', 'accessoryInvoices', 'mobileInvoices', 'isAdmin'));
+        $khataTransactionsData = $transactions->map(function ($t) {
+            return [
+                'id'           => $t->id,
+                'customer_id'  => (int) $t->customer_id,
+                'customer_name'=> $t->customer_name,
+                'date'         => date('d M Y, h:i A', strtotime($t->created_at)),
+                'raw_date'     => date('Y-m-d', strtotime($t->created_at)),
+                'type'         => $t->type,
+                'ref_no'       => $t->reference_no ?? '',
+                'remarks'      => $t->remarks ?? '',
+                'amount'       => (float) $t->amount,
+                'payment_mode' => $t->payment_mode ?? '',
+                'balance_after'=> (float) $t->balance_after,
+            ];
+        });
+
+        return view('mobileshop.khata', compact('customers', 'transactions', 'khataTransactionsData', 'accessoryInvoices', 'mobileInvoices', 'isAdmin'));
     }
 
     /**
