@@ -496,6 +496,18 @@ class KhataController extends BaseMobileShopController
                 ->where('id', $id)
                 ->delete();
 
+            if ($tx->type === 'udhari_sale' && !empty($tx->reference_no)) {
+                DB::table('ms_accessory_sales')
+                    ->where('company_id', $companyId)
+                    ->where('invoice_number', $tx->reference_no)
+                    ->update(['status' => 'voided', 'updated_at' => now()]);
+
+                DB::table('ms_mobile_sales')
+                    ->where('company_id', $companyId)
+                    ->where('invoice_number', $tx->reference_no)
+                    ->update(['status' => 'voided', 'updated_at' => now()]);
+            }
+
             // Recalculate customer's balance accurately
             $newBalance = self::syncCustomerUdhariBalance($companyId, $customerId);
 

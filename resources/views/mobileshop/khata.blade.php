@@ -253,9 +253,10 @@
                             @endif
                         </td>
                         <td style="text-align:center;">
-                            <span class="badge" style="background:#F1F5F9; color:#475569; font-weight:700; font-size:11px;">
+                            <button type="button" onclick="openCustomerEntriesModal({{ $c->id }}, '{{ addslashes($c->name) }}', {{ $c->udhari_balance }}, '{{ addslashes($c->phone ?? '') }}')" class="badge" style="background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; font-weight:700; font-size:11px; cursor:pointer; padding:3px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;" title="Click to view & manage entries (edit or delete mistake entries)">
+                                <i data-lucide="list" style="width:11px; height:11px;"></i>
                                 {{ $c->total_tx_count }} txs
-                            </span>
+                            </button>
                         </td>
                         <td style="text-align:center; white-space:nowrap;">
                             <div style="display:inline-flex; gap:6px; align-items:center;">
@@ -276,8 +277,11 @@
                                 <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; text-decoration:none; color:#0F172A;" title="View Statement">
                                     <i data-lucide="file-text" style="width:13px;height:13px;"></i> Statement
                                 </a>
-                                <button type="button" onclick="openEditCustomerModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ addslashes($c->phone ?? '') }}', '{{ addslashes($c->address ?? '') }}', {{ $c->credit_limit ?? 10000 }}, '{{ addslashes($c->gstin ?? '') }}', {{ $c->udhari_balance }})" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; color:#0369A1; border-color:#BAE6FD; background:#F0F9FF; display:inline-flex; align-items:center; gap:3px; cursor:pointer;" title="Edit Customer Profile (Name, Phone, Address, Credit Limit)">
-                                    <i data-lucide="edit-3" style="width:12px;height:12px;"></i> Edit
+                                <button type="button" onclick="openCustomerEntriesModal({{ $c->id }}, '{{ addslashes($c->name) }}', {{ $c->udhari_balance }}, '{{ addslashes($c->phone ?? '') }}')" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; color:#DC2626; border-color:#FECACA; background:#FEF2F2; display:inline-flex; align-items:center; gap:3px; cursor:pointer;" title="View customer entries, edit, or delete any mistake/duplicate entry">
+                                    <i data-lucide="trash-2" style="width:12px;height:12px;"></i> Fix / Delete Entry
+                                </button>
+                                <button type="button" onclick="openEditCustomerModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ addslashes($c->phone ?? '') }}', '{{ addslashes($c->address ?? '') }}', {{ $c->credit_limit ?? 10000 }}, '{{ addslashes($c->gstin ?? '') }}', {{ $c->udhari_balance }})" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 7px; border-radius:6px; font-size:11.5px; color:#64748B; border-color:#E2E8F0; background:#F8FAFC; display:inline-flex; align-items:center; cursor:pointer;" title="Edit Customer Profile (Name, Phone, Address, Credit Limit)">
+                                    <i data-lucide="user-cog" style="width:13px;height:13px;"></i>
                                 </button>
                             </div>
                         </td>
@@ -377,9 +381,13 @@
                         <i data-lucide="file-text" style="width:13px;height:13px;"></i>
                         <span>Statement</span>
                     </a>
-                    <button type="button" onclick="openEditCustomerModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ addslashes($c->phone ?? '') }}', '{{ addslashes($c->address ?? '') }}', {{ $c->credit_limit ?? 10000 }}, '{{ addslashes($c->gstin ?? '') }}', {{ $c->udhari_balance }})" class="cust-action-btn" style="background:#F0F9FF; color:#0369A1; border:1px solid #BAE6FD;" title="Edit Customer Profile">
-                        <i data-lucide="edit-3" style="width:13px;height:13px;"></i>
-                        <span>Edit</span>
+                    <button type="button" onclick="openCustomerEntriesModal({{ $c->id }}, '{{ addslashes($c->name) }}', {{ $c->udhari_balance }}, '{{ addslashes($c->phone ?? '') }}')" class="cust-action-btn" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA;" title="View entries and delete mistake entry">
+                        <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                        <span>Fix / Delete Entry</span>
+                    </button>
+                    <button type="button" onclick="openEditCustomerModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ addslashes($c->phone ?? '') }}', '{{ addslashes($c->address ?? '') }}', {{ $c->credit_limit ?? 10000 }}, '{{ addslashes($c->gstin ?? '') }}', {{ $c->udhari_balance }})" class="cust-action-btn" style="background:#F8FAFC; color:#64748B; border:1px solid #E2E8F0;" title="Edit Customer Profile">
+                        <i data-lucide="user-cog" style="width:13px;height:13px;"></i>
+                        <span>Profile</span>
                     </button>
                 </div>
             </div>
@@ -558,14 +566,20 @@
                                 @else
                                     <span class="badge" style="background:#DCFCE7; color:#15803D; font-weight:700; font-size:10px; padding:3px 6px;">Settled</span>
                                 @endif
-                                @if($t->type !== 'udhari_sale')
-                                    <form method="POST" action="{{ route('mobileshop.khata.transaction.delete', ['id' => $t->id]) }}" onsubmit="return confirm('Delete duplicate entry #{{ $t->reference_no ?: $t->id }} (₹{{ number_format($t->amount, 2) }})? This will automatically restore {{ addslashes($t->customer_name) }}\'s balance.');" style="margin:0; display:inline;">
-                                        @csrf
-                                        <button type="submit" class="btn btn-outline btn-sm" style="font-size:11px; padding:4px 6px; color:#DC2626; border-color:#FECACA; background:#FEF2F2;" title="Delete Duplicate Entry">
-                                            🗑️
-                                        </button>
-                                    </form>
-                                @endif
+                                <button type="button" 
+                                        onclick="openEditKhataTxModal({{ $t->id }}, '{{ addslashes($t->customer_name) }}', {{ $t->amount }}, '{{ date('Y-m-d', strtotime($t->created_at)) }}', '{{ $t->payment_mode ?? '' }}', '{{ addslashes($t->remarks ?? '') }}', '{{ addslashes($t->reference_no ?? '') }}', '{{ in_array($t->type, ['opening_balance', 'old_udhar', 'debit_adjustment', 'udhari_sale']) ? 'debit' : 'credit' }}')" 
+                                        class="btn btn-outline btn-sm" 
+                                        style="font-size:11px; padding:4px 7px; color:#2563EB; border-color:#BFDBFE; background:#EFF6FF; display:inline-flex; align-items:center; gap:2px;" 
+                                        title="Edit this entry amount, date, or remarks">
+                                    <i data-lucide="edit-2" style="width:11px;height:11px;"></i> Edit
+                                </button>
+                                <button type="button" 
+                                        onclick="openDeleteKhataTxModal({{ $t->id }}, '{{ addslashes($t->customer_name) }}', {{ $t->amount }}, '{{ date('d M Y', strtotime($t->created_at)) }}', '{{ addslashes($t->reference_no ?: $t->id) }}', '{{ in_array($t->type, ['opening_balance', 'old_udhar', 'debit_adjustment', 'udhari_sale']) ? 'debit' : 'credit' }}', '{{ $t->type }}')" 
+                                        class="btn btn-outline btn-sm" 
+                                        style="font-size:11px; padding:4px 7px; color:#DC2626; border-color:#FECACA; background:#FEF2F2; display:inline-flex; align-items:center; gap:2px;" 
+                                        title="Delete mistake / duplicate entry">
+                                    <i data-lucide="trash-2" style="width:11px;height:11px;"></i> Delete Mistake
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -1092,6 +1106,174 @@
                 </div>
             </form>
         </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- CUSTOMER ENTRIES & MISTAKE MANAGEMENT MODAL                -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="customerEntriesModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.65); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+    <div class="card" style="max-width: 820px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; border:none; background:#fff; overflow:hidden;">
+        <!-- Header -->
+        <div style="background:#0F172A; color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:32px; height:32px; border-radius:8px; background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <i data-lucide="trash-2" style="width:18px;height:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px;">
+                        <span>Customer Entries &amp; Mistake Correction</span>
+                        <span id="custEntriesBadgeCount" class="badge" style="background:#4F46E5; color:#fff; font-size:11px;">0 txs</span>
+                    </div>
+                    <div style="font-size:11px; color:#94A3B8; font-weight:400;">
+                        Delete mistake entries, duplicate repayments, or edit amounts with automatic balance recovery
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="closeCustomerEntriesModal()" style="background:rgba(255,255,255,0.1); border:none; color:#FFFFFF; font-size:16px; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+        </div>
+
+        <!-- Customer Summary & Quick Sync Bar -->
+        <div style="padding:12px 20px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+                <div style="font-weight:900; font-size:15px; color:#0F172A;" id="custEntriesModalName">—</div>
+                <div style="font-size:11.5px; color:#64748B;" id="custEntriesModalPhone">—</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <div style="text-align:right;">
+                    <span style="font-size:10.5px; font-weight:700; color:#64748B; text-transform:uppercase; display:block;">Current Outstanding Due:</span>
+                    <strong style="font-size:16px; font-weight:900; color:#DC2626; font-family:monospace;" id="custEntriesModalDue">₹0.00</strong>
+                </div>
+                <form id="custEntriesSyncForm" method="POST" action="" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline" style="border:1px solid #CBD5E1; color:#0F172A; font-weight:700; padding:6px 12px; border-radius:7px; font-size:11.5px; cursor:pointer; background:#fff; display:inline-flex; align-items:center; gap:4px;" title="Re-calculate customer's balance accurately from their full ledger history">
+                        <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i> Sync Balance
+                    </button>
+                </form>
+                <a id="custEntriesStatementLink" href="#" class="btn btn-sm btn-primary" style="background:#4F46E5; color:#fff; font-weight:700; padding:6px 12px; border-radius:7px; font-size:11.5px; text-decoration:none; display:inline-flex; align-items:center; gap:4px;" title="View & print complete statement of account">
+                    <i data-lucide="file-text" style="width:12px;height:12px;"></i> View Full Statement
+                </a>
+            </div>
+        </div>
+
+        <!-- Entries Table List -->
+        <div style="padding:0; overflow-y:auto; flex:1; max-height:480px;">
+            <table class="data-table" id="custEntriesTable" style="margin:0; width:100%;">
+                <thead style="background:#F1F5F9; position:sticky; top:0; z-index:2;">
+                    <tr>
+                        <th style="font-size:11px; padding:10px 14px;">Date &amp; Time</th>
+                        <th style="font-size:11px;">Type</th>
+                        <th style="font-size:11px;">Particulars / Description</th>
+                        <th style="text-align:right; font-size:11px;">Amount (₹)</th>
+                        <th style="text-align:center; font-size:11px; width:180px;">Fix Mistake / Action</th>
+                    </tr>
+                </thead>
+                <tbody id="custEntriesTableBody">
+                    <!-- Populated dynamically via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="padding:12px 20px; background:#F8FAFC; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:11.5px; color:#64748B;">
+                💡 <em>Deleting a mistake entry automatically recalculates and restores the customer's balance.</em>
+            </div>
+            <button type="button" onclick="closeCustomerEntriesModal()" class="btn btn-outline" style="border:1px solid #CBD5E1; color:#475569; font-weight:700; padding:6px 16px; border-radius:8px; cursor:pointer;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- EDIT KHATA ENTRY MODAL                                    -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="editKhataTxModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:1300; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#ffffff; border-radius:12px; max-width:480px; width:100%; padding:22px 24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.15); border:1px solid #E2E8F0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #F1F5F9; padding-bottom:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:18px;">✏️</span>
+                <h3 style="font-size:15px; font-weight:800; color:#0F172A; margin:0;" id="editTxModalTitle">Edit Entry</h3>
+            </div>
+            <button type="button" onclick="closeEditKhataTxModal()" style="background:none; border:none; font-size:20px; color:#64748B; cursor:pointer;">&times;</button>
+        </div>
+        
+        <form id="editKhataTxForm" method="POST" action="">
+            @csrf
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:4px;">Amount (₹):</label>
+                <input type="number" step="0.01" min="0.01" name="amount" id="editTxAmount" required class="form-control" style="font-size:15px; font-weight:800; color:#0F172A; height:38px; border-radius:6px; border:1px solid #CBD5E1; padding:0 12px; width:100%;">
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:4px;">Date:</label>
+                <input type="date" name="date" id="editTxDate" required class="form-control" style="font-size:13px; font-weight:600; color:#0F172A; height:38px; border-radius:6px; border:1px solid #CBD5E1; padding:0 12px; width:100%;">
+            </div>
+
+            <div id="editTxPaymentModeGroup" style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:4px;">Payment Mode:</label>
+                <select name="payment_mode" id="editTxPaymentMode" class="form-control" style="font-size:13px; font-weight:600; color:#0F172A; height:38px; border-radius:6px; border:1px solid #CBD5E1; padding:0 12px; width:100%;">
+                    <option value="cash">Cash</option>
+                    <option value="upi">UPI</option>
+                    <option value="cash+upi">Cash + UPI</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="cheque">Cheque</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:4px;">Reference No / Bill Ref:</label>
+                <input type="text" name="reference_no" id="editTxRef" class="form-control" style="font-size:13px; font-weight:600; color:#0F172A; height:38px; border-radius:6px; border:1px solid #CBD5E1; padding:0 12px; width:100%;">
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#475569; margin-bottom:4px;">Particulars / Description / Remarks:</label>
+                <input type="text" name="remarks" id="editTxRemarks" class="form-control" style="font-size:13px; font-weight:600; color:#0F172A; height:38px; border-radius:6px; border:1px solid #CBD5E1; padding:0 12px; width:100%;">
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button type="button" onclick="closeEditKhataTxModal()" class="btn btn-outline" style="font-size:12px; font-weight:700; padding:7px 14px; border-radius:6px;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="font-size:12px; font-weight:700; padding:7px 18px; border-radius:6px; background:#2563EB; border-color:#2563EB;">💾 Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- DELETE MISTAKE ENTRY CONFIRMATION MODAL                   -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="deleteKhataTxModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); z-index:1300; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#ffffff; border-radius:12px; max-width:440px; width:100%; padding:24px 26px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.15); border:1px solid #E2E8F0;">
+        <div style="width:48px; height:48px; border-radius:50%; background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; font-size:22px;">
+            🗑️
+        </div>
+        <h3 style="font-size:16px; font-weight:800; color:#0F172A; text-align:center; margin-bottom:6px;">Delete Mistake Entry?</h3>
+        <p style="font-size:12px; color:#64748B; text-align:center; line-height:1.5; margin-bottom:14px;">
+            Are you sure you want to delete this entry? The customer's outstanding balance will be automatically recalculated and restored.
+        </p>
+
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:12px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="color:#64748B;">Customer:</span>
+                <span id="delTxCustName" style="font-weight:700; color:#0F172A;"></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="color:#64748B;">Date / Ref:</span>
+                <span id="delTxRef" style="font-weight:600; color:#475569;"></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="color:#64748B;">Amount:</span>
+                <span id="delTxAmount" style="font-weight:800; font-family:monospace; font-size:14px; color:#0F172A;"></span>
+            </div>
+            <div id="delTxEffect" style="margin-top:8px; padding-top:8px; border-top:1px dashed #CBD5E1; font-size:11.5px; color:#1E40AF; line-height:1.4;"></div>
+        </div>
+
+        <form id="deleteKhataTxForm" method="POST" action="">
+            @csrf
+            <div style="display:flex; justify-content:center; gap:8px;">
+                <button type="button" onclick="closeDeleteKhataTxModal()" class="btn btn-outline" style="font-size:12px; font-weight:700; padding:8px 16px; border-radius:6px;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="font-size:12px; font-weight:700; padding:8px 18px; border-radius:6px; background:#DC2626; border-color:#DC2626;">🗑️ Yes, Delete Mistake Entry</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -2194,6 +2376,169 @@
 
     function closeEditCustomerModal() {
         var modal = document.getElementById('editCustomerModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    const allKhataTransactions = @json($transactions->map(function($t) {
+        return [
+            'id'           => $t->id,
+            'customer_id'  => (int)$t->customer_id,
+            'customer_name'=> $t->customer_name,
+            'date'         => date('d M Y, h:i A', strtotime($t->created_at)),
+            'raw_date'     => date('Y-m-d', strtotime($t->created_at)),
+            'type'         => $t->type,
+            'ref_no'       => $t->reference_no ?? '',
+            'remarks'      => $t->remarks ?? '',
+            'amount'       => (float) $t->amount,
+            'payment_mode' => $t->payment_mode ?? '',
+            'balance_after'=> (float) $t->balance_after,
+        ];
+    }));
+
+    function openCustomerEntriesModal(custId, custName, custDue, custPhone) {
+        document.getElementById('custEntriesModalName').textContent = custName;
+        document.getElementById('custEntriesModalPhone').textContent = custPhone ? ('Mobile: ' + custPhone) : 'No phone registered';
+        document.getElementById('custEntriesModalDue').textContent = '₹' + Number(custDue).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+        const syncForm = document.getElementById('custEntriesSyncForm');
+        if (syncForm) {
+            syncForm.action = "{{ url('mobileshop/khata/customer') }}/" + custId + "/sync-balance";
+        }
+
+        const stLink = document.getElementById('custEntriesStatementLink');
+        if (stLink) {
+            stLink.href = "{{ url('mobileshop/khata/customer') }}/" + custId + "/statement";
+        }
+
+        const tbody = document.getElementById('custEntriesTableBody');
+        tbody.innerHTML = '';
+
+        const custTxs = allKhataTransactions.filter(function(t) {
+            return Number(t.customer_id) === Number(custId);
+        });
+
+        document.getElementById('custEntriesBadgeCount').textContent = custTxs.length + (custTxs.length === 1 ? ' entry' : ' entries');
+
+        if (custTxs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:32px 16px; color:#94A3B8;">No transactions found for this customer.</td></tr>';
+        } else {
+            custTxs.forEach(function(tx) {
+                const isDebit = ['opening_balance', 'old_udhar', 'debit_adjustment', 'udhari_sale'].includes(tx.type);
+                const isRepayment = (tx.type === 'payment_received');
+                let typeBadge = '';
+                if (isRepayment) {
+                    typeBadge = '<span class="badge" style="background:#DCFCE7; color:#15803D; font-weight:700; font-size:10px;">CREDIT / REPAYMENT</span>';
+                } else if (tx.type === 'udhari_sale') {
+                    typeBadge = '<span class="badge" style="background:#FEE2E2; color:#B91C1C; font-weight:700; font-size:10px;">UDHARI SALE</span>';
+                } else if (tx.type === 'opening_balance' || tx.type === 'old_udhar') {
+                    typeBadge = '<span class="badge" style="background:#FEF3C7; color:#B45309; font-weight:800; font-size:10px;">OLD UDHAR</span>';
+                } else {
+                    typeBadge = '<span class="badge" style="background:#E0F2FE; color:#0369A1; font-weight:700; font-size:10px;">ADJUSTMENT</span>';
+                }
+
+                const safeCustName = custName.replace(/'/g, "\\'");
+                const safeRemarks = (tx.remarks || '').replace(/'/g, "\\'");
+                const safeRef = (tx.ref_no || '').replace(/'/g, "\\'");
+
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #E5E7EB';
+                tr.innerHTML = `
+                    <td style="padding:10px 14px; font-size:12px; color:#475569; white-space:nowrap; vertical-align:middle;">
+                        ${tx.date}
+                    </td>
+                    <td style="padding:10px 14px; vertical-align:middle;">
+                        ${typeBadge}
+                        ${tx.payment_mode ? `<div style="font-size:10px; color:#64748B; text-transform:uppercase; margin-top:2px;">Mode: ${tx.payment_mode}</div>` : ''}
+                    </td>
+                    <td style="padding:10px 14px; vertical-align:middle;">
+                        ${tx.ref_no ? `<div style="font-family:monospace; font-weight:700; font-size:11.5px; color:#0F172A;">#${tx.ref_no}</div>` : ''}
+                        <div style="font-size:12px; color:#334155;">${tx.remarks || 'Khata entry'}</div>
+                    </td>
+                    <td style="padding:10px 14px; text-align:right; font-weight:800; font-size:13px; font-family:monospace; color:${isRepayment ? '#16A34A' : '#DC2626'}; vertical-align:middle;">
+                        ${isRepayment ? '-' : '+'}₹${Number(tx.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                    </td>
+                    <td style="padding:10px 14px; text-align:center; vertical-align:middle; white-space:nowrap;">
+                        <div style="display:inline-flex; gap:4px; align-items:center;">
+                            <button type="button" 
+                                    class="btn btn-xs btn-outline" 
+                                    style="padding:3px 8px; font-size:11px; font-weight:700; border-radius:5px; color:#2563EB; border-color:#BFDBFE; background:#EFF6FF; cursor:pointer;"
+                                    onclick="openEditKhataTxModal(${tx.id}, '${safeCustName}', ${tx.amount}, '${tx.raw_date}', '${tx.payment_mode}', '${safeRemarks}', '${safeRef}', '${isDebit ? 'debit' : 'credit'}')">
+                                ✏️ Edit
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-xs btn-outline" 
+                                    style="padding:3px 8px; font-size:11px; font-weight:700; border-radius:5px; color:#DC2626; border-color:#FECACA; background:#FEF2F2; cursor:pointer;"
+                                    onclick="openDeleteKhataTxModal(${tx.id}, '${safeCustName}', ${tx.amount}, '${tx.date}', '${tx.ref_no || tx.id}', '${isDebit ? 'debit' : 'credit'}', '${tx.type}')">
+                                🗑️ Delete Mistake
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        const modal = document.getElementById('customerEntriesModal');
+        if (modal) modal.style.display = 'flex';
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
+
+    function closeCustomerEntriesModal() {
+        const modal = document.getElementById('customerEntriesModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function openEditKhataTxModal(id, custName, amount, date, paymentMode, remarks, ref, direction) {
+        const modal = document.getElementById('editKhataTxModal');
+        const form = document.getElementById('editKhataTxForm');
+        form.action = "{{ url('mobileshop/khata/transaction') }}/" + id + "/update";
+
+        document.getElementById('editTxModalTitle').textContent = 'Edit ' + (direction === 'debit' ? 'Old Udhar / Debit' : 'Payment / Credit') + ' for ' + custName;
+        document.getElementById('editTxAmount').value = Number(amount).toFixed(2);
+        document.getElementById('editTxDate').value = date || '';
+        document.getElementById('editTxRef').value = ref || '';
+        document.getElementById('editTxRemarks').value = remarks || '';
+
+        const modeGroup = document.getElementById('editTxPaymentModeGroup');
+        const modeSelect = document.getElementById('editTxPaymentMode');
+        if (direction === 'credit') {
+            modeGroup.style.display = 'block';
+            if (paymentMode) modeSelect.value = paymentMode;
+        } else {
+            modeGroup.style.display = 'none';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeEditKhataTxModal() {
+        const modal = document.getElementById('editKhataTxModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function openDeleteKhataTxModal(id, custName, amount, date, ref, direction, type) {
+        const modal = document.getElementById('deleteKhataTxModal');
+        const form = document.getElementById('deleteKhataTxForm');
+        form.action = "{{ url('mobileshop/khata/transaction') }}/" + id + "/delete";
+
+        document.getElementById('delTxCustName').textContent = custName;
+        document.getElementById('delTxRef').textContent = (ref ? '#' + ref + ' · ' : '') + date;
+        document.getElementById('delTxAmount').textContent = '₹' + Number(amount).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+        const effectEl = document.getElementById('delTxEffect');
+        if (direction === 'credit') {
+            effectEl.innerHTML = '👉 <strong>Effect:</strong> Deleting this duplicate payment will add <strong>₹' + Number(amount).toFixed(2) + '</strong> back to <strong>' + custName + '</strong>\'s pending due balance.';
+        } else {
+            effectEl.innerHTML = '👉 <strong>Effect:</strong> Deleting this mistake debit entry will reduce <strong>₹' + Number(amount).toFixed(2) + '</strong> from <strong>' + custName + '</strong>\'s pending due balance.';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeDeleteKhataTxModal() {
+        const modal = document.getElementById('deleteKhataTxModal');
         if (modal) modal.style.display = 'none';
     }
 

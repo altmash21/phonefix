@@ -281,7 +281,7 @@
                     <th style="text-align: right; padding: 8px 6px; font-weight: 700; color: #1F2937; font-size: 11px; text-transform: uppercase; width: 14%;">Total Amount (₹)</th>
                     <th style="text-align: right; padding: 8px 6px; font-weight: 700; color: #1F2937; font-size: 11px; text-transform: uppercase; width: 14%;">Amount Received (₹)</th>
                     <th style="text-align: right; padding: 8px 6px; font-weight: 700; color: #1F2937; font-size: 11px; text-transform: uppercase; width: 14%;">Balance (₹)</th>
-                    <th class="no-print" style="text-align: center; padding: 8px 6px; font-weight: 700; color: #1F2937; font-size: 11px; text-transform: uppercase; width: 10%;">Actions</th>
+                    <th class="no-print" style="text-align: center; padding: 8px 6px; font-weight: 700; color: #DC2626; font-size: 11px; text-transform: uppercase; width: 14%;">Fix Mistake / Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -379,34 +379,34 @@
                             <div style="display: inline-flex; align-items: center; gap: 4px;">
                                 <button type="button" 
                                         class="btn btn-xs" 
-                                        style="padding: 3px 7px; font-size: 11px; font-weight: 700; border-radius: 4px; color: #2563EB; border: 1px solid #BFDBFE; background: #EFF6FF; cursor: pointer;" 
+                                        style="padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; color: #2563EB; border: 1px solid #BFDBFE; background: #EFF6FF; cursor: pointer;" 
                                         onclick="openEditKhataModal({{ $entry->source_id }}, '{{ addslashes($itemName) }}', {{ $entry->billed > 0 ? $entry->billed : $entry->paid }}, '{{ date('Y-m-d', strtotime($entry->created_at)) }}', '{{ $entry->payment_mode ?? '' }}', '{{ addslashes($entry->raw_remarks ?? $entry->description ?? '') }}', '{{ addslashes($entry->ref_no ?? '') }}', '{{ in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']) ? 'debit' : 'credit' }}')"
                                         title="Edit this entry amount, date, or remarks">
                                     ✏️ Edit
                                 </button>
                                 <button type="button" 
                                         class="btn btn-xs" 
-                                        style="padding: 3px 7px; font-size: 11px; font-weight: 700; border-radius: 4px; color: #DC2626; border: 1px solid #FECACA; background: #FEF2F2; cursor: pointer;" 
+                                        style="padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; color: #DC2626; border: 1px solid #FECACA; background: #FEF2F2; cursor: pointer;" 
                                         onclick="openDeleteKhataModal({{ $entry->source_id }}, '{{ addslashes($itemName) }}', {{ $entry->billed > 0 ? $entry->billed : $entry->paid }}, '{{ $entry->date }}', '{{ addslashes($entry->ref_no ?? '') }}', '{{ in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']) ? 'debit' : 'credit' }}')"
                                         title="Delete duplicate entry and restore balance">
-                                    🗑️ Delete
+                                    🗑️ Delete Mistake
                                 </button>
                             </div>
                         @elseif(($entry->source ?? '') === 'accessory_sale' && !empty($entry->source_id))
                             <button type="button" 
                                     class="btn btn-xs" 
-                                    style="padding: 3px 7px; font-size: 11px; font-weight: 700; border-radius: 4px; color: #B45309; border: 1px solid #FDE68A; background: #FFFBEB; cursor: pointer;" 
+                                    style="padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; color: #B45309; border: 1px solid #FDE68A; background: #FFFBEB; cursor: pointer;" 
                                     onclick="openVoidSaleModal('accessory', {{ $entry->source_id }}, '{{ $entry->ref_no }}', '{{ addslashes($itemName) }}', {{ $entry->billed }})"
                                     title="Void duplicate sale bill">
-                                🗑️ Void Bill
+                                🗑️ Void Mistake Bill
                             </button>
                         @elseif(($entry->source ?? '') === 'mobile_sale' && !empty($entry->source_id))
                             <button type="button" 
                                     class="btn btn-xs" 
-                                    style="padding: 3px 7px; font-size: 11px; font-weight: 700; border-radius: 4px; color: #B45309; border: 1px solid #FDE68A; background: #FFFBEB; cursor: pointer;" 
+                                    style="padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; color: #B45309; border: 1px solid #FDE68A; background: #FFFBEB; cursor: pointer;" 
                                     onclick="openVoidSaleModal('mobile', {{ $entry->source_id }}, '{{ $entry->ref_no }}', '{{ addslashes($itemName) }}', {{ $entry->billed }})"
                                     title="Void duplicate sale bill">
-                                🗑️ Void Bill
+                                🗑️ Void Mistake Bill
                             </button>
                         @else
                             <span style="color: #94A3B8; font-size: 11px;">—</span>
