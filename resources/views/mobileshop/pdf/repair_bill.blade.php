@@ -177,8 +177,8 @@
                 <th style="text-align: left;">Service / Spare Part Description</th>
                 <th style="width: 60px; text-align: center;">Type</th>
                 <th style="width: 45px; text-align: center;">Qty</th>
-                <th style="width: 80px; text-align: right;">Rate (₹)</th>
-                <th style="width: 90px; text-align: right;">Amount (₹)</th>
+                <th style="width: 80px; text-align: right;">Rate (Rs.)</th>
+                <th style="width: 90px; text-align: right;">Amount (Rs.)</th>
             </tr>
         </thead>
         <tbody>
@@ -191,8 +191,8 @@
                 </td>
                 <td style="text-align: center;">Service</td>
                 <td style="text-align: center;">1</td>
-                <td style="text-align: right;">₹{{ number_format($laborCharge, 2) }}</td>
-                <td style="text-align: right; font-weight: bold;">₹{{ number_format($laborCharge, 2) }}</td>
+                <td style="text-align: right;">Rs. {{ number_format($laborCharge, 2) }}</td>
+                <td style="text-align: right; font-weight: bold;">Rs. {{ number_format($laborCharge, 2) }}</td>
             </tr>
 
             @forelse($parts as $p)
@@ -211,8 +211,8 @@
                     </td>
                     <td style="text-align: center;">Part</td>
                     <td style="text-align: center;">{{ $qty }}</td>
-                    <td style="text-align: right;">₹{{ number_format($rate, 2) }}</td>
-                    <td style="text-align: right; font-weight: bold;">₹{{ number_format($lineTot, 2) }}</td>
+                    <td style="text-align: right;">Rs. {{ number_format($rate, 2) }}</td>
+                    <td style="text-align: right; font-weight: bold;">Rs. {{ number_format($lineTot, 2) }}</td>
                 </tr>
             @empty
                 @if($partsCost > 0)
@@ -221,8 +221,8 @@
                         <td><strong>Replaced Hardware Spare Parts</strong></td>
                         <td style="text-align: center;">Part</td>
                         <td style="text-align: center;">1</td>
-                        <td style="text-align: right;">₹{{ number_format($partsCost, 2) }}</td>
-                        <td style="text-align: right; font-weight: bold;">₹{{ number_format($partsCost, 2) }}</td>
+                        <td style="text-align: right;">Rs. {{ number_format($partsCost, 2) }}</td>
+                        <td style="text-align: right; font-weight: bold;">Rs. {{ number_format($partsCost, 2) }}</td>
                     </tr>
                 @endif
             @endforelse
@@ -238,7 +238,7 @@
                     @if($balanceDue <= 0.01)
                         <div style="font-weight: bold; color: #16a34a; font-size: 11px;">✓ FULLY PAID &amp; SETTLED</div>
                     @else
-                        <div style="font-weight: bold; color: #dc2626; font-size: 11px;">⚠️ BALANCE DUE: ₹{{ number_format($balanceDue, 2) }}</div>
+                        <div style="font-weight: bold; color: #dc2626; font-size: 11px;">⚠️ BALANCE DUE: Rs. {{ number_format($balanceDue, 2) }}</div>
                         @if($storeUpi)
                             <div style="font-size: 9px; color: #4b5563; margin-top: 2px;">UPI: {{ $storeUpi }}</div>
                         @endif
@@ -249,25 +249,25 @@
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td style="color: #4b5563;">Labor &amp; Service:</td>
-                        <td style="text-align: right; font-weight: bold;">₹{{ number_format($laborCharge, 2) }}</td>
+                        <td style="text-align: right; font-weight: bold;">Rs. {{ number_format($laborCharge, 2) }}</td>
                     </tr>
                     @if($partsCost > 0)
                         <tr>
                             <td style="color: #4b5563;">Parts Total:</td>
-                            <td style="text-align: right; font-weight: bold;">₹{{ number_format($partsCost, 2) }}</td>
+                            <td style="text-align: right; font-weight: bold;">Rs. {{ number_format($partsCost, 2) }}</td>
                         </tr>
                     @endif
                     <tr style="border-top: 1.5px solid #d1d5db;">
                         <td style="font-weight: bold; font-size: 11px; padding-top: 4px;">Total Bill Amount:</td>
-                        <td style="text-align: right; font-weight: bold; font-size: 12px; padding-top: 4px;">₹{{ number_format($grandTotal, 2) }}</td>
+                        <td style="text-align: right; font-weight: bold; font-size: 12px; padding-top: 4px;">Rs. {{ number_format($grandTotal, 2) }}</td>
                     </tr>
                     <tr>
                         <td style="color: #16a34a; font-weight: bold;">Advance Paid:</td>
-                        <td style="text-align: right; color: #16a34a; font-weight: bold;">-₹{{ number_format($advancePaid, 2) }}</td>
+                        <td style="text-align: right; color: #16a34a; font-weight: bold;">-Rs. {{ number_format($advancePaid, 2) }}</td>
                     </tr>
                     <tr style="border-top: 1px dashed #d1d5db;">
                         <td style="font-weight: bold; font-size: 11px; color: {{ $balanceDue > 0 ? '#dc2626' : '#16a34a' }}; padding-top: 4px;">Balance Due:</td>
-                        <td style="text-align: right; font-weight: bold; font-size: 13px; color: {{ $balanceDue > 0 ? '#dc2626' : '#16a34a' }}; padding-top: 4px;">₹{{ number_format($balanceDue, 2) }}</td>
+                        <td style="text-align: right; font-weight: bold; font-size: 13px; color: {{ $balanceDue > 0 ? '#dc2626' : '#16a34a' }}; padding-top: 4px;">Rs. {{ number_format($balanceDue, 2) }}</td>
                     </tr>
                 </table>
             </td>

@@ -395,6 +395,71 @@ class KhataController extends BaseMobileShopController
     }
 
     /**
+     * Update Customer Profile Details from Khata Screen
+     */
+    public function updateCustomer(Request $request, $id)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-sales') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('repair-technician')
+        ), 403, 'Unauthorized action.');
+
+        $request->validate([
+            'name'         => 'required|string|max:191',
+            'phone'        => 'nullable|string|max:50',
+            'address'      => 'nullable|string|max:500',
+            'gstin'        => 'nullable|string|max:15',
+            'credit_limit' => 'nullable|numeric|min:0',
+        ]);
+
+        $companyId = $this->getCompanyId();
+
+        $customer = DB::table('ms_customers')
+            ->where('company_id', $companyId)
+            ->where('id', $id)
+            ->first();
+
+        if (!$customer) {
+            return redirect()->back()->with('error', 'Customer not found.');
+        }
+
+        $cleanPhone = $request->filled('phone') ? trim($request->phone) : null;
+
+        if ($cleanPhone) {
+            $existing = DB::table('ms_customers')
+                ->where('company_id', $companyId)
+                ->where('phone', $cleanPhone)
+                ->where('id', '!=', $id)
+                ->first();
+
+            if ($existing) {
+                return redirect()->back()->with('error', "Another customer ('{$existing->name}') is already registered with mobile number {$cleanPhone}.");
+            }
+        }
+
+        DB::table('ms_customers')
+            ->where('company_id', $companyId)
+            ->where('id', $id)
+            ->update([
+                'name'         => trim($request->name),
+                'phone'        => $cleanPhone,
+                'address'      => $request->filled('address') ? trim($request->address) : null,
+                'gstin'        => $request->filled('gstin') ? strtoupper(trim($request->gstin)) : null,
+                'credit_limit' => $request->filled('credit_limit') ? (float) $request->credit_limit : ($customer->credit_limit ?? 10000.00),
+                'updated_at'   => now(),
+            ]);
+
+        \Illuminate\Support\Facades\Cache::forget("ms_customers_picker_v2_{$companyId}");
+
+        return redirect()->back()->with('success', "Customer profile for '{$request->name}' updated successfully!");
+    }
+
+    /**
      * Delete Duplicate Khata Entry (Statement Edit / Correction)
      */
     public function deleteTransaction(Request $request, $id)

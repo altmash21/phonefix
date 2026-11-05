@@ -105,12 +105,28 @@
             </div>
         </div>
 
-        <div class="cust-search-wrap" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <div class="cust-search-wrap" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
             <!-- Customer Search Input -->
-            <div class="search-bar" style="background:#fff; border:1px solid #CBD5E1; border-radius:8px; padding:5px 12px; display:flex; align-items:center; gap:6px; min-width:260px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+            <div class="search-bar" style="background:#fff; border:1px solid #CBD5E1; border-radius:8px; padding:5px 12px; display:flex; align-items:center; gap:6px; min-width:240px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
                 <i data-lucide="search" style="width:14px;height:14px; color:#94A3B8;"></i>
                 <input type="text" id="custUdhariSearchInput" placeholder="Search customer, phone, address..." oninput="filterCustomerUdhariList()" style="border:none; outline:none; font-size:12px; color:#0F172A; width:100%; background:transparent;">
                 <button type="button" onclick="clearCustUdhariSearch()" id="btnClearCustUdhariSearch" style="display:none; background:#e2e4e8; border:none; border-radius:50%; width:16px; height:16px; color:#4f535b; cursor:pointer; font-size:10px; line-height:16px; text-align:center; padding:0;">✕</button>
+            </div>
+
+            <!-- Customer Sorting Dropdown -->
+            <div style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #CBD5E1; border-radius:8px; padding:4px 10px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                <i data-lucide="arrow-up-down" style="width:13px; height:13px; color:#64748B;"></i>
+                <span style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Sort:</span>
+                <select id="custSortSelect" onchange="applyCustomerSortAndFilter()" style="border:none; outline:none; background:transparent; font-size:12px; font-weight:700; color:#0F172A; cursor:pointer; padding:2px 0;">
+                    <option value="due_desc" selected>💰 Most Udhari (High to Low)</option>
+                    <option value="due_asc">🪙 Least Udhari (Low to High)</option>
+                    <option value="activity_desc">⏱️ Last Modified / Recent</option>
+                    <option value="activity_asc">⏱️ Oldest Activity First</option>
+                    <option value="name_asc">🔤 Name (A → Z)</option>
+                    <option value="name_desc">🔤 Name (Z → A)</option>
+                    <option value="tx_desc">📊 Most Transactions</option>
+                    <option value="tx_asc">📊 Fewest Transactions</option>
+                </select>
             </div>
         </div>
     </div>
@@ -138,11 +154,31 @@
         <table class="data-table" id="customerUdhariTable" style="margin:0; width:100%;">
             <thead style="background:#F1F5F9;">
                 <tr>
-                    <th style="color:#475569; font-weight:700; font-size:12px; padding:12px 16px;">Customer Name & Info</th>
+                    <th onclick="toggleCustSort('name')" style="color:#475569; font-weight:700; font-size:12px; padding:12px 16px; cursor:pointer; user-select:none;" title="Click to sort by Name (A-Z / Z-A)">
+                        <div style="display:inline-flex; align-items:center; gap:5px;">
+                            <span>Customer Name &amp; Info</span>
+                            <span id="sortIndicator_name" style="font-size:10px; color:#94A3B8;">⇅</span>
+                        </div>
+                    </th>
                     <th style="color:#475569; font-weight:700; font-size:12px;">Mobile Phone</th>
-                    <th style="color:#475569; font-weight:700; font-size:12px; text-align:right;">Outstanding Due (₹)</th>
-                    <th style="color:#475569; font-weight:700; font-size:12px;">Last Activity</th>
-                    <th style="color:#475569; font-weight:700; font-size:12px; text-align:center;">Transactions</th>
+                    <th onclick="toggleCustSort('due')" style="color:#475569; font-weight:700; font-size:12px; text-align:right; cursor:pointer; user-select:none;" title="Click to sort by Outstanding Due">
+                        <div style="display:inline-flex; align-items:center; justify-content:flex-end; gap:5px; width:100%;">
+                            <span>Outstanding Due (₹)</span>
+                            <span id="sortIndicator_due" style="font-size:10px; color:#4F46E5; font-weight:900;">▼</span>
+                        </div>
+                    </th>
+                    <th onclick="toggleCustSort('activity')" style="color:#475569; font-weight:700; font-size:12px; cursor:pointer; user-select:none;" title="Click to sort by Last Modified / Activity">
+                        <div style="display:inline-flex; align-items:center; gap:5px;">
+                            <span>Last Activity</span>
+                            <span id="sortIndicator_activity" style="font-size:10px; color:#94A3B8;">⇅</span>
+                        </div>
+                    </th>
+                    <th onclick="toggleCustSort('tx')" style="color:#475569; font-weight:700; font-size:12px; text-align:center; cursor:pointer; user-select:none;" title="Click to sort by Transaction Count">
+                        <div style="display:inline-flex; align-items:center; justify-content:center; gap:5px; width:100%;">
+                            <span>Transactions</span>
+                            <span id="sortIndicator_tx" style="font-size:10px; color:#94A3B8;">⇅</span>
+                        </div>
+                    </th>
                     <th style="color:#475569; font-weight:700; font-size:12px; text-align:center;">Quick Actions</th>
                 </tr>
             </thead>
@@ -178,7 +214,7 @@
                         $cWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($cMsg);
                         $isDebtor = ($c->udhari_balance > 0);
                     @endphp
-                    <tr class="cust-udhari-row" data-debtor="{{ $isDebtor ? '1' : '0' }}" data-due="{{ $c->udhari_balance }}" data-search="{{ strtolower($c->name . ' ' . ($c->phone ?? '') . ' ' . ($c->address ?? '')) }}">
+                    <tr class="cust-udhari-row" data-id="{{ $c->id }}" data-name="{{ strtolower($c->name) }}" data-activity="{{ $c->last_tx_date ? strtotime($c->last_tx_date) : 0 }}" data-txs="{{ (int) $c->total_tx_count }}" data-debtor="{{ $isDebtor ? '1' : '0' }}" data-due="{{ $c->udhari_balance }}" data-search="{{ strtolower($c->name . ' ' . ($c->phone ?? '') . ' ' . ($c->address ?? '')) }}">
                         <td style="padding:12px 16px;">
                             <div style="font-weight:800; font-size:13.5px; color:#0F172A;">
                                 <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" style="color:#0F172A; text-decoration:none;" onmouseover="this.style.color='#4F46E5';" onmouseout="this.style.color='#0F172A';">
@@ -240,6 +276,9 @@
                                 <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; text-decoration:none; color:#0F172A;" title="View Statement">
                                     <i data-lucide="file-text" style="width:13px;height:13px;"></i> Statement
                                 </a>
+                                <button type="button" onclick="openEditCustomerModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ addslashes($c->phone ?? '') }}', '{{ addslashes($c->address ?? '') }}', {{ $c->credit_limit ?? 10000 }}, '{{ addslashes($c->gstin ?? '') }}', {{ $c->udhari_balance }})" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; color:#0369A1; border-color:#BAE6FD; background:#F0F9FF; display:inline-flex; align-items:center; gap:3px; cursor:pointer;" title="Edit Customer Profile (Name, Phone, Address, Credit Limit)">
+                                    <i data-lucide="edit-3" style="width:12px;height:12px;"></i> Edit
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -288,7 +327,7 @@
                 $cMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                 $cWaUrl = 'https://wa.me/' . $cPhone . '?text=' . rawurlencode($cMsg);
             @endphp
-            <div class="cust-udhari-mobile-card" data-debtor="{{ $isDebtor ? '1' : '0' }}" data-due="{{ $c->udhari_balance }}" data-search="{{ strtolower($c->name . ' ' . ($c->phone ?? '') . ' ' . ($c->address ?? '')) }}">
+            <div class="cust-udhari-mobile-card" data-id="{{ $c->id }}" data-name="{{ strtolower($c->name) }}" data-activity="{{ $c->last_tx_date ? strtotime($c->last_tx_date) : 0 }}" data-txs="{{ (int) $c->total_tx_count }}" data-debtor="{{ $isDebtor ? '1' : '0' }}" data-due="{{ $c->udhari_balance }}" data-search="{{ strtolower($c->name . ' ' . ($c->phone ?? '') . ' ' . ($c->address ?? '')) }}">
                 <div class="cust-card-header">
                     <div class="cust-card-info">
                         <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $c->id]) }}" class="cust-card-name" title="View Customer Statement">
@@ -338,6 +377,10 @@
                         <i data-lucide="file-text" style="width:13px;height:13px;"></i>
                         <span>Statement</span>
                     </a>
+                    <button type="button" onclick="openEditCustomerModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ addslashes($c->phone ?? '') }}', '{{ addslashes($c->address ?? '') }}', {{ $c->credit_limit ?? 10000 }}, '{{ addslashes($c->gstin ?? '') }}', {{ $c->udhari_balance }})" class="cust-action-btn" style="background:#F0F9FF; color:#0369A1; border:1px solid #BAE6FD;" title="Edit Customer Profile">
+                        <i data-lucide="edit-3" style="width:13px;height:13px;"></i>
+                        <span>Edit</span>
+                    </button>
                 </div>
             </div>
         @endforeach
@@ -979,6 +1022,75 @@
             <button type="button" onclick="closeDesktopWaGuide()" class="btn btn-outline btn-sm" style="font-weight:700; padding:7px 16px; border-radius:7px; cursor:pointer;">
                 Got it
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- EDIT CUSTOMER DETAILS MODAL                               -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="editCustomerModal" style="display:none; position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); align-items:center; justify-content:center; padding: 16px;">
+    <div class="card" style="max-width: 500px; width: 100%; max-height: 92vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border-radius:14px; border:none; background:#fff;">
+        <div style="background:#0F172A; color:#fff; padding:16px 20px; border-top-left-radius:14px; border-top-right-radius:14px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px;">
+                <div style="width:28px; height:28px; border-radius:6px; background:#E0F2FE; color:#0369A1; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <i data-lucide="edit-3" style="width:16px;height:16px;"></i>
+                </div>
+                <div>
+                    <div>Edit Customer Profile</div>
+                    <div style="font-size:11px; color:#94A3B8; font-weight:400;">Update contact information &amp; credit parameters</div>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditCustomerModal()" style="background:rgba(255,255,255,0.1); border:none; color:#FFFFFF; font-size:16px; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+        </div>
+
+        <div class="card-body" style="padding:20px;">
+            <!-- Current Due Status Banner -->
+            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:11.5px; font-weight:700; color:#475569;">Current Khata Balance:</div>
+                <div id="editCustDueBadge" style="font-size:14px; font-weight:900; color:#DC2626; font-family:monospace;">₹0.00</div>
+            </div>
+
+            <form action="" method="POST" id="formEditCustomer">
+                @csrf
+                <input type="hidden" id="editCustId" name="customer_id">
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label required" style="font-weight:700; color:#0F172A; font-size:12px;">Customer Full Name</label>
+                    <input type="text" name="name" id="editCustName" required placeholder="e.g. Ramesh Kumar" class="form-control" style="font-weight:600; color:#0F172A; border-color:#CBD5E1; font-size:13px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label" style="font-weight:700; color:#0F172A; font-size:12px;">Mobile Phone Number</label>
+                    <div style="position:relative;">
+                        <input type="text" name="phone" id="editCustPhone" placeholder="10-digit mobile number" class="form-control" style="font-weight:600; color:#0F172A; border-color:#CBD5E1; font-size:13px; font-family:monospace;">
+                    </div>
+                    <div style="font-size:10.5px; color:#64748B; margin-top:3px;">Used for 1-click WhatsApp payment reminders and invoice lookup.</div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label class="form-label" style="font-weight:700; color:#0F172A; font-size:12px;">Address / Location</label>
+                    <textarea name="address" id="editCustAddress" rows="2" placeholder="e.g. Near Jama Masjid, Katra Azamgarh" class="form-control" style="font-weight:500; color:#0F172A; border-color:#CBD5E1; font-size:12px; resize:vertical;"></textarea>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+                    <div>
+                        <label class="form-label" style="font-weight:700; color:#0F172A; font-size:12px;">Credit Limit (₹)</label>
+                        <input type="number" step="1" min="0" name="credit_limit" id="editCustLimit" placeholder="10000" class="form-control" style="font-weight:600; color:#0F172A; border-color:#CBD5E1; font-size:12px;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-weight:700; color:#0F172A; font-size:12px;">GSTIN (Optional)</label>
+                        <input type="text" name="gstin" id="editCustGstin" placeholder="e.g. 09AAAAA0000A1Z5" class="form-control" style="font-weight:600; color:#0F172A; border-color:#CBD5E1; font-size:12px; text-transform:uppercase;">
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0;">
+                    <button type="button" onclick="closeEditCustomerModal()" class="btn btn-outline" style="border:1px solid #CBD5E1; color:#475569; font-weight:700; padding:8px 18px; border-radius:8px; cursor:pointer;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background:#4F46E5; color:#FFFFFF; font-weight:800; padding:9px 22px; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="check-circle" style="width:16px;height:16px;"></i> Update Customer
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -1918,6 +2030,171 @@
         }
 
         filterCustomerUdhariList();
+    }
+
+    let currentCustSort = 'due_desc';
+
+    function applyCustomerSortAndFilter() {
+        var sortSelect = document.getElementById('custSortSelect');
+        if (sortSelect) {
+            currentCustSort = sortSelect.value;
+        }
+
+        // Update Header Indicators
+        ['name', 'due', 'activity', 'tx'].forEach(function(col) {
+            var indicator = document.getElementById('sortIndicator_' + col);
+            if (!indicator) return;
+            if (currentCustSort.startsWith(col)) {
+                indicator.textContent = currentCustSort.endsWith('_asc') ? '▲' : '▼';
+                indicator.style.color = '#4F46E5';
+                indicator.style.fontWeight = '900';
+            } else {
+                indicator.textContent = '⇅';
+                indicator.style.color = '#94A3B8';
+                indicator.style.fontWeight = 'normal';
+            }
+        });
+
+        // 1. Sort Desktop Table Rows
+        var tbody = document.querySelector('#customerUdhariTable tbody');
+        if (tbody) {
+            var rows = Array.from(tbody.querySelectorAll('tr.cust-udhari-row'));
+            rows.sort(function(a, b) {
+                return compareCustElements(a, b, currentCustSort);
+            });
+            var emptyRow = document.getElementById('custTableEmptyFilterRow');
+            rows.forEach(function(row) {
+                if (emptyRow) {
+                    tbody.insertBefore(row, emptyRow);
+                } else {
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        // 2. Sort Mobile Cards
+        var mobileWrap = document.getElementById('custUdhariMobileCards');
+        if (mobileWrap) {
+            var cards = Array.from(mobileWrap.querySelectorAll('.cust-udhari-mobile-card'));
+            cards.sort(function(a, b) {
+                return compareCustElements(a, b, currentCustSort);
+            });
+            var emptyMobRow = document.getElementById('custMobileEmptyRow');
+            cards.forEach(function(card) {
+                if (emptyMobRow) {
+                    mobileWrap.insertBefore(card, emptyMobRow);
+                } else {
+                    mobileWrap.appendChild(card);
+                }
+            });
+        }
+
+        // Re-apply search & active pill filtering
+        filterCustomerUdhariList();
+    }
+
+    function compareCustElements(a, b, sortKey) {
+        if (sortKey === 'due_desc') {
+            return (parseFloat(b.dataset.due) || 0) - (parseFloat(a.dataset.due) || 0);
+        } else if (sortKey === 'due_asc') {
+            return (parseFloat(a.dataset.due) || 0) - (parseFloat(b.dataset.due) || 0);
+        } else if (sortKey === 'activity_desc') {
+            var actA = parseInt(a.dataset.activity) || 0;
+            var actB = parseInt(b.dataset.activity) || 0;
+            if (actB !== actA) return actB - actA;
+            return (parseFloat(b.dataset.due) || 0) - (parseFloat(a.dataset.due) || 0);
+        } else if (sortKey === 'activity_asc') {
+            var actA = parseInt(a.dataset.activity) || 0;
+            var actB = parseInt(b.dataset.activity) || 0;
+            if (actB !== actA) return actA - actB;
+            return (parseFloat(b.dataset.due) || 0) - (parseFloat(a.dataset.due) || 0);
+        } else if (sortKey === 'name_asc') {
+            var nameA = (a.dataset.name || '').toLowerCase();
+            var nameB = (b.dataset.name || '').toLowerCase();
+            return nameA.localeCompare(nameB);
+        } else if (sortKey === 'name_desc') {
+            var nameA = (a.dataset.name || '').toLowerCase();
+            var nameB = (b.dataset.name || '').toLowerCase();
+            return nameB.localeCompare(nameA);
+        } else if (sortKey === 'tx_desc') {
+            var txA = parseInt(a.dataset.txs) || 0;
+            var txB = parseInt(b.dataset.txs) || 0;
+            if (txB !== txA) return txB - txA;
+            return (parseFloat(b.dataset.due) || 0) - (parseFloat(a.dataset.due) || 0);
+        } else if (sortKey === 'tx_asc') {
+            var txA = parseInt(a.dataset.txs) || 0;
+            var txB = parseInt(b.dataset.txs) || 0;
+            if (txB !== txA) return txA - txB;
+            return (parseFloat(b.dataset.due) || 0) - (parseFloat(a.dataset.due) || 0);
+        }
+        return 0;
+    }
+
+    function toggleCustSort(column) {
+        var newSort = '';
+        if (column === 'name') {
+            newSort = (currentCustSort === 'name_asc') ? 'name_desc' : 'name_asc';
+        } else if (column === 'due') {
+            newSort = (currentCustSort === 'due_desc') ? 'due_asc' : 'due_desc';
+        } else if (column === 'activity') {
+            newSort = (currentCustSort === 'activity_desc') ? 'activity_asc' : 'activity_desc';
+        } else if (column === 'tx') {
+            newSort = (currentCustSort === 'tx_desc') ? 'tx_asc' : 'tx_desc';
+        }
+
+        var sortSelect = document.getElementById('custSortSelect');
+        if (sortSelect) {
+            if (sortSelect.querySelector('option[value="' + newSort + '"]')) {
+                sortSelect.value = newSort;
+            } else {
+                if (column === 'due') sortSelect.value = 'due_desc';
+                else if (column === 'activity') sortSelect.value = 'activity_desc';
+                else if (column === 'name') sortSelect.value = 'name_asc';
+                else if (column === 'tx') sortSelect.value = 'tx_desc';
+            }
+        }
+        currentCustSort = newSort;
+        applyCustomerSortAndFilter();
+    }
+
+    function openEditCustomerModal(id, name, phone, address, creditLimit, gstin, due) {
+        var form = document.getElementById('formEditCustomer');
+        if (form) {
+            form.action = "{{ url('mobileshop/khata/customer') }}/" + id + "/update";
+        }
+        var idField = document.getElementById('editCustId');
+        if (idField) idField.value = id;
+        var nameField = document.getElementById('editCustName');
+        if (nameField) nameField.value = name || '';
+        var phoneField = document.getElementById('editCustPhone');
+        if (phoneField) phoneField.value = phone || '';
+        var addrField = document.getElementById('editCustAddress');
+        if (addrField) addrField.value = address || '';
+        var limitField = document.getElementById('editCustLimit');
+        if (limitField) limitField.value = (creditLimit !== undefined && creditLimit !== null && creditLimit !== '') ? creditLimit : 10000;
+        var gstinField = document.getElementById('editCustGstin');
+        if (gstinField) gstinField.value = gstin || '';
+
+        var dueBadge = document.getElementById('editCustDueBadge');
+        if (dueBadge) {
+            dueBadge.textContent = '₹' + (parseFloat(due) || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        }
+
+        var modal = document.getElementById('editCustomerModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(function() {
+                document.getElementById('editCustName')?.focus();
+            }, 100);
+        }
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
+
+    function closeEditCustomerModal() {
+        var modal = document.getElementById('editCustomerModal');
+        if (modal) modal.style.display = 'none';
     }
 
     function filterCustomerUdhariList() {
