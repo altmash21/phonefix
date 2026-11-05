@@ -45,12 +45,11 @@ class SalesController extends BaseMobileShopController
         $canCreateAccessories = $user->can('create-sale-accessories') || $user->hasRole('accessories-manager') || $user->hasRole('accessories-staff') || $user->hasRole('admin') || $user->hasRole('store-admin');
         $canCreateCovers      = $user->can('create-sale-covers') || $canCreateAccessories;
 
-        // Fetch itemized accessory sales
+        // Fetch itemized accessory sales (include both active and fully/partially returned sales for complete audit trail)
         $query = DB::table('ms_accessory_sales')
             ->leftJoin('ms_customers', 'ms_accessory_sales.customer_id', '=', 'ms_customers.id')
             ->select('ms_accessory_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
-            ->where('ms_accessory_sales.company_id', $companyId)
-            ->where('ms_accessory_sales.status', '!=', 'voided');
+            ->where('ms_accessory_sales.company_id', $companyId);
 
         if ($niche === 'covers') {
             $coverCats = $this->coverCategories;
@@ -87,14 +86,14 @@ class SalesController extends BaseMobileShopController
             $todaySalesTotal = (float) DB::table('ms_accessory_sales')
                 ->where('company_id', $companyId)
                 ->where('created_at', '>=', $todayStart)
-                ->where('status', '!=', 'voided')
-                ->sum('total_amount');
+                ->whereNotIn('status', ['voided', 'returned'])
+                ->sum(DB::raw('GREATEST(0, total_amount - COALESCE(refund_amount, 0))'));
 
             $monthSalesTotal = (float) DB::table('ms_accessory_sales')
                 ->where('company_id', $companyId)
                 ->where('created_at', '>=', $monthStart)
-                ->where('status', '!=', 'voided')
-                ->sum('total_amount');
+                ->whereNotIn('status', ['voided', 'returned'])
+                ->sum(DB::raw('GREATEST(0, total_amount - COALESCE(refund_amount, 0))'));
 
             $availableParts = DB::table('ms_parts_inventory')
                 ->where('company_id', $companyId)

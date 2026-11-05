@@ -83,15 +83,27 @@ class MobileShopInvoiceResolver
 
         $prefix = DB::getTablePrefix();
 
-        // 1. Mobile Sales (Only include sales where a balance was left)
+        // 1. Mobile Sales (Include active udhari sales or returned/voided sales that had udhari recorded)
         $mobileSales = DB::table('ms_mobile_sales')
             ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
             ->where('ms_mobile_sales.company_id', $companyId)
             ->where('ms_mobile_sales.customer_id', $customerId)
-            ->where('ms_mobile_sales.status', '!=', 'voided')
             ->where(function ($q) {
-                $q->where('ms_mobile_sales.udhari_amount', '>', 0)
-                  ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
+                $q->where(function ($activeQ) {
+                    $activeQ->where('ms_mobile_sales.status', '!=', 'voided')
+                        ->where(function ($w) {
+                            $w->where('ms_mobile_sales.udhari_amount', '>', 0)
+                              ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
+                        });
+                })->orWhere(function ($retQ) {
+                    $retQ->whereIn('ms_mobile_sales.status', ['voided', 'returned'])
+                        ->where(function ($w) {
+                            $w->where('ms_mobile_sales.udhari_amount', '>', 0)
+                              ->orWhere('ms_mobile_sales.payment_mode', 'LIKE', '%udhari%')
+                              ->orWhere('ms_mobile_sales.payment_mode', 'LIKE', '%credit%')
+                              ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
+                        });
+                });
             })
             ->select(
                 'ms_mobile_sales.id',
@@ -101,20 +113,23 @@ class MobileShopInvoiceResolver
                 'ms_mobile_sales.total_amount as billed_amount',
                 'ms_mobile_sales.amount_paid as paid_amount',
                 'ms_mobile_sales.udhari_amount as due_amount',
+                'ms_mobile_sales.status',
                 DB::raw("'mobile_sale' as entry_type")
             )
             ->get();
 
         $mobEntries = collect();
         foreach ($mobileSales as $ms) {
+            $isVoidedMob = in_array($ms->status ?? '', ['voided', 'returned']);
+            $mobParticulars = $ms->particulars . ($isVoidedMob ? ' [Full Invoice Returned]' : '');
             $mobEntries->push((object) [
                 'id'            => 'mob_' . $ms->id,
                 'created_at'    => $ms->created_at,
                 'sort_order'    => 0,
                 'ref_no'        => $ms->ref_no,
-                'particulars'   => $ms->particulars,
-                'item_name'     => $ms->particulars,
-                'description'   => '',
+                'particulars'   => $mobParticulars,
+                'item_name'     => $mobParticulars,
+                'description'   => $isVoidedMob ? 'Full invoice returned & reversed in khata' : '',
                 'billed_amount' => (float) $ms->billed_amount,
                 'paid_amount'   => 0.00,
                 'due_amount'    => (float) $ms->billed_amount,
@@ -122,7 +137,8 @@ class MobileShopInvoiceResolver
                 'source'        => 'mobile_sale',
                 'source_id'     => (int) $ms->id,
                 'payment_mode'  => null,
-                'raw_remarks'   => '',
+                'raw_remarks'   => $isVoidedMob ? 'Full Invoice Returned' : '',
+                'is_voided'     => $isVoidedMob,
             ]);
 
             if ((float) $ms->paid_amount > 0) {
@@ -146,14 +162,28 @@ class MobileShopInvoiceResolver
             }
         }
 
-        // 2. Accessory Sales (Expand each line item separately)
+        // 2. Accessory Sales (Expand each line item separately; include voided/returned sales that had udhari recorded)
         $accSales = DB::table('ms_accessory_sales')
             ->where('ms_accessory_sales.company_id', $companyId)
             ->where('ms_accessory_sales.customer_id', $customerId)
-            ->where('ms_accessory_sales.status', '!=', 'voided')
             ->where(function ($q) {
-                $q->where('ms_accessory_sales.udhari_amount', '>', 0)
-                  ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
+                $q->where(function ($activeQ) {
+                    $activeQ->where('ms_accessory_sales.status', '!=', 'voided')
+                        ->where(function ($w) {
+                            $w->where('ms_accessory_sales.udhari_amount', '>', 0)
+                              ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
+                        });
+                })->orWhere(function ($retQ) {
+                    $retQ->whereIn('ms_accessory_sales.status', ['voided', 'returned', 'partially_returned'])
+                        ->where(function ($w) {
+                            $w->where('ms_accessory_sales.udhari_amount', '>', 0)
+                              ->orWhere('ms_accessory_sales.refund_amount', '>', 0)
+                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%udhari%')
+                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%credit%')
+                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%split%')
+                              ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
+                        });
+                });
             })
             ->select(
                 'ms_accessory_sales.id',
@@ -162,6 +192,8 @@ class MobileShopInvoiceResolver
                 'ms_accessory_sales.total_amount as billed_amount',
                 'ms_accessory_sales.amount_paid as paid_amount',
                 'ms_accessory_sales.udhari_amount as due_amount',
+                'ms_accessory_sales.status',
+                'ms_accessory_sales.refund_amount',
                 DB::raw("'accessory_sale' as entry_type")
             )
             ->get();
@@ -179,10 +211,14 @@ class MobileShopInvoiceResolver
                 ->groupBy('accessory_sale_id');
 
             foreach ($accSales as $sale) {
+                $isVoidedSale = in_array($sale->status ?? '', ['voided', 'returned']);
                 $items = $itemsGrouped[$sale->id] ?? collect();
                 if ($items->isNotEmpty()) {
                     foreach ($items as $idx => $it) {
                         $itemName = $it->part_name . ($it->quantity > 1 ? " (x{$it->quantity})" : "");
+                        if ($isVoidedSale) {
+                            $itemName .= " [Full Invoice Returned]";
+                        }
                         $itemBilled = (float) ($it->line_total > 0 ? $it->line_total : ($it->unit_price * $it->quantity));
 
                         $accEntries->push((object) [
@@ -192,7 +228,7 @@ class MobileShopInvoiceResolver
                             'ref_no'        => $sale->ref_no,
                             'particulars'   => $itemName,
                             'item_name'     => $itemName,
-                            'description'   => '',
+                            'description'   => $isVoidedSale ? 'Full invoice returned & reversed in khata' : '',
                             'billed_amount' => $itemBilled,
                             'paid_amount'   => 0.00,
                             'due_amount'    => $itemBilled,
@@ -200,7 +236,8 @@ class MobileShopInvoiceResolver
                             'source'        => 'accessory_sale',
                             'source_id'     => (int) $sale->id,
                             'payment_mode'  => null,
-                            'raw_remarks'   => '',
+                            'raw_remarks'   => $isVoidedSale ? 'Full Invoice Returned' : '',
+                            'is_voided'     => $isVoidedSale,
                         ]);
                     }
 
@@ -213,7 +250,7 @@ class MobileShopInvoiceResolver
                             'ref_no'        => $sale->ref_no,
                             'particulars'   => "Payment at Counter (Ref #{$sale->ref_no})",
                             'item_name'     => "Payment at Counter",
-                            'description'   => "Payment received at billing for #{$sale->ref_no}",
+                            'description'   => "Advance / Cash payment received at billing for #{$sale->ref_no}",
                             'billed_amount' => 0.00,
                             'paid_amount'   => (float) $sale->paid_amount,
                             'due_amount'    => 0.00,
@@ -222,17 +259,19 @@ class MobileShopInvoiceResolver
                             'source_id'     => (int) $sale->id,
                             'payment_mode'  => 'cash',
                             'raw_remarks'   => "Payment received at billing for #{$sale->ref_no}",
+                            'is_voided'     => false,
                         ]);
                     }
                 } else {
+                    $itemName = 'Accessory Purchase' . ($isVoidedSale ? ' [Full Invoice Returned]' : '');
                     $accEntries->push((object) [
                         'id'            => 'acc_' . $sale->id,
                         'created_at'    => $sale->created_at,
                         'sort_order'    => 0,
                         'ref_no'        => $sale->ref_no,
-                        'particulars'   => 'Accessory Purchase',
-                        'item_name'     => 'Accessory Purchase',
-                        'description'   => '',
+                        'particulars'   => $itemName,
+                        'item_name'     => $itemName,
+                        'description'   => $isVoidedSale ? 'Full invoice returned & reversed in khata' : '',
                         'billed_amount' => (float) $sale->billed_amount,
                         'paid_amount'   => (float) $sale->paid_amount,
                         'due_amount'    => (float) $sale->due_amount,
@@ -240,7 +279,8 @@ class MobileShopInvoiceResolver
                         'source'        => 'accessory_sale',
                         'source_id'     => (int) $sale->id,
                         'payment_mode'  => null,
-                        'raw_remarks'   => '',
+                        'raw_remarks'   => $isVoidedSale ? 'Full Invoice Returned' : '',
+                        'is_voided'     => $isVoidedSale,
                     ]);
                 }
             }

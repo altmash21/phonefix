@@ -170,9 +170,9 @@
                     <div style="font-size: 18px; font-weight: 800; color: #111827; letter-spacing: 0.5px; text-transform: uppercase;">
                         {{ $sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE' }}
                     </div>
-                    @if($sale->status === 'voided')
+                    @if(in_array($sale->status ?? '', ['voided', 'returned']))
                         <div style="display:inline-block; background:#FEE2E2; border:1px solid #FECDD3; color:#DC2626; font-size:10px; font-weight:800; padding:2px 8px; border-radius:4px; text-transform:uppercase; margin-top:2px;">
-                            ● FULL RETURN / VOIDED
+                            ● FULL INVOICE RETURNED
                         </div>
                     @elseif($sale->status === 'partially_returned' || $retRefund > 0)
                         <div style="display:inline-block; background:#FEF3C7; border:1px solid #FDE68A; color:#B45309; font-size:10px; font-weight:800; padding:2px 8px; border-radius:4px; text-transform:uppercase; margin-top:2px;">

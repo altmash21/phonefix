@@ -167,7 +167,17 @@
             </td>
             <td style="width: 42%; vertical-align: top; text-align: right;">
                 <div class="doc-title">{{ $sale->bill_type === 'non_gst' ? 'ESTIMATE & RETAIL BILL' : 'TAX INVOICE' }}</div>
-                <div style="font-size: 9px; color: #6b7280; margin-top: 2px; text-transform: uppercase;">Original for Recipient</div>
+                @if(in_array($sale->status ?? '', ['voided', 'returned']))
+                    <div style="font-size: 9.5px; font-weight: bold; color: #dc2626; margin-top: 2px; text-transform: uppercase; background-color: #fee2e2; border: 1px solid #fecaca; padding: 2px 4px; display: inline-block;">
+                        FULL INVOICE RETURNED / CANCELLED
+                    </div>
+                @elseif(($sale->status ?? '') === 'partially_returned' || $retRefund > 0)
+                    <div style="font-size: 9.5px; font-weight: bold; color: #b45309; margin-top: 2px; text-transform: uppercase; background-color: #fef3c7; border: 1px solid #fde68a; padding: 2px 4px; display: inline-block;">
+                        PARTIALLY RETURNED
+                    </div>
+                @else
+                    <div style="font-size: 9px; color: #6b7280; margin-top: 2px; text-transform: uppercase;">Original for Recipient</div>
+                @endif
                 <div style="font-size: 13px; font-weight: bold; color: #111827; margin-top: 6px;">
                     Invoice #: <span class="font-mono">{{ $sale->invoice_number }}</span>
                 </div>

@@ -242,8 +242,15 @@
                             </div>
                         @endif
                     @else
+                        @php
+                            $isVoidedEntryPdf = !empty($entry->is_voided) || str_contains($itemName, '[Full Invoice Returned]');
+                            $cleanItemNamePdf = trim(str_replace('[Full Invoice Returned]', '', $itemName));
+                        @endphp
                         <div style="font-weight: bold; color: #111827; font-size: 10px;">
-                            {{ $itemName ?: 'Counter Purchase' }}
+                            {{ $cleanItemNamePdf ?: 'Counter Purchase' }}
+                            @if($isVoidedEntryPdf)
+                                <span style="color: #dc2626; font-size: 8.5px; font-weight: bold;">[FULL INVOICE RETURNED]</span>
+                            @endif
                         </div>
                         @if(!empty($entry->ref_no))
                             <div style="font-size: 8.5px; color: #4338ca; font-family: monospace; font-weight: bold; margin-top: 1px;">

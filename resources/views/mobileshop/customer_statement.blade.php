@@ -355,8 +355,17 @@
                                 </div>
                             @endif
                         @else
-                            <div style="font-weight: 700; color: #0F172A; font-size: 12.5px; line-height: 1.35;">
-                                🛍️ {{ $itemName ?: 'Counter Purchase' }}
+                            @php
+                                $isVoidedEntry = !empty($entry->is_voided) || str_contains($itemName, '[Full Invoice Returned]');
+                                $cleanItemName = trim(str_replace('[Full Invoice Returned]', '', $itemName));
+                            @endphp
+                            <div style="font-weight: 700; color: #0F172A; font-size: 12.5px; line-height: 1.35; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                <span>🛍️ {{ $cleanItemName ?: 'Counter Purchase' }}</span>
+                                @if($isVoidedEntry)
+                                    <span style="background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; font-size: 9.5px; font-weight: 800; padding: 1px 6px; border-radius: 4px; text-transform: uppercase;">
+                                        ↩️ Full Invoice Returned
+                                    </span>
+                                @endif
                             </div>
                             @if(!empty($entry->ref_no))
                                 <div style="font-size: 11px; color: #4F46E5; font-family: monospace; font-weight: 700; margin-top: 2px;">

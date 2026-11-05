@@ -720,6 +720,14 @@
                 <button type="button" onclick="setSalesDatePreset('month')" id="salesDateBtn_month" class="filter-pill sales-date-pill">This Month</button>
             </div>
 
+            <!-- Middle: Quick Status Switcher (All Sales / Active / Returned) -->
+            <div class="sales-status-rail" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748B; margin-right: 2px;">Status:</span>
+                <button type="button" onclick="setSalesStatusFilter('all', this)" id="salesStatusBtn_all" class="filter-pill sales-status-pill active" title="Show All Invoices">All</button>
+                <button type="button" onclick="setSalesStatusFilter('active', this)" id="salesStatusBtn_active" class="filter-pill sales-status-pill" title="Show Active Sales">Active</button>
+                <button type="button" onclick="setSalesStatusFilter('returned', this)" id="salesStatusBtn_returned" class="filter-pill sales-status-pill" style="color:#DC2626;" title="Show Full Returned & Partially Returned Sales">↩️ Returned</button>
+            </div>
+
             <!-- Right: Desktop Custom Date Range Inputs & Reset Button -->
             <div class="desktop-date-inputs" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 3px 8px; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
@@ -749,11 +757,22 @@
                 </thead>
                 <tbody>
                     @forelse($accSales as $asale)
-                    <tr class="sales-row" data-type="accessory" data-date="{{ \Carbon\Carbon::parse($asale->created_at)->format('Y-m-d') }}">
+                    @php
+                        $isFullyReturned = in_array($asale->status ?? '', ['voided', 'returned']);
+                        $isPartiallyReturned = (($asale->status ?? '') === 'partially_returned');
+                        $rowStatus = $isFullyReturned ? 'returned' : ($isPartiallyReturned ? 'partially_returned' : 'active');
+                        $refAmt = (float)($asale->refund_amount ?? 0);
+                    @endphp
+                    <tr class="sales-row" data-type="accessory" data-status="{{ $rowStatus }}" data-date="{{ \Carbon\Carbon::parse($asale->created_at)->format('Y-m-d') }}" style="{{ $isFullyReturned ? 'background: #FFFDFD;' : '' }}">
                         <td>
-                            <a href="{{ route('mobileshop.accessories.invoice', ['id' => $asale->id]) }}" target="_blank" rel="noopener" style="font-family:monospace; font-weight:800; color:var(--brand-700); text-decoration:none;" title="View Invoice in New Tab">
-                                {{ $asale->invoice_number }}
-                            </a>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <a href="{{ route('mobileshop.accessories.invoice', ['id' => $asale->id]) }}" target="_blank" rel="noopener" style="font-family:monospace; font-weight:800; color:var(--brand-700); text-decoration:none;" title="View Invoice in New Tab">
+                                    {{ $asale->invoice_number }}
+                                </a>
+                                @if($isFullyReturned)
+                                    <span class="badge" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA; font-size:9px; font-weight:800; padding:1px 5px; border-radius:4px;">RETURNED</span>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             <div style="font-weight:700; color:#0F172A; font-size:13px;">{{ $asale->customer_name ?: 'Walk-in Retail' }}</div>
@@ -768,23 +787,35 @@
                             @else
                                 <div style="font-weight:700; font-size:12px;">Parts & Accessories Order</div>
                             @endif
+
+                            @if($isFullyReturned)
+                                <div style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; font-size:11px; font-weight:800; color:#DC2626; background:#FEF2F2; border:1px solid #FECACA; padding:2px 7px; border-radius:4px;">
+                                    <span>↩️ Full Invoice Returned</span>
+                                </div>
+                            @elseif($isPartiallyReturned)
+                                <div style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; font-size:11px; font-weight:800; color:#B45309; background:#FEF3C7; border:1px solid #FDE68A; padding:2px 7px; border-radius:4px;">
+                                    <span>↩️ Item(s) Returned</span>
+                                </div>
+                            @endif
                         </td>
                         <td>
                             <span class="badge badge-blue" style="text-transform:uppercase; font-size:10px;">{{ $asale->payment_mode }}</span>
-                            @if(($asale->status ?? '') === 'partially_returned')
-                                <span class="badge" style="background:#FEF3C7; color:#B45309; font-size:9.5px; font-weight:800; display:block; margin-top:3px;">Partially Returned</span>
-                            @elseif(($asale->status ?? '') === 'voided')
-                                <span class="badge" style="background:#FEE2E2; color:#DC2626; font-size:9.5px; font-weight:800; display:block; margin-top:3px;">Returned</span>
+                            @if($isFullyReturned)
+                                <span class="badge" style="background:#FEE2E2; color:#DC2626; border:1px solid #FECACA; font-size:9.5px; font-weight:800; display:block; margin-top:3px; letter-spacing:0.2px;">
+                                    ⚠️ FULL INVOICE RETURNED
+                                </span>
+                            @elseif($isPartiallyReturned)
+                                <span class="badge" style="background:#FEF3C7; color:#B45309; border:1px solid #FDE68A; font-size:9.5px; font-weight:800; display:block; margin-top:3px; letter-spacing:0.2px;">
+                                    PARTIALLY RETURNED
+                                </span>
                             @endif
                         </td>
                         <td style="text-align:right; font-weight:900; color:#0F172A; font-size:14px;">
-                            @php
-                                $refAmt = (float)($asale->refund_amount ?? 0);
-                            @endphp
-                            @if(($asale->status ?? '') === 'voided')
+                            @if($isFullyReturned)
                                 <span style="text-decoration:line-through; font-size:11.5px; color:#94A3B8;">₹{{ number_format($asale->total_amount, 2) }}</span>
-                                <div style="color:#DC2626; font-size:12px; font-weight:800;">₹0.00 <span style="font-size:9.5px;">(Returned)</span></div>
-                            @elseif(($asale->status ?? '') === 'partially_returned' || $refAmt > 0)
+                                <div style="color:#DC2626; font-size:13px; font-weight:900;">₹0.00</div>
+                                <div style="font-size:10px; color:#DC2626; font-weight:800;">(Full Returned)</div>
+                            @elseif($isPartiallyReturned || $refAmt > 0)
                                 <span style="text-decoration:line-through; font-size:11px; color:#94A3B8;">₹{{ number_format($asale->total_amount, 2) }}</span>
                                 <div style="color:#0F172A; font-size:13px; font-weight:900;">₹{{ number_format(max(0, (float)$asale->total_amount - $refAmt), 2) }}</div>
                                 <div style="font-size:10px; color:#DC2626; font-weight:700;">-₹{{ number_format($refAmt, 2) }} ret</div>
@@ -805,12 +836,12 @@
                                         return ((int)$it->quantity - (int)($it->returned_qty ?? 0)) > 0;
                                     });
                                 @endphp
-                                @if(($asale->status ?? '') !== 'voided' && $hasReturnableItems)
+                                @if(!$isFullyReturned && $hasReturnableItems)
                                     <button type="button" onclick="handleReturnButtonClick(this, 'accessory', {{ $asale->id }}, '{{ $asale->invoice_number }}', '{{ number_format($asale->total_amount, 2) }}')" data-items="{{ json_encode($asale->items ?? []) }}" class="btn btn-outline btn-icon" style="color:#DC2626; border-color:#FECDD3; background:#FFF1F2; cursor:pointer;" title="Process Return & Restock">
                                         <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i>
                                     </button>
                                 @else
-                                    <span class="badge" style="background:#FEE2E2; color:#DC2626; font-size:10px; font-weight:700;">Returned</span>
+                                    <span class="badge" style="background:#FEE2E2; color:#DC2626; border:1px solid #FECACA; font-size:10px; font-weight:800; padding:4px 8px; border-radius:4px;" title="Full invoice has been returned">Full Returned</span>
                                 @endif
                             </div>
                         </td>
@@ -840,6 +871,10 @@
             <div id="salesMobileCards" class="mobile-sales-cards">
                 @forelse($accSales as $asale)
                     @php
+                        $isFullyReturned = in_array($asale->status ?? '', ['voided', 'returned']);
+                        $isPartiallyReturned = (($asale->status ?? '') === 'partially_returned');
+                        $rowStatus = $isFullyReturned ? 'returned' : ($isPartiallyReturned ? 'partially_returned' : 'active');
+
                         $apm = strtolower($asale->payment_mode ?? 'cash');
                         if (str_contains($apm, 'cash')) {
                             $badgeBg = '#DCFCE7'; $badgeColor = '#15803D';
@@ -863,23 +898,32 @@
 
                         $refAmt = (float)($asale->refund_amount ?? 0);
                     @endphp
-                    <div class="sales-flat-row sales-row" data-type="accessory" data-date="{{ \Carbon\Carbon::parse($asale->created_at)->format('Y-m-d') }}">
+                    <div class="sales-flat-row sales-row" data-type="accessory" data-status="{{ $rowStatus }}" data-date="{{ \Carbon\Carbon::parse($asale->created_at)->format('Y-m-d') }}" style="{{ $isFullyReturned ? 'background: #FFFDFD;' : '' }}">
                         <!-- Row 1: Invoice # + Payment Badge + Total Amount -->
                         <div class="row-line1">
-                            <a href="{{ route('mobileshop.accessories.invoice', ['id' => $asale->id]) }}" target="_blank" rel="noopener" class="inv-num" title="View Invoice in New Tab">
-                                {{ $asale->invoice_number }}
-                            </a>
-                            <span class="pay-badge" style="background:{{ $badgeBg }}; color:{{ $badgeColor }};">
-                                {{ $asale->payment_mode }}
-                                @if(($asale->status ?? '') === 'partially_returned')
-                                    • Ret
-                                @elseif(($asale->status ?? '') === 'voided')
-                                    • Void
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <a href="{{ route('mobileshop.accessories.invoice', ['id' => $asale->id]) }}" target="_blank" rel="noopener" class="inv-num" title="View Invoice in New Tab">
+                                    {{ $asale->invoice_number }}
+                                </a>
+                                @if($isFullyReturned)
+                                    <span style="font-size:9px; font-weight:800; color:#DC2626; background:#FEF2F2; border:1px solid #FECACA; padding:1px 4px; border-radius:3px;">RET</span>
+                                @endif
+                            </div>
+                            <span class="pay-badge" style="background:{{ $isFullyReturned ? '#FEE2E2' : ($isPartiallyReturned ? '#FEF3C7' : $badgeBg) }}; color:{{ $isFullyReturned ? '#DC2626' : ($isPartiallyReturned ? '#B45309' : $badgeColor) }}; border:1px solid {{ $isFullyReturned ? '#FECACA' : ($isPartiallyReturned ? '#FDE68A' : 'transparent') }}; font-weight:800;">
+                                @if($isFullyReturned)
+                                    FULL INVOICE RETURNED
+                                @elseif($isPartiallyReturned)
+                                    {{ $asale->payment_mode }} • Part Ret
+                                @else
+                                    {{ $asale->payment_mode }}
                                 @endif
                             </span>
-                            @if(($asale->status ?? '') === 'voided')
-                                <div class="row-amount" style="color:#DC2626; text-decoration:line-through; font-size:12px;">₹{{ number_format($asale->total_amount, 2) }}</div>
-                            @elseif(($asale->status ?? '') === 'partially_returned' || $refAmt > 0)
+                            @if($isFullyReturned)
+                                <div class="row-amount" style="text-align:right;">
+                                    <span style="color:#94A3B8; text-decoration:line-through; font-size:11px;">₹{{ number_format($asale->total_amount, 2) }}</span>
+                                    <div style="color:#DC2626; font-weight:800; font-size:12px;">₹0.00 (Full Ret)</div>
+                                </div>
+                            @elseif($isPartiallyReturned || $refAmt > 0)
                                 <div class="row-amount" style="color:#0F172A;">₹{{ number_format(max(0, (float)$asale->total_amount - $refAmt), 2) }}</div>
                             @else
                                 <div class="row-amount">₹{{ number_format($asale->total_amount, 2) }}</div>
@@ -896,6 +940,11 @@
                         <div class="row-line3">
                             <div class="items-summary">
                                 {{ $itemsSummary }}
+                                @if($isFullyReturned)
+                                    <div style="font-size:10px; font-weight:800; color:#DC2626; margin-top:2px;">↩️ Full Invoice Returned</div>
+                                @elseif($isPartiallyReturned)
+                                    <div style="font-size:10px; font-weight:800; color:#B45309; margin-top:2px;">↩️ Item(s) Returned</div>
+                                @endif
                             </div>
                             <div class="row-actions">
                                 <a href="{{ route('mobileshop.accessories.whatsapp', ['id' => $asale->id]) }}" target="_blank" class="compact-action-btn mobile-whatsapp-btn" title="Share on WhatsApp">
@@ -909,12 +958,12 @@
                                         return ((int)$it->quantity - (int)($it->returned_qty ?? 0)) > 0;
                                     });
                                 @endphp
-                                @if(($asale->status ?? '') !== 'voided' && $hasReturnableItemsMobile)
+                                @if(!$isFullyReturned && $hasReturnableItemsMobile)
                                     <button type="button" onclick="handleReturnButtonClick(this, 'accessory', {{ $asale->id }}, '{{ $asale->invoice_number }}', '{{ number_format($asale->total_amount, 2) }}')" data-items="{{ json_encode($asale->items ?? []) }}" class="compact-action-btn mobile-return-btn" title="Process Return & Restock">
                                         <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i>
                                     </button>
                                 @else
-                                    <span style="font-size:9.5px; font-weight:700; color:#DC2626; background:#FEE2E2; padding:3px 6px; border-radius:4px;">Returned</span>
+                                    <span style="font-size:9.5px; font-weight:800; color:#DC2626; background:#FEE2E2; border:1px solid #FECACA; padding:3px 6px; border-radius:4px;">Full Ret</span>
                                 @endif
                             </div>
                         </div>
@@ -2065,6 +2114,14 @@
     }
 
     let currentSalesCategoryFilter = 'all';
+    let currentSalesStatusFilter = 'all';
+
+    function setSalesStatusFilter(status, btnEl) {
+        currentSalesStatusFilter = status;
+        document.querySelectorAll('.sales-status-pill').forEach(el => el.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+        filterSalesTable();
+    }
 
     function setSalesCategoryFilter(cat, btnEl) {
         currentSalesCategoryFilter = cat;
@@ -2091,8 +2148,15 @@
             const rawDate = (row.dataset.date || '').trim();
             const cleanRowDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const rowType = row.dataset.type || '';
+            const rowStatus = row.dataset.status || 'active';
 
             const matchesCategory = (currentSalesCategoryFilter === 'all') || (rowType === currentSalesCategoryFilter);
+            let matchesStatus = true;
+            if (currentSalesStatusFilter === 'active') {
+                matchesStatus = (rowStatus === 'active');
+            } else if (currentSalesStatusFilter === 'returned') {
+                matchesStatus = (rowStatus === 'returned' || rowStatus === 'partially_returned');
+            }
             const matchesText = !term || rowText.includes(term);
             let matchesDate = true;
 
@@ -2103,7 +2167,7 @@
                 matchesDate = matchesDate && (cleanRowDate !== '' && cleanRowDate <= toDate);
             }
 
-            const isVisible = matchesCategory && matchesText && matchesDate;
+            const isVisible = matchesCategory && matchesStatus && matchesText && matchesDate;
             row.dataset.mobiHidden = isVisible ? '0' : '1';
             row.style.display = isVisible ? '' : 'none';
             if (isVisible) visibleCount++;
@@ -2116,8 +2180,15 @@
             const rawDate = (card.dataset.date || '').trim();
             const cleanCardDate = rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
             const cardType = card.dataset.type || '';
+            const cardStatus = card.dataset.status || 'active';
 
             const matchesCategory = (currentSalesCategoryFilter === 'all') || (cardType === currentSalesCategoryFilter);
+            let matchesStatus = true;
+            if (currentSalesStatusFilter === 'active') {
+                matchesStatus = (cardStatus === 'active');
+            } else if (currentSalesStatusFilter === 'returned') {
+                matchesStatus = (cardStatus === 'returned' || cardStatus === 'partially_returned');
+            }
             const matchesText = !term || cardText.includes(term);
             let matchesDate = true;
 
@@ -2128,7 +2199,7 @@
                 matchesDate = matchesDate && (cleanCardDate !== '' && cleanCardDate <= toDate);
             }
 
-            const isCardVisible = matchesCategory && matchesText && matchesDate;
+            const isCardVisible = matchesCategory && matchesStatus && matchesText && matchesDate;
             card.dataset.mobiHidden = isCardVisible ? '0' : '1';
             card.style.display = isCardVisible ? '' : 'none';
             if (isCardVisible) visibleMobileCount++;
