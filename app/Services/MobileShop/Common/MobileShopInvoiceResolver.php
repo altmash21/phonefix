@@ -354,20 +354,82 @@ class MobileShopInvoiceResolver
         $displayLedger = collect();
 
         if ($filter === 'last_payment') {
-            // Find the last entry where a payment was received (paid > 0)
-            $lastPaymentIndex = null;
+            // Collect all entries where a repayment, counter payment, or credit was made (paid > 0)
+            $paymentIndices = [];
             foreach ($ledger as $idx => $entry) {
                 if ($entry->paid > 0.0001) {
-                    $lastPaymentIndex = $idx;
+                    $paymentIndices[] = $idx;
                 }
             }
 
-            if ($lastPaymentIndex !== null) {
-                $lastPaymentEntry = $ledger[$lastPaymentIndex];
+            if (!empty($paymentIndices)) {
+                $latestPaymentIdx = end($paymentIndices);
+                $lastPaymentEntry = $ledger[$latestPaymentIdx];
                 $periodLabel = 'From Last Payment (' . date('d M Y', strtotime($lastPaymentEntry->created_at)) . ')';
 
-                // Prior entries before the last payment
-                $priorEntries = $ledger->slice(0, $lastPaymentIndex)->values();
+                // Check transactions after the latest payment
+                $purchasesAfter = $ledger->slice($latestPaymentIdx + 1)->where('billed', '>', 0);
+                $billedAfter = (float) $purchasesAfter->sum('billed');
+
+                // Check transactions before the latest payment
+                $purchasesBefore = $ledger->slice(0, $latestPaymentIdx)->where('billed', '>', 0);
+                $billedBefore = (float) $purchasesBefore->sum('billed');
+
+                $clearedPrevious = ($ledger[$latestPaymentIdx]->balance_left <= 0.0001);
+
+                $sliceIndex = 0;
+
+                // Case A: If substantial new purchases occurred AFTER the latest payment
+                // (e.g. customer settled or made a payment, and then subsequently bought new items)
+                if ($billedAfter > 0 && ($clearedPrevious || $billedBefore <= 0.0001 || $billedAfter >= $billedBefore)) {
+                    // Start from the latest payment entry so customer sees that payment and subsequent purchases
+                    $sliceIndex = $latestPaymentIdx;
+                } else {
+                    // Case B: Purchases occurred BEFORE (or up to) the latest payment
+                    // (e.g. Arvind Jaiswal who bought items on credit and then made a repayment)
+                    // The statement must include the items sold that this payment was made towards!
+                    if (count($paymentIndices) >= 2) {
+                        $prevPaymentIdx = $paymentIndices[count($paymentIndices) - 2];
+                        
+                        // Check if there are purchases between prevPaymentIdx and latestPaymentIdx
+                        $purchasesBetween = $ledger->slice($prevPaymentIdx + 1, $latestPaymentIdx - $prevPaymentIdx)->where('billed', '>', 0);
+                        
+                        if ($purchasesBetween->count() > 0) {
+                            $sliceIndex = $prevPaymentIdx + 1;
+                        } else {
+                            // Multiple repayments with no items between (e.g. installment payments)
+                            // Look further back to find where the debt cycle actually started
+                            $foundSlice = null;
+                            for ($k = count($paymentIndices) - 2; $k >= 0; $k--) {
+                                $candidateIdx = $paymentIndices[$k];
+                                $prevBefore = $k > 0 ? $paymentIndices[$k - 1] : -1;
+                                $salesInK = $ledger->slice($prevBefore + 1, $candidateIdx - ($prevBefore + 1))->where('billed', '>', 0);
+                                if ($salesInK->count() > 0) {
+                                    $foundSlice = $prevBefore + 1;
+                                    break;
+                                }
+                            }
+                            $sliceIndex = $foundSlice !== null ? $foundSlice : 0;
+                        }
+                    } else {
+                        // Only 1 payment in customer's entire history (e.g. Arvind Jaiswal)
+                        // Look for the last time balance was 0 before this payment; if none, start from inception (0)
+                        $lastZeroBefore = null;
+                        for ($i = 0; $i < $latestPaymentIdx; $i++) {
+                            if ($ledger[$i]->balance_left <= 0.0001) {
+                                $lastZeroBefore = $i;
+                            }
+                        }
+
+                        $sliceIndex = ($lastZeroBefore !== null) ? ($lastZeroBefore + 1) : 0;
+                    }
+                }
+
+                // Ensure sliceIndex is within bounds [0, $latestPaymentIdx]
+                $sliceIndex = max(0, min($sliceIndex, $latestPaymentIdx));
+
+                // Prior entries before sliceIndex
+                $priorEntries = $ledger->slice(0, $sliceIndex)->values();
                 if ($priorEntries->isNotEmpty()) {
                     $openingBalance = (float) $priorEntries->last()->balance_left;
                     $hasPriorHistory = true;
@@ -378,18 +440,19 @@ class MobileShopInvoiceResolver
                     $priorSettledCount = 0;
                 }
 
-                $periodEntries = $ledger->slice($lastPaymentIndex)->values();
+                $periodEntries = $ledger->slice($sliceIndex)->values();
 
-                if ($openingBalance > 0.0001 || $hasPriorHistory) {
+                if ($openingBalance > 0.0001) {
+                    $firstPeriodEntry = $periodEntries->first() ?? $lastPaymentEntry;
                     $openingEntry = (object) [
                         'id'           => 'opening_balance_forward',
-                        'created_at'   => $lastPaymentEntry->created_at,
-                        'date'         => date('d/m/Y', strtotime($lastPaymentEntry->created_at)),
-                        'datetime'     => date('d M Y, h:i A', strtotime($lastPaymentEntry->created_at)),
+                        'created_at'   => $firstPeriodEntry->created_at,
+                        'date'         => date('d/m/Y', strtotime($firstPeriodEntry->created_at)),
+                        'datetime'     => date('d M Y, h:i A', strtotime($firstPeriodEntry->created_at)),
                         'ref_no'       => 'OPENING',
                         'particulars'  => 'Opening Balance Brought Forward',
                         'item_name'    => 'Opening Balance Brought Forward',
-                        'description'  => 'Balance accumulated prior to last payment on ' . date('d M Y', strtotime($lastPaymentEntry->created_at)),
+                        'description'  => 'Balance accumulated prior to ' . date('d M Y', strtotime($firstPeriodEntry->created_at)),
                         'billed'       => $openingBalance,
                         'paid'         => 0.00,
                         'balance_left' => $openingBalance,

@@ -139,7 +139,7 @@
             <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'last_payment']) }}" 
                class="btn btn-sm {{ $currentFilter === 'last_payment' ? 'btn-primary' : 'btn-outline' }}" 
                style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'last_payment') background: #059669; border-color: #059669; @endif"
-               title="From Last Payment Received (Includes latest payment and subsequent bills)">
+               title="From Last Payment Received (Includes active purchases and payment received)">
                 💵 From Last Payment
             </a>
 

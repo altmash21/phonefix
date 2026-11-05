@@ -104,7 +104,7 @@
             <a href="{{ route('public.statement.show', ['id' => $customer->id, 'filter' => 'last_payment']) }}" 
                class="btn {{ ($currentFilter ?? '') === 'last_payment' ? 'btn-primary' : 'btn-outline' }}" 
                style="font-size:11.5px; padding:4px 10px; border-radius:999px; text-decoration:none; @if(($currentFilter ?? '') === 'last_payment') background:#059669; @endif"
-               title="From Last Payment Received">
+               title="From Last Payment Received (Includes active purchases and payment received)">
                 💵 From Last Payment
             </a>
 
@@ -186,8 +186,8 @@
                     @forelse($ledger as $entry)
                         @php
                             $isOpening = !empty($entry->is_opening);
-                            $isOldUdhar = in_array($entry->entry_type, ['opening_balance', 'old_udhar', 'debit_adjustment']) && !$isOpening;
-                            $isRepayment = ($entry->paid > 0 && $entry->billed <= 0) && !$isOpening;
+                            $isOldUdhar = in_array($entry->entry_type ?? '', ['opening_balance', 'old_udhar', 'debit_adjustment']) && !$isOpening;
+                            $isRepayment = (($entry->paid > 0 && $entry->billed <= 0) || in_array($entry->entry_type ?? '', ['adjustment', 'refund_credit', 'payment_received'])) && !$isOpening;
                             $itemName = $entry->item_name ?? $entry->particulars;
                             $dateFormatted = !empty($entry->date) ? $entry->date : (isset($entry->created_at) ? date('d/m/Y', strtotime($entry->created_at)) : '—');
                         @endphp
