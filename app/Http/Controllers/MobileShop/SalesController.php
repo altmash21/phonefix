@@ -98,6 +98,12 @@ class SalesController extends BaseMobileShopController
             $availableParts = DB::table('ms_parts_inventory')
                 ->where('company_id', $companyId)
                 ->where('stock_qty', '>', 0)
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                      ->from('ms_parts_inventory_history')
+                      ->whereColumn('ms_parts_inventory_history.part_id', 'ms_parts_inventory.id')
+                      ->where('ms_parts_inventory_history.reference', 'like', 'Auto-created via Quick Sale%');
+                })
                 ->sum('stock_qty');
 
             return compact('todaySalesTotal', 'monthSalesTotal', 'availableParts');
@@ -128,6 +134,12 @@ class SalesController extends BaseMobileShopController
 
         $parts = DB::table('ms_parts_inventory')
             ->where('company_id', $companyId)
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('ms_parts_inventory_history')
+                  ->whereColumn('ms_parts_inventory_history.part_id', 'ms_parts_inventory.id')
+                  ->where('ms_parts_inventory_history.reference', 'like', 'Auto-created via Quick Sale%');
+            })
             ->orderBy('name', 'asc')
             ->get(['id', 'name', 'selling_price', 'stock_qty', 'category']);
 
@@ -288,7 +300,7 @@ class SalesController extends BaseMobileShopController
                     return redirect()->back()->withInput()->with('error', "Price cannot be negative for item '{$pName}'.");
                 }
 
-                // Auto-resolve or register inventory item if part_id missing
+                // Check if item matches an existing catalog inventory item
                 if (!$pId && !empty($pName)) {
                     $existing = DB::table('ms_parts_inventory')
                         ->where('company_id', $companyId)
@@ -300,38 +312,9 @@ class SalesController extends BaseMobileShopController
                             $uPrice = (float) ($existing->selling_price ?? 0);
                         }
                     } else {
-                        $pPrice = $uPrice !== null ? max(0, $uPrice) : 0.0;
-                        $catInfo = $this->resolvePartCategory($companyId, $item['category'] ?? $item['cat'] ?? null);
-
-                        $pId = DB::table('ms_parts_inventory')->insertGetId([
-                            'company_id'       => $companyId,
-                            'name'             => $pName,
-                            'category'         => $catInfo['slug'],
-                            'category_id'      => $catInfo['id'],
-                            'brand'            => 'Universal',
-                            'compatible_model' => 'Universal',
-                            'display_type'     => 'na',
-                            'hsn_code'         => '85177090',
-                            'unit_cost'        => 0.00,
-                            'selling_price'    => $pPrice,
-                            'stock_qty'        => max(10, $qty),
-                            'min_stock_alert'  => 3,
-                            'created_at'       => now(),
-                            'updated_at'       => now(),
-                        ]);
-
-                        try {
-                            DB::table('ms_parts_inventory_history')->insert([
-                                'part_id'       => $pId,
-                                'type'          => 'addition',
-                                'quantity'      => max(10, $qty),
-                                'balance_after' => max(10, $qty),
-                                'reference'     => "Auto-created via Quick Sale: {$pName} (" . ucwords(str_replace('_', ' ', $catInfo['slug'])) . ")",
-                                'user_id'       => auth()->id(),
-                                'created_at'    => now(),
-                                'updated_at'    => now(),
-                            ]);
-                        } catch (\Throwable $e) {}
+                        // Direct sale custom item: DO NOT add to inventory stock!
+                        // Default quantity is 0; item is limited strictly to this invoice & customer khata statement.
+                        $pId = 0;
                     }
                 }
 
@@ -349,6 +332,18 @@ class SalesController extends BaseMobileShopController
 
                     $cleanedItems[] = [
                         'part_id'    => $pId,
+                        'part_name'  => $pName,
+                        'quantity'   => $qty,
+                        'unit_price' => $uPrice,
+                    ];
+                } elseif (!empty($pName)) {
+                    // Direct sale custom item without stock inventory record
+                    $uPrice = max(0, (float) ($uPrice ?: 0));
+                    $lineTotal = round($uPrice * $qty, 2);
+                    $computedTotal += $lineTotal;
+
+                    $cleanedItems[] = [
+                        'part_id'    => 0,
                         'part_name'  => $pName,
                         'quantity'   => $qty,
                         'unit_price' => $uPrice,
@@ -422,7 +417,7 @@ class SalesController extends BaseMobileShopController
         $partId = (int) $request->input('part_id');
         $itemName = trim((string) ($request->input('item_name') ?? $request->input('name') ?? ''));
 
-        // If part_id is empty, resolve by item name or auto-register in inventory
+        // If part_id is empty, check if matches an existing catalog inventory item
         if (!$partId && !empty($itemName)) {
             $existing = DB::table('ms_parts_inventory')
                 ->where('company_id', $companyId)
@@ -431,42 +426,27 @@ class SalesController extends BaseMobileShopController
             if ($existing) {
                 $partId = (int) $existing->id;
             } else {
-                $customPrice = (float) ($request->input('custom_price') ?: 0);
-                $catInfo = $this->resolvePartCategory($companyId, $request->input('category') ?: $request->input('cat'));
-
-                $partId = DB::table('ms_parts_inventory')->insertGetId([
-                    'company_id'       => $companyId,
-                    'name'             => $itemName,
-                    'category'         => $catInfo['slug'],
-                    'category_id'      => $catInfo['id'],
-                    'brand'            => 'Universal',
-                    'compatible_model' => 'Universal',
-                    'display_type'     => 'na',
-                    'hsn_code'         => '85177090',
-                    'unit_cost'        => 0.00,
-                    'selling_price'    => max(0, $customPrice),
-                    'stock_qty'        => max(10, (int) $request->input('quantity', 1)),
-                    'min_stock_alert'  => 3,
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
-                ]);
+                // Direct custom item: DO NOT add to inventory stock
+                $partId = 0;
             }
             $request->merge(['part_id' => $partId]);
         }
 
-        if ($partId > 0 && !$request->has('items')) {
+        if (($partId > 0 || !empty($itemName)) && !$request->has('items')) {
             $qty = max(1, (int) ($request->input('quantity', 1) ?: 1));
             
             // Get item price if custom_price not provided
             $customPrice = $request->input('custom_price');
             if ($customPrice !== null && $customPrice !== '') {
                 $unitPrice = max(0, (float) $customPrice);
-            } else {
+            } elseif ($partId > 0) {
                 $part = DB::table('ms_parts_inventory')
                     ->where('company_id', $companyId)
                     ->where('id', $partId)
                     ->first();
                 $unitPrice = max(0, (float) ($part->selling_price ?? 0));
+            } else {
+                $unitPrice = 0.00;
             }
 
             $total = round($unitPrice * $qty, 2);
@@ -487,6 +467,7 @@ class SalesController extends BaseMobileShopController
             $items = [
                 [
                     'part_id'    => $partId,
+                    'part_name'  => $itemName ?: ($part->name ?? 'Custom Item'),
                     'quantity'   => $qty,
                     'unit_price' => $unitPrice,
                 ]
@@ -561,6 +542,12 @@ class SalesController extends BaseMobileShopController
             if (\Illuminate\Support\Facades\Schema::hasTable('ms_parts_inventory')) {
                 $parts = DB::table('ms_parts_inventory')
                     ->where('company_id', $companyId)
+                    ->whereNotExists(function ($q) {
+                        $q->select(DB::raw(1))
+                          ->from('ms_parts_inventory_history')
+                          ->whereColumn('ms_parts_inventory_history.part_id', 'ms_parts_inventory.id')
+                          ->where('ms_parts_inventory_history.reference', 'like', 'Auto-created via Quick Sale%');
+                    })
                     ->orderBy('name', 'asc')
                     ->get(['id', 'name', 'selling_price', 'stock_qty', 'category']);
             }
@@ -697,25 +684,9 @@ class SalesController extends BaseMobileShopController
                             $pId = (int) $existing->id;
                             if ($uPrice === null) $uPrice = (float) ($existing->selling_price ?? 0);
                         } else {
-                            $pPrice = $uPrice !== null ? max(0, $uPrice) : 0.0;
-                            $catInfo = $this->resolvePartCategory($companyId, $it['category'] ?? $it['cat'] ?? null);
-
-                            $pId = DB::table('ms_parts_inventory')->insertGetId([
-                                'company_id'       => $companyId,
-                                'name'             => $pName,
-                                'category'         => $catInfo['slug'],
-                                'category_id'      => $catInfo['id'],
-                                'brand'            => 'Universal',
-                                'compatible_model' => 'Universal',
-                                'display_type'     => 'na',
-                                'hsn_code'         => '85177090',
-                                'unit_cost'        => 0.00,
-                                'selling_price'    => $pPrice,
-                                'stock_qty'        => max(10, $qty),
-                                'min_stock_alert'  => 3,
-                                'created_at'       => now(),
-                                'updated_at'       => now(),
-                            ]);
+                            // Direct sale custom item: DO NOT add to inventory stock!
+                            // Default quantity is 0; item is limited strictly to this invoice & customer khata statement.
+                            $pId = 0;
                         }
                     }
 
@@ -729,6 +700,17 @@ class SalesController extends BaseMobileShopController
                         $saleTotal += $lTot;
                         $cleanedItems[] = [
                             'part_id'    => $pId,
+                            'part_name'  => $pName,
+                            'quantity'   => $qty,
+                            'unit_price' => $uPrice,
+                        ];
+                    } elseif (!empty($pName)) {
+                        // Direct sale custom item without stock inventory record
+                        $uPrice = max(0, (float) ($uPrice ?: 0));
+                        $lTot = round($uPrice * $qty, 2);
+                        $saleTotal += $lTot;
+                        $cleanedItems[] = [
+                            'part_id'    => 0,
                             'part_name'  => $pName,
                             'quantity'   => $qty,
                             'unit_price' => $uPrice,

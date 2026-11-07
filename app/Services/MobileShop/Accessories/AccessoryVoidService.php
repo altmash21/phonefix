@@ -173,8 +173,8 @@ class AccessoryVoidService
                             'updated_at'    => now(),
                         ]);
                     }
-                } elseif ($shouldRestock && !empty($item->part_name)) {
-                    // Create inventory item if none existed so stock is preserved
+                } elseif ($shouldRestock && !empty($item->part_name) && !empty($item->part_id) && ((int) $item->part_id) > 0) {
+                    // Create inventory item if none existed so stock is preserved (only for catalog items, not direct custom sale items)
                     $newPartId = DB::table('ms_parts_inventory')->insertGetId([
                         'company_id'       => $companyId,
                         'name'             => $item->part_name,

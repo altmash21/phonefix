@@ -18,7 +18,8 @@ class AccessorySaleService
             'customer_phone'     => 'required',
             'customer_name'      => 'required',
             'items'              => 'required|array|min:1',
-            'items.*.part_id'    => 'required|exists:ms_parts_inventory,id',
+            'items.*.part_id'    => 'nullable',
+            'items.*.part_name'  => 'nullable|string',
             'items.*.quantity'   => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'amount_paid'        => 'required|numeric|min:0',
@@ -52,82 +53,113 @@ class AccessorySaleService
 
             // Lock and Validate Every Item in Cart
             foreach ($request->items as $cartItem) {
-                $partId = $cartItem['part_id'];
+                $partId = (int) ($cartItem['part_id'] ?? 0);
                 $qty = (int) $cartItem['quantity'];
                 $price = (float) $cartItem['unit_price'];
+                $partName = trim((string) ($cartItem['part_name'] ?? $cartItem['name'] ?? ''));
 
-                $part = DB::table('ms_parts_inventory')
-                    ->where('company_id', $companyId)
-                    ->where('id', $partId)
-                    ->lockForUpdate()
-                    ->first();
+                if ($partId > 0) {
+                    $part = DB::table('ms_parts_inventory')
+                        ->where('company_id', $companyId)
+                        ->where('id', $partId)
+                        ->lockForUpdate()
+                        ->first();
 
-                if (!$part) {
-                    throw new \InvalidArgumentException("Accessory item ID #{$partId} not found in inventory!");
-                }
+                    if (!$part) {
+                        throw new \InvalidArgumentException("Accessory item ID #{$partId} not found in inventory!");
+                    }
 
-                if ($part->stock_qty < $qty) {
-                    // Counter quick-sale auto replenishment: if physical item was sold across counter,
-                    // auto-adjust stock so sale is never blocked for a walk-in paying customer!
-                    $shortage = $qty - (int) $part->stock_qty;
+                    if ($part->stock_qty < $qty) {
+                        // Counter quick-sale auto replenishment: if physical item was sold across counter,
+                        // auto-adjust stock so sale is never blocked for a walk-in paying customer!
+                        $shortage = $qty - (int) $part->stock_qty;
+                        DB::table('ms_parts_inventory_history')->insert([
+                            'part_id'       => $part->id,
+                            'type'          => 'addition',
+                            'quantity'      => $shortage,
+                            'balance_after' => $qty,
+                            'reference'     => "Counter Sale Restock #{$invoiceNumber}",
+                            'user_id'       => auth()->id(),
+                            'created_at'    => now(),
+                            'updated_at'    => now(),
+                        ]);
+                        $part->stock_qty = $qty;
+                    }
+
+                    // Decrement stock
+                    $newBalance = $part->stock_qty - $qty;
+                    DB::table('ms_parts_inventory')
+                        ->where('id', $part->id)
+                        ->update([
+                            'stock_qty'  => $newBalance,
+                            'updated_at' => now(),
+                        ]);
+
+                    // Log deduction in stock history ledger
                     DB::table('ms_parts_inventory_history')->insert([
                         'part_id'       => $part->id,
-                        'type'          => 'addition',
-                        'quantity'      => $shortage,
-                        'balance_after' => $qty,
-                        'reference'     => "Counter Sale Restock #{$invoiceNumber}",
+                        'type'          => 'deduction',
+                        'quantity'      => $qty,
+                        'balance_after' => $newBalance,
+                        'reference'     => "Retail Counter Sale #{$invoiceNumber}",
                         'user_id'       => auth()->id(),
                         'created_at'    => now(),
                         'updated_at'    => now(),
                     ]);
-                    $part->stock_qty = $qty;
+
+                    $lineTotal = round($price * $qty, 2);
+                    $origUnitPrice = (float) ($part->selling_price ?: $price);
+                    $origLineTotal = round($origUnitPrice * $qty, 2);
+                    $lineDiscount = max(0.00, round($origLineTotal - $lineTotal, 2));
+
+                    $subtotal += $lineTotal;
+                    $grossTotal += $origLineTotal;
+
+                    $lineItemsData[] = [
+                        'company_id'      => $companyId,
+                        'part_id'         => $part->id,
+                        'part_name'       => $part->name,
+                        'hsn_code'        => $part->hsn_code ?? '85177090',
+                        'quantity'        => $qty,
+                        'unit_cost'       => $part->unit_cost,
+                        'unit_price'      => $price,
+                        'original_price'  => $origUnitPrice,
+                        'discount_amount' => $lineDiscount,
+                        'tax_rate'        => 18.00,
+                        'tax_amount'      => round($lineTotal - ($lineTotal / 1.18), 2),
+                        'line_total'      => $lineTotal,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ];
+                } else {
+                    // Direct Quick Sale ad-hoc / custom item:
+                    // Default quantity is 0; NOT added to stock inventory catalog.
+                    // Strictly limited to this invoice and customer statement!
+                    $lineTotal = round($price * $qty, 2);
+                    $origUnitPrice = $price;
+                    $origLineTotal = $lineTotal;
+                    $lineDiscount = 0.00;
+
+                    $subtotal += $lineTotal;
+                    $grossTotal += $origLineTotal;
+
+                    $lineItemsData[] = [
+                        'company_id'      => $companyId,
+                        'part_id'         => 0,
+                        'part_name'       => $partName ?: 'Custom Item',
+                        'hsn_code'        => '85177090',
+                        'quantity'        => $qty,
+                        'unit_cost'       => 0.00,
+                        'unit_price'      => $price,
+                        'original_price'  => $origUnitPrice,
+                        'discount_amount' => $lineDiscount,
+                        'tax_rate'        => 18.00,
+                        'tax_amount'      => round($lineTotal - ($lineTotal / 1.18), 2),
+                        'line_total'      => $lineTotal,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ];
                 }
-
-                // Decrement stock
-                $newBalance = $part->stock_qty - $qty;
-                DB::table('ms_parts_inventory')
-                    ->where('id', $part->id)
-                    ->update([
-                        'stock_qty'  => $newBalance,
-                        'updated_at' => now(),
-                    ]);
-
-                // Log deduction in stock history ledger
-                DB::table('ms_parts_inventory_history')->insert([
-                    'part_id'       => $part->id,
-                    'type'          => 'deduction',
-                    'quantity'      => $qty,
-                    'balance_after' => $newBalance,
-                    'reference'     => "Retail Counter Sale #{$invoiceNumber}",
-                    'user_id'       => auth()->id(),
-                    'created_at'    => now(),
-                    'updated_at'    => now(),
-                ]);
-
-                $lineTotal = round($price * $qty, 2);
-                $origUnitPrice = (float) ($part->selling_price ?: $price);
-                $origLineTotal = round($origUnitPrice * $qty, 2);
-                $lineDiscount = max(0.00, round($origLineTotal - $lineTotal, 2));
-
-                $subtotal += $lineTotal;
-                $grossTotal += $origLineTotal;
-
-                $lineItemsData[] = [
-                    'company_id'      => $companyId,
-                    'part_id'         => $part->id,
-                    'part_name'       => $part->name,
-                    'hsn_code'        => $part->hsn_code ?? '85177090',
-                    'quantity'        => $qty,
-                    'unit_cost'       => $part->unit_cost,
-                    'unit_price'      => $price,
-                    'original_price'  => $origUnitPrice,
-                    'discount_amount' => $lineDiscount,
-                    'tax_rate'        => 18.00,
-                    'tax_amount'      => round($lineTotal - ($lineTotal / 1.18), 2),
-                    'line_total'      => $lineTotal,
-                    'created_at'      => now(),
-                    'updated_at'      => now(),
-                ];
             }
 
             $invoiceDiscount = max(0.00, round($grossTotal - $subtotal, 2));

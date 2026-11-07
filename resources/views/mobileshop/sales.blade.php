@@ -547,7 +547,7 @@
                                         style="display:none; position: absolute; right: 8px; top: 18px; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
                                 <div class="search-picker-dropdown"></div>
                                 <div class="new-item-pill" style="display:none; margin-top:4px; font-size:11px; align-items:center; gap:5px; background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; border-radius:4px; padding:2px 7px; width:fit-content;">
-                                    <span>✨ New Item &bull; <strong class="pill-category-name">General Accessory</strong></span>
+                                    <span>✨ Direct Item &bull; <strong class="pill-category-name">One-Off Sale</strong></span>
                                     <button type="button" onclick="editRowNewItemCategory(this)" style="background:none; border:none; color:#6366F1; cursor:pointer; padding:0 2px; font-size:10px; text-decoration:underline;">Change</button>
                                 </div>
                             </div>
@@ -994,7 +994,7 @@
                         New Item Details
                     </div>
                     <div style="font-size:11px; color:#E0E7FF; margin-top:2px;">
-                        Item not found in stock. Set name & category to sell and auto-add to catalog.
+                        Item not found in stock. Set name & price to sell directly on this invoice & statement.
                     </div>
                 </div>
                 <button type="button" onclick="closeQuickNewItemModal()" style="background:rgba(255,255,255,0.15); border:none; color:#FFFFFF; font-size:16px; width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -1051,7 +1051,7 @@
                             <input type="number" step="0.01" min="0" id="modalNewItemPrice" required class="app-input-field" placeholder="0.00" style="padding-left:26px; font-size:14px; font-weight:800; width:100%;">
                         </div>
                         <div style="font-size:10.5px; color:#64748B; margin-top:4px;">
-                            This item will be automatically registered in your inventory catalog and sold directly in this invoice.
+                            Direct Sale Item &bull; Sold directly on this invoice and customer statement (no inventory stock added).
                         </div>
                     </div>
 
@@ -2460,8 +2460,8 @@
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div style="width:26px; height:26px; border-radius:6px; background:#4F46E5; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">+</div>
                         <div style="min-width:0; text-align:left;">
-                            <div style="font-weight:800; font-size:12.5px; color:#3730A3;">Sell New Item: "<strong>${safeQuery}</strong>"</div>
-                            <div style="font-size:10.5px; color:#6366F1;">Item not in stock? Click to set category & sell directly</div>
+                            <div style="font-weight:800; font-size:12.5px; color:#3730A3;">Sell Direct Item: "<strong>${safeQuery}</strong>"</div>
+                            <div style="font-size:10.5px; color:#6366F1;">Item not in stock? Click to set price & sell on this invoice</div>
                         </div>
                     </div>
                 </div>
@@ -2653,7 +2653,7 @@
         const pillCatName = row.querySelector('.pill-category-name');
 
         if (nameInput) nameInput.value = nameVal;
-        if (partIdInput) partIdInput.value = ''; // Empty part_id means auto-register new item
+        if (partIdInput) partIdInput.value = '0'; // 0 indicates direct one-off item (no inventory stock)
         if (catInput) catInput.value = catVal;
         if (priceInput && priceVal !== '') {
             priceInput.value = parseFloat(priceVal);
@@ -2724,7 +2724,7 @@
                         style="display:none; position: absolute; right: 8px; top: 18px; transform: translateY(-50%); background: #e2e8f0; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 20px; text-align: center; color: #475569; cursor: pointer; padding: 0;">✕</button>
                 <div class="search-picker-dropdown"></div>
                 <div class="new-item-pill" style="display:none; margin-top:4px; font-size:11px; align-items:center; gap:5px; background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; border-radius:4px; padding:2px 7px; width:fit-content;">
-                    <span>✨ New Item &bull; <strong class="pill-category-name">General Accessory</strong></span>
+                    <span>✨ Direct Item &bull; <strong class="pill-category-name">One-Off Sale</strong></span>
                     <button type="button" onclick="editRowNewItemCategory(this)" style="background:none; border:none; color:#6366F1; cursor:pointer; padding:0 2px; font-size:10px; text-decoration:underline;">Change</button>
                 </div>
             </div>

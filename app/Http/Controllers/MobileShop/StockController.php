@@ -59,13 +59,30 @@ class StockController extends BaseMobileShopController
                 break;
 
             case 'accessories':
-                $parts      = DB::table('ms_parts_inventory')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
+                $parts      = DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->whereNotExists(function ($q) {
+                        $q->select(DB::raw(1))
+                          ->from('ms_parts_inventory_history')
+                          ->whereColumn('ms_parts_inventory_history.part_id', 'ms_parts_inventory.id')
+                          ->where('ms_parts_inventory_history.reference', 'like', 'Auto-created via Quick Sale%');
+                    })
+                    ->orderBy('name', 'asc')->get();
                 $categories = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
                 break;
 
             case 'covers':
                 $coverCats  = $this->coverCategories;
-                $parts      = DB::table('ms_parts_inventory')->where('company_id', $companyId)->whereIn('category', $coverCats)->orderBy('name', 'asc')->get();
+                $parts      = DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->whereIn('category', $coverCats)
+                    ->whereNotExists(function ($q) {
+                        $q->select(DB::raw(1))
+                          ->from('ms_parts_inventory_history')
+                          ->whereColumn('ms_parts_inventory_history.part_id', 'ms_parts_inventory.id')
+                          ->where('ms_parts_inventory_history.reference', 'like', 'Auto-created via Quick Sale%');
+                    })
+                    ->orderBy('name', 'asc')->get();
                 $categories = DB::table('ms_part_categories')->where('company_id', $companyId)->whereIn('slug', $coverCats)->orderBy('name', 'asc')->get();
                 break;
 
@@ -80,7 +97,15 @@ class StockController extends BaseMobileShopController
             default: // admin — all stock
                 $newPhones        = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'new')->whereNotIn('status', ['deleted', 'scraped'])->orderBy('id', 'desc')->get();
                 $secondHandPhones = DB::table('ms_mobile_devices')->where('company_id', $companyId)->where('type', 'second_hand')->whereNotIn('status', ['deleted', 'scraped'])->orderBy('id', 'desc')->get();
-                $parts            = DB::table('ms_parts_inventory')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
+                $parts            = DB::table('ms_parts_inventory')
+                    ->where('company_id', $companyId)
+                    ->whereNotExists(function ($q) {
+                        $q->select(DB::raw(1))
+                          ->from('ms_parts_inventory_history')
+                          ->whereColumn('ms_parts_inventory_history.part_id', 'ms_parts_inventory.id')
+                          ->where('ms_parts_inventory_history.reference', 'like', 'Auto-created via Quick Sale%');
+                    })
+                    ->orderBy('name', 'asc')->get();
                 $categories       = DB::table('ms_part_categories')->where('company_id', $companyId)->orderBy('name', 'asc')->get();
                 $repairTickets    = DB::table('ms_repair_tickets')
                     ->join('ms_customers', 'ms_repair_tickets.customer_id', '=', 'ms_customers.id')
