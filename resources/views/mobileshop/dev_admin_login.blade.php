@@ -111,8 +111,8 @@
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                             <i class="fa-solid fa-user-shield"></i>
                         </span>
-                        <input type="text" name="id" value="{{ old('id', 'altmash') }}" required autofocus
-                               placeholder="altmash"
+                        <input type="text" name="id" value="{{ old('id') }}" required autofocus
+                               placeholder="Enter Developer ID"
                                class="w-full pl-10 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                     </div>
                 </div>
@@ -127,7 +127,7 @@
                             <i class="fa-solid fa-key"></i>
                         </span>
                         <input type="password" id="devPassword" name="password" value="" required autocomplete="current-password"
-                               placeholder="Enter Password@12"
+                               placeholder="••••••••"
                                class="w-full pl-10 pr-10 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                         <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300">
                             <i id="eyeIcon" class="fa-solid fa-eye"></i>
