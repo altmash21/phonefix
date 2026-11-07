@@ -228,10 +228,49 @@
                             </div>
                         @endif
                     @elseif($isRepayment)
-                        <div style="font-weight: bold; color: #16a34a;">
-                            {{ $itemName ?: 'Payment / Settlement Received' }}
+                        @php
+                            $rawModePdf = strtolower(trim((string)($entry->payment_mode ?? '')));
+                            $rawTextPdf = strtolower(trim((string)($entry->raw_remarks ?? '') . ' ' . (string)($entry->description ?? '') . ' ' . (string)($entry->particulars ?? '')));
+                            $isReversalPdf = ($entry->entry_type ?? '') === 'adjustment' 
+                                           || ($entry->entry_type ?? '') === 'refund_credit'
+                                           || str_contains($rawTextPdf, 'reversal')
+                                           || str_contains($rawTextPdf, 'returned items')
+                                           || str_contains($rawTextPdf, 'returned:');
+                            
+                            $modeKeyPdf = 'cash';
+                            if ($isReversalPdf) {
+                                $modeKeyPdf = 'reversal';
+                            } elseif (in_array($rawModePdf, ['upi', 'online', 'gpay', 'phonepe', 'paytm']) || str_contains($rawTextPdf, '(upi)') || str_contains($rawTextPdf, '[upi portion]') || str_contains($rawTextPdf, 'gpay') || str_contains($rawTextPdf, 'phonepe') || str_contains($rawTextPdf, 'paytm') || str_contains($rawTextPdf, 'online')) {
+                                $modeKeyPdf = 'upi';
+                            } elseif ($rawModePdf === 'bank_transfer' || str_contains($rawTextPdf, 'bank')) {
+                                $modeKeyPdf = 'bank';
+                            } elseif ($rawModePdf === 'cheque' || str_contains($rawTextPdf, 'cheque')) {
+                                $modeKeyPdf = 'cheque';
+                            } elseif ($rawModePdf === 'split' || $rawModePdf === 'cash+upi') {
+                                $modeKeyPdf = 'split';
+                            } elseif ($rawModePdf === 'cash' || str_contains($rawTextPdf, '(cash)') || str_contains($rawTextPdf, '[cash portion]')) {
+                                $modeKeyPdf = 'cash';
+                            }
+                        @endphp
+                        <div style="font-weight: bold; color: {{ $isReversalPdf ? '#059669' : '#16a34a' }}; font-size: 10px;">
+                            {{ $itemName ?: ($isReversalPdf ? 'Return Adjustment' : 'Khata Repayment Received') }}
+                            @if(!$isReversalPdf)
+                                @if($modeKeyPdf === 'cash')
+                                    <span style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 7.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; margin-left: 3px;">CASH</span>
+                                @elseif($modeKeyPdf === 'upi')
+                                    <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 7.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; margin-left: 3px;">ONLINE (UPI)</span>
+                                @elseif($modeKeyPdf === 'bank')
+                                    <span style="background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; font-size: 7.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; margin-left: 3px;">BANK TRANSFER</span>
+                                @elseif($modeKeyPdf === 'cheque')
+                                    <span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 7.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; margin-left: 3px;">CHEQUE</span>
+                                @elseif($modeKeyPdf === 'split')
+                                    <span style="background: #f0fdf4; color: #047857; border: 1px solid #a7f3d0; font-size: 7.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; margin-left: 3px;">CASH + ONLINE</span>
+                                @endif
+                            @else
+                                <span style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; font-size: 7.5px; font-weight: bold; padding: 1px 4px; border-radius: 2px; text-transform: uppercase; margin-left: 3px;">RETURN CREDIT</span>
+                            @endif
                         </div>
-                        @if(!empty($entry->description) && !in_array($entry->description, [$itemName, $entry->particulars, $entry->ref_no, 'Payment / Settlement Received', 'Khata repayment received', 'Khata repayment received (Cash)', 'Khata repayment received (UPI)']))
+                        @if(!empty($entry->description) && !in_array($entry->description, [$itemName, $entry->particulars, $entry->ref_no, 'Payment / Settlement Received', 'Khata repayment received', 'Khata repayment received (Cash)', 'Khata repayment received (UPI)', 'Return Adjustment']))
                             <div style="font-size: 8.5px; color: #4b5563; margin-top: 1px;">
                                 {{ $entry->description }}
                             </div>
@@ -289,6 +328,21 @@
             <td class="font-bold" style="color: #111827;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Received / Paid' : 'Total Received / Paid' }}</td>
             <td class="text-right font-mono font-bold" style="color: #16a34a; font-size: 12px;">Rs. {{ number_format($totalPaid, 2) }}</td>
         </tr>
+        @if($totalPaid > 0)
+        <tr>
+            <td colspan="2" style="text-align: right; font-size: 8.5px; color: #4b5563; padding-top: 1px; padding-bottom: 3px; font-family: monospace;">
+                @php
+                    $pdfBreakdown = [];
+                    if (!empty($totalPaidCash) && $totalPaidCash > 0) $pdfBreakdown[] = 'Cash: Rs. ' . number_format($totalPaidCash, 2);
+                    if (!empty($totalPaidOnline) && $totalPaidOnline > 0) $pdfBreakdown[] = 'Online (UPI): Rs. ' . number_format($totalPaidOnline, 2);
+                    if (!empty($totalPaidBank) && $totalPaidBank > 0) $pdfBreakdown[] = 'Bank: Rs. ' . number_format($totalPaidBank, 2);
+                    if (!empty($totalPaidCheque) && $totalPaidCheque > 0) $pdfBreakdown[] = 'Cheque: Rs. ' . number_format($totalPaidCheque, 2);
+                    if (!empty($totalReturnCredits) && $totalReturnCredits > 0) $pdfBreakdown[] = 'Return Credits: Rs. ' . number_format($totalReturnCredits, 2);
+                @endphp
+                {{ implode('   •   ', $pdfBreakdown) }}
+            </td>
+        </tr>
+        @endif
     </table>
 
     <!-- 6. NET OUTSTANDING BALANCE BOX -->

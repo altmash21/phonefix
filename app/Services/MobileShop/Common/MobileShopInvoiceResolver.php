@@ -57,6 +57,72 @@ class MobileShopInvoiceResolver
     }
 
     /**
+     * Normalize payment mode for customer statement entries
+     */
+    public static function normalizePaymentMode(?string $mode, ?string $text = ''): ?string
+    {
+        $m = strtolower(trim((string) $mode));
+        $t = strtolower(trim((string) $text));
+
+        // Return reversals or adjustment credits are not cash/online receipts
+        if ($m === 'reversal' || str_contains($t, 'reversal') || str_contains($t, 'returned items') || str_contains($t, 'returned:')) {
+            return 'reversal';
+        }
+
+        if (in_array($m, ['cash', 'upi', 'online', 'bank_transfer', 'cheque', 'card', 'split', 'cash+upi'])) {
+            if (in_array($m, ['upi', 'online'])) {
+                return 'upi';
+            }
+            if ($m === 'cash+upi') {
+                return 'split';
+            }
+            return $m;
+        }
+
+        // Fallback checks from description/remarks if payment_mode is missing or unmapped
+        if (str_contains($t, 'cash portion') || str_contains($t, '(cash)') || str_contains($t, 'paid cash')) {
+            return 'cash';
+        }
+        if (str_contains($t, 'upi portion') || str_contains($t, '(upi)') || str_contains($t, 'gpay') || str_contains($t, 'phonepe') || str_contains($t, 'paytm') || str_contains($t, 'online')) {
+            return 'upi';
+        }
+        if (str_contains($t, 'bank transfer') || str_contains($t, 'neft') || str_contains($t, 'rtgs') || str_contains($t, 'imps') || str_contains($t, 'bank')) {
+            return 'bank_transfer';
+        }
+        if (str_contains($t, 'cheque')) {
+            return 'cheque';
+        }
+
+        return !empty($m) ? $m : 'cash';
+    }
+
+    /**
+     * Format payment mode label for display
+     */
+    public static function formatPaymentModeLabel(?string $mode): string
+    {
+        switch (strtolower(trim((string) $mode))) {
+            case 'cash':
+                return 'Cash';
+            case 'upi':
+            case 'online':
+                return 'Online (UPI)';
+            case 'bank_transfer':
+                return 'Bank Transfer';
+            case 'cheque':
+                return 'Cheque';
+            case 'card':
+                return 'Card';
+            case 'split':
+                return 'Cash + Online';
+            case 'reversal':
+                return 'Return Reversal';
+            default:
+                return !empty($mode) ? ucfirst(str_replace('_', ' ', $mode)) : 'Cash';
+        }
+    }
+
+    /**
      * Build Tally-Style Customer Ledger Statement (Chronological with running balance)
      */
     public static function buildCustomerLedgerStatement(int $companyId, int $customerId, array $filters = []): array
@@ -77,6 +143,11 @@ class MobileShopInvoiceResolver
                 'priorSettledCount'   => 0,
                 'totalBilled'         => 0.00,
                 'totalPaid'           => 0.00,
+                'totalPaidCash'       => 0.00,
+                'totalPaidOnline'     => 0.00,
+                'totalPaidBank'       => 0.00,
+                'totalPaidCheque'     => 0.00,
+                'totalReturnCredits'  => 0.00,
                 'closingBalance'      => 0.00,
             ];
         }
@@ -113,6 +184,7 @@ class MobileShopInvoiceResolver
                 'ms_mobile_sales.total_amount as billed_amount',
                 'ms_mobile_sales.amount_paid as paid_amount',
                 'ms_mobile_sales.udhari_amount as due_amount',
+                'ms_mobile_sales.payment_mode',
                 'ms_mobile_sales.status',
                 DB::raw("'mobile_sale' as entry_type")
             )
@@ -142,6 +214,7 @@ class MobileShopInvoiceResolver
             ]);
 
             if ((float) $ms->paid_amount > 0) {
+                $normMobMode = self::normalizePaymentMode($ms->payment_mode ?? 'cash');
                 $mobEntries->push((object) [
                     'id'            => 'mob_' . $ms->id . '_paid',
                     'created_at'    => $ms->created_at,
@@ -149,14 +222,14 @@ class MobileShopInvoiceResolver
                     'ref_no'        => $ms->ref_no,
                     'particulars'   => "Payment at Counter (Ref #{$ms->ref_no})",
                     'item_name'     => "Payment at Counter",
-                    'description'   => "Advance / Cash payment received at billing for #{$ms->ref_no}",
+                    'description'   => "Payment received at billing for #{$ms->ref_no} (" . self::formatPaymentModeLabel($normMobMode) . ")",
                     'billed_amount' => 0.00,
                     'paid_amount'   => (float) $ms->paid_amount,
                     'due_amount'    => 0.00,
                     'entry_type'    => 'payment_received',
                     'source'        => 'counter_payment',
                     'source_id'     => (int) $ms->id,
-                    'payment_mode'  => 'cash',
+                    'payment_mode'  => $normMobMode,
                     'raw_remarks'   => "Payment received at billing for #{$ms->ref_no}",
                 ]);
             }
@@ -192,6 +265,7 @@ class MobileShopInvoiceResolver
                 'ms_accessory_sales.total_amount as billed_amount',
                 'ms_accessory_sales.amount_paid as paid_amount',
                 'ms_accessory_sales.udhari_amount as due_amount',
+                'ms_accessory_sales.payment_mode',
                 'ms_accessory_sales.status',
                 'ms_accessory_sales.refund_amount',
                 DB::raw("'accessory_sale' as entry_type")
@@ -243,6 +317,7 @@ class MobileShopInvoiceResolver
 
                     // If upfront payment was made on this sale, record as a separate line
                     if ((float) $sale->paid_amount > 0) {
+                        $normAccMode = self::normalizePaymentMode($sale->payment_mode ?? 'cash');
                         $accEntries->push((object) [
                             'id'            => 'acc_' . $sale->id . '_paid',
                             'created_at'    => $sale->created_at,
@@ -250,14 +325,14 @@ class MobileShopInvoiceResolver
                             'ref_no'        => $sale->ref_no,
                             'particulars'   => "Payment at Counter (Ref #{$sale->ref_no})",
                             'item_name'     => "Payment at Counter",
-                            'description'   => "Advance / Cash payment received at billing for #{$sale->ref_no}",
+                            'description'   => "Payment received at billing for #{$sale->ref_no} (" . self::formatPaymentModeLabel($normAccMode) . ")",
                             'billed_amount' => 0.00,
                             'paid_amount'   => (float) $sale->paid_amount,
                             'due_amount'    => 0.00,
                             'entry_type'    => 'payment_received',
                             'source'        => 'counter_payment',
                             'source_id'     => (int) $sale->id,
-                            'payment_mode'  => 'cash',
+                            'payment_mode'  => $normAccMode,
                             'raw_remarks'   => "Payment received at billing for #{$sale->ref_no}",
                             'is_voided'     => false,
                         ]);
@@ -301,6 +376,7 @@ class MobileShopInvoiceResolver
 
                 if ($isDebit) {
                     $itemDesc = $hasCustomDesc ? "Old Udhar: {$rawRemarks}" : 'Old Udhar / Opening Balance';
+                    $entryPaymentMode = null;
                 } else {
                     $isReversal = ($tx->type === 'adjustment' || stripos($rawRemarks, 'reversal') !== false || stripos($rawRemarks, 'returned') !== false);
                     if ($isReversal && preg_match('/#([A-Za-z0-9\-_]+)/', $rawRemarks, $m)) {
@@ -310,10 +386,15 @@ class MobileShopInvoiceResolver
                             $itemDesc = "Reversal for Returned: {$returnedSummary}";
                             $detailsDesc = "Sale #{$invoiceRef}";
                         } else {
-                            $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Payment / Settlement Received';
+                            $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Return Adjustment';
                         }
+                        $entryPaymentMode = 'reversal';
+                    } elseif ($isReversal) {
+                        $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Return Adjustment';
+                        $entryPaymentMode = 'reversal';
                     } else {
-                        $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Payment / Settlement Received';
+                        $itemDesc = !empty($rawRemarks) ? $rawRemarks : 'Khata repayment received';
+                        $entryPaymentMode = self::normalizePaymentMode($tx->payment_mode ?? null, $rawRemarks . ' ' . ($tx->reference_no ?? ''));
                     }
                 }
 
@@ -331,7 +412,7 @@ class MobileShopInvoiceResolver
                     'entry_type'    => $tx->type,
                     'source'        => 'khata_transaction',
                     'source_id'     => (int) $tx->id,
-                    'payment_mode'  => $tx->payment_mode ?? null,
+                    'payment_mode'  => $entryPaymentMode,
                     'raw_remarks'   => $tx->remarks ?? '',
                 ];
             });
@@ -625,6 +706,43 @@ class MobileShopInvoiceResolver
             $totalPaid   = (float) $periodEntries->sum('paid');
         }
 
+        $totalPaidCash = 0.00;
+        $totalPaidOnline = 0.00;
+        $totalPaidBank = 0.00;
+        $totalPaidCheque = 0.00;
+        $totalReturnCredits = 0.00;
+
+        foreach ($displayLedger as $entry) {
+            if (!empty($entry->is_opening)) {
+                continue;
+            }
+            $pAmt = (float) ($entry->paid ?? 0);
+            if ($pAmt <= 0.0001) {
+                continue;
+            }
+
+            $normMode = self::normalizePaymentMode(
+                $entry->payment_mode ?? null,
+                ($entry->raw_remarks ?? '') . ' ' . ($entry->description ?? '') . ' ' . ($entry->particulars ?? '')
+            );
+
+            if ($normMode === 'reversal') {
+                $totalReturnCredits += $pAmt;
+            } elseif ($normMode === 'cash') {
+                $totalPaidCash += $pAmt;
+            } elseif ($normMode === 'upi') {
+                $totalPaidOnline += $pAmt;
+            } elseif ($normMode === 'bank_transfer') {
+                $totalPaidBank += $pAmt;
+            } elseif ($normMode === 'cheque') {
+                $totalPaidCheque += $pAmt;
+            } elseif ($normMode === 'split') {
+                $totalPaidOnline += $pAmt;
+            } else {
+                $totalPaidCash += $pAmt;
+            }
+        }
+
         return [
             'customer'            => $customer,
             'ledger'              => $displayLedger,
@@ -639,6 +757,11 @@ class MobileShopInvoiceResolver
             'priorSettledCount'   => $priorSettledCount,
             'totalBilled'         => $totalBilled,
             'totalPaid'           => $totalPaid,
+            'totalPaidCash'       => $totalPaidCash,
+            'totalPaidOnline'     => $totalPaidOnline,
+            'totalPaidBank'       => $totalPaidBank,
+            'totalPaidCheque'     => $totalPaidCheque,
+            'totalReturnCredits'  => $totalReturnCredits,
             'closingBalance'      => (float) $customer->udhari_balance,
         ];
     }

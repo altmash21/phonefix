@@ -236,10 +236,63 @@
                                         </div>
                                     @endif
                                 @elseif($isRepayment)
-                                    <div style="color: #16A34A; font-weight: 700; font-size: 13px;">
-                                        💵 {{ $itemName ?: 'Payment / Settlement Received' }}
+                                    @php
+                                        $rawModePub = strtolower(trim((string)($entry->payment_mode ?? '')));
+                                        $rawTextPub = strtolower(trim((string)($entry->raw_remarks ?? '') . ' ' . (string)($entry->description ?? '') . ' ' . (string)($entry->particulars ?? '')));
+                                        $isReversalPub = ($entry->entry_type ?? '') === 'adjustment' 
+                                                       || ($entry->entry_type ?? '') === 'refund_credit'
+                                                       || str_contains($rawTextPub, 'reversal')
+                                                       || str_contains($rawTextPub, 'returned items')
+                                                       || str_contains($rawTextPub, 'returned:');
+                                        
+                                        $modeKeyPub = 'cash';
+                                        if ($isReversalPub) {
+                                            $modeKeyPub = 'reversal';
+                                        } elseif (in_array($rawModePub, ['upi', 'online', 'gpay', 'phonepe', 'paytm']) || str_contains($rawTextPub, '(upi)') || str_contains($rawTextPub, '[upi portion]') || str_contains($rawTextPub, 'gpay') || str_contains($rawTextPub, 'phonepe') || str_contains($rawTextPub, 'paytm') || str_contains($rawTextPub, 'online')) {
+                                            $modeKeyPub = 'upi';
+                                        } elseif ($rawModePub === 'bank_transfer' || str_contains($rawTextPub, 'bank')) {
+                                            $modeKeyPub = 'bank';
+                                        } elseif ($rawModePub === 'cheque' || str_contains($rawTextPub, 'cheque')) {
+                                            $modeKeyPub = 'cheque';
+                                        } elseif ($rawModePub === 'split' || $rawModePub === 'cash+upi') {
+                                            $modeKeyPub = 'split';
+                                        } elseif ($rawModePub === 'cash' || str_contains($rawTextPub, '(cash)') || str_contains($rawTextPub, '[cash portion]')) {
+                                            $modeKeyPub = 'cash';
+                                        }
+                                    @endphp
+                                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                        <span style="color: {{ $isReversalPub ? '#059669' : '#16A34A' }}; font-weight: 700; font-size: 13px;">
+                                            {{ $isReversalPub ? '↩️' : '💵' }} {{ $itemName ?: ($isReversalPub ? 'Return Adjustment' : 'Khata Repayment Received') }}
+                                        </span>
+                                        @if(!$isReversalPub)
+                                            @if($modeKeyPub === 'cash')
+                                                <span style="background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">
+                                                    💵 CASH
+                                                </span>
+                                            @elseif($modeKeyPub === 'upi')
+                                                <span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">
+                                                    📱 ONLINE (UPI)
+                                                </span>
+                                            @elseif($modeKeyPub === 'bank')
+                                                <span style="background: #FAF5FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">
+                                                    🏦 BANK TRANSFER
+                                                </span>
+                                            @elseif($modeKeyPub === 'cheque')
+                                                <span style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">
+                                                    📝 CHEQUE
+                                                </span>
+                                            @elseif($modeKeyPub === 'split')
+                                                <span style="background: #F0FDF4; color: #047857; border: 1px solid #A7F3D0; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">
+                                                    💵/📱 CASH + ONLINE
+                                                </span>
+                                            @endif
+                                        @else
+                                            <span style="background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">
+                                                ↩️ RETURN CREDIT
+                                            </span>
+                                        @endif
                                     </div>
-                                    @if(!empty($entry->description) && !in_array($entry->description, [$itemName, $entry->particulars, $entry->ref_no, 'Payment / Settlement Received', 'Khata repayment received', 'Khata repayment received (Cash)', 'Khata repayment received (UPI)']))
+                                    @if(!empty($entry->description) && !in_array($entry->description, [$itemName, $entry->particulars, $entry->ref_no, 'Payment / Settlement Received', 'Khata repayment received', 'Khata repayment received (Cash)', 'Khata repayment received (UPI)', 'Return Adjustment']))
                                         <div style="font-size: 11px; color: #475569; margin-top: 1px; font-weight: 500;">
                                             {{ $entry->description }}
                                         </div>
@@ -301,6 +354,29 @@
                     ₹{{ number_format($totalPaid, 2) }}
                 </td>
             </tr>
+            @if($totalPaid > 0)
+            <tr style="border-top: 1px dashed #CBD5E1;">
+                <td colspan="2" style="text-align: right; padding: 4px 0 8px 0; font-size: 11px; color: #64748B;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                        @if(!empty($totalPaidCash) && $totalPaidCash > 0)
+                            <span style="color: #15803D; font-weight: 800; background: #DCFCE7; padding: 2px 6px; border-radius: 4px; border: 1px solid #BBF7D0;">💵 Cash: ₹{{ number_format($totalPaidCash, 2) }}</span>
+                        @endif
+                        @if(!empty($totalPaidOnline) && $totalPaidOnline > 0)
+                            <span style="color: #1D4ED8; font-weight: 800; background: #EFF6FF; padding: 2px 6px; border-radius: 4px; border: 1px solid #BFDBFE;">📱 Online/UPI: ₹{{ number_format($totalPaidOnline, 2) }}</span>
+                        @endif
+                        @if(!empty($totalPaidBank) && $totalPaidBank > 0)
+                            <span style="color: #7E22CE; font-weight: 800; background: #FAF5FF; padding: 2px 6px; border-radius: 4px; border: 1px solid #E9D5FF;">🏦 Bank: ₹{{ number_format($totalPaidBank, 2) }}</span>
+                        @endif
+                        @if(!empty($totalPaidCheque) && $totalPaidCheque > 0)
+                            <span style="color: #B45309; font-weight: 800; background: #FEF3C7; padding: 2px 6px; border-radius: 4px; border: 1px solid #FDE68A;">📝 Cheque: ₹{{ number_format($totalPaidCheque, 2) }}</span>
+                        @endif
+                        @if(!empty($totalReturnCredits) && $totalReturnCredits > 0)
+                            <span style="color: #DC2626; font-weight: 800; background: #FEE2E2; padding: 2px 6px; border-radius: 4px; border: 1px solid #FECACA;">↩️ Return Credits: ₹{{ number_format($totalReturnCredits, 2) }}</span>
+                        @endif
+                    </span>
+                </td>
+            </tr>
+            @endif
         </table>
 
         <!-- Outstanding Due Box -->
