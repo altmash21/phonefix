@@ -154,214 +154,7 @@ class MobileShopInvoiceResolver
 
         $prefix = DB::getTablePrefix();
 
-        // 1. Mobile Sales (Include active udhari sales or returned/voided sales that had udhari recorded)
-        $mobileSales = DB::table('ms_mobile_sales')
-            ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
-            ->where('ms_mobile_sales.company_id', $companyId)
-            ->where('ms_mobile_sales.customer_id', $customerId)
-            ->where(function ($q) {
-                $q->where(function ($activeQ) {
-                    $activeQ->where('ms_mobile_sales.status', '!=', 'voided')
-                        ->where(function ($w) {
-                            $w->where('ms_mobile_sales.udhari_amount', '>', 0)
-                              ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
-                        });
-                })->orWhere(function ($retQ) {
-                    $retQ->whereIn('ms_mobile_sales.status', ['voided', 'returned'])
-                        ->where(function ($w) {
-                            $w->where('ms_mobile_sales.udhari_amount', '>', 0)
-                              ->orWhere('ms_mobile_sales.payment_mode', 'LIKE', '%udhari%')
-                              ->orWhere('ms_mobile_sales.payment_mode', 'LIKE', '%credit%')
-                              ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
-                        });
-                });
-            })
-            ->select(
-                'ms_mobile_sales.id',
-                'ms_mobile_sales.created_at',
-                'ms_mobile_sales.invoice_number as ref_no',
-                DB::raw("CONCAT({$prefix}ms_mobile_devices.brand, ' ', {$prefix}ms_mobile_devices.model, ' (IMEI: ', {$prefix}ms_mobile_devices.imei_1, ')') as particulars"),
-                'ms_mobile_sales.total_amount as billed_amount',
-                'ms_mobile_sales.amount_paid as paid_amount',
-                'ms_mobile_sales.udhari_amount as due_amount',
-                'ms_mobile_sales.payment_mode',
-                'ms_mobile_sales.status',
-                DB::raw("'mobile_sale' as entry_type")
-            )
-            ->get();
-
-        $mobEntries = collect();
-        foreach ($mobileSales as $ms) {
-            $isVoidedMob = in_array($ms->status ?? '', ['voided', 'returned']);
-            $mobParticulars = $ms->particulars . ($isVoidedMob ? ' [Full Invoice Returned]' : '');
-            $mobEntries->push((object) [
-                'id'            => 'mob_' . $ms->id,
-                'created_at'    => $ms->created_at,
-                'sort_order'    => 0,
-                'ref_no'        => $ms->ref_no,
-                'particulars'   => $mobParticulars,
-                'item_name'     => $mobParticulars,
-                'description'   => $isVoidedMob ? 'Full invoice returned & reversed in khata' : '',
-                'billed_amount' => (float) $ms->billed_amount,
-                'paid_amount'   => 0.00,
-                'due_amount'    => (float) $ms->billed_amount,
-                'entry_type'    => 'mobile_sale',
-                'source'        => 'mobile_sale',
-                'source_id'     => (int) $ms->id,
-                'payment_mode'  => null,
-                'raw_remarks'   => $isVoidedMob ? 'Full Invoice Returned' : '',
-                'is_voided'     => $isVoidedMob,
-            ]);
-
-            if ((float) $ms->paid_amount > 0) {
-                $normMobMode = self::normalizePaymentMode($ms->payment_mode ?? 'cash');
-                $mobEntries->push((object) [
-                    'id'            => 'mob_' . $ms->id . '_paid',
-                    'created_at'    => $ms->created_at,
-                    'sort_order'    => 999,
-                    'ref_no'        => $ms->ref_no,
-                    'particulars'   => "Payment at Counter (Ref #{$ms->ref_no})",
-                    'item_name'     => "Payment at Counter",
-                    'description'   => "Payment received at billing for #{$ms->ref_no} (" . self::formatPaymentModeLabel($normMobMode) . ")",
-                    'billed_amount' => 0.00,
-                    'paid_amount'   => (float) $ms->paid_amount,
-                    'due_amount'    => 0.00,
-                    'entry_type'    => 'payment_received',
-                    'source'        => 'counter_payment',
-                    'source_id'     => (int) $ms->id,
-                    'payment_mode'  => $normMobMode,
-                    'raw_remarks'   => "Payment received at billing for #{$ms->ref_no}",
-                ]);
-            }
-        }
-
-        // 2. Accessory Sales (Expand each line item separately; include voided/returned sales that had udhari recorded)
-        $accSales = DB::table('ms_accessory_sales')
-            ->where('ms_accessory_sales.company_id', $companyId)
-            ->where('ms_accessory_sales.customer_id', $customerId)
-            ->where(function ($q) {
-                $q->where(function ($activeQ) {
-                    $activeQ->where('ms_accessory_sales.status', '!=', 'voided')
-                        ->where(function ($w) {
-                            $w->where('ms_accessory_sales.udhari_amount', '>', 0)
-                              ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
-                        });
-                })->orWhere(function ($retQ) {
-                    $retQ->whereIn('ms_accessory_sales.status', ['voided', 'returned', 'partially_returned'])
-                        ->where(function ($w) {
-                            $w->where('ms_accessory_sales.udhari_amount', '>', 0)
-                              ->orWhere('ms_accessory_sales.refund_amount', '>', 0)
-                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%udhari%')
-                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%credit%')
-                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%split%')
-                              ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
-                        });
-                });
-            })
-            ->select(
-                'ms_accessory_sales.id',
-                'ms_accessory_sales.created_at',
-                'ms_accessory_sales.invoice_number as ref_no',
-                'ms_accessory_sales.total_amount as billed_amount',
-                'ms_accessory_sales.amount_paid as paid_amount',
-                'ms_accessory_sales.udhari_amount as due_amount',
-                'ms_accessory_sales.payment_mode',
-                'ms_accessory_sales.status',
-                'ms_accessory_sales.refund_amount',
-                DB::raw("'accessory_sale' as entry_type")
-            )
-            ->get();
-
-        $accEntries = collect();
-
-        if ($accSales->isNotEmpty()) {
-            $saleIds = $accSales->pluck('id')->toArray();
-            $itemsGrouped = DB::table('ms_accessory_sale_items')
-                ->where('company_id', $companyId)
-                ->whereIn('accessory_sale_id', $saleIds)
-                ->select('id', 'accessory_sale_id', 'part_name', 'quantity', 'unit_price', 'line_total', 'created_at')
-                ->orderBy('id', 'asc')
-                ->get()
-                ->groupBy('accessory_sale_id');
-
-            foreach ($accSales as $sale) {
-                $isVoidedSale = in_array($sale->status ?? '', ['voided', 'returned']);
-                $items = $itemsGrouped[$sale->id] ?? collect();
-                if ($items->isNotEmpty()) {
-                    foreach ($items as $idx => $it) {
-                        $itemName = $it->part_name . ($it->quantity > 1 ? " (x{$it->quantity})" : "");
-                        if ($isVoidedSale) {
-                            $itemName .= " [Full Invoice Returned]";
-                        }
-                        $itemBilled = (float) ($it->line_total > 0 ? $it->line_total : ($it->unit_price * $it->quantity));
-
-                        $accEntries->push((object) [
-                            'id'            => 'acc_' . $sale->id . '_' . $it->id,
-                            'created_at'    => $sale->created_at,
-                            'sort_order'    => $idx,
-                            'ref_no'        => $sale->ref_no,
-                            'particulars'   => $itemName,
-                            'item_name'     => $itemName,
-                            'description'   => $isVoidedSale ? 'Full invoice returned & reversed in khata' : '',
-                            'billed_amount' => $itemBilled,
-                            'paid_amount'   => 0.00,
-                            'due_amount'    => $itemBilled,
-                            'entry_type'    => 'accessory_sale',
-                            'source'        => 'accessory_sale',
-                            'source_id'     => (int) $sale->id,
-                            'payment_mode'  => null,
-                            'raw_remarks'   => $isVoidedSale ? 'Full Invoice Returned' : '',
-                            'is_voided'     => $isVoidedSale,
-                        ]);
-                    }
-
-                    // If upfront payment was made on this sale, record as a separate line
-                    if ((float) $sale->paid_amount > 0) {
-                        $normAccMode = self::normalizePaymentMode($sale->payment_mode ?? 'cash');
-                        $accEntries->push((object) [
-                            'id'            => 'acc_' . $sale->id . '_paid',
-                            'created_at'    => $sale->created_at,
-                            'sort_order'    => 999,
-                            'ref_no'        => $sale->ref_no,
-                            'particulars'   => "Payment at Counter (Ref #{$sale->ref_no})",
-                            'item_name'     => "Payment at Counter",
-                            'description'   => "Payment received at billing for #{$sale->ref_no} (" . self::formatPaymentModeLabel($normAccMode) . ")",
-                            'billed_amount' => 0.00,
-                            'paid_amount'   => (float) $sale->paid_amount,
-                            'due_amount'    => 0.00,
-                            'entry_type'    => 'payment_received',
-                            'source'        => 'counter_payment',
-                            'source_id'     => (int) $sale->id,
-                            'payment_mode'  => $normAccMode,
-                            'raw_remarks'   => "Payment received at billing for #{$sale->ref_no}",
-                            'is_voided'     => false,
-                        ]);
-                    }
-                } else {
-                    $itemName = 'Accessory Purchase' . ($isVoidedSale ? ' [Full Invoice Returned]' : '');
-                    $accEntries->push((object) [
-                        'id'            => 'acc_' . $sale->id,
-                        'created_at'    => $sale->created_at,
-                        'sort_order'    => 0,
-                        'ref_no'        => $sale->ref_no,
-                        'particulars'   => $itemName,
-                        'item_name'     => $itemName,
-                        'description'   => $isVoidedSale ? 'Full invoice returned & reversed in khata' : '',
-                        'billed_amount' => (float) $sale->billed_amount,
-                        'paid_amount'   => (float) $sale->paid_amount,
-                        'due_amount'    => (float) $sale->due_amount,
-                        'entry_type'    => 'accessory_sale',
-                        'source'        => 'accessory_sale',
-                        'source_id'     => (int) $sale->id,
-                        'payment_mode'  => null,
-                        'raw_remarks'   => $isVoidedSale ? 'Full Invoice Returned' : '',
-                        'is_voided'     => $isVoidedSale,
-                    ]);
-                }
-            }
-        }
-
-        // 3. Khata Repayments, Old Udhar / Opening Balances & Adjustments
+        // 1. Khata Repayments, Old Udhar / Opening Balances & Adjustments (Loaded first for reversal cross-referencing)
         $khataTxs = DB::table('ms_customer_khata_transactions')
             ->where('company_id', $companyId)
             ->where('customer_id', $customerId)
@@ -416,6 +209,323 @@ class MobileShopInvoiceResolver
                     'raw_remarks'   => $tx->remarks ?? '',
                 ];
             });
+
+        // Helper to check existing return/reversal credits in Khata for an invoice
+        $getExistingReversals = function (string $invoiceRef) use ($khataTxs): float {
+            $ref = trim($invoiceRef);
+            if (empty($ref)) return 0.00;
+            return (float) $khataTxs->filter(function ($tx) use ($ref) {
+                $raw = ($tx->raw_remarks ?? '') . ' ' . ($tx->description ?? '') . ' ' . ($tx->ref_no ?? '') . ' ' . ($tx->particulars ?? '');
+                return str_contains($raw, $ref) && (
+                    $tx->entry_type === 'adjustment' ||
+                    $tx->entry_type === 'refund_credit' ||
+                    $tx->payment_mode === 'reversal' ||
+                    stripos($raw, 'reversal') !== false ||
+                    stripos($raw, 'returned') !== false
+                );
+            })->sum('paid_amount');
+        };
+
+        // 2. Mobile Sales (Include active udhari sales or returned/voided sales that had udhari recorded)
+        $mobileSales = DB::table('ms_mobile_sales')
+            ->join('ms_mobile_devices', 'ms_mobile_sales.device_id', '=', 'ms_mobile_devices.id')
+            ->where('ms_mobile_sales.company_id', $companyId)
+            ->where('ms_mobile_sales.customer_id', $customerId)
+            ->where(function ($q) {
+                $q->where(function ($activeQ) {
+                    $activeQ->where('ms_mobile_sales.status', '!=', 'voided')
+                        ->where(function ($w) {
+                            $w->where('ms_mobile_sales.udhari_amount', '>', 0)
+                              ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
+                        });
+                })->orWhere(function ($retQ) {
+                    $retQ->whereIn('ms_mobile_sales.status', ['voided', 'returned'])
+                        ->where(function ($w) {
+                            $w->where('ms_mobile_sales.udhari_amount', '>', 0)
+                              ->orWhere('ms_mobile_sales.payment_mode', 'LIKE', '%udhari%')
+                              ->orWhere('ms_mobile_sales.payment_mode', 'LIKE', '%credit%')
+                              ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
+                        });
+                });
+            })
+            ->select(
+                'ms_mobile_sales.id',
+                'ms_mobile_sales.created_at',
+                'ms_mobile_sales.invoice_number as ref_no',
+                DB::raw("CONCAT({$prefix}ms_mobile_devices.brand, ' ', {$prefix}ms_mobile_devices.model, ' (IMEI: ', {$prefix}ms_mobile_devices.imei_1, ')') as particulars"),
+                'ms_mobile_sales.total_amount as billed_amount',
+                'ms_mobile_sales.amount_paid as paid_amount',
+                'ms_mobile_sales.udhari_amount as due_amount',
+                'ms_mobile_sales.payment_mode',
+                'ms_mobile_sales.status',
+                'ms_mobile_sales.voided_at',
+                DB::raw("'mobile_sale' as entry_type")
+            )
+            ->get();
+
+        $mobEntries = collect();
+        foreach ($mobileSales as $ms) {
+            $isVoidedMob = in_array($ms->status ?? '', ['voided', 'returned']);
+            $mobParticulars = $ms->particulars . ($isVoidedMob ? ' [Full Invoice Returned]' : '');
+            $mobEntries->push((object) [
+                'id'            => 'mob_' . $ms->id,
+                'created_at'    => $ms->created_at,
+                'sort_order'    => 0,
+                'ref_no'        => $ms->ref_no,
+                'particulars'   => $mobParticulars,
+                'item_name'     => $mobParticulars,
+                'description'   => $isVoidedMob ? 'Full invoice returned & reversed in khata' : '',
+                'billed_amount' => (float) $ms->billed_amount,
+                'paid_amount'   => 0.00,
+                'due_amount'    => (float) $ms->billed_amount,
+                'entry_type'    => 'mobile_sale',
+                'source'        => 'mobile_sale',
+                'source_id'     => (int) $ms->id,
+                'payment_mode'  => null,
+                'raw_remarks'   => $isVoidedMob ? 'Full Invoice Returned' : '',
+                'is_voided'     => $isVoidedMob,
+            ]);
+
+            if ((float) $ms->paid_amount > 0) {
+                $normMobMode = self::normalizePaymentMode($ms->payment_mode ?? 'cash');
+                $mobEntries->push((object) [
+                    'id'            => 'mob_' . $ms->id . '_paid',
+                    'created_at'    => $ms->created_at,
+                    'sort_order'    => 500,
+                    'ref_no'        => $ms->ref_no,
+                    'particulars'   => "Payment at Counter (Ref #{$ms->ref_no})",
+                    'item_name'     => "Payment at Counter",
+                    'description'   => "Payment received at billing for #{$ms->ref_no} (" . self::formatPaymentModeLabel($normMobMode) . ")",
+                    'billed_amount' => 0.00,
+                    'paid_amount'   => (float) $ms->paid_amount,
+                    'due_amount'    => 0.00,
+                    'entry_type'    => 'payment_received',
+                    'source'        => 'counter_payment',
+                    'source_id'     => (int) $ms->id,
+                    'payment_mode'  => $normMobMode,
+                    'raw_remarks'   => "Payment received at billing for #{$ms->ref_no}",
+                    'is_voided'     => false,
+                ]);
+            }
+
+            // If mobile sale was voided/returned, ensure matching reversal credit exists
+            if ($isVoidedMob) {
+                $mobCredit = max(0.00, (float) $ms->billed_amount - (float) $ms->paid_amount);
+                $existingRev = $getExistingReversals($ms->ref_no);
+                $missingMobRev = round($mobCredit - $existingRev, 2);
+
+                if ($missingMobRev > 0.0001) {
+                    $revDate = !empty($ms->voided_at) ? $ms->voided_at : $ms->created_at;
+                    $mobEntries->push((object) [
+                        'id'            => 'mob_rev_' . $ms->id,
+                        'created_at'    => $revDate,
+                        'sort_order'    => 998,
+                        'ref_no'        => $ms->ref_no,
+                        'particulars'   => "Reversal for Returned: {$ms->particulars}",
+                        'item_name'     => "Reversal for Returned Sale #{$ms->ref_no}",
+                        'description'   => "Full invoice returned & reversed in khata",
+                        'billed_amount' => 0.00,
+                        'paid_amount'   => $missingMobRev,
+                        'due_amount'    => 0.00,
+                        'entry_type'    => 'adjustment',
+                        'source'        => 'return_reversal',
+                        'source_id'     => (int) $ms->id,
+                        'payment_mode'  => 'reversal',
+                        'raw_remarks'   => "Reversal for Returned: {$ms->particulars} (Sale #{$ms->ref_no})",
+                        'is_voided'     => false,
+                    ]);
+                }
+            }
+        }
+
+        // 3. Accessory Sales (Expand each line item separately; include voided/returned sales that had udhari recorded)
+        $accSales = DB::table('ms_accessory_sales')
+            ->where('ms_accessory_sales.company_id', $companyId)
+            ->where('ms_accessory_sales.customer_id', $customerId)
+            ->where(function ($q) {
+                $q->where(function ($activeQ) {
+                    $activeQ->where('ms_accessory_sales.status', '!=', 'voided')
+                        ->where(function ($w) {
+                            $w->where('ms_accessory_sales.udhari_amount', '>', 0)
+                              ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
+                        });
+                })->orWhere(function ($retQ) {
+                    $retQ->whereIn('ms_accessory_sales.status', ['voided', 'returned', 'partially_returned'])
+                        ->where(function ($w) {
+                            $w->where('ms_accessory_sales.udhari_amount', '>', 0)
+                              ->orWhere('ms_accessory_sales.refund_amount', '>', 0)
+                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%udhari%')
+                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%credit%')
+                              ->orWhere('ms_accessory_sales.payment_mode', 'LIKE', '%split%')
+                              ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
+                        });
+                });
+            })
+            ->select(
+                'ms_accessory_sales.id',
+                'ms_accessory_sales.created_at',
+                'ms_accessory_sales.invoice_number as ref_no',
+                'ms_accessory_sales.total_amount as billed_amount',
+                'ms_accessory_sales.amount_paid as paid_amount',
+                'ms_accessory_sales.udhari_amount as due_amount',
+                'ms_accessory_sales.payment_mode',
+                'ms_accessory_sales.status',
+                'ms_accessory_sales.refund_amount',
+                'ms_accessory_sales.voided_at',
+                DB::raw("'accessory_sale' as entry_type")
+            )
+            ->get();
+
+        $accEntries = collect();
+
+        if ($accSales->isNotEmpty()) {
+            $saleIds = $accSales->pluck('id')->toArray();
+            $itemsGrouped = DB::table('ms_accessory_sale_items')
+                ->where('company_id', $companyId)
+                ->whereIn('accessory_sale_id', $saleIds)
+                ->select('id', 'accessory_sale_id', 'part_name', 'quantity', 'unit_price', 'line_total', 'created_at')
+                ->orderBy('id', 'asc')
+                ->get()
+                ->groupBy('accessory_sale_id');
+
+            foreach ($accSales as $sale) {
+                $isVoidedSale = in_array($sale->status ?? '', ['voided', 'returned']);
+                $items = $itemsGrouped[$sale->id] ?? collect();
+                $saleBilledTotal = 0.00;
+
+                if ($items->isNotEmpty()) {
+                    foreach ($items as $idx => $it) {
+                        $itemName = $it->part_name . ($it->quantity > 1 ? " (x{$it->quantity})" : "");
+                        if ($isVoidedSale) {
+                            $itemName .= " [Full Invoice Returned]";
+                        }
+                        $itemBilled = (float) ($it->line_total > 0 ? $it->line_total : ($it->unit_price * $it->quantity));
+                        $saleBilledTotal += $itemBilled;
+
+                        $accEntries->push((object) [
+                            'id'            => 'acc_' . $sale->id . '_' . $it->id,
+                            'created_at'    => $sale->created_at,
+                            'sort_order'    => $idx,
+                            'ref_no'        => $sale->ref_no,
+                            'particulars'   => $itemName,
+                            'item_name'     => $itemName,
+                            'description'   => $isVoidedSale ? 'Full invoice returned & reversed in khata' : '',
+                            'billed_amount' => $itemBilled,
+                            'paid_amount'   => 0.00,
+                            'due_amount'    => $itemBilled,
+                            'entry_type'    => 'accessory_sale',
+                            'source'        => 'accessory_sale',
+                            'source_id'     => (int) $sale->id,
+                            'payment_mode'  => null,
+                            'raw_remarks'   => $isVoidedSale ? 'Full Invoice Returned' : '',
+                            'is_voided'     => $isVoidedSale,
+                        ]);
+                    }
+
+                    // If upfront payment was made on this sale, record as a separate line
+                    if ((float) $sale->paid_amount > 0) {
+                        $normAccMode = self::normalizePaymentMode($sale->payment_mode ?? 'cash');
+                        $accEntries->push((object) [
+                            'id'            => 'acc_' . $sale->id . '_paid',
+                            'created_at'    => $sale->created_at,
+                            'sort_order'    => 500,
+                            'ref_no'        => $sale->ref_no,
+                            'particulars'   => "Payment at Counter (Ref #{$sale->ref_no})",
+                            'item_name'     => "Payment at Counter",
+                            'description'   => "Payment received at billing for #{$sale->ref_no} (" . self::formatPaymentModeLabel($normAccMode) . ")",
+                            'billed_amount' => 0.00,
+                            'paid_amount'   => (float) $sale->paid_amount,
+                            'due_amount'    => 0.00,
+                            'entry_type'    => 'payment_received',
+                            'source'        => 'counter_payment',
+                            'source_id'     => (int) $sale->id,
+                            'payment_mode'  => $normAccMode,
+                            'raw_remarks'   => "Payment received at billing for #{$sale->ref_no}",
+                            'is_voided'     => false,
+                        ]);
+                    }
+                } else {
+                    $itemName = 'Accessory Purchase' . ($isVoidedSale ? ' [Full Invoice Returned]' : '');
+                    $saleBilledTotal = (float) $sale->billed_amount;
+                    $accEntries->push((object) [
+                        'id'            => 'acc_' . $sale->id,
+                        'created_at'    => $sale->created_at,
+                        'sort_order'    => 0,
+                        'ref_no'        => $sale->ref_no,
+                        'particulars'   => $itemName,
+                        'item_name'     => $itemName,
+                        'description'   => $isVoidedSale ? 'Full invoice returned & reversed in khata' : '',
+                        'billed_amount' => $saleBilledTotal,
+                        'paid_amount'   => (float) $sale->paid_amount,
+                        'due_amount'    => (float) $sale->due_amount,
+                        'entry_type'    => 'accessory_sale',
+                        'source'        => 'accessory_sale',
+                        'source_id'     => (int) $sale->id,
+                        'payment_mode'  => null,
+                        'raw_remarks'   => $isVoidedSale ? 'Full Invoice Returned' : '',
+                        'is_voided'     => $isVoidedSale,
+                    ]);
+                }
+
+                // If sale was voided/returned, ensure matching reversal credit exists in Khata
+                if ($isVoidedSale) {
+                    $creditUdhari = max(0.00, $saleBilledTotal - (float) $sale->paid_amount);
+                    $existingRev = $getExistingReversals($sale->ref_no);
+                    $missingAccRev = round($creditUdhari - $existingRev, 2);
+
+                    if ($missingAccRev > 0.0001) {
+                        $revTimestamp = !empty($sale->voided_at) ? $sale->voided_at : $sale->created_at;
+                        $itemSummary = $items->map(function ($it) {
+                            return ($it->quantity > 1 ? "{$it->quantity}x " : "") . $it->part_name;
+                        })->filter()->join(', ');
+
+                        $accEntries->push((object) [
+                            'id'            => 'acc_rev_' . $sale->id,
+                            'created_at'    => $revTimestamp,
+                            'sort_order'    => 998,
+                            'ref_no'        => $sale->ref_no,
+                            'particulars'   => "Reversal for Returned Items on Sale #{$sale->ref_no}",
+                            'item_name'     => "Reversal for Returned Items on Sale #{$sale->ref_no}",
+                            'description'   => $itemSummary ? "Items: {$itemSummary}" : "Full invoice returned & reversed in khata",
+                            'billed_amount' => 0.00,
+                            'paid_amount'   => $missingAccRev,
+                            'due_amount'    => 0.00,
+                            'entry_type'    => 'adjustment',
+                            'source'        => 'return_reversal',
+                            'source_id'     => (int) $sale->id,
+                            'payment_mode'  => 'reversal',
+                            'raw_remarks'   => "Reversal for Returned: " . ($itemSummary ?: "Sale #{$sale->ref_no}") . " (Sale #{$sale->ref_no})",
+                            'is_voided'     => false,
+                        ]);
+                    }
+                } elseif ((float)($sale->refund_amount ?? 0) > 0) {
+                    $refundAmt = (float) $sale->refund_amount;
+                    $existingRev = $getExistingReversals($sale->ref_no);
+                    $missingPartRev = round($refundAmt - $existingRev, 2);
+                    if ($missingPartRev > 0.0001) {
+                        $revTimestamp = !empty($sale->voided_at) ? $sale->voided_at : $sale->created_at;
+                        $accEntries->push((object) [
+                            'id'            => 'acc_part_rev_' . $sale->id,
+                            'created_at'    => $revTimestamp,
+                            'sort_order'    => 998,
+                            'ref_no'        => $sale->ref_no,
+                            'particulars'   => "Reversal for Returned Items on Sale #{$sale->ref_no}",
+                            'item_name'     => "Reversal for Returned Items on Sale #{$sale->ref_no}",
+                            'description'   => "Partial return credited to customer khata",
+                            'billed_amount' => 0.00,
+                            'paid_amount'   => $missingPartRev,
+                            'due_amount'    => 0.00,
+                            'entry_type'    => 'adjustment',
+                            'source'        => 'return_reversal',
+                            'source_id'     => (int) $sale->id,
+                            'payment_mode'  => 'reversal',
+                            'raw_remarks'   => "Reversal for Returned Items on Sale #{$sale->ref_no}",
+                            'is_voided'     => false,
+                        ]);
+                    }
+                }
+            }
+        }
 
         // Merge and sort chronologically
         $allEntries = $mobEntries->concat($accEntries)->concat($khataTxs)->sortBy(function ($entry) {
@@ -762,7 +872,7 @@ class MobileShopInvoiceResolver
             'totalPaidBank'       => $totalPaidBank,
             'totalPaidCheque'     => $totalPaidCheque,
             'totalReturnCredits'  => $totalReturnCredits,
-            'closingBalance'      => (float) $customer->udhari_balance,
+            'closingBalance'      => $ledger->isNotEmpty() ? (float) $ledger->last()->balance_left : (float) ($customer->udhari_balance ?? 0.00),
         ];
     }
 
