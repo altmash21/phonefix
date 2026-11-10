@@ -233,7 +233,7 @@ class MobileShopInvoiceResolver
             ->where('ms_mobile_sales.customer_id', $customerId)
             ->where(function ($q) {
                 $q->where(function ($activeQ) {
-                    $activeQ->where('ms_mobile_sales.status', '!=', 'voided')
+                    $activeQ->whereNotIn('ms_mobile_sales.status', ['voided', 'returned'])
                         ->where(function ($w) {
                             $w->where('ms_mobile_sales.udhari_amount', '>', 0)
                               ->orWhereColumn('ms_mobile_sales.amount_paid', '<', 'ms_mobile_sales.total_amount');
@@ -344,7 +344,7 @@ class MobileShopInvoiceResolver
             ->where('ms_accessory_sales.customer_id', $customerId)
             ->where(function ($q) {
                 $q->where(function ($activeQ) {
-                    $activeQ->where('ms_accessory_sales.status', '!=', 'voided')
+                    $activeQ->whereNotIn('ms_accessory_sales.status', ['voided', 'returned', 'partially_returned'])
                         ->where(function ($w) {
                             $w->where('ms_accessory_sales.udhari_amount', '>', 0)
                               ->orWhereColumn('ms_accessory_sales.amount_paid', '<', 'ms_accessory_sales.total_amount');
@@ -872,7 +872,9 @@ class MobileShopInvoiceResolver
             'totalPaidBank'       => $totalPaidBank,
             'totalPaidCheque'     => $totalPaidCheque,
             'totalReturnCredits'  => $totalReturnCredits,
-            'closingBalance'      => $ledger->isNotEmpty() ? (float) $ledger->last()->balance_left : (float) ($customer->udhari_balance ?? 0.00),
+            'closingBalance'      => $displayLedger->isNotEmpty()
+                ? (float) $displayLedger->last()->balance_left
+                : ($ledger->isNotEmpty() ? (float) $ledger->last()->balance_left : (float) ($customer->udhari_balance ?? 0.00)),
         ];
     }
 

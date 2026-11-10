@@ -193,6 +193,7 @@ class PosSaleService
                     'sale_id' => $saleId,
                     'amount' => $udhariAmount,
                     'balance_after' => $newBal,
+                    'reference_no' => $invoiceNumber,
                     'remarks' => "Udhari on Phone Sale Invoice #{$invoiceNumber}",
                     'recorded_by' => auth()->id(),
                     'created_at' => now(),

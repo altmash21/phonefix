@@ -512,16 +512,35 @@ class KhataController extends BaseMobileShopController
                 ->where('id', $id)
                 ->delete();
 
-            if ($tx->type === 'udhari_sale' && !empty($tx->reference_no)) {
-                DB::table('ms_accessory_sales')
-                    ->where('company_id', $companyId)
-                    ->where('invoice_number', $tx->reference_no)
-                    ->update(['status' => 'voided', 'updated_at' => now()]);
+            if ($tx->type === 'udhari_sale') {
+                $refNo = $tx->reference_no;
+                if (empty($refNo) && !empty($tx->remarks) && preg_match('/#([A-Za-z0-9\-_]+)/', $tx->remarks, $m)) {
+                    $refNo = $m[1];
+                }
 
-                DB::table('ms_mobile_sales')
-                    ->where('company_id', $companyId)
-                    ->where('invoice_number', $tx->reference_no)
-                    ->update(['status' => 'voided', 'updated_at' => now()]);
+                if (!empty($refNo)) {
+                    DB::table('ms_accessory_sales')
+                        ->where('company_id', $companyId)
+                        ->where('invoice_number', $refNo)
+                        ->update(['status' => 'voided', 'updated_at' => now()]);
+
+                    DB::table('ms_mobile_sales')
+                        ->where('company_id', $companyId)
+                        ->where('invoice_number', $refNo)
+                        ->update(['status' => 'voided', 'updated_at' => now()]);
+                }
+
+                if (!empty($tx->sale_id)) {
+                    DB::table('ms_accessory_sales')
+                        ->where('company_id', $companyId)
+                        ->where('id', $tx->sale_id)
+                        ->update(['status' => 'voided', 'updated_at' => now()]);
+
+                    DB::table('ms_mobile_sales')
+                        ->where('company_id', $companyId)
+                        ->where('id', $tx->sale_id)
+                        ->update(['status' => 'voided', 'updated_at' => now()]);
+                }
             }
 
             // Recalculate customer's balance accurately

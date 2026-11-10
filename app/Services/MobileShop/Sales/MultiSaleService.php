@@ -213,6 +213,7 @@ class MultiSaleService
                         'sale_id'      => $saleId,
                         'amount'       => $udhariShare,
                         'balance_after'=> $newBal,
+                        'reference_no' => $invoiceNumber,
                         'remarks'      => $udhariNote,
                         'recorded_by'  => auth()->id(),
                         'created_at'   => now(),

@@ -807,14 +807,18 @@ class SalesController extends BaseMobileShopController
 
                         if ($udhariDue > 0) {
                             DB::table('ms_customers')->where('id', $custModel->id)->increment('udhari_balance', $udhariDue);
+                            $newCustBal = (float) (DB::table('ms_customers')->where('id', $custModel->id)->value('udhari_balance') ?? 0);
                             DB::table('ms_customer_khata_transactions')->insert([
-                                'company_id'  => $companyId,
-                                'customer_id' => $custModel->id,
-                                'type'        => 'udhari_sale',
-                                'sale_id'     => $mSaleId,
-                                'amount'      => $udhariDue,
-                                'created_at'  => $saleTimestamp,
-                                'updated_at'  => $saleTimestamp,
+                                'company_id'    => $companyId,
+                                'customer_id'   => $custModel->id,
+                                'type'          => 'udhari_sale',
+                                'sale_id'       => $mSaleId,
+                                'amount'        => $udhariDue,
+                                'balance_after' => $newCustBal,
+                                'reference_no'  => $invNum,
+                                'remarks'       => "Udhari on Phone Sale Invoice #{$invNum}",
+                                'created_at'    => $saleTimestamp,
+                                'updated_at'    => $saleTimestamp,
                             ]);
                         }
 
