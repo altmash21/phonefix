@@ -327,17 +327,6 @@
 
     <!-- 5. SUMMARY TOTALS -->
     <table class="totals-table">
-        @if(!empty($openingBalance) && $openingBalance > 0)
-        <tr style="background-color: #fffbeb;">
-            <td style="color: #92400e; padding: 4px 6px; font-size: 9.5px;">Opening Balance Brought Forward</td>
-            <td class="text-right font-mono" style="color: #92400e; font-size: 10px; padding: 4px 6px;">Rs. {{ number_format($openingBalance, 2) }}</td>
-        </tr>
-        <tr>
-            <td style="color: #4b5563; padding: 4px 6px; font-size: 9.5px;">Period Purchases / Debits</td>
-            <td class="text-right font-mono" style="color: #111827; font-size: 10px; padding: 4px 6px;">Rs. {{ number_format($totalBilled, 2) }}</td>
-        </tr>
-        @endif
-
         <!-- 1. TOTAL THE AMOUNT -->
         <tr style="background-color: #f9fafb; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;">
             <td class="font-bold" style="color: #111827; font-size: 10px; text-transform: uppercase; padding: 4px 6px;">Total Amount</td>

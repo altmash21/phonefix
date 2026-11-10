@@ -503,21 +503,6 @@
 
         <!-- 5. SUMMARY TOTALS -->
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 22px;">
-            @if($openingBalance > 0)
-            <tr style="background: #FFFBEB; border-bottom: 1px solid #FEF3C7;">
-                <td style="font-weight: 700; color: #92400E; padding: 6px 8px;">Opening Balance Brought Forward</td>
-                <td style="text-align: right; font-family: monospace; font-size: 13.5px; font-weight: 700; color: #92400E; padding: 6px 8px;">
-                    ₹{{ number_format($openingBalance, 2) }}
-                </td>
-            </tr>
-            <tr style="border-bottom: 1px solid #E2E8F0;">
-                <td style="font-weight: 700; color: #475569; padding: 6px 8px;">Period Purchases / Debits</td>
-                <td style="text-align: right; font-family: monospace; font-size: 13.5px; font-weight: 700; color: #0F172A; padding: 6px 8px;">
-                    ₹{{ number_format($totalBilled, 2) }}
-                </td>
-            </tr>
-            @endif
-
             <!-- 1. TOTAL THE AMOUNT -->
             <tr style="background: #F8FAFC; border-bottom: 1.5px solid #CBD5E1; border-top: 1.5px solid #CBD5E1;">
                 <td style="font-weight: 900; color: #0F172A; font-size: 13.5px; padding: 8px 8px; text-transform: uppercase; letter-spacing: 0.3px;">
