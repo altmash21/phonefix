@@ -481,19 +481,32 @@
                 $tableSumBilled = (float) $ledger->sum('billed');
                 $tableSumPaid   = (float) $ledger->sum('paid');
                 $overallTotalAmount = ($openingBalance > 0) ? ($openingBalance + $totalBilled) : $totalBilled;
+                $paidBreakdownParts = [];
+                if (!empty($totalPaidCash) && $totalPaidCash > 0) $paidBreakdownParts[] = 'Cash: ₹' . number_format($totalPaidCash, 2);
+                if (!empty($totalPaidOnline) && $totalPaidOnline > 0) $paidBreakdownParts[] = 'UPI: ₹' . number_format($totalPaidOnline, 2);
+                if (!empty($totalReturnCredits) && $totalReturnCredits > 0) $paidBreakdownParts[] = 'Returned: ₹' . number_format($totalReturnCredits, 2);
+                if (!empty($totalPaidBank) && $totalPaidBank > 0) $paidBreakdownParts[] = 'Bank: ₹' . number_format($totalPaidBank, 2);
+                if (!empty($totalPaidCheque) && $totalPaidCheque > 0) $paidBreakdownParts[] = 'Cheque: ₹' . number_format($totalPaidCheque, 2);
             @endphp
             <tfoot style="background: #F1F5F9; border-top: 2px solid #CBD5E1; border-bottom: 2px solid #CBD5E1;">
                 <tr>
-                    <td colspan="2" style="padding: 10px 8px; font-size: 12px; font-weight: 800; color: #1E293B; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <td colspan="2" style="padding: 10px 8px; font-size: 12px; font-weight: 800; color: #1E293B; text-transform: uppercase; letter-spacing: 0.5px; vertical-align: top;">
                         TOTALS
                     </td>
-                    <td style="padding: 10px 6px; text-align: right; font-family: monospace; font-size: 13px; font-weight: 800; color: #0F172A;">
+                    <td style="padding: 10px 6px; text-align: right; font-family: monospace; font-size: 13.5px; font-weight: 800; color: #0F172A; vertical-align: top;">
                         ₹{{ number_format($tableSumBilled, 2) }}
                     </td>
-                    <td style="padding: 10px 6px; text-align: right; font-family: monospace; font-size: 13px; font-weight: 800; color: #16A34A;">
-                        ₹{{ number_format($tableSumPaid, 2) }}
+                    <td style="padding: 10px 6px; text-align: right; vertical-align: top;">
+                        <div style="font-family: monospace; font-size: 13.5px; font-weight: 800; color: #16A34A;">
+                            ₹{{ number_format($tableSumPaid, 2) }}
+                        </div>
+                        @if($tableSumPaid > 0 && !empty($paidBreakdownParts))
+                        <div style="font-size: 10.5px; font-weight: 600; color: #475569; margin-top: 3px; font-family: sans-serif; line-height: 1.35;">
+                            {{ implode(' • ', $paidBreakdownParts) }}
+                        </div>
+                        @endif
                     </td>
-                    <td style="padding: 10px 6px; text-align: right; font-family: monospace; font-size: 13px; font-weight: 900; color: #0F172A;">
+                    <td style="padding: 10px 6px; text-align: right; font-family: monospace; font-size: 13.5px; font-weight: 900; color: #0F172A; vertical-align: top;">
                         ₹{{ number_format($closingBalance, 2) }}
                     </td>
                     <td class="no-print"></td>
@@ -505,84 +518,37 @@
         <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 22px;">
             <!-- 1. TOTAL THE AMOUNT -->
             <tr style="background: #F8FAFC; border-bottom: 1.5px solid #CBD5E1; border-top: 1.5px solid #CBD5E1;">
-                <td style="font-weight: 900; color: #0F172A; font-size: 13.5px; padding: 8px 8px; text-transform: uppercase; letter-spacing: 0.3px;">
+                <td style="font-weight: 900; color: #0F172A; font-size: 13.5px; padding: 10px 8px; text-transform: uppercase; letter-spacing: 0.3px;">
                     Total Amount
                 </td>
-                <td style="text-align: right; font-family: monospace; font-size: 15px; font-weight: 900; color: #0F172A; padding: 8px 8px;">
+                <td style="text-align: right; font-family: monospace; font-size: 15px; font-weight: 900; color: #0F172A; padding: 10px 8px;">
                     ₹{{ number_format($overallTotalAmount, 2) }}
                 </td>
             </tr>
 
             <!-- 2. TOTAL AMOUNT RECEIVED -->
-            <tr style="border-bottom: 1px solid #E2E8F0;">
-                <td style="font-weight: 800; color: #166534; font-size: 13.5px; padding: 8px 8px; text-transform: uppercase; letter-spacing: 0.3px;">
-                    Total Amount Received
+            <tr style="border-bottom: 1.5px solid #CBD5E1;">
+                <td style="padding: 10px 8px; vertical-align: middle;">
+                    <div style="font-weight: 800; color: #166534; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.3px;">
+                        Total Amount Received
+                    </div>
+                    @if($totalPaid > 0 && !empty($paidBreakdownParts))
+                    <div style="font-size: 11px; font-weight: 600; color: #475569; margin-top: 2px;">
+                        ({{ implode(' • ', $paidBreakdownParts) }})
+                    </div>
+                    @endif
                 </td>
-                <td style="text-align: right; font-family: monospace; font-size: 15px; font-weight: 900; color: #16A34A; padding: 8px 8px;">
+                <td style="text-align: right; font-family: monospace; font-size: 15px; font-weight: 900; color: #16A34A; padding: 10px 8px; vertical-align: middle;">
                     ₹{{ number_format($totalPaid, 2) }}
                 </td>
             </tr>
 
-            <!-- 2b. BELOW AMOUNT RECEIVED: SPLIT IN CASH, UPI, AND RETURNED SO IT'S EASIER TO READ -->
-            @if($totalPaid > 0)
-                @if(!empty($totalPaidCash) && $totalPaidCash > 0)
-                <tr style="background: #F0FDF4; border-bottom: 1px solid #DCFCE7;">
-                    <td style="padding: 5px 8px 5px 28px; font-size: 12px; font-weight: 700; color: #15803D;">
-                        ↳ 💵 Cash Received:
-                    </td>
-                    <td style="text-align: right; font-family: monospace; font-size: 12.5px; font-weight: 800; color: #15803D; padding: 5px 8px;">
-                        ₹{{ number_format($totalPaidCash, 2) }}
-                    </td>
-                </tr>
-                @endif
-                @if(!empty($totalPaidOnline) && $totalPaidOnline > 0)
-                <tr style="background: #EFF6FF; border-bottom: 1px solid #DBEAFE;">
-                    <td style="padding: 5px 8px 5px 28px; font-size: 12px; font-weight: 700; color: #1D4ED8;">
-                        ↳ 📱 Online (UPI) Received:
-                    </td>
-                    <td style="text-align: right; font-family: monospace; font-size: 12.5px; font-weight: 800; color: #1D4ED8; padding: 5px 8px;">
-                        ₹{{ number_format($totalPaidOnline, 2) }}
-                    </td>
-                </tr>
-                @endif
-                @if(!empty($totalReturnCredits) && $totalReturnCredits > 0)
-                <tr style="background: #FEF2F2; border-bottom: 1px solid #FEE2E2;">
-                    <td style="padding: 5px 8px 5px 28px; font-size: 12px; font-weight: 700; color: #DC2626;">
-                        ↳ ↩️ Returned / Return Credits:
-                    </td>
-                    <td style="text-align: right; font-family: monospace; font-size: 12.5px; font-weight: 800; color: #DC2626; padding: 5px 8px;">
-                        ₹{{ number_format($totalReturnCredits, 2) }}
-                    </td>
-                </tr>
-                @endif
-                @if(!empty($totalPaidBank) && $totalPaidBank > 0)
-                <tr style="background: #FAF5FF; border-bottom: 1px solid #F3E8FF;">
-                    <td style="padding: 5px 8px 5px 28px; font-size: 12px; font-weight: 700; color: #7E22CE;">
-                        ↳ 🏦 Bank Transfer:
-                    </td>
-                    <td style="text-align: right; font-family: monospace; font-size: 12.5px; font-weight: 800; color: #7E22CE; padding: 5px 8px;">
-                        ₹{{ number_format($totalPaidBank, 2) }}
-                    </td>
-                </tr>
-                @endif
-                @if(!empty($totalPaidCheque) && $totalPaidCheque > 0)
-                <tr style="background: #FEFCE8; border-bottom: 1px solid #FEF08A;">
-                    <td style="padding: 5px 8px 5px 28px; font-size: 12px; font-weight: 700; color: #B45309;">
-                        ↳ 📝 Cheque:
-                    </td>
-                    <td style="text-align: right; font-family: monospace; font-size: 12.5px; font-weight: 800; color: #B45309; padding: 5px 8px;">
-                        ₹{{ number_format($totalPaidCheque, 2) }}
-                    </td>
-                </tr>
-                @endif
-            @endif
-
             <!-- 3. TOTAL BALANCE -->
-            <tr style="background: #F8FAFC; border-top: 1.5px solid #CBD5E1; border-bottom: 2px solid #0F172A;">
-                <td style="font-weight: 900; color: #0F172A; font-size: 14px; padding: 9px 8px; text-transform: uppercase; letter-spacing: 0.3px;">
+            <tr style="background: #F8FAFC; border-bottom: 2px solid #0F172A;">
+                <td style="font-weight: 900; color: #0F172A; font-size: 14px; padding: 10px 8px; text-transform: uppercase; letter-spacing: 0.3px;">
                     Total Balance
                 </td>
-                <td style="text-align: right; font-family: monospace; font-size: 16px; font-weight: 900; color: #0F172A; padding: 9px 8px;">
+                <td style="text-align: right; font-family: monospace; font-size: 16px; font-weight: 900; color: #0F172A; padding: 10px 8px;">
                     ₹{{ number_format($closingBalance, 2) }}
                 </td>
             </tr>
