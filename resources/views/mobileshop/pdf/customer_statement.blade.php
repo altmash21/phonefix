@@ -310,45 +310,91 @@
             </tr>
             @endforeach
         </tbody>
+        @php
+            $pdfSumBilled = (float) $ledger->sum('billed');
+            $pdfSumPaid   = (float) $ledger->sum('paid');
+            $pdfOverallTotal = ($openingBalance > 0) ? ($openingBalance + $totalBilled) : $totalBilled;
+        @endphp
+        <tfoot>
+            <tr style="background-color: #f3f4f6; font-weight: bold; border-top: 1.5px solid #111827; border-bottom: 1.5px solid #111827;">
+                <td class="text-left font-bold" colspan="2" style="padding: 5px 6px; font-size: 9.5px; text-transform: uppercase;">Totals</td>
+                <td class="text-right font-mono font-bold" style="padding: 5px 6px; font-size: 10px;">Rs. {{ number_format($pdfSumBilled, 2) }}</td>
+                <td class="text-right font-mono font-bold" style="padding: 5px 6px; font-size: 10px; color: #16a34a;">Rs. {{ number_format($pdfSumPaid, 2) }}</td>
+                <td class="text-right font-mono font-bold" style="padding: 5px 6px; font-size: 10px; color: #111827;">Rs. {{ number_format($closingBalance, 2) }}</td>
+            </tr>
+        </tfoot>
     </table>
 
     <!-- 5. SUMMARY TOTALS -->
     <table class="totals-table">
         @if(!empty($openingBalance) && $openingBalance > 0)
         <tr style="background-color: #fffbeb;">
-            <td class="font-bold" style="color: #92400e; padding: 4px 6px;">Opening Balance Brought Forward</td>
-            <td class="text-right font-mono font-bold" style="color: #92400e; font-size: 12px; padding: 4px 6px;">Rs. {{ number_format($openingBalance, 2) }}</td>
+            <td style="color: #92400e; padding: 4px 6px; font-size: 9.5px;">Opening Balance Brought Forward</td>
+            <td class="text-right font-mono" style="color: #92400e; font-size: 10px; padding: 4px 6px;">Rs. {{ number_format($openingBalance, 2) }}</td>
+        </tr>
+        <tr>
+            <td style="color: #4b5563; padding: 4px 6px; font-size: 9.5px;">Period Purchases / Debits</td>
+            <td class="text-right font-mono" style="color: #111827; font-size: 10px; padding: 4px 6px;">Rs. {{ number_format($totalBilled, 2) }}</td>
         </tr>
         @endif
-        <tr>
-            <td class="font-bold" style="color: #111827;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Purchases / Debits' : 'Total Billed' }}</td>
-            <td class="text-right font-mono font-bold" style="color: #111827; font-size: 12px;">Rs. {{ number_format($totalBilled, 2) }}</td>
+
+        <!-- 1. TOTAL THE AMOUNT -->
+        <tr style="background-color: #f9fafb; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;">
+            <td class="font-bold" style="color: #111827; font-size: 10px; text-transform: uppercase; padding: 4px 6px;">Total Amount</td>
+            <td class="text-right font-mono font-bold" style="color: #111827; font-size: 11px; padding: 4px 6px;">Rs. {{ number_format($pdfOverallTotal, 2) }}</td>
         </tr>
+
+        <!-- 2. TOTAL AMOUNT RECEIVED -->
         <tr>
-            <td class="font-bold" style="color: #111827;">{{ (!empty($openingBalance) && $openingBalance > 0) ? 'Period Received / Paid' : 'Total Received / Paid' }}</td>
-            <td class="text-right font-mono font-bold" style="color: #16a34a; font-size: 12px;">Rs. {{ number_format($totalPaid, 2) }}</td>
+            <td class="font-bold" style="color: #166534; font-size: 10px; text-transform: uppercase; padding: 4px 6px;">Total Amount Received</td>
+            <td class="text-right font-mono font-bold" style="color: #16a34a; font-size: 11px; padding: 4px 6px;">Rs. {{ number_format($totalPaid, 2) }}</td>
         </tr>
+
+        <!-- 2b. BELOW AMOUNT RECEIVED: SPLIT IN CASH, UPI, AND RETURNED SO IT'S EASIER TO READ -->
         @if($totalPaid > 0)
-        <tr>
-            <td colspan="2" style="text-align: right; font-size: 8.5px; color: #4b5563; padding-top: 1px; padding-bottom: 3px; font-family: monospace;">
-                @php
-                    $pdfBreakdown = [];
-                    if (!empty($totalPaidCash) && $totalPaidCash > 0) $pdfBreakdown[] = 'Cash: Rs. ' . number_format($totalPaidCash, 2);
-                    if (!empty($totalPaidOnline) && $totalPaidOnline > 0) $pdfBreakdown[] = 'Online (UPI): Rs. ' . number_format($totalPaidOnline, 2);
-                    if (!empty($totalPaidBank) && $totalPaidBank > 0) $pdfBreakdown[] = 'Bank: Rs. ' . number_format($totalPaidBank, 2);
-                    if (!empty($totalPaidCheque) && $totalPaidCheque > 0) $pdfBreakdown[] = 'Cheque: Rs. ' . number_format($totalPaidCheque, 2);
-                    if (!empty($totalReturnCredits) && $totalReturnCredits > 0) $pdfBreakdown[] = 'Return Credits: Rs. ' . number_format($totalReturnCredits, 2);
-                @endphp
-                {{ implode('   •   ', $pdfBreakdown) }}
-            </td>
-        </tr>
+            @if(!empty($totalPaidCash) && $totalPaidCash > 0)
+            <tr style="background-color: #f0fdf4;">
+                <td style="padding: 3px 6px 3px 18px; font-size: 9px; color: #15803d;">&bull; Cash Received</td>
+                <td class="text-right font-mono" style="padding: 3px 6px; font-size: 9.5px; color: #15803d; font-weight: bold;">Rs. {{ number_format($totalPaidCash, 2) }}</td>
+            </tr>
+            @endif
+            @if(!empty($totalPaidOnline) && $totalPaidOnline > 0)
+            <tr style="background-color: #eff6ff;">
+                <td style="padding: 3px 6px 3px 18px; font-size: 9px; color: #1d4ed8;">&bull; Online (UPI) Received</td>
+                <td class="text-right font-mono" style="padding: 3px 6px; font-size: 9.5px; color: #1d4ed8; font-weight: bold;">Rs. {{ number_format($totalPaidOnline, 2) }}</td>
+            </tr>
+            @endif
+            @if(!empty($totalReturnCredits) && $totalReturnCredits > 0)
+            <tr style="background-color: #fef2f2;">
+                <td style="padding: 3px 6px 3px 18px; font-size: 9px; color: #dc2626;">&bull; Returned / Return Credits</td>
+                <td class="text-right font-mono" style="padding: 3px 6px; font-size: 9.5px; color: #dc2626; font-weight: bold;">Rs. {{ number_format($totalReturnCredits, 2) }}</td>
+            </tr>
+            @endif
+            @if(!empty($totalPaidBank) && $totalPaidBank > 0)
+            <tr style="background-color: #faf5ff;">
+                <td style="padding: 3px 6px 3px 18px; font-size: 9px; color: #7e22ce;">&bull; Bank Transfer</td>
+                <td class="text-right font-mono" style="padding: 3px 6px; font-size: 9.5px; color: #7e22ce; font-weight: bold;">Rs. {{ number_format($totalPaidBank, 2) }}</td>
+            </tr>
+            @endif
+            @if(!empty($totalPaidCheque) && $totalPaidCheque > 0)
+            <tr style="background-color: #fefce8;">
+                <td style="padding: 3px 6px 3px 18px; font-size: 9px; color: #b45309;">&bull; Cheque</td>
+                <td class="text-right font-mono" style="padding: 3px 6px; font-size: 9.5px; color: #b45309; font-weight: bold;">Rs. {{ number_format($totalPaidCheque, 2) }}</td>
+            </tr>
+            @endif
         @endif
+
+        <!-- 3. TOTAL BALANCE -->
+        <tr style="background-color: #f9fafb; border-top: 1px solid #d1d5db; border-bottom: 1.5px solid #111827;">
+            <td class="font-bold" style="color: #111827; font-size: 10.5px; text-transform: uppercase; padding: 5px 6px;">Total Balance</td>
+            <td class="text-right font-mono font-bold" style="color: #111827; font-size: 11.5px; padding: 5px 6px;">Rs. {{ number_format($closingBalance, 2) }}</td>
+        </tr>
     </table>
 
-    <!-- 6. NET OUTSTANDING BALANCE BOX -->
-    <table class="balance-box">
+    <!-- 4. BIG BOX: TOTAL OUTSTANDING BALANCE -->
+    <table class="balance-box" style="margin-top: 12px;">
         <tr>
-            <td class="balance-title" style="vertical-align: middle;">Net Outstanding Balance</td>
+            <td class="balance-title" style="vertical-align: middle;">Total Outstanding Balance</td>
             <td class="balance-amt font-mono" style="vertical-align: middle;">Rs. {{ number_format($closingBalance, 2) }}</td>
         </tr>
     </table>
