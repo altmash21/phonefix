@@ -856,9 +856,14 @@
                                 </div>
                                 <div style="font-weight:700; color:#1E293B; font-size:13px;">No sales found for this date range</div>
                                 <div style="font-size:11.5px; color:#64748B;">Try selecting a different date preset (e.g. Yesterday, This Month) or reset filters</div>
-                                <button type="button" onclick="setSalesDatePreset('all')" class="filter-pill" style="margin-top:6px; cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:4px 12px; border-radius:6px; font-weight:700; font-size:11.5px;">
-                                    Show All Sales
-                                </button>
+                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px;">
+                                    <button type="button" onclick="setSalesDatePreset('all')" class="filter-pill" style="cursor:pointer; background:#5E6AD2; color:#fff; border:none; padding:4px 12px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                                        Show All Loaded
+                                    </button>
+                                    <a id="btnFetchServerRange" href="#" style="display:none; text-decoration:none; background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; padding:4px 12px; border-radius:6px; font-weight:700; font-size:11.5px;">
+                                        🔍 Search Entire Server History
+                                    </a>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -2228,6 +2233,20 @@
         if (activeDateInd) {
             activeDateInd.style.display = (fromDate || toDate) ? 'inline-block' : 'none';
         }
+
+        const btnServer = document.getElementById('btnFetchServerRange');
+        if (btnServer) {
+            if ((fromDate || toDate || term) && visibleCount === 0) {
+                let params = new URLSearchParams();
+                if (fromDate) params.set('from', fromDate);
+                if (toDate) params.set('to', toDate);
+                if (term) params.set('search', term);
+                btnServer.href = "{{ route('mobileshop.sales') }}?" + params.toString();
+                btnServer.style.display = 'inline-flex';
+            } else {
+                btnServer.style.display = 'none';
+            }
+        }
     }
 
     function clearSalesSearch() {
@@ -2330,6 +2349,20 @@
 
     // Initialize counts and pagination on page load
     function initSalesPage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('from')) {
+            const f = document.getElementById('salesFromDate');
+            if (f) f.value = urlParams.get('from');
+        }
+        if (urlParams.get('to')) {
+            const t = document.getElementById('salesToDate');
+            if (t) t.value = urlParams.get('to');
+        }
+        if (urlParams.get('search')) {
+            const s = document.getElementById('salesSearchInput');
+            if (s) s.value = urlParams.get('search');
+        }
+
         if (window.setupMobiTablePagination) {
             window.salesPager = window.setupMobiTablePagination({
                 tableId: 'salesTable',

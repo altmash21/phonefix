@@ -316,7 +316,9 @@
                         {{ number_format($entry->balance_left, 2) }}
                     </td>
                     <td class="no-print" style="padding: 9px 6px; text-align: center; color: #B45309; font-size: 11px; vertical-align: middle;">
-                        —
+                        <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'all']) }}" class="badge" style="background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; font-weight:700; font-size:10.5px; text-decoration:none; padding:3px 7px; border-radius:5px;" title="View all individual invoices prior to this date">
+                            📖 View All Past Bills
+                        </a>
                     </td>
                 </tr>
                 @continue

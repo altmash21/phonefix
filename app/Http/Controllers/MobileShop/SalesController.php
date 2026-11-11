@@ -51,6 +51,22 @@ class SalesController extends BaseMobileShopController
             ->select('ms_accessory_sales.*', 'ms_customers.name as customer_name', 'ms_customers.phone as customer_phone')
             ->where('ms_accessory_sales.company_id', $companyId);
 
+        if ($request->filled('search')) {
+            $term = trim($request->search);
+            $query->where(function ($q) use ($term) {
+                $q->where('ms_accessory_sales.invoice_number', 'LIKE', "%{$term}%")
+                  ->orWhere('ms_customers.name', 'LIKE', "%{$term}%")
+                  ->orWhere('ms_customers.phone', 'LIKE', "%{$term}%");
+            });
+        }
+
+        if ($request->filled('from')) {
+            $query->where('ms_accessory_sales.created_at', '>=', \Carbon\Carbon::parse($request->from)->startOfDay());
+        }
+        if ($request->filled('to')) {
+            $query->where('ms_accessory_sales.created_at', '<=', \Carbon\Carbon::parse($request->to)->endOfDay());
+        }
+
         if ($niche === 'covers') {
             $coverCats = $this->coverCategories;
             $query->whereExists(function($q) use ($coverCats) {
@@ -61,7 +77,8 @@ class SalesController extends BaseMobileShopController
             });
         }
 
-        $accSales = $query->orderBy('ms_accessory_sales.id', 'desc')->limit(200)->get();
+        $limit = ($request->filled('from') || $request->filled('search')) ? 2000 : 1000;
+        $accSales = $query->orderBy('ms_accessory_sales.id', 'desc')->limit($limit)->get();
 
         // Attach line items to accessory sales for return modal & item details
         if ($accSales->isNotEmpty()) {
