@@ -2485,16 +2485,16 @@
             }).join('');
         }
 
-        // Add "Sell New Item" option if exact item doesn't exist or if matches are empty
+        // Add "Sell Direct Item" option if exact item doesn't exist or if matches are empty
         if (!exactMatch && rawVal.trim().length > 0) {
             const safeQuery = escapeHtml(rawVal.trim());
             html += `
-                <div class="search-picker-item new-custom-item-option" onclick="promptNewItemCategory(this, '${escapeHtml(rawVal.trim()).replace(/'/g, "\\'")}')" style="background:#F5F3FF; border-top:1px dashed #C7D2FE; cursor:pointer; padding:9px 12px;">
+                <div class="search-picker-item new-custom-item-option" onclick="selectRowDirectItem(this, '${escapeHtml(rawVal.trim()).replace(/'/g, "\\'")}')" style="background:#F5F3FF; border-top:1px dashed #C7D2FE; cursor:pointer; padding:9px 12px;">
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div style="width:26px; height:26px; border-radius:6px; background:#4F46E5; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">+</div>
                         <div style="min-width:0; text-align:left;">
                             <div style="font-weight:800; font-size:12.5px; color:#3730A3;">Sell Direct Item: "<strong>${safeQuery}</strong>"</div>
-                            <div style="font-size:10.5px; color:#6366F1;">Item not in stock? Click to set price & sell on this invoice</div>
+                            <div style="font-size:10.5px; color:#6366F1;">One-off item — click to enter selling price directly in row (no modal)</div>
                         </div>
                     </div>
                 </div>
@@ -2575,6 +2575,49 @@
             recalcBulkCustomerTotals(row.closest('.bulk-customer-card'));
         } else {
             recalcQuickSaleRow(row);
+        }
+    }
+
+    /* ─── Seamless Direct One-Off Item Selection (No Modal Interruption) ─── */
+    function selectRowDirectItem(dropdownItemEl, typedName) {
+        const row = dropdownItemEl.closest('.item-search-row');
+        if (!row) return;
+
+        const nameInput = row.querySelector('.input-item-name');
+        const partIdInput = row.querySelector('.input-part-id');
+        const catInput = row.querySelector('.input-item-category');
+        const priceInput = row.querySelector('.input-unit-price');
+        const dropdown = row.querySelector('.search-picker-dropdown');
+        const clearBtn = row.querySelector('.btn-item-clear');
+        const pill = row.querySelector('.new-item-pill');
+        const pillCatName = row.querySelector('.pill-category-name');
+
+        const itemName = typedName || (nameInput?.value || '').trim();
+        if (nameInput) nameInput.value = itemName;
+        if (partIdInput) partIdInput.value = '0'; // 0 indicates direct one-off item
+        if (catInput) catInput.value = 'general_accessory';
+        if (clearBtn) clearBtn.style.display = 'block';
+
+        if (pill) {
+            pill.style.display = 'inline-flex';
+            if (pillCatName) pillCatName.textContent = 'General Accessory';
+        }
+
+        if (dropdown) {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+
+        if (row.closest('#bulkSaleModal')) {
+            recalcBulkCustomerTotals(row.closest('.bulk-customer-card'));
+        } else {
+            recalcQuickSaleRow(row);
+        }
+
+        // Direct workflow: instantly focus price field in the row so operator can type selling price
+        if (priceInput) {
+            priceInput.focus();
+            if (priceInput.value) priceInput.select();
         }
     }
 
@@ -3094,10 +3137,15 @@
                     if (partIdInput) partIdInput.value = exact.id;
                     if (catInput) catInput.value = exact.category || '';
                 } else {
-                    showQuickSaleWarning(`Item #${i + 1} ("${name}"): Please select a category for this new item before selling.`, nameInput);
-                    if (e) e.preventDefault();
-                    promptNewItemCategoryForRow(r, name);
-                    return false;
+                    // Seamless direct custom item: auto-assign direct item without blocking popup modal
+                    if (partIdInput) partIdInput.value = '0';
+                    if (catInput) catInput.value = 'general_accessory';
+                    const pill = r.querySelector('.new-item-pill');
+                    const pillCatName = r.querySelector('.pill-category-name');
+                    if (pill) {
+                        pill.style.display = 'inline-flex';
+                        if (pillCatName) pillCatName.textContent = 'General Accessory';
+                    }
                 }
             }
 
@@ -3112,8 +3160,9 @@
             const priceInput = r.querySelector('.input-unit-price');
             const price = parseFloat(priceInput?.value);
             if (isNaN(price) || price < 0) {
-                showQuickSaleWarning(`Item #${i + 1} (${name}): Unit price cannot be empty or negative.`, priceInput);
+                showQuickSaleWarning(`Item #${i + 1} (${name}): Please enter the selling price in the price box.`, priceInput);
                 if (e) e.preventDefault();
+                priceInput?.focus();
                 return false;
             }
         }

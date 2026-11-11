@@ -95,11 +95,14 @@
     /* ─── 3-TIER DASHBOARD ARCHITECTURE ─── */
     .pulse-kpi-grid {
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(7, 1fr);
         gap: 10px;
         margin-bottom: 12px;
     }
-    @media (max-width: 1300px) {
+    @media (max-width: 1400px) {
+        .pulse-kpi-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 1024px) {
         .pulse-kpi-grid { grid-template-columns: repeat(3, 1fr); }
     }
     @media (max-width: 768px) {
@@ -224,7 +227,7 @@
 @section('content')
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- 1. TIER 1: THE DAILY CASH & PULSE STRIP (6 HERO KPIS)    -->
+    <!-- 1. TIER 1: THE DAILY CASH & PULSE STRIP (7 HERO KPIS)    -->
     <!-- ══════════════════════════════════════════════════════════ -->
     @if($isAdmin)
     <div class="pulse-kpi-grid">
@@ -243,7 +246,24 @@
             </div>
         </div>
 
-        <!-- 2. Cash in Drawer (Physical Register Cash) -->
+        <!-- 2. Items Sold Today -->
+        <div class="pulse-card">
+            <div class="pulse-card-label">
+                <span>Items Sold Today</span>
+                <i data-lucide="package-check" style="width:13px;height:13px;color:#059669;"></i>
+            </div>
+            <div class="pulse-card-val" style="color:#059669;">
+                {{ number_format($analytics['todayItemsSold'] ?? $todayItemsSold ?? 0) }} <span style="font-size:12px;font-weight:600;color:#64748b;">items</span>
+            </div>
+            <div class="pulse-card-sub">
+                <a href="{{ route('mobileshop.sales') }}" style="color:var(--color-ink-muted); text-decoration:none; display:flex; align-items:center; gap:4px;">
+                    <i data-lucide="receipt" style="width:11px;height:11px;color:#059669;"></i>
+                    <span>Across {{ number_format($analytics['todayInvoicesCount'] ?? $todayInvoicesCount ?? 0) }} bills today</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 3. Cash in Drawer (Physical Register Cash) -->
         <div class="pulse-card">
             <div class="pulse-card-label">
                 <span>Cash in Drawer</span>
@@ -346,6 +366,15 @@
             </div>
             <div>
                 <div class="kpi-label">Sales Invoices</div>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-num" style="color:#059669;">{{ number_format($todayItemsSold ?? 0) }}</div>
+            </div>
+            <div>
+                <div class="kpi-label">Items Sold Today</div>
+                <div style="font-size:11px;color:var(--color-ink-subtle);margin-top:2px;">{{ number_format($todayInvoicesCount ?? 0) }} bills today</div>
             </div>
         </div>
         <div class="kpi-card">

@@ -302,10 +302,48 @@ class DashboardController extends BaseMobileShopController
                 ->get();
         }
 
+        // ─── Today's Live Counter: Items Sold & Invoices Counts ──────────────
+        $todayMobilesCount = (int) DB::table('ms_mobile_sales')
+            ->where('company_id', $companyId)
+            ->whereDate('created_at', today())
+            ->where('status', '!=', 'voided')
+            ->count();
+
+        $todayAccItemsCount = (int) DB::table('ms_accessory_sale_items')
+            ->join('ms_accessory_sales', 'ms_accessory_sale_items.accessory_sale_id', '=', 'ms_accessory_sales.id')
+            ->where('ms_accessory_sales.company_id', $companyId)
+            ->whereDate('ms_accessory_sales.created_at', today())
+            ->where('ms_accessory_sales.status', '!=', 'voided')
+            ->sum('ms_accessory_sale_items.quantity');
+
+        $orphanAccSales = (int) DB::table('ms_accessory_sales')
+            ->where('company_id', $companyId)
+            ->whereDate('created_at', today())
+            ->where('status', '!=', 'voided')
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('ms_accessory_sale_items')
+                    ->whereColumn('ms_accessory_sale_items.accessory_sale_id', 'ms_accessory_sales.id');
+            })
+            ->count();
+
+        $todayItemsSold = $todayMobilesCount + $todayAccItemsCount + $orphanAccSales;
+
+        $todayInvoicesCount = (int) DB::table('ms_mobile_sales')
+            ->where('company_id', $companyId)
+            ->whereDate('created_at', today())
+            ->where('status', '!=', 'voided')
+            ->count()
+            + (int) DB::table('ms_accessory_sales')
+            ->where('company_id', $companyId)
+            ->whereDate('created_at', today())
+            ->where('status', '!=', 'voided')
+            ->count();
+
         // ─── Admin-Only Executive Analytics (Cached 60s) ────────────────────
         $analytics = [];
         if ($isAdmin) {
-            $analytics = Cache::remember("ms_dash_analytics_{$companyId}", 60, function () use ($companyId, $lowStockParts) {
+            $analytics = Cache::remember("ms_dash_analytics_{$companyId}", 60, function () use ($companyId, $lowStockParts, $todayItemsSold, $todayInvoicesCount, $todayMobilesCount, $todayAccItemsCount) {
                 $todaySales  = (float) DB::table('ms_mobile_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->sum('total_amount')
                              + (float) DB::table('ms_accessory_sales')->where('company_id', $companyId)->whereDate('created_at', today())->where('status', '!=', 'voided')->sum('total_amount');
                 
@@ -421,6 +459,7 @@ class DashboardController extends BaseMobileShopController
 
                 return compact(
                     'todaySales', 'todayCogs', 'todayProfit', 'todayProfitMargin',
+                    'todayItemsSold', 'todayInvoicesCount', 'todayMobilesCount', 'todayAccItemsCount',
                     'cashInDrawer', 'todayUpi', 'todayUpiCount',
                     'monthSales', 'prevMonthSales', 'monthGrowthPct',
                     'totalUdhariDue', 'totalUdhariCount',
@@ -441,6 +480,7 @@ class DashboardController extends BaseMobileShopController
 
         return view('mobileshop.dashboard', compact(
             'niche', 'isAdmin', 'isTech', 'isBuyback', 'isSales', 'isAccessories', 'isCover',
+            'todayItemsSold', 'todayInvoicesCount', 'todayMobilesCount', 'todayAccItemsCount',
             'totalNewPhones', 'totalSecondHand', 'totalRepairsOpen',
             'totalUdhariDue', 'totalSupplierCredit', 'totalEmiBalance',
             'statPurchaseInvoices', 'statBuybackReturns', 'statSaleInvoices', 'statPendingUdhari',
