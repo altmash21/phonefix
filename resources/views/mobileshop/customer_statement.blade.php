@@ -149,6 +149,13 @@
         <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
             <span style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; margin-right: 4px; letter-spacing: 0.3px;">Period:</span>
             
+            <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'all']) }}" 
+               class="btn btn-sm {{ $currentFilter === 'all' ? 'btn-primary' : 'btn-outline' }}" 
+               style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'all') background: #4F46E5; border-color: #4F46E5; @endif"
+               title="Complete History — Shows all individual invoices and repayments">
+                📖 All Time (Full History)
+            </a>
+
             <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'active']) }}" 
                class="btn btn-sm {{ $currentFilter === 'active' ? 'btn-primary' : 'btn-outline' }}" 
                style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'active') background: #16A34A; border-color: #16A34A; @endif"
@@ -173,12 +180,6 @@
                class="btn btn-sm {{ $currentFilter === 'last_30_days' ? 'btn-primary' : 'btn-outline' }}" 
                style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'last_30_days') background: #4F46E5; border-color: #4F46E5; @endif">
                 ⏳ Last 30 Days
-            </a>
-
-            <a href="{{ route('mobileshop.khata.customer_statement', ['id' => $customer->id, 'filter' => 'all']) }}" 
-               class="btn btn-sm {{ $currentFilter === 'all' ? 'btn-primary' : 'btn-outline' }}" 
-               style="font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 4px 12px; text-decoration: none; @if($currentFilter === 'all') background: #4F46E5; border-color: #4F46E5; @endif">
-                📖 All Time
             </a>
 
             <button type="button" 

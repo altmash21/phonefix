@@ -403,7 +403,7 @@ class KhataController extends BaseMobileShopController
         $companyId = $this->getCompanyId();
         self::syncCustomerUdhariBalance($companyId, (int) $id);
         $filters = [
-            'filter' => $request->get('filter', 'active'),
+            'filter' => $request->get('filter', 'all'),
             'from'   => $request->get('from'),
             'to'     => $request->get('to'),
         ];
@@ -434,7 +434,7 @@ class KhataController extends BaseMobileShopController
         $companyId = $this->getCompanyId();
         self::syncCustomerUdhariBalance($companyId, (int) $id);
         $filters = [
-            'filter' => $request->get('filter', 'active'),
+            'filter' => $request->get('filter', 'all'),
             'from'   => $request->get('from'),
             'to'     => $request->get('to'),
         ];

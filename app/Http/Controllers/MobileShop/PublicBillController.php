@@ -115,7 +115,7 @@ class PublicBillController extends BaseMobileShopController
         }
 
         $filters = [
-            'filter' => $request->get('filter', 'active'),
+            'filter' => $request->get('filter', 'all'),
             'from'   => $request->get('from'),
             'to'     => $request->get('to'),
         ];
@@ -144,7 +144,7 @@ class PublicBillController extends BaseMobileShopController
 
         try {
             $filters = [
-                'filter' => $request->get('filter', 'active'),
+                'filter' => $request->get('filter', 'all'),
                 'from'   => $request->get('from'),
                 'to'     => $request->get('to'),
             ];

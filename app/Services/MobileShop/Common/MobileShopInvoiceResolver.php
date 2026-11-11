@@ -571,10 +571,10 @@ class MobileShopInvoiceResolver
             ];
         });
 
-        // Resolve filter mode: 'active' (default), 'last_payment', 'this_month', 'last_30_days', 'all', 'custom'
-        $filter = strtolower(trim((string) ($filters['filter'] ?? 'active')));
+        // Resolve filter mode: 'all' (default - show complete invoice history), 'active', 'last_payment', 'this_month', 'last_30_days', 'custom'
+        $filter = strtolower(trim((string) ($filters['filter'] ?? 'all')));
         if (!in_array($filter, ['active', 'last_payment', 'this_month', 'last_30_days', 'all', 'custom'])) {
-            $filter = 'active';
+            $filter = 'all';
         }
 
         $now = now();
