@@ -4,6 +4,12 @@
 @section('page-title', 'Customer Khata & Repayments')
 
 @section('page-actions')
+    <form action="{{ route('mobileshop.khata.sync_all') }}" method="POST" style="display:inline; margin:0;" onsubmit="return confirm('Recalculate and synchronize all customer balances against true transaction ledgers?');">
+        @csrf
+        <button type="submit" class="btn btn-outline" style="font-weight:700; color:#4338CA; border-color:#C7D2FE; background:#EEF2FF; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Recalculate and synchronize all customer balances against true transaction ledger">
+            <i data-lucide="refresh-cw" style="width:15px;height:15px; color:#4F46E5;"></i> Sync Balances
+        </button>
+    </form>
     <button type="button" onclick="openDebtorsModal()" class="btn btn-outline" style="font-weight:700; color:#854D0E; border-color:#FEF08A; background:#FEFCE8; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="View all debtors and send WhatsApp payment reminders">
         <i data-lucide="bell" style="width:16px;height:16px; color:#CA8A04;"></i> Active Debtors ({{ $customers->where('udhari_balance', '>', 0)->count() }})
     </button>
@@ -78,6 +84,12 @@
         </button>
     </div>
     <div class="khata-desktop-actions hide-on-mobile" style="display:flex; align-items:center; gap:8px;">
+        <form action="{{ route('mobileshop.khata.sync_all') }}" method="POST" style="display:inline; margin:0;" onsubmit="return confirm('Recalculate and synchronize all customer balances against true transaction ledgers?');">
+            @csrf
+            <button type="submit" class="btn btn-outline btn-sm" style="font-weight:700; font-size:12px; color:#4338CA; border-color:#C7D2FE; background:#EEF2FF; display:inline-flex; align-items:center; gap:5px; padding:7px 12px; border-radius:8px; cursor:pointer;" title="Recalculate all customer balances from ledger">
+                <i data-lucide="refresh-cw" style="width:14px;height:14px; color:#4F46E5;"></i> Sync All Balances
+            </button>
+        </form>
         <button type="button" onclick="openAddOldUdharModal()" class="btn btn-primary btn-sm" style="background:#4F46E5; color:#fff; font-weight:800; border:none; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px;">
             <i data-lucide="book-plus" style="width:14px;height:14px;"></i> + Add Old Udhar
         </button>
@@ -280,6 +292,12 @@
                                 <button type="button" onclick="openCustomerEntriesModal({{ $c->id }}, '{{ addslashes($c->name) }}', {{ $c->udhari_balance }}, '{{ addslashes($c->phone ?? '') }}')" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 9px; border-radius:6px; font-size:11.5px; color:#DC2626; border-color:#FECACA; background:#FEF2F2; display:inline-flex; align-items:center; gap:3px; cursor:pointer;" title="View customer entries, edit, or delete any mistake/duplicate entry">
                                     <i data-lucide="trash-2" style="width:12px;height:12px;"></i> Fix / Delete Entry
                                 </button>
+                                <form action="{{ route('mobileshop.khata.customer.sync_balance', ['id' => $c->id]) }}" method="POST" style="display:inline; margin:0;">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 7px; border-radius:6px; font-size:11.5px; color:#4F46E5; border-color:#C7D2FE; background:#EEF2FF; display:inline-flex; align-items:center; cursor:pointer;" title="Sync and reconcile customer balance with ledger">
+                                        <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i>
+                                    </button>
+                                </form>
                                 <button type="button" onclick="openEditCustomerModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ addslashes($c->phone ?? '') }}', '{{ addslashes($c->address ?? '') }}', {{ $c->credit_limit ?? 10000 }}, '{{ addslashes($c->gstin ?? '') }}', {{ $c->udhari_balance }})" class="btn btn-outline btn-sm" style="font-weight:700; padding:5px 7px; border-radius:6px; font-size:11.5px; color:#64748B; border-color:#E2E8F0; background:#F8FAFC; display:inline-flex; align-items:center; cursor:pointer;" title="Edit Customer Profile (Name, Phone, Address, Credit Limit)">
                                     <i data-lucide="user-cog" style="width:13px;height:13px;"></i>
                                 </button>

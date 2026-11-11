@@ -77,6 +77,36 @@ class KhataController extends BaseMobileShopController
             }
         }
 
+        // Auto-reconcile customer balances with true transaction ledger
+        $activeCustIds = DB::table('ms_customer_khata_transactions')
+            ->where('company_id', $companyId)
+            ->pluck('customer_id')
+            ->concat(
+                DB::table('ms_accessory_sales')
+                    ->where('company_id', $companyId)
+                    ->whereNotNull('customer_id')
+                    ->pluck('customer_id')
+            )
+            ->concat(
+                DB::table('ms_mobile_sales')
+                    ->where('company_id', $companyId)
+                    ->whereNotNull('customer_id')
+                    ->pluck('customer_id')
+            )
+            ->concat(
+                DB::table('ms_customers')
+                    ->where('company_id', $companyId)
+                    ->where('udhari_balance', '>', 0)
+                    ->pluck('id')
+            )
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($activeCustIds as $cid) {
+            self::syncCustomerUdhariBalance($companyId, (int) $cid);
+        }
+
         // Always fetch all customers for the store so operators can view and search any customer's udhari
         $customers = DB::table('ms_customers')
             ->where('company_id', $companyId)
@@ -218,6 +248,9 @@ class KhataController extends BaseMobileShopController
                     ]);
                 }
 
+                // Recalculate customer's balance accurately from ledger
+                $newBalance = self::syncCustomerUdhariBalance($companyId, $customer->id);
+
                 return redirect()->route('mobileshop.khata')->with('success', "Split repayment of ₹" . number_format($amount, 2) . " (Cash: ₹" . number_format($cashPart, 2) . ", UPI: ₹" . number_format($upiPart, 2) . ") received from {$customer->name}! New balance: ₹" . number_format($newBalance, 2));
             }
 
@@ -233,6 +266,9 @@ class KhataController extends BaseMobileShopController
                 'recorded_by'   => auth()->id(),
                 'created_at'    => now(),
             ]);
+
+            // Recalculate customer's balance accurately from ledger
+            $newBalance = self::syncCustomerUdhariBalance($companyId, $customer->id);
 
             return redirect()->route('mobileshop.khata')->with('success', "Repayment of ₹" . number_format($amount, 2) . " received via " . strtoupper($paymentMode) . " from {$customer->name}! New balance: ₹" . number_format($newBalance, 2));
         });
@@ -339,6 +375,9 @@ class KhataController extends BaseMobileShopController
             // Clear customers cache
             \Illuminate\Support\Facades\Cache::forget("ms_customers_picker_v2_{$companyId}");
 
+            // Recalculate customer's balance accurately from ledger
+            $newBalance = self::syncCustomerUdhariBalance($companyId, $customer->id);
+
             return redirect()->route('mobileshop.khata')
                 ->with('success', "Old Udhar of ₹" . number_format($amount, 2) . " added directly to {$customer->name}'s Khata! Total Due: ₹" . number_format($newBalance, 2));
         });
@@ -362,6 +401,7 @@ class KhataController extends BaseMobileShopController
         ), 403, 'Unauthorized access to customer statement.');
 
         $companyId = $this->getCompanyId();
+        self::syncCustomerUdhariBalance($companyId, (int) $id);
         $filters = [
             'filter' => $request->get('filter', 'active'),
             'from'   => $request->get('from'),
@@ -392,6 +432,7 @@ class KhataController extends BaseMobileShopController
         ), 403, 'Unauthorized access to customer statement PDF.');
 
         $companyId = $this->getCompanyId();
+        self::syncCustomerUdhariBalance($companyId, (int) $id);
         $filters = [
             'filter' => $request->get('filter', 'active'),
             'from'   => $request->get('from'),
@@ -633,6 +674,56 @@ class KhataController extends BaseMobileShopController
         $balance = self::syncCustomerUdhariBalance($companyId, (int) $id);
 
         return redirect()->back()->with('success', "Customer balance verified and synchronized with ledger! Current Due: ₹" . number_format($balance, 2));
+    }
+
+    /**
+     * Recalculate and Sync All Customer Udhari Balances with Ledger
+     */
+    public function syncAllBalances(Request $request)
+    {
+        abort_unless(auth()->check() && (
+            auth()->user()->can('create-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-khata') ||
+            auth()->user()->can('read-mobileshop-sales') ||
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('store-admin') ||
+            auth()->user()->hasRole('accessories-staff') ||
+            auth()->user()->hasRole('repair-technician')
+        ), 403, 'Unauthorized action.');
+
+        $companyId = $this->getCompanyId();
+
+        $activeCustIds = DB::table('ms_customer_khata_transactions')
+            ->where('company_id', $companyId)
+            ->pluck('customer_id')
+            ->concat(
+                DB::table('ms_accessory_sales')
+                    ->where('company_id', $companyId)
+                    ->whereNotNull('customer_id')
+                    ->pluck('customer_id')
+            )
+            ->concat(
+                DB::table('ms_mobile_sales')
+                    ->where('company_id', $companyId)
+                    ->whereNotNull('customer_id')
+                    ->pluck('customer_id')
+            )
+            ->concat(
+                DB::table('ms_customers')
+                    ->where('company_id', $companyId)
+                    ->pluck('id')
+            )
+            ->filter()
+            ->unique()
+            ->values();
+
+        $syncedCount = 0;
+        foreach ($activeCustIds as $cid) {
+            self::syncCustomerUdhariBalance($companyId, (int) $cid);
+            $syncedCount++;
+        }
+
+        return redirect()->back()->with('success', "All {$syncedCount} customer accounts have been verified and synchronized with the transaction ledger!");
     }
 
     /**

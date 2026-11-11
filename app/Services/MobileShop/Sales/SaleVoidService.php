@@ -82,6 +82,8 @@ class SaleVoidService
                         'recorded_by' => $userId,
                         'created_at' => now(),
                     ]);
+
+                    \App\Http\Controllers\MobileShop\KhataController::syncCustomerUdhariBalance($companyId, (int) $customer->id);
                 }
             }
 

@@ -853,6 +853,20 @@ class MobileShopInvoiceResolver
             }
         }
 
+        // Auto-heal / synchronize ms_customers.udhari_balance with true ledger if it has drifted
+        $overallBalance = $ledger->isNotEmpty() ? (float) $ledger->last()->balance_left : 0.00;
+        if ($customerId > 0 && abs((float) ($customer->udhari_balance ?? 0) - $overallBalance) > 0.001) {
+            DB::table('ms_customers')
+                ->where('company_id', $companyId)
+                ->where('id', $customerId)
+                ->update([
+                    'udhari_balance' => $overallBalance,
+                    'updated_at'     => now(),
+                ]);
+            $customer->udhari_balance = $overallBalance;
+            \Illuminate\Support\Facades\Cache::forget("ms_customers_picker_v2_{$companyId}");
+        }
+
         return [
             'customer'            => $customer,
             'ledger'              => $displayLedger,

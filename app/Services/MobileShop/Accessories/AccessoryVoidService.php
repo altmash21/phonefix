@@ -254,6 +254,8 @@ class AccessoryVoidService
                         'recorded_by'   => auth()->id(),
                         'created_at'    => now(),
                     ]);
+
+                    \App\Http\Controllers\MobileShop\KhataController::syncCustomerUdhariBalance($companyId, (int) $customer->id);
                 }
             }
 

@@ -281,6 +281,9 @@ Route::group(['as' => 'mobileshop.', 'prefix' => 'mobileshop'], function () {
     Route::post('khata/customer/{id}/sync-balance', 'MobileShop\KhataController@syncCustomerBalance')
         ->middleware('permission:create-mobileshop-khata|read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|create-sale-accessories|create-mobileshop-pos')
         ->name('khata.customer.sync_balance');
+    Route::match(['get', 'post'], 'khata/sync-all', 'MobileShop\KhataController@syncAllBalances')
+        ->middleware('permission:create-mobileshop-khata|read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|create-sale-accessories|create-mobileshop-pos')
+        ->name('khata.sync_all');
     Route::post('khata/customer/{id}/update', 'MobileShop\KhataController@updateCustomer')
         ->middleware('permission:create-mobileshop-khata|read-mobileshop-khata|read-mobileshop-sales|read-mobileshop-accessories|read-mobileshop-repairs|create-sale-accessories|create-mobileshop-pos')
         ->name('khata.customer.update');
