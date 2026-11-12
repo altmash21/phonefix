@@ -92,6 +92,18 @@
             display: none !important;
         }
 
+        /* Prevent auto-zoom on iOS Safari and mobile Chrome by enforcing >= 16px */
+        .app-input-field,
+        .input-item-name,
+        .input-quantity,
+        .input-unit-price,
+        .sales-search-input,
+        input.form-control,
+        select.form-control,
+        textarea.form-control {
+            font-size: 16px !important;
+        }
+
         /* Hide heavy 2x2 KPI grid on mobile, show compact strip */
         .kpi-cards-grid {
             display: none !important;

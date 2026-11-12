@@ -1597,9 +1597,9 @@ input:focus, select:focus, textarea:focus {
         padding: 0.15em 0.5em !important;
         font-size: var(--fs-xs) !important;
     }
-    .form-control, input, select {
-        min-height: 2em !important;
-        font-size: var(--fs-base) !important;
+    .form-control, input, select, textarea, .app-input-field {
+        min-height: 2.2em !important;
+        font-size: 16px !important; /* 16px threshold prevents iOS Safari & Android mobile focus zoom */
         padding: 0.25rem 0.5rem !important;
     }
     .filter-bar, .sales-filter-toolbar, .purchase-filter-toolbar, .stock-filter-toolbar {

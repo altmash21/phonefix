@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="mobile-web-app-capable" content="yes">
@@ -150,6 +150,13 @@
         /* Ensure child svg icons inside action buttons never swallow or cancel click events */
         button svg, .btn svg, [role="button"] svg, .stock-action-trigger-btn svg, .purchase-dots-btn svg {
             pointer-events: none !important;
+        }
+
+        /* Prevent iOS Safari and Android Chrome from auto-zooming when focusing inputs */
+        @media screen and (max-width: 768px) {
+            input, select, textarea, .form-control, .app-input-field, .sales-search-input {
+                font-size: 16px !important;
+            }
         }
     </style>
     @stack('styles')

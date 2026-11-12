@@ -255,4 +255,11 @@
     .ui-dialog-backdrop.open .ui-dialog-content {
         transform: scale(1) translateY(0);
     }
+
+    /* Prevent iOS Safari & Android mobile browser auto-zoom on input focus */
+    @media screen and (max-width: 768px) {
+        input, select, textarea, .form-control, .app-input-field {
+            font-size: 16px !important;
+        }
+    }
 }
