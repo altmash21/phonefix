@@ -1,12 +1,52 @@
 /**
  * PhoneFix Azamgarh — MobileShop Admin Panel Tailwind CSS
  *
- * Pre-built Tailwind utility bundle with Linear Light Design System tokens
- * and foundational component layers.
+ * Pre-built Tailwind utility bundle with Linear Light Design System tokens,
+ * shadcn UI design tokens, and foundational component layers.
  */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 222.2 84% 4.9%;
+
+        --card: 0 0% 100%;
+        --card-foreground: 222.2 84% 4.9%;
+
+        --popover: 0 0% 100%;
+        --popover-foreground: 222.2 84% 4.9%;
+
+        --primary: 236 57% 59%; /* #5E6AD2 PhoneFix Brand Indigo */
+        --primary-foreground: 210 40% 98%;
+
+        --secondary: 210 40% 96.1%;
+        --secondary-foreground: 222.2 47.4% 11.2%;
+
+        --muted: 210 40% 96.1%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+
+        --accent: 210 40% 96.1%;
+        --accent-foreground: 222.2 47.4% 11.2%;
+
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
+
+        --success: 142 76% 36%;
+        --success-foreground: 210 40% 98%;
+
+        --warning: 38 92% 50%;
+        --warning-foreground: 48 96% 89%;
+
+        --border: 214.3 31.8% 91.4%;
+        --input: 214.3 31.8% 91.4%;
+        --ring: 236 57% 59%;
+
+        --radius: 0.5rem;
+    }
+}
 
 @layer components {
     /* Standard Form Controls */
@@ -178,5 +218,41 @@
     .badge-gray, .badge-slate {
         background-color: #F1F5F9;
         color: #475569;
+    }
+
+    /* ─── shadcn UI Dialog & Overlay Transitions ─── */
+    .ui-dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background-color: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .ui-dialog-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .ui-dialog-content {
+        background-color: #FFFFFF;
+        color: #0F172A;
+        border: 1px solid #E2E8F0;
+        border-radius: 0.75rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 32rem;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: scale(0.96) translateY(8px);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .ui-dialog-backdrop.open .ui-dialog-content {
+        transform: scale(1) translateY(0);
     }
 }

@@ -142,7 +142,7 @@
     </script>
 
     <!-- MobileShop Pre-Compiled Tailwind CSS (replaces cdn.tailwindcss.com) -->
-    <link rel="stylesheet" href="{{ asset('public/css/mobileshop-panel.css') }}?v=2.6.0">
+    <link rel="stylesheet" href="{{ asset('public/css/mobileshop-panel.css') }}?v=2.7.0">
     <link rel="stylesheet" href="{{ asset('public/css/admin-panel.css') }}?v=2.7.0">
 
     <!-- Dedicated Print Media Engine is encapsulated inside admin-panel.css -->
@@ -641,6 +641,66 @@
             });
         });
     }
+
+    /* ─── shadcn UI Dialog Engine ─── */
+    window.uiDialog = {
+        open: function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.style.display = 'flex';
+            requestAnimationFrame(function() {
+                el.classList.add('open');
+                el.style.opacity = '1';
+                var content = el.querySelector('.ui-dialog-content');
+                if (content) {
+                    content.classList.remove('scale-95');
+                    content.classList.add('scale-100');
+                }
+            });
+            document.body.style.overflow = 'hidden';
+            if (window.refreshIcons) window.refreshIcons(el);
+            else if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+        },
+        close: function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('open');
+            el.style.opacity = '0';
+            var content = el.querySelector('.ui-dialog-content');
+            if (content) {
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+            setTimeout(function() {
+                el.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 200);
+        }
+    };
+
+    // Close open dialogs on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.ui-dialog-backdrop.open').forEach(function(d) {
+                window.uiDialog.close(d.id);
+            });
+        }
+    });
+
+    // Auto-bind clicks on [data-dialog-open="dialogId"] and [data-dialog-close="dialogId"]
+    document.addEventListener('click', function(e) {
+        var openBtn = e.target.closest('[data-dialog-open]');
+        if (openBtn) {
+            e.preventDefault();
+            window.uiDialog.open(openBtn.getAttribute('data-dialog-open'));
+            return;
+        }
+        var closeBtn = e.target.closest('[data-dialog-close]');
+        if (closeBtn) {
+            e.preventDefault();
+            window.uiDialog.close(closeBtn.getAttribute('data-dialog-close'));
+        }
+    });
     </script>
     @include('mobileshop.partials.shortcut_modal')
 </body>
