@@ -14,18 +14,18 @@
 @section('page-title', $nicheTitle)
 
 @section('page-actions')
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span class="badge badge-gray" style="font-size:11px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E2E8F0;">
-            <i data-lucide="calendar" style="width:13px;height:13px;color:var(--color-primary);"></i>
-            {{ date('D, d M Y') }}
-        </span>
+    <div class="flex items-center gap-2 flex-wrap">
+        <x-ui.badge variant="outline" class="text-xs font-semibold py-1 px-2.5 bg-white">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <span>{{ date('D, d M Y') }}</span>
+        </x-ui.badge>
         
         <div style="position:relative;" id="new-action-wrap">
-            <button type="button" class="btn btn-primary btn-sm" id="new-action-btn" style="gap:6px; font-weight:600;">
-                <i data-lucide="plus" style="width:14px;height:14px;"></i>
+            <x-ui.button variant="default" size="sm" id="new-action-btn" class="gap-1.5 font-semibold">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 <span>New</span>
-                <i data-lucide="chevron-down" style="width:12px;height:12px; opacity:0.8;"></i>
-            </button>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-80"></i>
+            </x-ui.button>
             <div id="new-action-menu">
                 @if(auth()->user()->can('create-sale-accessories') || auth()->user()->hasRole('admin') || auth()->user()->hasRole('store-admin') || auth()->user()->hasRole('accessories-staff'))
                 <a href="{{ route('mobileshop.accessories.pos') }}" class="dropdown-item-link" style="font-weight:600; color:var(--color-primary);">
@@ -110,44 +110,47 @@
     }
 
     .pulse-card {
-        background: var(--color-canvas);
-        border: 1px solid var(--color-hairline);
-        border-radius: var(--radius-md);
-        padding: 9px 12px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 11px 13px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 82px;
-        transition: all 0.15s ease;
+        min-height: 86px;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .pulse-card:hover {
-        border-color: var(--color-hairline-strong);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        transform: translateY(-1px);
     }
     .pulse-card-label {
-        font-size: 10.5px;
-        font-weight: 600;
+        font-size: 11px;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        color: var(--color-ink-muted);
+        color: #64748b;
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
     .pulse-card-val {
-        font-size: 17.5px;
-        font-weight: 700;
-        font-family: var(--font-mono);
-        color: var(--color-ink);
+        font-size: 19px;
+        font-weight: 800;
+        font-family: var(--font-mono, monospace);
+        color: #0f172a;
         line-height: 1.2;
-        margin: 3px 0 2px 0;
+        margin: 4px 0 2px 0;
+        letter-spacing: -0.02em;
     }
     .pulse-card-sub {
-        font-size: 11px;
-        color: var(--color-ink-subtle);
+        font-size: 11.5px;
+        color: #64748b;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -235,14 +238,18 @@
         <div class="pulse-card">
             <div class="pulse-card-label">
                 <span>Today's Sales</span>
-                <i data-lucide="trending-up" style="width:13px;height:13px;color:var(--color-primary);"></i>
+                <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                </div>
             </div>
             <div class="pulse-card-val">
                 ₹{{ number_format($analytics['todaySales'] ?? 0, 2) }}
             </div>
-            <div class="pulse-card-sub" style="color:#16a34a; font-weight:600;">
-                <i data-lucide="arrow-up-right" style="width:12px;height:12px;"></i>
-                <span>+₹{{ number_format($analytics['todayProfit'] ?? 0, 2) }} ({{ $analytics['todayProfitMargin'] ?? 0 }}%)</span>
+            <div class="pulse-card-sub">
+                <x-ui.badge variant="success" class="text-[10px] px-1.5 py-0 font-bold">
+                    <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                    +₹{{ number_format($analytics['todayProfit'] ?? 0, 2) }} ({{ $analytics['todayProfitMargin'] ?? 0 }}%)
+                </x-ui.badge>
             </div>
         </div>
 
@@ -250,14 +257,16 @@
         <div class="pulse-card">
             <div class="pulse-card-label">
                 <span>Items Sold Today</span>
-                <i data-lucide="package-check" style="width:13px;height:13px;color:#059669;"></i>
+                <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <i data-lucide="package-check" class="w-3.5 h-3.5"></i>
+                </div>
             </div>
-            <div class="pulse-card-val" style="color:#059669;">
-                {{ number_format($analytics['todayItemsSold'] ?? $todayItemsSold ?? 0) }} <span style="font-size:12px;font-weight:600;color:#64748b;">items</span>
+            <div class="pulse-card-val text-emerald-600">
+                {{ number_format($analytics['todayItemsSold'] ?? $todayItemsSold ?? 0) }} <span class="text-xs font-semibold text-slate-500">items</span>
             </div>
             <div class="pulse-card-sub">
-                <a href="{{ route('mobileshop.sales') }}" style="color:var(--color-ink-muted); text-decoration:none; display:flex; align-items:center; gap:4px;">
-                    <i data-lucide="receipt" style="width:11px;height:11px;color:#059669;"></i>
+                <a href="{{ route('mobileshop.sales') }}" class="hover:underline text-slate-600 inline-flex items-center gap-1 text-[11px]">
+                    <i data-lucide="receipt" class="w-3 h-3 text-emerald-600"></i>
                     <span>Across {{ number_format($analytics['todayInvoicesCount'] ?? $todayInvoicesCount ?? 0) }} bills today</span>
                 </a>
             </div>
@@ -267,76 +276,98 @@
         <div class="pulse-card">
             <div class="pulse-card-label">
                 <span>Cash in Drawer</span>
-                <i data-lucide="wallet" style="width:13px;height:13px;color:#16a34a;"></i>
+                <div class="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+                </div>
             </div>
             <div class="pulse-card-val">
                 ₹{{ number_format($analytics['cashInDrawer'] ?? 0, 2) }}
             </div>
             <div class="pulse-card-sub">
-                <span class="badge badge-green" style="font-size:9.5px;padding:1px 5px;">Physical Counter Cash</span>
+                <x-ui.badge variant="success" class="text-[10px] px-1.5 py-0 font-semibold">
+                    Physical Drawer Cash
+                </x-ui.badge>
             </div>
         </div>
 
-        <!-- 3. UPI In-Flow -->
+        <!-- 4. UPI In-Flow -->
         <div class="pulse-card">
             <div class="pulse-card-label">
                 <span>UPI In-Flow</span>
-                <i data-lucide="qr-code" style="width:13px;height:13px;color:#2563eb;"></i>
+                <div class="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+                </div>
             </div>
             <div class="pulse-card-val">
                 ₹{{ number_format($analytics['todayUpi'] ?? 0, 2) }}
             </div>
             <div class="pulse-card-sub">
-                <span>{{ $analytics['todayUpiCount'] ?? 0 }} digital txns today</span>
+                <x-ui.badge variant="blue" class="text-[10px] px-1.5 py-0">
+                    {{ $analytics['todayUpiCount'] ?? 0 }} digital txns
+                </x-ui.badge>
             </div>
         </div>
 
-        <!-- 4. Month-to-Date (MTD) Sales -->
+        <!-- 5. Month-to-Date (MTD) Sales -->
         <div class="pulse-card">
             <div class="pulse-card-label">
                 <span>MTD Sales ({{ date('M') }})</span>
-                <i data-lucide="calendar" style="width:13px;height:13px;color:#7c3aed;"></i>
+                <div class="w-6 h-6 rounded-md bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                </div>
             </div>
             <div class="pulse-card-val">
                 ₹{{ number_format($analytics['monthSales'] ?? 0, 2) }}
             </div>
             <div class="pulse-card-sub">
                 @if(($analytics['monthGrowthPct'] ?? 0) >= 0)
-                    <span style="color:#16a34a; font-weight:600;">↑ {{ $analytics['monthGrowthPct'] ?? 0 }}% vs last mo</span>
+                    <x-ui.badge variant="success" class="text-[10px] px-1.5 py-0 font-bold">
+                        ↑ {{ $analytics['monthGrowthPct'] ?? 0 }}% vs last mo
+                    </x-ui.badge>
                 @else
-                    <span style="color:#dc2626; font-weight:600;">↓ {{ abs($analytics['monthGrowthPct'] ?? 0) }}% vs last mo</span>
+                    <x-ui.badge variant="destructive" class="text-[10px] px-1.5 py-0 font-bold">
+                        ↓ {{ abs($analytics['monthGrowthPct'] ?? 0) }}% vs last mo
+                    </x-ui.badge>
                 @endif
             </div>
         </div>
 
-        <!-- 5. Customer Khata / Udhari -->
+        <!-- 6. Customer Khata / Udhari -->
         <div class="pulse-card">
             <div class="pulse-card-label">
                 <span>Khata / Udhari</span>
-                <i data-lucide="book-open" style="width:13px;height:13px;color:#ea580c;"></i>
+                <div class="w-6 h-6 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+                </div>
             </div>
-            <div class="pulse-card-val" style="color:#b91c1c;">
+            <div class="pulse-card-val text-red-600">
                 ₹{{ number_format($analytics['totalUdhariDue'] ?? 0, 2) }}
             </div>
             <div class="pulse-card-sub">
-                <a href="{{ route('mobileshop.khata') }}" style="color:var(--color-ink-muted); text-decoration:underline;">
-                    {{ $analytics['totalUdhariCount'] ?? 0 }} customers owing
+                <a href="{{ route('mobileshop.khata') }}" class="inline-flex">
+                    <x-ui.badge variant="destructive" class="text-[10px] px-1.5 py-0 cursor-pointer hover:bg-red-100">
+                        {{ $analytics['totalUdhariCount'] ?? 0 }} customers owing
+                    </x-ui.badge>
                 </a>
             </div>
         </div>
 
-        <!-- 6. Total Supplier Debt -->
+        <!-- 7. Total Supplier Debt -->
         <div class="pulse-card">
             <div class="pulse-card-label">
                 <span>Supplier Debt</span>
-                <i data-lucide="truck" style="width:13px;height:13px;color:#475569;"></i>
+                <div class="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <i data-lucide="truck" class="w-3.5 h-3.5"></i>
+                </div>
             </div>
-            <div class="pulse-card-val" style="color:#d97706;">
+            <div class="pulse-card-val text-amber-700">
                 ₹{{ number_format($analytics['totalSupplierDebt'] ?? 0, 2) }}
             </div>
             <div class="pulse-card-sub">
-                <a href="{{ route('mobileshop.purchase') }}" style="color:var(--color-ink-muted); text-decoration:underline;">
-                    {{ $analytics['unpaidPoCount'] ?? 0 }} pending invoices
+                <a href="{{ route('mobileshop.purchase') }}" class="inline-flex">
+                    <x-ui.badge variant="warning" class="text-[10px] px-1.5 py-0 cursor-pointer hover:bg-amber-100">
+                        {{ $analytics['unpaidPoCount'] ?? 0 }} pending POs
+                    </x-ui.badge>
                 </a>
             </div>
         </div>
@@ -370,11 +401,11 @@
         </div>
         <div class="kpi-card">
             <div class="kpi-top">
-                <div class="kpi-num" style="color:#059669;">{{ number_format($todayItemsSold ?? 0) }}</div>
+                <div class="kpi-num text-emerald-600">{{ number_format($todayItemsSold ?? 0) }}</div>
             </div>
             <div>
                 <div class="kpi-label">Items Sold Today</div>
-                <div style="font-size:11px;color:var(--color-ink-subtle);margin-top:2px;">{{ number_format($todayInvoicesCount ?? 0) }} bills today</div>
+                <div class="text-xs text-slate-500 mt-0.5">{{ number_format($todayInvoicesCount ?? 0) }} bills today</div>
             </div>
         </div>
         <div class="kpi-card">
@@ -394,19 +425,22 @@
     <div class="dashboard-middle-grid">
         
         <!-- Left: 7-Day Revenue & Profit Spline Chart -->
-        <div class="chart-container-card">
-            <div class="chart-header-row">
+        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+            <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 flex-wrap gap-2">
                 <div>
-                    <div class="chart-main-title">7-Day Revenue & Profit Momentum</div>
-                    <div style="font-size:11px; color:var(--color-ink-subtle); margin-top:2px;">Real-time margin pulse over the last 7 trading days</div>
+                    <div class="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4 text-indigo-600"></i>
+                        <span>7-Day Revenue & Profit Momentum</span>
+                    </div>
+                    <div class="text-xs text-slate-500 mt-0.5">Real-time margin pulse over the last 7 trading days</div>
                 </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div class="legend-item">
-                        <span class="legend-circle" style="background:#5E6AD2;"></span>
+                <div class="flex items-center gap-3">
+                    <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
                         <span>Sales (₹)</span>
                     </div>
-                    <div class="legend-item">
-                        <span class="legend-circle" style="background:#16A34A;"></span>
+                    <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
                         <span>Profit (₹)</span>
                     </div>
                 </div>
@@ -417,17 +451,17 @@
         </div>
 
         <!-- Right: Today's Payment Mode Mix & EOD Reconcile -->
-        <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
-            <div class="card-header" style="background:var(--color-surface-1); border-bottom:1px solid var(--color-hairline);">
-                <div class="card-title" style="font-size:13px; font-weight:700;">
-                    <i data-lucide="pie-chart" style="width:14px;height:14px;color:var(--color-primary);"></i>
+        <div class="rounded-xl border border-slate-200 bg-white shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                <div class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i>
                     <span>Payment Mode Breakdown</span>
                 </div>
-                <span class="badge {{ ($analytics['isTodayPaymentMode'] ?? false) ? 'badge-green' : 'badge-gray' }}">
+                <x-ui.badge :variant="($analytics['isTodayPaymentMode'] ?? false) ? 'success' : 'secondary'">
                     {{ ($analytics['isTodayPaymentMode'] ?? false) ? "Today's Mix" : "All Time Mix" }}
-                </span>
+                </x-ui.badge>
             </div>
-            <div class="card-body" style="padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+            <div class="p-3.5 flex flex-col gap-2.5">
                 @php
                     $payModes = $analytics['paymentModes'] ?? collect();
                     $payTotal = (float) $payModes->sum('total_amount');
@@ -440,7 +474,7 @@
                             'upi', 'gpay', 'phonepe', 'paytm', 'online' => '#2563EB',
                             'card'    => '#7C3AED',
                             'udhari', 'credit' => '#E11D48',
-                            default   => '#4F535B'
+                            default   => '#64748B'
                         };
                         $modeIcon = match(strtolower($pm->payment_mode)) {
                             'cash'    => 'banknote',
@@ -451,29 +485,32 @@
                         };
                     @endphp
                     <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:3px;">
-                            <span style="font-weight:600; text-transform:capitalize; display:flex; align-items:center; gap:5px; color:var(--color-ink);">
-                                <i data-lucide="{{ $modeIcon }}" style="width:13px;height:13px;color:{{ $modeColor }};"></i>
+                        <div class="flex justify-between items-center text-xs mb-1">
+                            <span class="font-bold capitalize flex items-center gap-1.5 text-slate-800">
+                                <i data-lucide="{{ $modeIcon }}" class="w-3.5 h-3.5" style="color:{{ $modeColor }};"></i>
                                 {{ str_replace('_', ' ', $pm->payment_mode) }}
                             </span>
-                            <span style="font-family:var(--font-mono); font-weight:700; color:var(--color-ink); font-size:12px;">
+                            <span class="font-mono font-bold text-slate-900 text-xs">
                                 ₹{{ number_format($pm->total_amount, 2) }}
-                                <span style="font-size:10px; font-weight:500; color:var(--color-ink-subtle);">({{ $pct }}%)</span>
+                                <span class="text-[11px] font-medium text-slate-500">({{ $pct }}%)</span>
                             </span>
                         </div>
-                        <div style="width:100%; height:5px; background:var(--color-surface-2); border-radius:3px; overflow:hidden;">
-                            <div style="width:{{ $pct }}%; height:100%; background:{{ $modeColor }}; border-radius:3px;"></div>
+                        <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-300" style="width:{{ $pct }}%; background-color:{{ $modeColor }};"></div>
                         </div>
                     </div>
                 @empty
-                    <div style="text-align:center; padding:18px; color:var(--color-ink-subtle); font-size:12px;">
+                    <div class="text-center py-5 text-slate-400 text-xs font-medium">
                         No payment transactions recorded yet.
                     </div>
                 @endforelse
             </div>
-            <div class="card-footer" style="padding:6px 12px; font-size:11px; color:var(--color-ink-muted); background:var(--color-surface-1);">
-                <span>Total Reconciled: <strong style="color:var(--color-ink);">₹{{ number_format($payTotal, 2) }}</strong></span>
-                <a href="{{ route('mobileshop.sales') }}" style="font-size:11px; font-weight:600; color:var(--color-primary);">View Register →</a>
+            <div class="p-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between text-xs text-slate-600">
+                <span>Total Reconciled: <strong class="text-slate-900 font-mono">₹{{ number_format($payTotal, 2) }}</strong></span>
+                <a href="{{ route('mobileshop.sales') }}" class="font-bold text-indigo-600 hover:text-indigo-700 hover:underline inline-flex items-center gap-1">
+                    <span>View Register</span>
+                    <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </a>
             </div>
         </div>
 
@@ -485,89 +522,98 @@
     <div class="dashboard-split-grid">
         
         <!-- Left: Recent Sales Invoices -->
-        <div class="card" style="margin-bottom:0;">
-            <div class="card-header" style="background:var(--color-surface-1); border-bottom:1px solid var(--color-hairline);">
-                <div class="card-title" style="font-size:13.5px; font-weight:700;">
-                    <i data-lucide="receipt" style="width:14px;height:14px;color:var(--color-primary);"></i>
+        <div class="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden flex flex-col justify-between">
+            <div class="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                <div class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="receipt" class="w-4 h-4 text-indigo-600"></i>
                     <span>Recent Sales Invoices</span>
                 </div>
-                <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-primary btn-xs">+ Sell Accessories</a>
+                <x-ui.button variant="default" size="xs" :href="route('mobileshop.accessories.pos')">
+                    <i data-lucide="plus" class="w-3 h-3 mr-1"></i> Sell Accessories
+                </x-ui.button>
             </div>
-            <div class="card-body" style="padding:0; overflow-x:auto;">
-                <table class="data-table" style="margin:0; border:none;">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
                     <thead>
-                        <tr>
-                            <th>Invoice #</th>
-                            <th>Customer</th>
-                            <th>Item Details</th>
-                            <th style="text-align:right;">Amount (₹)</th>
-                            <th style="text-align:center;">Mode</th>
+                        <tr class="border-b border-slate-100 bg-slate-50/40 text-[11px] uppercase tracking-wider font-bold text-slate-500">
+                            <th class="py-2.5 px-3 font-semibold">Invoice #</th>
+                            <th class="py-2.5 px-3 font-semibold">Customer</th>
+                            <th class="py-2.5 px-3 font-semibold">Item Details</th>
+                            <th class="py-2.5 px-3 font-semibold text-right">Amount (₹)</th>
+                            <th class="py-2.5 px-3 font-semibold text-center">Mode</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
                         @forelse($recentSales as $sale)
-                        <tr>
-                            <td>
-                                <a href="{{ route('mobileshop.invoice', ['id' => $sale->id]) }}" style="font-family:var(--font-mono); font-weight:700; color:var(--color-primary); text-decoration:none;">
+                        <tr class="hover:bg-slate-50/80 transition-colors">
+                            <td class="py-2.5 px-3">
+                                <a href="{{ route('mobileshop.invoice', ['id' => $sale->id]) }}" class="font-mono font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
                                     {{ $sale->invoice_number }}
                                 </a>
                             </td>
-                            <td>
-                                <div style="font-weight:600; color:var(--color-ink); font-size:12.5px;">{{ $sale->customer_name }}</div>
-                                <div style="font-size:10.5px; color:var(--color-ink-muted); font-family:var(--font-mono);">{{ $sale->customer_phone }}</div>
+                            <td class="py-2.5 px-3">
+                                <div class="font-bold text-slate-900 text-xs">{{ $sale->customer_name }}</div>
+                                <div class="text-[11px] text-slate-500 font-mono">{{ $sale->customer_phone }}</div>
                             </td>
-                            <td>
-                                <div style="font-weight:600; font-size:12px;">{{ $sale->brand }} {{ $sale->model }}</div>
-                                <div style="font-size:10px; color:var(--color-ink-muted); font-family:var(--font-mono);">IMEI: {{ $sale->imei_1 }}</div>
+                            <td class="py-2.5 px-3">
+                                <div class="font-semibold text-slate-900 text-xs">{{ $sale->brand }} {{ $sale->model }}</div>
+                                <div class="text-[10px] text-slate-500 font-mono">IMEI: {{ $sale->imei_1 }}</div>
                             </td>
-                            <td style="text-align:right; font-weight:700; font-family:var(--font-mono); color:var(--color-ink);">
+                            <td class="py-2.5 px-3 text-right font-bold font-mono text-slate-900">
                                 ₹{{ number_format($sale->total_amount, 2) }}
                             </td>
-                            <td style="text-align:center;">
-                                <span class="badge badge-green" style="text-transform:capitalize;">
+                            <td class="py-2.5 px-3 text-center">
+                                <x-ui.badge variant="success" class="capitalize text-[10.5px]">
                                     {{ $sale->payment_mode ?? 'Paid' }}
-                                </span>
+                                </x-ui.badge>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" style="text-align:center; padding:24px; color:var(--color-ink-muted); font-size:12px;">No sales recorded today yet.</td>
+                            <td colspan="5" class="text-center py-8 text-slate-400 text-xs">No sales recorded today yet.</td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer" style="padding:6px 12px; font-size:11px; background:var(--color-surface-1);">
-                <a href="{{ route('mobileshop.sales') }}" style="font-weight:600; color:var(--color-primary); margin-left:auto;">View All Sales Register →</a>
+            <div class="p-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-end text-xs">
+                <a href="{{ route('mobileshop.sales') }}" class="font-bold text-indigo-600 hover:text-indigo-700 hover:underline inline-flex items-center gap-1">
+                    <span>View All Sales Register</span>
+                    <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </a>
             </div>
         </div>
 
         <!-- Right: Action Center (Ready for Pickup + Overdue Debtors) -->
-        <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="flex flex-col gap-3">
             
             <!-- [A] Ready for Delivery (Collectable Counter Cash) -->
-            <div class="card" style="margin-bottom:0;">
-                <div class="card-header" style="background:var(--color-surface-1); border-bottom:1px solid var(--color-hairline);">
-                    <div class="card-title" style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px;">
-                        <i data-lucide="check-circle-2" style="width:14px;height:14px;color:#16A34A;"></i>
+            <div class="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+                <div class="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                    <div class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                        </div>
                         <span>Ready for Pickup</span>
                     </div>
                     @if(($analytics['readyRepairsCollectable'] ?? 0) > 0)
-                        <span class="badge badge-green" style="font-family:var(--font-mono);">
+                        <x-ui.badge variant="success" class="font-mono text-[10.5px]">
                             ₹{{ number_format($analytics['readyRepairsCollectable'], 2) }} Collectable
-                        </span>
+                        </x-ui.badge>
                     @endif
                 </div>
-                <div class="card-body" style="padding:10px; display:flex; flex-direction:column; gap:6px;">
+                <div class="p-3 flex flex-col gap-2">
                     @php $readyList = $analytics['readyRepairs'] ?? collect(); @endphp
                     @forelse($readyList as $rep)
-                    <div class="action-item-row">
+                    <div class="flex justify-between items-center p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors gap-2">
                         <div>
-                            <div style="font-weight:700; font-size:12px; color:var(--color-ink);">
+                            <div class="font-bold text-xs text-slate-900">
                                 {{ $rep->ticket_number }} — {{ $rep->brand }} {{ $rep->model }}
                             </div>
-                            <div style="font-size:10.5px; color:var(--color-ink-muted);">
-                                {{ $rep->customer_name }} · <span style="font-weight:700; color:#16a34a; font-family:var(--font-mono);">₹{{ number_format($rep->total_amount, 2) }}</span>
+                            <div class="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                <span>{{ $rep->customer_name }}</span>
+                                <span class="text-slate-300">&bull;</span>
+                                <span class="font-bold text-emerald-600 font-mono">₹{{ number_format($rep->total_amount, 2) }}</span>
                             </div>
                         </div>
                         @php
@@ -588,17 +634,13 @@
                             $rNotifyMsg .= "📞 *Helpdesk:* {$sPhone}\n";
                             $rNotifyMsg .= "_Please show this message at our counter to collect your device._";
                         @endphp
-                        <a href="https://wa.me/{{ $rPhone }}?text={{ rawurlencode($rNotifyMsg) }}" 
-                           target="_blank"
-                           class="btn btn-sm btn-outline"
-                           style="color:#16a34a; border-color:#86efac; gap:4px; font-size:11px;"
-                           title="Notify Customer via WhatsApp">
-                            <i data-lucide="message-circle" style="width:12px;height:12px;"></i>
+                        <x-ui.button variant="outline" size="xs" :href="'https://wa.me/' . $rPhone . '?text=' . rawurlencode($rNotifyMsg)" target="_blank" class="text-emerald-700 border-emerald-200 hover:bg-emerald-50">
+                            <i data-lucide="message-circle" class="w-3.5 h-3.5 text-emerald-600 mr-1"></i>
                             <span>Notify</span>
-                        </a>
+                        </x-ui.button>
                     </div>
                     @empty
-                    <div style="text-align:center; padding:12px; color:var(--color-ink-subtle); font-size:11.5px;">
+                    <div class="text-center py-3 text-slate-400 text-xs">
                         No repaired devices currently waiting for pickup.
                     </div>
                     @endforelse
@@ -606,23 +648,27 @@
             </div>
 
             <!-- [B] High-Risk Overdue Debtors (₹5,000+) -->
-            <div class="card" style="margin-bottom:0;">
-                <div class="card-header" style="background:var(--color-surface-1); border-bottom:1px solid var(--color-hairline);">
-                    <div class="card-title" style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px;">
-                        <i data-lucide="alert-circle" style="width:14px;height:14px;color:#E11D48;"></i>
+            <div class="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+                <div class="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+                    <div class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center">
+                            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
+                        </div>
                         <span>High-Risk Debtors (₹5,000+)</span>
                     </div>
-                    <a href="{{ route('mobileshop.khata') }}" class="btn btn-outline btn-xs">Full Khata</a>
+                    <x-ui.button variant="outline" size="xs" :href="route('mobileshop.khata')">
+                        Full Khata
+                    </x-ui.button>
                 </div>
-                <div class="card-body" style="padding:10px; display:flex; flex-direction:column; gap:6px;">
+                <div class="p-3 flex flex-col gap-2">
                     @php $debtorList = $analytics['highRiskDebtors'] ?? collect(); @endphp
                     @forelse($debtorList as $deb)
-                    <div class="action-item-row">
+                    <div class="flex justify-between items-center p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors gap-2">
                         <div>
-                            <div style="font-weight:700; font-size:12px; color:var(--color-ink);">
+                            <div class="font-bold text-xs text-slate-900">
                                 {{ $deb->name }}
                             </div>
-                            <div style="font-size:10.5px; color:#b91c1c; font-weight:700; font-family:var(--font-mono);">
+                            <div class="text-[11px] text-rose-600 font-bold font-mono mt-0.5">
                                 Due: ₹{{ number_format($deb->udhari_balance, 2) }}
                             </div>
                         </div>
@@ -652,17 +698,13 @@
                             $debMsg .= "🏢 *Showroom:* {$sAddress}\n";
                             $debMsg .= "_If you have already settled this payment recently, please disregard this message. Thank you for your continued support!_";
                         @endphp
-                        <a href="https://wa.me/{{ $debPhone }}?text={{ rawurlencode($debMsg) }}" 
-                           target="_blank"
-                           class="btn btn-sm btn-outline"
-                           style="color:#e11d48; border-color:#fca5a5; gap:4px; font-size:11px;"
-                           title="Send WhatsApp Payment Reminder">
-                            <i data-lucide="bell" style="width:12px;height:12px;"></i>
+                        <x-ui.button variant="outline" size="xs" :href="'https://wa.me/' . $debPhone . '?text=' . rawurlencode($debMsg)" target="_blank" class="text-rose-700 border-rose-200 hover:bg-rose-50">
+                            <i data-lucide="bell" class="w-3.5 h-3.5 text-rose-600 mr-1"></i>
                             <span>Remind</span>
-                        </a>
+                        </x-ui.button>
                     </div>
                     @empty
-                    <div style="text-align:center; padding:12px; color:var(--color-ink-subtle); font-size:11.5px;">
+                    <div class="text-center py-3 text-slate-400 text-xs">
                         All customer credit accounts are healthy (none above ₹5,000).
                     </div>
                     @endforelse
@@ -677,22 +719,22 @@
     <!-- 4. URGENT LOW STOCK ALERT STRIP (CONDITIONAL)            -->
     <!-- ══════════════════════════════════════════════════════════ -->
     @if(count($lowStockParts) > 0)
-    <div class="card" style="margin-bottom:0; border-color:#FECDD3; background:#FFF1F2;">
-        <div class="card-header" style="background:transparent; border-bottom:1px solid #FFE4E6; padding:8px 12px;">
-            <div class="card-title" style="font-size:12.5px; font-weight:700; color:#BE123C; display:flex; align-items:center; gap:6px;">
-                <i data-lucide="alert-triangle" style="width:15px;height:15px;"></i>
+    <div class="rounded-xl border border-rose-200 bg-rose-50/60 p-4 shadow-xs mt-3">
+        <div class="flex items-center justify-between pb-3 border-b border-rose-100 flex-wrap gap-2">
+            <div class="text-xs font-bold text-rose-900 flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
                 <span>Low Stock Warning ({{ count($lowStockParts) }} Parts below minimum alert level)</span>
             </div>
-            <a href="{{ route('mobileshop.purchase') }}" class="btn btn-xs" style="background:#fff; color:#BE123C; border:1px solid #FDA4AF; font-weight:600;">
+            <x-ui.button variant="outline" size="xs" :href="route('mobileshop.purchase')" class="bg-white text-rose-700 border-rose-300 hover:bg-rose-50">
                 + Restock Purchase Order
-            </a>
+            </x-ui.button>
         </div>
-        <div class="card-body" style="padding:8px 12px;">
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        <div class="pt-3">
+            <div class="flex flex-wrap gap-1.5">
                 @foreach($lowStockParts->take(8) as $lsp)
-                <span style="font-size:11px; font-weight:600; background:#fff; border:1px solid #FECDD3; padding:2px 8px; border-radius:4px; color:#9F1239; display:inline-flex; align-items:center; gap:4px;">
+                <span class="text-xs font-semibold bg-white border border-rose-200 px-2.5 py-1 rounded-md text-rose-950 inline-flex items-center gap-1.5 shadow-xs">
                     <span>{{ $lsp->name }}</span>
-                    <strong style="color:#e11d48;">({{ $lsp->stock_qty }} left)</strong>
+                    <strong class="text-rose-600 font-mono">({{ $lsp->stock_qty }} left)</strong>
                 </span>
                 @endforeach
             </div>
