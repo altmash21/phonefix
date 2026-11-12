@@ -13,16 +13,12 @@
 
 @section('page-actions')
     <div class="flex items-center gap-2 flex-wrap">
-        <x-ui.button variant="default" size="sm" :href="route('mobileshop.sales.bulk')">
-            <i data-lucide="layers" class="w-3.5 h-3.5 mr-1.5"></i>
-            <span class="desktop-btn-label">Bulk Multi-Customer Sale</span>
-            <span class="mobile-btn-label">Bulk Sale</span>
-        </x-ui.button>
-        <x-ui.button variant="outline" size="sm" :href="route('mobileshop.accessories.pos')">
-            <i data-lucide="zap" class="w-3.5 h-3.5 mr-1.5"></i>
-            <span class="desktop-btn-label">Sell Accessories</span>
-            <span class="mobile-btn-label">Sell Accessories</span>
-        </x-ui.button>
+        <a href="{{ route('mobileshop.sales.bulk') }}" class="btn btn-primary btn-sm" style="background:#4F46E5; border-color:#4338CA; color:#ffffff; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+            <i data-lucide="layers" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Bulk Multi-Customer Sale</span><span class="mobile-btn-label">Bulk Sale</span>
+        </a>
+        <a href="{{ route('mobileshop.accessories.pos') }}" class="btn btn-outline btn-sm">
+            <i data-lucide="zap" style="width:13px;height:13px;"></i> <span class="desktop-btn-label">Sell Accessories</span><span class="mobile-btn-label">Sell Accessories</span>
+        </a>
     </div>
 @endsection
 
@@ -90,18 +86,6 @@
         }
         .hide-on-mobile {
             display: none !important;
-        }
-
-        /* Prevent auto-zoom on iOS Safari and mobile Chrome by enforcing >= 16px */
-        .app-input-field,
-        .input-item-name,
-        .input-quantity,
-        .input-unit-price,
-        .sales-search-input,
-        input.form-control,
-        select.form-control,
-        textarea.form-control {
-            font-size: 16px !important;
         }
 
         /* Hide heavy 2x2 KPI grid on mobile, show compact strip */
@@ -286,10 +270,10 @@
     .light-sale-panel {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 0.75rem;
-        padding: 1rem;
+        border-radius: var(--radius-lg, 0.75rem);
+        padding: 1.15rem .6rem;
         color: #0f172a;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
     }
     .panel-header-box {
         display: flex;
@@ -447,24 +431,24 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- FULL-WIDTH QUICK SALE PANEL (MULTI-ITEM & BULK READY)      -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="quick-sales-top-grid mb-3">
-        <div class="light-sale-panel rounded-xl border border-slate-200 bg-white p-4 shadow-xs" style="width: 100%; box-sizing: border-box;">
+    <div class="quick-sales-top-grid">
+        <div class="light-sale-panel" style="width: 100%; box-sizing: border-box;">
             <!-- Panel Header: Title + Bulk Sale Trigger Button -->
-            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 flex-wrap gap-2.5">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+            <div class="panel-header-box" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="panel-header-icon sale-icon">
+                        <i data-lucide="shopping-cart" style="width:16px;height:16px;"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-900 m-0">Quick Sale</h3>
-                        <p class="m-0 text-xs text-slate-500">Fast counter billing — add multiple items in a single bill</p>
+                        <h3 class="panel-header-title">Quick Sale</h3>
+                        <p style="margin: 0; font-size: 11px; color: #64748b;">Fast counter billing — add multiple items in a single bill</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <x-ui.button variant="outline" size="sm" :href="route('mobileshop.sales.bulk')">
-                        <i data-lucide="layers" class="w-3.5 h-3.5 mr-1.5"></i> Bulk Multi-Customer Sale
-                    </x-ui.button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <a href="{{ route('mobileshop.sales.bulk') }}" class="btn-app-primary" style="background: #4f46e5; padding: 6px 14px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="layers" style="width:13px;height:13px;"></i> Bulk Multi-Customer Sale
+                    </a>
                 </div>
             </div>
 
@@ -474,7 +458,7 @@
                 <input type="hidden" name="amount_paid" id="quickSaleAmountPaid" value="0">
 
                 <!-- Quick Sale Inline Alert / Warning Box -->
-                <div id="quickSaleAlertBox" style="display:none;" class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-3 text-xs font-semibold"></div>
+                <div id="quickSaleAlertBox" style="display:none; background:#fef2f2; border:1px solid #fecdd3; border-radius:8px; padding:10px 14px; margin-bottom:12px; color:#991b1b; font-size:12.5px; font-weight:600;"></div>
 
                 <!-- 1. Customer & Payment Details Bar -->
                 <div class="quick-sale-cust-grid">
@@ -507,12 +491,12 @@
                 </div>
 
                 <!-- Customer Khata Balance Alert / Info Notice -->
-                <div id="quickSaleCustKhataNotice" style="display:none;" class="bg-amber-50 border border-amber-200 rounded-lg p-2.5 mb-3 text-xs text-amber-800 flex items-center justify-between">
-                    <div class="flex items-center gap-2 font-semibold">
-                        <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+                <div id="quickSaleCustKhataNotice" style="display:none; background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:12px; color:#92400E; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:14px;">⚠️</span>
                         <span id="quickSaleCustKhataNoticeText">Customer has an existing Khata balance.</span>
                     </div>
-                    <button type="button" onclick="dismissQuickCustNotice()" class="text-amber-700 hover:text-amber-900 font-bold p-1 leading-none text-base" title="Dismiss">&times;</button>
+                    <button type="button" onclick="dismissQuickCustNotice()" style="background:transparent; border:none; color:#B45309; font-weight:bold; cursor:pointer; font-size:14px; line-height:1; padding:0 4px;" title="Dismiss">&times;</button>
                 </div>
 
                 <!-- Dynamic Split Payment Fields (Cash+UPI, Cash+Udhari, UPI+Udhari, Udhari) -->
@@ -521,15 +505,15 @@
                 </div>
 
                 <!-- 2. Multi-Item Cart Repeater Section -->
-                <div class="bg-white border border-slate-200 rounded-xl p-3 mb-3 shadow-xs">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                            <i data-lucide="package" class="w-3.5 h-3.5 text-indigo-600"></i>
-                            <span>Sale Items (<span id="quickItemCountText">1</span>)</span>
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 12px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="package" style="width:14px;height:14px; color: #4f46e5;"></i>
+                            Sale Items (<span id="quickItemCountText">1</span>)
                         </span>
-                        <x-ui.button variant="outline" size="xs" type="button" onclick="addQuickSaleItemRow()">
-                            <i data-lucide="plus" class="w-3 h-3 mr-1"></i> Add Another Item
-                        </x-ui.button>
+                        <button type="button" onclick="addQuickSaleItemRow()" style="background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                            <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Another Item
+                        </button>
                     </div>
 
                     <!-- Column Headers (Desktop) -->
@@ -605,22 +589,22 @@
                     </div>
 
                     <!-- Bottom Add Item Button Strip -->
-                    <div class="mt-2 text-left">
-                        <button type="button" onclick="addQuickSaleItemRow()" class="w-full py-2 px-3 border border-dashed border-indigo-200 rounded-lg text-xs font-bold text-indigo-600 hover:bg-indigo-50/50 hover:border-indigo-300 transition-colors inline-flex items-center justify-center gap-1.5">
-                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Click to Add Another Item
+                    <div style="margin-top: 8px; text-align: left;">
+                        <button type="button" onclick="addQuickSaleItemRow()" style="background: transparent; color: #4f46e5; border: 1px dashed #c7d2fe; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; width: 100%; justify-content: center;">
+                            <i data-lucide="plus-circle" style="width:14px;height:14px;"></i> + Click to Add Another Item
                         </button>
                     </div>
                 </div>
 
                 <!-- 3. Submit Button Row & Total Badges -->
-                <div class="flex justify-between items-center flex-wrap gap-2.5 pt-3 border-t border-slate-100">
-                    <x-ui.button variant="default" size="default" type="submit" id="quickSaleSubmitBtn" class="shadow-sm">
-                        <i data-lucide="check-circle" class="w-4 h-4 mr-1.5"></i> Complete Sale
-                    </x-ui.button>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;">
+                    <button type="submit" class="btn-app-primary" id="quickSaleSubmitBtn">
+                        <i data-lucide="check-circle" style="width:15px;height:15px;"></i> Complete Sale
+                    </button>
 
-                    <div class="flex items-center gap-2.5">
-                        <span id="quickItemCountBadge" class="text-xs text-slate-500 font-medium">1 Item</span>
-                        <div id="quickSaleTotalBadge" class="bg-indigo-50 text-indigo-700 border border-indigo-200/80 rounded-lg px-4 py-1.5 text-sm font-extrabold font-mono shadow-xs">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="quickItemCountBadge" style="font-size: 12px; color: #64748b; font-weight: 600;">1 Item</span>
+                        <div id="quickSaleTotalBadge" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; border-radius:6px; padding:6px 16px; font-size: 15px; font-weight: 800;">
                             Total: ₹0.00
                         </div>
                     </div>
@@ -655,73 +639,56 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- TOP KPI METRIC CARDS (Desktop View)                        -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="kpi-cards-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+    <div class="kpi-cards-grid">
         <!-- Card 1: Today's Revenue -->
-        <div class="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-            <div class="flex items-center justify-between pb-1">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Today's Revenue</span>
-                <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-label">Today's Revenue</div>
+                <div class="kpi-icon-box"><i data-lucide="banknote"></i></div>
             </div>
-            <div class="text-xl font-extrabold font-mono text-slate-900 mt-1">
-                ₹{{ fmod($todaySalesTotal, 1) != 0 ? number_format($todaySalesTotal, 2) : number_format($todaySalesTotal, 0) }}
-            </div>
+            <div class="kpi-num">₹{{ fmod($todaySalesTotal, 1) != 0 ? number_format($todaySalesTotal, 2) : number_format($todaySalesTotal, 0) }}</div>
         </div>
 
         <!-- Card 2: Monthly Inflow -->
-        <div class="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-            <div class="flex items-center justify-between pb-1">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Monthly Inflow</span>
-                <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-label">Monthly Inflow</div>
+                <div class="kpi-icon-box"><i data-lucide="trending-up"></i></div>
             </div>
-            <div class="text-xl font-extrabold font-mono text-slate-900 mt-1">
-                ₹{{ fmod($monthSalesTotal, 1) != 0 ? number_format($monthSalesTotal, 2) : number_format($monthSalesTotal, 0) }}
-            </div>
+            <div class="kpi-num">₹{{ fmod($monthSalesTotal, 1) != 0 ? number_format($monthSalesTotal, 2) : number_format($monthSalesTotal, 0) }}</div>
         </div>
 
         <!-- Card 3: Total Invoices -->
-        <div class="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-            <div class="flex items-center justify-between pb-1">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Invoices</span>
-                <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-label">Total Invoices</div>
+                <div class="kpi-icon-box"><i data-lucide="receipt"></i></div>
             </div>
-            <div class="text-xl font-extrabold font-mono text-slate-900 mt-1">
-                {{ number_format($salesCount) }}
-            </div>
+            <div class="kpi-num">{{ number_format($salesCount) }}</div>
         </div>
 
         <!-- Card 4: Ready Stock -->
-        <div class="rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-            <div class="flex items-center justify-between pb-1">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Ready Stock</span>
-                <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                    <i data-lucide="package" class="w-3.5 h-3.5"></i>
-                </div>
+        <div class="kpi-card">
+            <div class="kpi-top">
+                <div class="kpi-label">Ready Stock</div>
+                <div class="kpi-icon-box"><i data-lucide="package"></i></div>
             </div>
-            <div class="text-xl font-extrabold font-mono text-slate-900 mt-1 flex items-baseline gap-1">
-                <span>{{ number_format($availableParts) }}</span>
-                <span class="text-xs font-medium text-slate-500">Units</span>
-            </div>
+            <div class="kpi-num">{{ number_format($availableParts) }} <span style="font-size:11px; font-weight:400; color:var(--color-ink-muted);">Units</span></div>
         </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- SALES REGISTRY TABLE CONTAINER                           -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="sales-registry-card rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+    <div class="card sales-registry-card">
         <!-- Top Title & Search Bar -->
         <div class="sales-header-container">
             <div class="sales-header-title-box flex items-center gap-2">
-                <div class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <div class="w-6 h-6 rounded-sm bg-primary-tint text-primary flex items-center justify-center flex-shrink-0">
                     <i data-lucide="receipt" style="width: 14px; height: 14px;"></i>
                 </div>
                 <div>
-                    <h2 class="text-xs font-bold text-slate-900 leading-tight m-0">Live Sales Invoice Registry</h2>
+                    <h2 class="text-xs font-semibold text-ink leading-tight m-0">Live Sales Invoice Registry</h2>
                 </div>
             </div>
 
@@ -771,9 +738,9 @@
                     <span style="font-size: 11px; font-weight: 700; color: #64748B;">To:</span>
                     <input type="date" id="salesToDate" onchange="onSalesCustomDateChange()" style="border: none; outline: none; font-size: 11px; font-weight: 700; color: #0F172A; background: transparent; cursor: pointer;">
                 </div>
-                <x-ui.button variant="outline" size="xs" type="button" onclick="setSalesDatePreset('all')" title="Reset Date Filter" class="h-7 text-xs font-semibold">
-                    <i data-lucide="rotate-ccw" class="w-3 h-3 mr-1"></i> Reset
-                </x-ui.button>
+                <button type="button" onclick="setSalesDatePreset('all')" title="Reset Date Filter" style="background: #FFFFFF; border: 1px solid #CBD5E1; color: #475569; font-weight: 700; font-size: 11px; border-radius: 8px; padding: 5px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease;" onmouseover="this.style.background='#F1F5F9';" onmouseout="this.style.background='#FFFFFF';">
+                    <i data-lucide="rotate-ccw" style="width: 12px; height: 12px;"></i> Reset
+                </button>
             </div>
         </div>
         <div class="card-body" style="padding:0; overflow-x:auto;">

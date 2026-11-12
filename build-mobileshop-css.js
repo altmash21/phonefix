@@ -13,13 +13,11 @@ const inputCSS = fs.existsSync(inputSourcePath)
     ? fs.readFileSync(inputSourcePath, 'utf8')
     : `@tailwind base;\n@tailwind components;\n@tailwind utilities;`;
 
-// Mobileshop-specific Tailwind config (mirrors the linear light & shadcn design system tokens)
+// Mobileshop-specific Tailwind config (mirrors the linear light design system tokens)
 const mobileshopConfig = {
     content: [
         './resources/views/mobileshop/**/*.blade.php',
         './resources/views/auth/**/*.blade.php',
-        './resources/views/components/ui/**/*.blade.php',
-        './resources/views/components/**/*.blade.php',
     ],
     corePlugins: {
         preflight: false, // Don't reset base styles — admin-panel.css handles it
@@ -27,35 +25,6 @@ const mobileshopConfig = {
     theme: {
         extend: {
             colors: {
-                border: "hsl(var(--border, 214.3 31.8% 91.4%) / <alpha-value>)",
-                input: "hsl(var(--input, 214.3 31.8% 91.4%) / <alpha-value>)",
-                ring: "hsl(var(--ring, 236 57% 59%) / <alpha-value>)",
-                background: "hsl(var(--background, 0 0% 100%) / <alpha-value>)",
-                foreground: "hsl(var(--foreground, 222.2 84% 4.9%) / <alpha-value>)",
-                card: {
-                    DEFAULT: "hsl(var(--card, 0 0% 100%) / <alpha-value>)",
-                    foreground: "hsl(var(--card-foreground, 222.2 84% 4.9%) / <alpha-value>)",
-                },
-                popover: {
-                    DEFAULT: "hsl(var(--popover, 0 0% 100%) / <alpha-value>)",
-                    foreground: "hsl(var(--popover-foreground, 222.2 84% 4.9%) / <alpha-value>)",
-                },
-                secondary: {
-                    DEFAULT: "hsl(var(--secondary, 210 40% 96.1%) / <alpha-value>)",
-                    foreground: "hsl(var(--secondary-foreground, 222.2 47.4% 11.2%) / <alpha-value>)",
-                },
-                muted: {
-                    DEFAULT: "hsl(var(--muted, 210 40% 96.1%) / <alpha-value>)",
-                    foreground: "hsl(var(--muted-foreground, 215.4 16.3% 46.9%) / <alpha-value>)",
-                },
-                accent: {
-                    DEFAULT: "hsl(var(--accent, 210 40% 96.1%) / <alpha-value>)",
-                    foreground: "hsl(var(--accent-foreground, 222.2 47.4% 11.2%) / <alpha-value>)",
-                },
-                destructive: {
-                    DEFAULT: "hsl(var(--destructive, 0 84.2% 60.2%) / <alpha-value>)",
-                    foreground: "hsl(var(--destructive-foreground, 210 40% 98%) / <alpha-value>)",
-                },
                 canvas: "#ffffff",
                 surface: {
                     1: "#f7f8fa",
