@@ -43,7 +43,7 @@
 
 <!-- Desktop Stat Grid (Hidden on Mobile) -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3" id="khataDesktopStatGrid">
-    <div class="stat-card rounded-xl border border-rose-200 bg-rose-50/50 p-4 shadow-xs cursor-pointer hover:border-rose-300 hover:shadow-sm transition-all" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('debtors');" title="Click to view all active debtors">
+    <div class="rounded-xl border border-rose-200 bg-rose-50/50 p-4 shadow-xs cursor-pointer hover:border-rose-300 hover:shadow-sm transition-all" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('debtors');" title="Click to view all active debtors">
         <div class="flex justify-between items-center mb-1">
             <span class="text-xs font-bold uppercase tracking-wider text-rose-800">Total Receivables</span>
             <div class="w-7 h-7 rounded-lg bg-rose-100/70 text-rose-600 flex items-center justify-center">
@@ -54,7 +54,7 @@
         <div class="text-xs text-rose-700 font-medium">Live Outstanding Across Store &bull; Click to View</div>
     </div>
 
-    <div class="stat-card rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-xs cursor-pointer hover:border-amber-300 hover:shadow-sm transition-all" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('debtors');" title="Click to view all active debtors & WhatsApp reminders">
+    <div class="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-xs cursor-pointer hover:border-amber-300 hover:shadow-sm transition-all" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('debtors');" title="Click to view all active debtors & WhatsApp reminders">
         <div class="flex justify-between items-center mb-1">
             <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Active Debtors</span>
             <div class="w-7 h-7 rounded-lg bg-amber-100/70 text-amber-600 flex items-center justify-center">
@@ -65,7 +65,7 @@
         <div class="text-xs text-amber-700 font-medium">Customers with Pending Khata &bull; Click to View List</div>
     </div>
 
-    <div class="stat-card rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-xs cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-all" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('settled');" title="Click to view cleared accounts">
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-xs cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-all" onclick="switchKhataMainTab('udhari_list'); setCustomerUdhariFilter('settled');" title="Click to view cleared accounts">
         <div class="flex justify-between items-center mb-1">
             <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Settled Accounts</span>
             <div class="w-7 h-7 rounded-lg bg-emerald-100/70 text-emerald-600 flex items-center justify-center">
@@ -112,14 +112,14 @@
 </div>
 
 <!-- ════════════════ VIEW 1: CUSTOMER UDHARI LIST DIRECTORY ════════════════ -->
-<div id="viewCustomerUdhariList" class="card rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden mb-3">
-    <div class="card-header cust-dir-header bg-slate-50/70 border-b border-slate-100 p-3.5 flex justify-between items-center flex-wrap gap-3">
+<div id="viewCustomerUdhariList" class="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden mb-3">
+    <div class="cust-dir-header bg-slate-50/70 border-b border-slate-100 p-3.5 flex justify-between items-center flex-wrap gap-3">
         <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
                 <i data-lucide="users" class="w-4 h-4"></i>
             </div>
             <div>
-                <div class="card-title flex items-center gap-2 font-bold text-sm text-slate-900 m-0">
+                <div class="flex items-center gap-2 font-bold text-sm text-slate-900 m-0">
                     <span>Customer Udhari & Balance Directory</span>
                     <x-ui.badge variant="destructive" class="text-[11px] font-bold" id="custUdhariCountBadge">
                         {{ $customers->where('udhari_balance', '>', 0)->count() }} Debtors

@@ -274,10 +274,10 @@
     .light-sale-panel {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: var(--radius-lg, 0.75rem);
-        padding: 1.15rem .6rem;
+        border-radius: 0.75rem;
+        padding: 1rem;
         color: #0f172a;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
     .panel-header-box {
         display: flex;
@@ -701,7 +701,7 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- SALES REGISTRY TABLE CONTAINER                           -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="card sales-registry-card rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+    <div class="sales-registry-card rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         <!-- Top Title & Search Bar -->
         <div class="sales-header-container">
             <div class="sales-header-title-box flex items-center gap-2">
