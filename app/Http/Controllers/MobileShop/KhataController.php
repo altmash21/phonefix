@@ -65,56 +65,30 @@ class KhataController extends BaseMobileShopController
             $txQuery->where('ms_customer_khata_transactions.recorded_by', $user->id);
         }
 
-        $transactions = $txQuery->orderBy('ms_customer_khata_transactions.id', 'desc')->get();
+        $transactions = $txQuery->orderBy('ms_customer_khata_transactions.id', 'desc')->limit(500)->get();
 
+        $invSummaryCache = [];
         foreach ($transactions as $tx) {
             if ($tx->type === 'adjustment' && !empty($tx->remarks) && str_contains($tx->remarks, 'Returned') && preg_match('/#([A-Za-z0-9\-_]+)/', $tx->remarks, $m)) {
                 $inv = $m[1];
-                $returnedItem = \App\Services\MobileShop\Common\MobileShopInvoiceResolver::resolveReturnedItemSummary($companyId, $inv, (float) $tx->amount);
+                if (!isset($invSummaryCache[$inv])) {
+                    $invSummaryCache[$inv] = \App\Services\MobileShop\Common\MobileShopInvoiceResolver::resolveReturnedItemSummary($companyId, $inv, (float) $tx->amount);
+                }
+                $returnedItem = $invSummaryCache[$inv];
                 if ($returnedItem && !str_contains($tx->remarks, $returnedItem)) {
                     $tx->remarks = "Reversal for Returned: {$returnedItem} (Sale #{$inv})";
                 }
             }
         }
 
-        // Auto-reconcile customer balances with true transaction ledger
-        $activeCustIds = DB::table('ms_customer_khata_transactions')
-            ->where('company_id', $companyId)
-            ->pluck('customer_id')
-            ->concat(
-                DB::table('ms_accessory_sales')
-                    ->where('company_id', $companyId)
-                    ->whereNotNull('customer_id')
-                    ->pluck('customer_id')
-            )
-            ->concat(
-                DB::table('ms_mobile_sales')
-                    ->where('company_id', $companyId)
-                    ->whereNotNull('customer_id')
-                    ->pluck('customer_id')
-            )
-            ->concat(
-                DB::table('ms_customers')
-                    ->where('company_id', $companyId)
-                    ->where('udhari_balance', '>', 0)
-                    ->pluck('id')
-            )
-            ->filter()
-            ->unique()
-            ->values();
-
-        foreach ($activeCustIds as $cid) {
-            self::syncCustomerUdhariBalance($companyId, (int) $cid);
-        }
-
-        // Always fetch all customers for the store so operators can view and search any customer's udhari
+        // Fetch all store customers with instant ordering
         $customers = DB::table('ms_customers')
             ->where('company_id', $companyId)
             ->orderBy('udhari_balance', 'desc')
             ->orderBy('name', 'asc')
             ->get();
 
-        // Enrich customers with their last transaction date and activity count
+        // Enrich customers with their last transaction date and activity count (single aggregated query)
         $lastTxs = DB::table('ms_customer_khata_transactions')
             ->where('company_id', $companyId)
             ->select('customer_id', DB::raw('MAX(created_at) as last_tx_date'), DB::raw('COUNT(id) as total_tx_count'))
@@ -127,15 +101,8 @@ class KhataController extends BaseMobileShopController
             $c->total_tx_count = isset($lastTxs[$c->id]) ? (int)$lastTxs[$c->id]->total_tx_count : 0;
         }
 
-        $accessoryInvoices = DB::table('ms_accessory_sales')
-            ->where('company_id', $companyId)
-            ->pluck('id', 'invoice_number')
-            ->toArray();
-
-        $mobileInvoices = DB::table('ms_mobile_sales')
-            ->where('company_id', $companyId)
-            ->pluck('id', 'invoice_number')
-            ->toArray();
+        $accessoryInvoices = [];
+        $mobileInvoices = [];
 
         $khataTransactionsData = $transactions->map(function ($t) {
             return [
